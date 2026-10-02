@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlchemistsTalent.class, GrizzlyBears.class, Shock.class})
+@CardUsed({AlchemistsTalent.class, Counterspell.class, GrizzlyBears.class, Shock.class})
 class AlchemistsTalentTest extends BaseCardTest {
 
     @Test
@@ -57,11 +58,33 @@ class AlchemistsTalentTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.handleListChoice(player1, "RED");
+        assertThat(talent.getCounterCount(CounterType.LEVEL)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTreasureManaTotal()).isEqualTo(2);
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void levelThreeStillDealsSpellManaValueDamageWhenTheSpellIsCountered() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new AlchemistsTalent());
+        addTreasureToken(player1);
+        levelUpToThree(talent);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, shock.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
     }
 
     @Test

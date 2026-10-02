@@ -1307,6 +1307,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A later one-shot setter beats an earlier Aura setter (Deep Freeze then Wings)")
+        @CardUsed({WingsOfVelisVel.class, GrizzlyBears.class, DeepFreeze.class})
         void wingsAfterDeepFreezeWins() {
             Permanent bears = addReady(player1, new GrizzlyBears());
             attach(player2, new DeepFreeze(), bears); // base 0/4
@@ -1319,6 +1320,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("A later Aura setter beats an earlier one-shot setter (Wings then Deep Freeze)")
+        @CardUsed({WingsOfVelisVel.class, GrizzlyBears.class, DeepFreeze.class})
         void deepFreezeAfterWingsWins() {
             Permanent bears = addReady(player1, new GrizzlyBears());
             castWingsOfVelisVel(player1, bears); // base 4/4
@@ -1356,6 +1358,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two one-shot setters, the later one wins (Wings then Diminish)")
+        @CardUsed({WingsOfVelisVel.class, GrizzlyBears.class, Diminish.class})
         void secondSpellSetterWins() {
             Permanent bears = addReady(player1, new GrizzlyBears());
             castWingsOfVelisVel(player1, bears);
@@ -1368,6 +1371,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("Of two one-shot setters, the later one wins (Diminish then Wings)")
+        @CardUsed({WingsOfVelisVel.class, GrizzlyBears.class, Diminish.class})
         void secondSpellSetterWinsReversedOrder() {
             Permanent bears = addReady(player1, new GrizzlyBears());
             castDiminish(player2, bears);
@@ -1393,6 +1397,7 @@ class SevenLayerTest extends BaseCardTest {
 
         @Test
         @DisplayName("An until-end-of-turn setter expires at cleanup")
+        @CardUsed({WingsOfVelisVel.class, GrizzlyBears.class})
         void temporarySetterExpires() {
             Permanent bears = addReady(player1, new GrizzlyBears());
             castWingsOfVelisVel(player1, bears);

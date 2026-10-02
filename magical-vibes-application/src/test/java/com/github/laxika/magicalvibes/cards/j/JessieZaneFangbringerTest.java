@@ -35,6 +35,7 @@ class JessieZaneFangbringerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new AmbushViper()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
@@ -54,9 +55,12 @@ class JessieZaneFangbringerTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         Card drawnCard = new GrizzlyBears();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Jessie Zane, Fangbringer")));
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(conjuredViper));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();

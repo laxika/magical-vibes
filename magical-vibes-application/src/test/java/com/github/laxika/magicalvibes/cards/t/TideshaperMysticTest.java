@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,8 +8,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TideshaperMystic.class, Forest.class, TurtleshellChangeling.class})
 class TideshaperMysticTest extends BaseCardTest {
 
     // ===== Activated ability =====
@@ -52,8 +53,21 @@ class TideshaperMysticTest extends BaseCardTest {
 
         var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(interaction.playerId()).isEqualTo(player1.getId());
+        assertThat(interaction.options()).containsExactly("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
         assertThat(interaction.context()).isInstanceOf(ChoiceContext.AddBasicLandTypeChoice.class);
         assertThat(((ChoiceContext.AddBasicLandTypeChoice) interaction.context()).replacing()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating the ability taps Tideshaper Mystic as a cost")
+    void activatingAbilityTapsSource() {
+        Permanent mystic = addCreatureReady(player1, new TideshaperMystic());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        assertThat(mystic.isTapped()).isTrue();
     }
 
     // ===== Type replacement (rule 305.7) =====
@@ -63,20 +77,17 @@ class TideshaperMysticTest extends BaseCardTest {
     void chosenTypeOverridesSubtypes() {
         Permanent forest = becomeIsland(player1);
 
-        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
-        assertThat(bonus.subtypeOverriding()).isTrue();
-        assertThat(bonus.landSubtypeOverriding()).isTrue();
-        assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.isLand(gd, forest)).isTrue();
     }
 
     @Test
-    @DisplayName("Replacing sets a transient override, not an additive subtype or mana ability")
-    void replacingUsesTransientOverride() {
+    @DisplayName("Replacing removes the land's original type and printed abilities")
+    void replacingRemovesOriginalTypeAndAbilities() {
         Permanent forest = becomeIsland(player1);
 
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forest.getTransientSubtypes()).isEmpty();
-        assertThat(forest.getTemporaryActivatedAbilities()).isEmpty();
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.hasLostPrintedAbilities(gd, forest)).isTrue();
     }
 
     @Test
@@ -86,7 +97,7 @@ class TideshaperMysticTest extends BaseCardTest {
 
         int forestIndex = gd.playerBattlefields.get(player1.getId())
                 .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, forestIndex);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
@@ -98,11 +109,13 @@ class TideshaperMysticTest extends BaseCardTest {
     @DisplayName("Override is cleared at end of turn")
     void overrideClearedAtEndOfTurn() {
         Permanent forest = becomeIsland(player1);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
-        forest.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UNTAP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     // ===== Targeting / timing restrictions =====
@@ -138,11 +151,11 @@ class TideshaperMysticTest extends BaseCardTest {
     void cannotTargetNonLand() {
         addCreatureReady(player1, new TideshaperMystic());
         harness.addToBattlefield(player1, new Forest()); // valid target so the ability is activatable
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new TurtleshellChangeling());
         harness.forceActivePlayer(player1);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player1, "Turtleshell Changeling");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }

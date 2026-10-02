@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrookclawTransmuter;
+import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,16 +17,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MysticalTeachings.class, Cancel.class, AmbushViper.class, GrizzlyBears.class})
+@CardUsed({MysticalTeachings.class, Cancel.class, CrookclawTransmuter.class, FledglingMawcor.class})
 class MysticalTeachingsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Search offers instant cards and cards with flash")
     void searchOffersInstantsAndFlashCards() {
         Card instant = new Cancel();
-        Card flashCreature = new AmbushViper();
-        Card creature = new GrizzlyBears();
-        castFromHand(List.of(instant, flashCreature, creature));
+        Card flashCreature = new CrookclawTransmuter();
+        Card creature = new FledglingMawcor();
+        castWithLibrary(List.of(instant, flashCreature, creature));
 
         GameData gd = harness.getGameData();
         harness.passBothPriorities();
@@ -44,17 +43,44 @@ class MysticalTeachingsTest extends BaseCardTest {
     @DisplayName("Choosing a matching card puts it into hand and finishes the search")
     void choosingMatchingCardPutsItIntoHand() {
         Card instant = new Cancel();
-        Card flashCreature = new AmbushViper();
-        castFromHand(List.of(instant, flashCreature));
+        Card flashCreature = new CrookclawTransmuter();
+        castWithLibrary(List.of(instant, flashCreature));
 
         GameData gd = harness.getGameData();
         harness.passBothPriorities();
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(flashCreature)));
+        harness.handleCardChosen(player1, search.params().cards().indexOf(flashCreature));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(flashCreature);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing a matching card shuffles the remaining library")
+    void choosingMatchingCardShufflesLibrary() {
+        Card instant = new Cancel();
+        Card flashCreature = new CrookclawTransmuter();
+        castWithLibrary(List.of(instant, flashCreature));
+
+        harness.passBothPriorities();
+        var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, search.params().cards().indexOf(flashCreature));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(instant);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("No matching cards end the search without a choice")
+    void noMatchingCardsDoNotPrompt() {
+        Card creature = new FledglingMawcor();
+        castWithLibrary(List.of(creature));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
     }
 
     @Test
@@ -63,8 +89,7 @@ class MysticalTeachingsTest extends BaseCardTest {
         MysticalTeachings teachings = new MysticalTeachings();
         Card instant = new Cancel();
         harness.setGraveyard(player1, List.of(teachings));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(instant);
+        harness.setLibrary(player1, List.of(instant));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -74,19 +99,14 @@ class MysticalTeachingsTest extends BaseCardTest {
         GameData gameData = harness.getGameData();
         var search = gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gameData.getPlayerExiledCards(player1.getId())).contains(teachings);
         assertThat(gameData.playerGraveyards.get(player1.getId())).doesNotContain(teachings);
     }
 
-    private void castFromHand(List<Card> library) {
-        harness.setHand(player1, List.of(new MysticalTeachings()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(library);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
+    private void castWithLibrary(List<Card> library) {
+        harness.setLibrary(player1, library);
+        harness.castFromHand(player1, new MysticalTeachings(), "{3}{U}");
     }
 }

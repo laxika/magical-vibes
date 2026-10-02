@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Deathmark.class, BorealDruid.class, KjeldoranOutrider.class, RimeboundDead.class,
-        SnowCoveredPlains.class})
+        SnowCoveredPlains.class, Forest.class})
 class DeathmarkTest extends BaseCardTest {
 
     @Test
@@ -33,6 +35,7 @@ class DeathmarkTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(druid.getId());
     }
 
@@ -47,6 +50,7 @@ class DeathmarkTest extends BaseCardTest {
         harness.castSorcery(player1, 0, druid.getId());
 
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(druid.getId());
     }
 
@@ -93,6 +97,20 @@ class DeathmarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, plains.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("green or white creature");
+    }
+
+    @Test
+    @DisplayName("Cannot target a Forest")
+    void cannotTargetForest() {
+        harness.addToBattlefield(player1, new BorealDruid());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.setHand(player1, List.of(new Deathmark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("green or white creature");
     }
@@ -145,4 +163,3 @@ class DeathmarkTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Deathmark");
     }
 }
-

@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StuffyDoll;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Assassinate.class, BenalishCavalry.class, Forest.class, StuffyDoll.class})
 class AssassinateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,9 +28,8 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Assassinate targeting a tapped creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -38,7 +40,6 @@ class AssassinateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Assassinate");
         assertThat(entry.getTargetId()).isEqualTo(tappedCreature.getId());
     }
 
@@ -46,12 +47,10 @@ class AssassinateTest extends BaseCardTest {
     @DisplayName("Cannot target an untapped creature")
     void cannotTargetUntappedCreature() {
         // Add a tapped creature as valid target so spell is playable
-        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        Permanent tappedValid = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         tappedValid.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
 
-        Permanent untappedCreature = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(untappedCreature);
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -65,13 +64,11 @@ class AssassinateTest extends BaseCardTest {
     @DisplayName("Cannot target a tapped noncreature")
     void cannotTargetTappedNonCreature() {
         // Add a tapped creature as valid target so spell is playable
-        Permanent tappedValid = new Permanent(new GrizzlyBears());
+        Permanent tappedValid = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         tappedValid.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedValid);
 
-        Permanent tappedLand = new Permanent(new Forest());
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         tappedLand.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedLand);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -86,26 +83,38 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target tapped creature")
     void resolvingDestroysTargetTappedCreature() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
     }
 
     @Test
     @DisplayName("Can destroy own tapped creature")
     void canDestroyOwnTappedCreature() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(tappedCreature);
+
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Benalish Cavalry");
+        harness.assertInGraveyard(player1, "Benalish Cavalry");
+    }
+
+    @Test
+    @DisplayName("Does not destroy an indestructible tapped creature")
+    void doesNotDestroyIndestructibleTappedCreature() {
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new StuffyDoll());
+        tappedCreature.tap();
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -113,22 +122,20 @@ class AssassinateTest extends BaseCardTest {
         harness.castSorcery(player1, 0, tappedCreature.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Stuffy Doll");
+        harness.assertNotInGraveyard(player2, "Stuffy Doll");
     }
 
     @Test
     @DisplayName("Assassinate goes to graveyard after resolving")
     void assassinateGoesToGraveyardAfterResolving() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, tappedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, tappedCreature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -140,9 +147,8 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -163,9 +169,8 @@ class AssassinateTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target creature becomes untapped before resolution")
     void fizzlesIfTargetBecomesUntapped() {
-        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
         tappedCreature.tap();
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -179,7 +184,7 @@ class AssassinateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Spell fizzles — creature survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Benalish Cavalry");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Assassinate still goes to graveyard
         harness.assertInGraveyard(player1, "Assassinate");

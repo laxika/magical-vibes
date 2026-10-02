@@ -1,91 +1,77 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.k.KitchenFinks;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.b.BallynockTrapper;
+import com.github.laxika.magicalvibes.cards.h.HearthfireHobgoblin;
+import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
+import com.github.laxika.magicalvibes.cards.s.SpiritOfTheHearth;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LightFromWithin.class, BallynockTrapper.class, HearthfireHobgoblin.class,
+        SlipperyBogle.class, SpiritOfTheHearth.class})
 class LightFromWithinTest extends BaseCardTest {
-
-    private Permanent creature(Player owner, String name) {
-        return findPermanent(owner, name);
-    }
 
     @Test
     @DisplayName("One white mana symbol grants +1/+1")
     void oneWhiteSymbol() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player1, new SavannahLions()); // {W}, 2/1
-
-        Permanent lions = creature(player1, "Savannah Lions");
-        assertThat(gqs.getEffectivePower(gd, lions)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, lions)).isEqualTo(2);
+        Permanent trapper = harness.addToBattlefieldAndReturn(player1, new BallynockTrapper()); // {3}{W}, 2/2
+        assertThat(gqs.getEffectivePower(gd, trapper)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, trapper)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Two white mana symbols grant +2/+2")
     void twoWhiteSymbols() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player1, new WhiteKnight()); // {W}{W}, 2/2
-
-        Permanent knight = creature(player1, "White Knight");
-        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SpiritOfTheHearth()); // {4}{W}{W}, 4/5
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(7);
     }
 
     @Test
     @DisplayName("Hybrid mana symbols containing white each count")
     void hybridSymbolsCount() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player1, new KitchenFinks()); // {1}{G/W}{G/W}, 3/2
-
-        Permanent finks = creature(player1, "Kitchen Finks");
-        assertThat(gqs.getEffectivePower(gd, finks)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, finks)).isEqualTo(4);
+        Permanent hobgoblin = harness.addToBattlefieldAndReturn(player1, new HearthfireHobgoblin()); // {R/W}{R/W}{R/W}, 2/2
+        assertThat(gqs.getEffectivePower(gd, hobgoblin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hobgoblin)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Creature with no white mana symbol gets no bonus")
     void noWhiteSymbol() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player1, new GrizzlyBears()); // {1}{G}, 2/2
-
-        Permanent bears = creature(player1, "Grizzly Bears");
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        Permanent bogle = harness.addToBattlefieldAndReturn(player1, new SlipperyBogle()); // {G/U}, 1/1
+        assertThat(gqs.getEffectivePower(gd, bogle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bogle)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Only affects creatures you control")
     void onlyOwnCreatures() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player2, new SavannahLions()); // opponent's {W} creature
-
-        Permanent opponentLions = creature(player2, "Savannah Lions");
-        assertThat(gqs.getEffectivePower(gd, opponentLions)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentLions)).isEqualTo(1);
+        Permanent opponentTrapper = harness.addToBattlefieldAndReturn(player2, new BallynockTrapper()); // opponent's {3}{W} creature
+        assertThat(gqs.getEffectivePower(gd, opponentTrapper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentTrapper)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Bonus is removed when Light from Within leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new LightFromWithin());
-        harness.addToBattlefield(player1, new SavannahLions());
-
-        Permanent lions = creature(player1, "Savannah Lions");
-        assertThat(gqs.getEffectivePower(gd, lions)).isEqualTo(3);
+        Permanent trapper = harness.addToBattlefieldAndReturn(player1, new BallynockTrapper());
+        assertThat(gqs.getEffectivePower(gd, trapper)).isEqualTo(3);
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Light from Within"));
 
-        assertThat(gqs.getEffectivePower(gd, lions)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, lions)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, trapper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, trapper)).isEqualTo(2);
     }
 }

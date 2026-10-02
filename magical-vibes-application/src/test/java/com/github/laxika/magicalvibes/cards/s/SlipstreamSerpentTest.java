@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,10 +19,7 @@ class SlipstreamSerpentTest extends BaseCardTest {
 
     @Test
     void isSacrificedWhenControllerControlsNoIslands() {
-        harness.setHand(player1, List.of(new SlipstreamSerpent()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -32,14 +30,49 @@ class SlipstreamSerpentTest extends BaseCardTest {
     @Test
     void survivesWhileControllerControlsAnIsland() {
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new SlipstreamSerpent()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Slipstream Serpent");
+    }
+
+    @Test
+    void isSacrificedAfterControllerLosesLastIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertInGraveyard(player1, "Slipstream Serpent");
+    }
+
+    @Test
+    void isSacrificedWhenOnlyOpponentControlsAnIsland() {
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertInGraveyard(player1, "Slipstream Serpent");
+    }
+
+    @Test
+    void faceDownIslandDoesNotSatisfyIslandCondition() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.castFromHand(player1, new SlipstreamSerpent(), "{7}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Slipstream Serpent");
+        harness.assertInGraveyard(player1, "Slipstream Serpent");
     }
 
     @Test
@@ -48,14 +81,8 @@ class SlipstreamSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = addReadySerpent();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
+        Permanent serpent = addCreatureReady(player1, new SlipstreamSerpent());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -64,15 +91,10 @@ class SlipstreamSerpentTest extends BaseCardTest {
     void cannotAttackWhenDefendingPlayerControlsNoIsland() {
         harness.addToBattlefield(player1, new Island());
 
-        Permanent serpent = addReadySerpent();
+        Permanent serpent = addCreatureReady(player1, new SlipstreamSerpent());
+        int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
-                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent))))
+        assertThatThrownBy(() -> declareAttackers(List.of(serpentIndex)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -96,12 +118,5 @@ class SlipstreamSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(serpent.isFaceDown()).isFalse();
-    }
-
-    private Permanent addReadySerpent() {
-        Permanent serpent = new Permanent(new SlipstreamSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
-        return serpent;
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -52,6 +53,11 @@ import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
@@ -65,6 +71,8 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
@@ -90,6 +98,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,6 +133,7 @@ public class CardChoiceHandlerService {
     private final MulliganService mulliganService;
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final EffectHandlerRegistry effectHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
@@ -225,6 +235,19 @@ public class CardChoiceHandlerService {
         keywords.addAll(copy.getKeywords());
         keywords.addAll(choice.keywords());
         copy.setKeywords(Set.copyOf(keywords));
+        if (choice.grantBlitz()
+                && copy.getManaCost() != null
+                && copy.getCastingOption(AlternateHandCast.class)
+                        .map(AlternateHandCast::blitz)
+                        .orElse(false) == false) {
+            copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
+            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+            copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                    new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
+            copy.addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
+                    new CastForAlternateCost(), new DrawCardEffect(1)));
+        }
         copy.freeze();
         hand.set(cardIndex, copy);
 
@@ -263,6 +286,88 @@ public class CardChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    /** Records a perpetual triggered ability on a chosen card in the controller's hand. */
+    public void handlePerpetualTriggeredAbilityCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualTriggeredAbilityCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+        Card selectedCard = hand.get(cardIndex);
+        if (!predicateEvaluationService.matchesCardPredicate(
+                selectedCard, choice.filter(), null, gameData, player.getId())) {
+            throw new IllegalStateException("That card no longer matches the choice");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.perpetualTriggeredAbilityGrants.compute(selectedCard.getId(), (ignored, existing) -> {
+            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
+            if (existing != null) {
+                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
+            }
+            updated.computeIfAbsent(choice.slot(), ignoredSlot -> new ArrayList<>())
+                    .addAll(choice.grantedEffects());
+            updated.replaceAll((slot, effects) -> List.copyOf(effects));
+            return Map.copyOf(updated);
+        });
+        gameLogService.append(gameData, GameLog.cardThen(
+                selectedCard, " perpetually gains the triggered ability."));
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** Records a perpetual triggered ability on each selected card in the controller's hand. */
+    public void handlePerpetualTriggeredAbilityCardsChosen(GameData gameData, Player player,
+                                                           List<UUID> cardIds) {
+        PendingInteraction.PerpetualTriggeredAbilityCardsChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        List<UUID> selectedIds = cardIds == null ? List.of() : cardIds;
+        if (selectedIds.size() > choice.maxCount()
+                || selectedIds.stream().distinct().count() != selectedIds.size()
+                || !choice.validCardIds().containsAll(selectedIds)) {
+            throw new IllegalStateException("Choose zero to " + choice.maxCount() + " valid cards");
+        }
+
+        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
+        List<Card> selectedCards = hand.stream()
+                .filter(card -> selectedIds.contains(card.getId()))
+                .toList();
+        if (selectedCards.size() != selectedIds.size()
+                || selectedCards.stream().anyMatch(card -> !predicateEvaluationService.matchesCardPredicate(
+                        card, choice.filter(), null, gameData, player.getId()))) {
+            throw new IllegalStateException("A chosen card no longer matches the choice");
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        for (Card selectedCard : selectedCards) {
+            gameData.perpetualTriggeredAbilityGrants.compute(selectedCard.getId(), (ignored, existing) -> {
+                Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
+                if (existing != null) {
+                    existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
+                }
+                updated.computeIfAbsent(choice.slot(), ignoredSlot -> new ArrayList<>())
+                        .addAll(choice.grantedEffects());
+                updated.replaceAll((slot, effects) -> List.copyOf(effects));
+                return Map.copyOf(updated);
+            });
+            gameLogService.append(gameData, GameLog.cardThen(
+                    selectedCard, " perpetually gains the triggered ability."));
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     /** Adds a perpetual triggered ability to a chosen card in a target player's hand. */
     public void handlePerpetualTargetCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.PerpetualTargetCardChoice choice =
@@ -288,6 +393,56 @@ public class CardChoiceHandlerService {
         hand.set(cardIndex, copy);
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** Gives the chosen hand card a persistent static effect, or resolves the decline fallback. */
+    public void handlePerpetualStaticEffectCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.PerpetualStaticEffectCardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PerpetualStaticEffectCardChoice.class);
+        if (choice == null || !player.getId().equals(choice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (cardIndex != -1 && !choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        if (hand == null || (cardIndex >= 0 && cardIndex >= hand.size())) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        if (cardIndex == -1) {
+            gameData.interaction.clearAwaitingInput();
+            resolveFallbackEffect(gameData, choice.fallbackEffect());
+        } else {
+            Card selectedCard = hand.get(cardIndex);
+            if (!predicateEvaluationService.matchesCardPredicate(
+                    selectedCard, choice.filter(), null, gameData, player.getId())) {
+                throw new IllegalStateException("That card no longer matches the choice");
+            }
+
+            gameData.interaction.clearAwaitingInput();
+            Card copy = selectedCard.createRuntimeCopy();
+            copy.addEffect(EffectSlot.STATIC, choice.staticEffect());
+            copy.freeze();
+            hand.set(cardIndex, copy);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(copy, " perpetually gains its additional enters-with-shield ability."));
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void resolveFallbackEffect(GameData gameData, CardEffect fallbackEffect) {
+        if (fallbackEffect == null || gameData.pendingEffectResolutionEntry == null) {
+            return;
+        }
+        EffectHandler handler = effectHandlerRegistry.getHandler(fallbackEffect);
+        if (handler == null) {
+            throw new IllegalStateException("No handler for fallback effect: "
+                    + fallbackEffect.getClass().getName());
+        }
+        handler.resolve(gameData, gameData.pendingEffectResolutionEntry, fallbackEffect);
     }
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */

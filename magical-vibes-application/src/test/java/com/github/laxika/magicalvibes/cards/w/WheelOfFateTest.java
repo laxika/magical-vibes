@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WheelOfFate.class, GrizzlyBears.class})
+@CardUsed({WheelOfFate.class, AshcoatBear.class})
 class WheelOfFateTest extends BaseCardTest {
 
     @Test
@@ -29,12 +30,38 @@ class WheelOfFateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Suspend can only be activated at sorcery speed")
+    void suspendRequiresSorcerySpeed() {
+        WheelOfFate card = new WheelOfFate();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Suspend counters are removed only during Wheel of Fate's owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        WheelOfFate card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
     @DisplayName("The last suspend counter offers a free cast that redraws seven cards")
     void lastCounterOffersFreeCastAndRedrawsSevenCards() {
         fillLibraries(10);
         WheelOfFate card = suspendCard();
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AshcoatBear(), new AshcoatBear()));
+        harness.setHand(player2, List.of(new AshcoatBear()));
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
@@ -52,9 +79,28 @@ class WheelOfFateTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears")).hasSize(2);
+                .filteredOn(c -> c.getName().equals("Ashcoat Bear")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Wheel of Fate");
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Wheel of Fate in exile")
+    void decliningSuspendCastLeavesCardInExile() {
+        WheelOfFate card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotInGraveyard(player1, "Wheel of Fate");
     }
 
     private WheelOfFate suspendCard() {
@@ -70,7 +116,7 @@ class WheelOfFateTest extends BaseCardTest {
         List.of(player1, player2).forEach(player -> {
             List<com.github.laxika.magicalvibes.model.Card> deck = new ArrayList<>();
             for (int i = 0; i < cardsEach; i++) {
-                deck.add(new GrizzlyBears());
+                deck.add(new AshcoatBear());
             }
             harness.setLibrary(player, deck);
         });

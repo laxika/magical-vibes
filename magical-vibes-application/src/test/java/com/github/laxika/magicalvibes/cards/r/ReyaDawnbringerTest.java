@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReyaDawnbringer.class, RagingKavu.class, AngelOfMercy.class, HolyDay.class})
+@CardUsed({ReyaDawnbringer.class, GiantSpider.class, AngelOfMercy.class, HolyDay.class})
 class ReyaDawnbringerTest extends BaseCardTest {
 
     @Test
@@ -60,7 +61,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger chooses a target before going on the stack")
     void upkeepTriggerPutsAbilityOnStack() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
@@ -85,7 +86,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger asks for a target even with summoning sickness")
     void triggerFiresWithSummoningSickness() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         Permanent reya = new Permanent(new ReyaDawnbringer());
         gd.playerBattlefields.get(player1.getId()).add(reya);
         harness.setGraveyard(player1, List.of(target));
@@ -102,7 +103,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @DisplayName("No trigger during opponent's upkeep")
     void noTriggerDuringOpponentsUpkeep() {
         addCreatureReady(player1, new ReyaDawnbringer());
-        harness.setGraveyard(player1, List.of(new RagingKavu()));
+        harness.setGraveyard(player1, List.of(new GiantSpider()));
 
         advanceToUpkeep(player2);
 
@@ -115,7 +116,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @Test
     @DisplayName("Returns the chosen creature from the graveyard to the battlefield")
     void returnsCreatureFromGraveyardToBattlefield() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
@@ -127,14 +128,14 @@ class ReyaDawnbringerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertOnBattlefield(player1, "Raging Kavu");
-        harness.assertNotInGraveyard(player1, "Raging Kavu");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertNotInGraveyard(player1, "Giant Spider");
     }
 
     @Test
     @DisplayName("Player may decline after choosing a graveyard target")
     void playerCanDeclineGraveyardChoice() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
@@ -145,29 +146,29 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertInGraveyard(player1, "Raging Kavu");
-        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
     }
 
     @Test
     @DisplayName("Choosing a specific creature when multiple are in the graveyard")
     void choosesSpecificCreatureFromGraveyard() {
-        RagingKavu ragingKavu = new RagingKavu();
+        GiantSpider giantSpider = new GiantSpider();
         AngelOfMercy angel = new AngelOfMercy();
         addCreatureReady(player1, new ReyaDawnbringer());
-        harness.setGraveyard(player1, List.of(ragingKavu, angel));
+        harness.setGraveyard(player1, List.of(giantSpider, angel));
 
         advanceToUpkeep(player1);
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(ragingKavu.getId(), angel.getId());
+        assertThat(choice.validCardIds()).containsExactly(giantSpider.getId(), angel.getId());
         harness.handleMultipleCardsChosen(player1, List.of(angel.getId()));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Angel of Mercy");
-        harness.assertInGraveyard(player1, "Raging Kavu");
+        harness.assertInGraveyard(player1, "Giant Spider");
         harness.assertNotInGraveyard(player1, "Angel of Mercy");
     }
 
@@ -196,6 +197,29 @@ class ReyaDawnbringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only offers creature cards in the controller's graveyard")
+    void onlyTargetsControllerGraveyard() {
+        GiantSpider ownCreature = new GiantSpider();
+        GiantSpider opponentCreature = new GiantSpider();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCreature.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
     @DisplayName("Returned creature's ETB ability triggers")
     void returnedCreatureTriggersETB() {
         AngelOfMercy angel = new AngelOfMercy();
@@ -221,7 +245,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @DisplayName("Cannot choose a non-creature card as the graveyard target")
     void cannotChooseInvalidIndex() {
         HolyDay holyDay = new HolyDay();
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(holyDay, target));
 
@@ -238,7 +262,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent cannot choose a graveyard target for the controller")
     void opponentCannotChoose() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
@@ -252,7 +276,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen target fizzles if it leaves the graveyard before resolution")
     void targetFizzlingWhenItLeavesGraveyard() {
-        RagingKavu target = new RagingKavu();
+        GiantSpider target = new GiantSpider();
         addCreatureReady(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
@@ -265,6 +289,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(text -> text.contains("Reya Dawnbringer") && text.contains("fizzles"));
-        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
     }
 }

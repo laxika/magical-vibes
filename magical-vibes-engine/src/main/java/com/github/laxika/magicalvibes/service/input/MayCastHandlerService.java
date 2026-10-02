@@ -852,7 +852,8 @@ public class MayCastHandlerService {
                             cardToCast, player.getId(), spellEffects, spellType,
                             exileInsteadOfGraveyard, castEffect.withoutPayingManaCost(), graveyardOwnerId,
                             false, false, 0,
-                            castAsAdventure));
+                            castAsAdventure, castEffect.afterSuccessfulCastEffect(),
+                            ability.sourcePermanentId()));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -886,6 +887,8 @@ public class MayCastHandlerService {
         stackEntry.setOwnerIdOverride(graveyardOwnerId);
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(stackEntry);
+        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
+                ability.sourcePermanentId(), castEffect.afterSuccessfulCastEffect());
         Card castCharacteristics = castAsAdventure
                 ? cardToCast.createRuntimeCopyWithFace(spellCard)
                 : cardToCast;

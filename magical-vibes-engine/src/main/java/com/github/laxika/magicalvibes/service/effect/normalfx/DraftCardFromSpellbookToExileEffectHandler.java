@@ -33,10 +33,6 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetId() != null) {
-            return;
-        }
-
         DraftCardFromSpellbookToExileEffect draft = (DraftCardFromSpellbookToExileEffect) effect;
         List<Card> spellbook = draft.cardNames().stream()
                 .map(this::findCard)
@@ -50,7 +46,7 @@ public class DraftCardFromSpellbookToExileEffectHandler implements NormalEffectH
         List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftToExileChoice(
                 entry.getControllerId(), entry.getSourcePermanentId(), offeredCards,
-                entry.getCard().getName()));
+                entry.getCard().getName(), draft.faceDown()));
     }
 
     private Card findCard(String cardName) {

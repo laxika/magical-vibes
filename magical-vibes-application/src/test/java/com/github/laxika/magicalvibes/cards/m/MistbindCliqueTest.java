@@ -1,28 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowHarrier;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MistbindClique.class, AvianChangeling.class, Island.class, GoldmeadowHarrier.class})
 class MistbindCliqueTest extends BaseCardTest {
 
     /** Casts Mistbind Clique, resolves its champion ETB, and champions the given Faerie —
      *  stopping once the "championed" trigger is awaiting a target player. */
     private void championFaerie(UUID faerieId) {
-        harness.setHand(player1, List.of(new MistbindClique()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistbindClique(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell -> champion ETB on stack
         harness.passBothPriorities(); // resolve champion ETB -> champion permanent choice
         harness.handlePermanentChosen(player1, faerieId); // champion the Faerie -> championed trigger
@@ -76,17 +74,51 @@ class MistbindCliqueTest extends BaseCardTest {
     @DisplayName("Only lands are tapped, not other permanents")
     void tapsOnlyLands() {
         harness.addToBattlefield(player2, new Island());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent harrier = harness.addToBattlefieldAndReturn(player2, new GoldmeadowHarrier());
         UUID faerieId = harness.addToBattlefieldAndReturn(player1, new AvianChangeling()).getId();
 
         championFaerie(faerieId);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(harrier.isTapped()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Island"))
                 .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Returns the championed Faerie when Mistbind Clique leaves")
+    void returnsChampionWhenCliqueLeaves() {
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
+
+        championFaerie(faerie.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        Permanent clique = findPermanent(player1, "Mistbind Clique");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, clique));
+
+        harness.assertNotOnBattlefield(player1, "Mistbind Clique");
+        harness.assertOnBattlefield(player1, "Avian Changeling");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Avian Changeling"));
+    }
+
+    @Test
+    @DisplayName("Does not champion a non-Faerie creature")
+    void doesNotChampionNonFaerieCreature() {
+        harness.addToBattlefield(player1, new GoldmeadowHarrier());
+
+        harness.castFromHand(player1, new MistbindClique(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Mistbind Clique");
+        harness.assertInGraveyard(player1, "Mistbind Clique");
+        harness.assertOnBattlefield(player1, "Goldmeadow Harrier");
     }
 
     @Test
@@ -94,9 +126,7 @@ class MistbindCliqueTest extends BaseCardTest {
     void noTriggerWhenNoFaerie() {
         harness.addToBattlefield(player2, new Island());
 
-        harness.setHand(player1, List.of(new MistbindClique()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MistbindClique(), "{3}{U}");
         harness.passBothPriorities(); // resolve creature spell -> champion ETB on stack
         harness.passBothPriorities(); // resolve champion ETB -> no Faerie -> sacrifice, no trigger
 

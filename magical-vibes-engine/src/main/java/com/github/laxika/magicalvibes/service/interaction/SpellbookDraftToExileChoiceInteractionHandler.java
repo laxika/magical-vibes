@@ -55,7 +55,7 @@ public class SpellbookDraftToExileChoiceInteractionHandler
             throw new IllegalStateException("No pending spellbook effect");
         }
 
-        gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId(), true);
+        gameData.addToExile(player.getId(), chosen, interaction.sourcePermanentId(), interaction.faceDown());
         gameData.interaction.clearAwaitingInput();
         pendingEntry.setTargetId(chosenId);
         gameData.rerunCurrentEffectAfterInteraction = false;

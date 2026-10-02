@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.p.Purelace;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Abomination.class, BogWraith.class, Deathlace.class, GiantSpider.class, Purelace.class,
-        SavannahLions.class, ScatheZombies.class})
+        SavannahLions.class, ScatheZombies.class, Unsummon.class})
 class AbominationTest extends BaseCardTest {
 
     @Test
@@ -94,8 +96,8 @@ class AbominationTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        resolveCombat();
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -191,5 +193,49 @@ class AbominationTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Bog Wraith");
         harness.assertNotInGraveyard(player2, "Bog Wraith");
+    }
+
+    @Test
+    @DisplayName("End-of-combat destruction uses the stack and allows the creature to be saved in response")
+    void canRespondToEndOfCombatDestruction() {
+        Permanent abomination = addCreatureReady(player1, new Abomination());
+        abomination.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        harness.setHand(player2, List.of(new Unsummon()));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, spider.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Removing Abomination before its block trigger resolves does not prevent delayed destruction")
+    void removingSourceDoesNotPreventDestruction() {
+        Permanent abomination = addCreatureReady(player1, new Abomination());
+        abomination.setAttacking(true);
+        addCreatureReady(player2, new GiantSpider());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, abomination.getId());
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInHand(player1, "Abomination");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 }

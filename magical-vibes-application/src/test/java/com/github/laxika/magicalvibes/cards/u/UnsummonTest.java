@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Confiscate.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, Unsummon.class})
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, Persuasion.class, Unsummon.class})
 class UnsummonTest extends BaseCardTest {
 
     @Test
@@ -57,11 +57,11 @@ class UnsummonTest extends BaseCardTest {
     @DisplayName("Cannot target an Aura")
     void cannotTargetAura() {
         harness.addToBattlefield(player1, new GrizzlyBears()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new Confiscate());
+        harness.addToBattlefield(player2, new Persuasion());
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Confiscate");
+        UUID targetId = harness.getPermanentId(player2, "Persuasion");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
@@ -131,8 +131,9 @@ class UnsummonTest extends BaseCardTest {
     @DisplayName("Returns a stolen creature to its owner's hand")
     void returnsStolenCreatureToOwnersHand() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new Confiscate()));
-        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
@@ -146,7 +147,7 @@ class UnsummonTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Confiscate");
+        harness.assertInGraveyard(player1, "Persuasion");
     }
 
     @Test

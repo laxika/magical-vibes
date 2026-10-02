@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicAwakening.class, Forest.class, GrizzlyBears.class})
+@CardUsed({VolcanicAwakening.class, Forest.class, BenalishCavalry.class})
 class VolcanicAwakeningTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class VolcanicAwakeningTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         castVolcanicAwakening(forest.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
@@ -34,7 +33,7 @@ class VolcanicAwakeningTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
         harness.setHand(player1, List.of(new VolcanicAwakening()));
         addManaForVolcanicAwakening();
@@ -48,13 +47,31 @@ class VolcanicAwakeningTest extends BaseCardTest {
     @DisplayName("Storm creates one copy for each spell cast before Volcanic Awakening")
     void stormCreatesCopiesForEachPriorSpell() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new BenalishCavalry());
+        gd.recordSpellCast(player2.getId(), new BenalishCavalry());
 
         castVolcanicAwakening(forest.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Storm copy may be retargeted to destroy another land")
+    void stormCopyMayBeRetargetedToAnotherLand() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent newTarget = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.recordSpellCast(player1.getId(), new BenalishCavalry());
+
+        castVolcanicAwakening(originalTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void castVolcanicAwakening(UUID targetId) {

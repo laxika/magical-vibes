@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SupremeExemplar.class, FlamekinBladewhirl.class, GrizzlyBears.class, Unsummon.class})
 class SupremeExemplarTest extends BaseCardTest {
 
     private void castSupremeExemplar() {
-        harness.setHand(player1, List.of(new SupremeExemplar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SupremeExemplar(), "{6}{U}");
         harness.passBothPriorities(); // resolve creature spell -> ETB on stack
     }
 
@@ -34,6 +33,18 @@ class SupremeExemplarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Supreme Exemplar");
         harness.assertInGraveyard(player1, "Supreme Exemplar");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An Elemental controlled by an opponent does not satisfy the champion cost")
+    void opponentElementalDoesNotSatisfyChampion() {
+        harness.addToBattlefield(player2, new FlamekinBladewhirl());
+        castSupremeExemplar();
+        harness.passBothPriorities(); // resolve champion ETB -> auto-sacrifice
+
+        harness.assertNotOnBattlefield(player1, "Supreme Exemplar");
+        harness.assertOnBattlefield(player2, "Flamekin Bladewhirl");
+        harness.assertInGraveyard(player1, "Supreme Exemplar");
     }
 
     @Test

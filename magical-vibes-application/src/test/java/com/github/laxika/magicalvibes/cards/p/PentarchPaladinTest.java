@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BrineElemental;
+import com.github.laxika.magicalvibes.cards.o.OpalGuardian;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PentarchPaladin.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({PentarchPaladin.class, AshcoatBear.class, BrineElemental.class, OpalGuardian.class})
 class PentarchPaladinTest extends BaseCardTest {
 
     @Test
@@ -35,17 +37,46 @@ class PentarchPaladinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flanking weakens a blocker without flanking")
+    void flankingWeakensNonFlankingBlocker() {
+        addCreatureReady(player1, new PentarchPaladin());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Pentarch Paladin destroys a permanent of the chosen color")
     void destroysPermanentOfChosenColor() {
         Permanent paladin = addReadyPaladin(CardColor.GREEN);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+        assertThat(paladin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Pentarch Paladin can destroy a noncreature permanent of the chosen color")
+    void destroysNoncreaturePermanentOfChosenColor() {
+        Permanent paladin = addReadyPaladin(CardColor.WHITE);
+        Permanent guardian = harness.addToBattlefieldAndReturn(player2, new OpalGuardian());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, guardian.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Opal Guardian");
+        harness.assertInGraveyard(player2, "Opal Guardian");
         assertThat(paladin.isTapped()).isTrue();
     }
 
@@ -53,7 +84,7 @@ class PentarchPaladinTest extends BaseCardTest {
     @DisplayName("Pentarch Paladin cannot target a permanent of another color")
     void rejectsPermanentOfAnotherColor() {
         Permanent paladin = addReadyPaladin(CardColor.GREEN);
-        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new BrineElemental());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, elemental.getId()))
@@ -62,9 +93,8 @@ class PentarchPaladinTest extends BaseCardTest {
     }
 
     private Permanent addReadyPaladin(CardColor chosenColor) {
-        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new PentarchPaladin());
+        Permanent paladin = addCreatureReady(player1, new PentarchPaladin());
         paladin.setChosenColor(chosenColor);
-        paladin.setSummoningSick(false);
         return paladin;
     }
 }

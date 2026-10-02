@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RageForger.class, ElvishWarrior.class})
 class RageForgerTest extends BaseCardTest {
 
     // "When this creature enters, put a +1/+1 counter on each other Shaman creature you control.
@@ -22,7 +25,8 @@ class RageForgerTest extends BaseCardTest {
     @DisplayName("ETB puts a +1/+1 counter on each other Shaman, not on itself or non-Shamans")
     void etbCountersOtherShamans() {
         Permanent otherShaman = addCreatureReady(player1, new RageForger()); // Elemental Shaman
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());       // Bear, not a Shaman
+        Permanent nonShaman = addCreatureReady(player1, new ElvishWarrior());  // Elf Warrior, not a Shaman
+        Permanent opponentShaman = addCreatureReady(player2, new RageForger());
 
         harness.setHand(player1, List.of(new RageForger()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -31,10 +35,11 @@ class RageForgerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ETB trigger
 
         assertThat(otherShaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(nonShaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentShaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p != otherShaman && p.getCard().getName().equals("Rage Forger"))
+        Permanent entered = findPermanents(player1, "Rage Forger").stream()
+                .filter(p -> p != otherShaman)
                 .findFirst().orElseThrow();
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -48,10 +53,10 @@ class RageForgerTest extends BaseCardTest {
     void attackingWithCounterMayPingPlayer() {
         harness.setLife(player1, 20);
         addCreatureReady(player1, new RageForger());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        declareAttackers(player1, List.of(1)); // attack with the counter-bearing bear
+        declareAttackers(player1, List.of(1)); // attack with the counter-bearing Elf Warrior
 
         harness.passBothPriorities(); // resolve the attack trigger — presents the may choice
         harness.handleMayAbilityChosen(player1, true);
@@ -65,8 +70,8 @@ class RageForgerTest extends BaseCardTest {
     void decliningDealsNoDamage() {
         harness.setLife(player1, 20);
         addCreatureReady(player1, new RageForger());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         declareAttackers(player1, List.of(1));
 
@@ -81,11 +86,30 @@ class RageForgerTest extends BaseCardTest {
     void attackingWithoutCounterDoesNotTrigger() {
         harness.setLife(player1, 20);
         addCreatureReady(player1, new RageForger());
-        addCreatureReady(player1, new GrizzlyBears()); // no counter
+        addCreatureReady(player1, new ElvishWarrior()); // no counter
 
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Attacking creature with a +1/+1 counter may ping a planeswalker")
+    void attackingWithCounterMayPingPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        addCreatureReady(player1, new RageForger());
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(player1, List.of(1));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShimmeringWings.class, GalinasKnight.class, Mountain.class})
+@CardUsed({ShimmeringWings.class, GrizzlyBears.class, Mountain.class})
 class ShimmeringWingsTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -26,7 +26,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Shimmering Wings puts it on the stack as enchantment spell")
     void castingPutsOnStack() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -40,7 +40,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Shimmering Wings attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -58,7 +58,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings can enchant a creature an opponent controls")
     void canEnchantOpponentCreature() {
-        Permanent knightPerm = addCreatureReady(player2, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -78,7 +78,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature has flying")
     void enchantedCreatureHasFlying() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
@@ -89,9 +89,9 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent otherKnight = addCreatureReady(player1, new GalinasKnight());
+        Permanent otherKnight = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
@@ -104,7 +104,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Activating {U} ability returns Shimmering Wings to owner's hand")
     void activateAbilityReturnsToHand() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
@@ -126,7 +126,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses flying after Shimmering Wings returns to hand")
     void creatureLosesFlyingAfterBounce() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
@@ -147,7 +147,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Returning a controlled Shimmering Wings puts it into its owner's hand")
     void returnsToOwnersHandWhenControlledByOpponent() {
-        Permanent knight = addCreatureReady(player2, new GalinasKnight());
+        Permanent knight = addCreatureReady(player2, new GrizzlyBears());
 
         ShimmeringWings card = new ShimmeringWings();
         card.setOwnerId(player1.getId());
@@ -163,12 +163,30 @@ class ShimmeringWingsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Shimmering Wings");
     }
 
+    @Test
+    @DisplayName("Aura controller can return Shimmering Wings while it enchants an opponent's creature")
+    void auraControllerCanActivateWhenEnchantedCreatureIsOpponent() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        ShimmeringWings card = new ShimmeringWings();
+        card.setOwnerId(player1.getId());
+        Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, card);
+        wingsPerm.setAttachedTo(opponentCreature.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shimmering Wings");
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
+    }
+
     // ===== Re-cast after bounce =====
 
     @Test
     @DisplayName("Shimmering Wings can be re-cast after returning to hand")
     void canRecastAfterBounce() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
@@ -206,7 +224,7 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent knightPerm = addCreatureReady(player1, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -227,12 +245,12 @@ class ShimmeringWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Shimmering Wings goes to graveyard when enchanted creature dies")
     void goesToGraveyardWhenCreatureDies() {
-        Permanent knightPerm = addCreatureReady(player2, new GalinasKnight());
+        Permanent knightPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent wingsPerm = harness.addToBattlefieldAndReturn(player2, new ShimmeringWings());
         wingsPerm.setAttachedTo(knightPerm.getId());
 
-        addCreatureReady(player1, new GalinasKnight());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
 
@@ -250,15 +268,12 @@ class ShimmeringWingsTest extends BaseCardTest {
     @DisplayName("Cannot enchant a land")
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
-        harness.addToBattlefield(player2, new GalinasKnight());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new Mountain());
         harness.setHand(player1, List.of(new ShimmeringWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof Mountain)
-                .findFirst()
-                .orElseThrow();
+        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)

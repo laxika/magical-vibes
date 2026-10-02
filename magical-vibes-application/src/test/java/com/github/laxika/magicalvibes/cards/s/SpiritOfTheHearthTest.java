@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
-import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,26 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Tag("scryfall")
-class SpiritOfTheHearthTest {
-
-    protected GameTestHarness harness;
-    protected Player player1;
-    protected Player player2;
-    protected GameService gs;
-    protected GameQueryService gqs;
-    protected GameData gd;
-
-    @BeforeEach
-    void setUp() {
-        harness = new GameTestHarness();
-        player1 = harness.getPlayer1();
-        player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
-        gd = harness.getGameData();
-        harness.skipMulligan();
-    }
+@CardUsed({SpiritOfTheHearth.class, BeaconOfImmortality.class, Shock.class})
+class SpiritOfTheHearthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Controller has hexproof while Spirit of the Hearth is on the battlefield")
@@ -79,14 +57,29 @@ class SpiritOfTheHearthTest {
     }
 
     @Test
+    @DisplayName("Opponent can still target Spirit of the Hearth itself")
+    void permanentItselfCanBeTargeted() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new SpiritOfTheHearth());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Controller loses hexproof once Spirit of the Hearth leaves the battlefield")
     void hexproofGoneAfterSpiritLeaves() {
         SpiritOfTheHearth spirit = new SpiritOfTheHearth();
         harness.addToBattlefield(player1, spirit);
 
-        Permanent perm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spirit of the Hearth"))
-                .findFirst().orElseThrow();
+        Permanent perm = findPermanent(player1, "Spirit of the Hearth");
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(spirit);
 

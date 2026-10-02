@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CloakAndDagger;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,25 +15,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Meadowboon.class, IndomitableAncients.class, CloakAndDagger.class})
 class MeadowboonTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Hardcast: Meadowboon enters normally and stays on the battlefield")
+    void hardcastStaysOnBattlefield() {
+        harness.setHand(player1, List.of(new Meadowboon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Meadowboon");
+        harness.assertNotInGraveyard(player1, "Meadowboon");
+    }
 
     // ===== Evoke =====
 
     @Test
     @DisplayName("Evoke: sacrificed on entry, LTB puts +1/+1 on each creature the targeted controller controls")
     void evokeBuffsOwnCreatures() {
-        Permanent ally1 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent ally2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ally1 = addCreatureReady(player1, new IndomitableAncients());
+        Permanent ally2 = addCreatureReady(player1, new IndomitableAncients());
         harness.setHand(player1, List.of(new Meadowboon()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithEvoke(player1, 0, null);
-        harness.passBothPriorities(); // resolve creature -> ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB (evoke sacrifice) -> LTB trigger -> target prompt
+        resolveAllTriggers();
 
         harness.handlePermanentChosen(player1, player1.getId()); // target self
-        harness.passBothPriorities(); // resolve LTB trigger
+        resolveAllTriggers();
 
         assertThat(ally1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ally2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -45,8 +61,9 @@ class MeadowboonTest extends BaseCardTest {
     @Test
     @DisplayName("LTB fires on any leave and can target an opponent: only that player's creatures get counters")
     void destroyedBuffsTargetedOpponentCreaturesOnly() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent oppCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new IndomitableAncients());
+        Permanent oppCreature = addCreatureReady(player2, new IndomitableAncients());
+        Permanent oppNonCreature = harness.addToBattlefieldAndReturn(player2, new CloakAndDagger());
         Permanent meadowboon = harness.addToBattlefieldAndReturn(player1, new Meadowboon());
 
         harness.inMutationScope(
@@ -61,6 +78,7 @@ class MeadowboonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve LTB trigger
 
         assertThat(oppCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(oppNonCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 }

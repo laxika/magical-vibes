@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.w.WildGooseChase;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -39,16 +40,16 @@ class AlbiorixGooseTyrantTest extends BaseCardTest {
     @Test
     void sacrificingATokenBoostsAlbiorixOnTheBattlefield() {
         AlbiorixGooseTyrant card = castAdventureAndCreatureFace();
-        int albiorixIndex = battlefieldIndex(player1, "Albiorix, Goose Tyrant");
-        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player1.getId()).get(albiorixIndex))).isEqualTo(3);
+        Permanent albiorix = findPermanent(player1, "Albiorix, Goose Tyrant");
+        assertThat(gqs.getEffectivePower(gd, albiorix)).isEqualTo(3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, gd.playerBattlefields.get(player1.getId()).get(albiorixIndex))).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, gd.playerBattlefields.get(player1.getId()).get(albiorixIndex))).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, albiorix)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, albiorix)).isEqualTo(4);
         assertThat(gd.findExiledCard(card.getId())).isNull();
     }
 
@@ -59,7 +60,7 @@ class AlbiorixGooseTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAdventure(player1, 0, List.of());
-        harness.passBothPriorities();
+        resolveAdventureDiscard();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
@@ -87,7 +88,7 @@ class AlbiorixGooseTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAdventure(player1, 0, List.of());
-        harness.passBothPriorities();
+        resolveAdventureDiscard();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -98,12 +99,11 @@ class AlbiorixGooseTyrantTest extends BaseCardTest {
         return card;
     }
 
-    private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, String name) {
-        for (int i = 0; i < gd.playerBattlefields.get(player.getId()).size(); i++) {
-            if (gd.playerBattlefields.get(player.getId()).get(i).getCard().getName().equals(name)) {
-                return i;
-            }
+    private void resolveAdventureDiscard() {
+        resolveAllTriggers();
+        while (gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null) {
+            harness.handleCardChosen(player1, 0);
         }
-        throw new AssertionError("Permanent not found: " + name);
+        resolveAllTriggers();
     }
 }

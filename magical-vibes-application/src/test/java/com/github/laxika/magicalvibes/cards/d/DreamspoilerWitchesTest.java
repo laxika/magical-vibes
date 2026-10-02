@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DreamspoilerWitches.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class DreamspoilerWitchesTest extends BaseCardTest {
 
     /** Puts player1 on defense during player2's turn so player1 may cast an instant. */
@@ -84,6 +86,35 @@ class DreamspoilerWitchesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The may ability can target any creature, but affects only the chosen one")
+    void targetsAnyCreatureAndOnlyDebuffsChosenCreature() {
+        harness.addToBattlefield(player1, new DreamspoilerWitches());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opponentBearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validPermanentIds()).contains(ownBearsId, opponentBearsId);
+
+        harness.handlePermanentChosen(player1, ownBearsId);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Grizzly Bears"))).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Grizzly Bears"))).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Declining leaves the target unchanged")
     void declineLeavesTarget() {
         harness.addToBattlefield(player1, new DreamspoilerWitches());
@@ -102,6 +133,34 @@ class DreamspoilerWitchesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -1/-1 lasts only until end of turn")
+    void debuffExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new DreamspoilerWitches());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Casting on your own turn does not trigger")
     void doesNotTriggerOnOwnTurn() {
         harness.addToBattlefield(player1, new DreamspoilerWitches());
@@ -112,6 +171,19 @@ class DreamspoilerWitchesTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent casting a spell does not trigger it")
+    void doesNotTriggerForOpponentsSpell() {
+        harness.addToBattlefield(player1, new DreamspoilerWitches());
+        enterOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }

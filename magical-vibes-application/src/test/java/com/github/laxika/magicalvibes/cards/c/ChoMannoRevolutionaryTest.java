@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.l.Lunge;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -24,7 +23,6 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
     void castingPutsOnStack() {
         harness.castFromHand(player1, new ChoMannoRevolutionary(), "{2}{W}{W}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -37,7 +35,6 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
         harness.castFromHand(player1, new ChoMannoRevolutionary(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
     }
@@ -104,7 +101,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
 
         resolveCombat(player1);
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -120,7 +117,7 @@ class ChoMannoRevolutionaryTest extends BaseCardTest {
 
         assertThat(choManno.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Cho-Manno, Revolutionary");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test

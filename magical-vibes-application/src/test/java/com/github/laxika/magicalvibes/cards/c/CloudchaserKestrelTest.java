@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.g.GriffinGuide;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,43 +16,68 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CloudchaserKestrel.class, AngelicChorus.class, GrizzlyBears.class})
+@CardUsed({CloudchaserKestrel.class, GriffinGuide.class, AshcoatBear.class, CandlesOfLeng.class})
 class CloudchaserKestrelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters and destroys target enchantment")
     void entersAndDestroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new AngelicChorus());
+        Permanent target = addAttachedGriffinGuide();
         harness.setHand(player1, List.of(new CloudchaserKestrel()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castCreature(player1, 0, 0, harness.getPermanentId(player2, "Angelic Chorus"));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, 0, target.getId());
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Cloudchaser Kestrel");
-        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        harness.assertInGraveyard(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Griffin Guide");
+        harness.assertInGraveyard(player2, "Griffin Guide");
     }
 
     @Test
     @DisplayName("Cannot target a creature with the enter-the-battlefield ability")
     void cannotTargetCreatureWithEnterTheBattlefieldAbility() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new CloudchaserKestrel()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         assertThatThrownBy(() -> harness.castCreature(
-                player1, 0, 0, harness.getPermanentId(player2, "Grizzly Bears")))
+                player1, 0, 0, harness.getPermanentId(player2, "Ashcoat Bear")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an enchantment");
+    }
+
+    @Test
+    @DisplayName("Can cast without an enchantment target when none is available")
+    void canCastWithoutEnchantmentTargetWhenNoneIsAvailable() {
+        harness.castFromHand(player1, new CloudchaserKestrel(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cloudchaser Kestrel");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chooses an enchantment when the enter-the-battlefield trigger is put on the stack")
+    void choosesEnchantmentWhenEnterTheBattlefieldTriggerIsPutOnStack() {
+        harness.castFromHand(player1, new CloudchaserKestrel(), "{1}{W}{W}");
+        Permanent target = addAttachedGriffinGuide();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Griffin Guide");
+        harness.assertInGraveyard(player2, "Griffin Guide");
     }
 
     @Test
     @DisplayName("Target permanent becomes white until end of turn")
     void targetPermanentBecomesWhiteUntilEndOfTurn() {
         harness.addToBattlefield(player1, new CloudchaserKestrel());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -65,5 +90,27 @@ class CloudchaserKestrelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Can target a noncreature permanent with the color ability")
+    void canTargetNoncreaturePermanentWithColorAbility() {
+        harness.addToBattlefield(player1, new CloudchaserKestrel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThat(gqs.getEffectiveColors(gd, target)).isEmpty();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+    }
+
+    private Permanent addAttachedGriffinGuide() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new GriffinGuide());
+        aura.setAttachedTo(creature.getId());
+        return aura;
     }
 }

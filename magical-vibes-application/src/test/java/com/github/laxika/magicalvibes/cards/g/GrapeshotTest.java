@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Grapeshot.class, GrizzlyBears.class})
+@CardUsed({Grapeshot.class, AshcoatBear.class})
 class GrapeshotTest extends BaseCardTest {
 
     @Test
@@ -23,7 +22,7 @@ class GrapeshotTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castGrapeshot(player2.getId());
 
-        resolveSpellAndStorm();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -31,11 +30,11 @@ class GrapeshotTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature")
     void dealsDamageToCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new AshcoatBear());
+        UUID targetId = harness.getPermanentId(player2, "Ashcoat Bear");
         castGrapeshot(targetId);
 
-        resolveSpellAndStorm();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getMarkedDamage()).isEqualTo(1);
     }
@@ -43,13 +42,50 @@ class GrapeshotTest extends BaseCardTest {
     @Test
     @DisplayName("Storm creates one copy for each spell cast before Grapeshot")
     void stormCreatesCopiesForEachPriorSpell() {
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new AshcoatBear());
+        gd.recordSpellCast(player2.getId(), new AshcoatBear());
         castGrapeshot(player2.getId());
 
         harness.passBothPriorities();
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Storm copies deal damage when their targets are unchanged")
+    void stormCopiesDealDamageToOriginalTarget() {
+        harness.setLife(player2, 20);
+        gd.recordSpellCast(player1.getId(), new AshcoatBear());
+        gd.recordSpellCast(player2.getId(), new AshcoatBear());
+        castGrapeshot(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("A Storm copy may be retargeted to another player")
+    void stormCopyMayChooseNewTargetPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        gd.recordSpellCast(player1.getId(), new AshcoatBear());
+        castGrapeshot(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     private void castGrapeshot(UUID targetId) {
@@ -59,8 +95,4 @@ class GrapeshotTest extends BaseCardTest {
         harness.castSorcery(player1, 0, targetId);
     }
 
-    private void resolveSpellAndStorm() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.amount.SuspendedCards;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
+import com.github.laxika.magicalvibes.model.amount.CardsLookedAtWhileScrying;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsPutIntoGraveyardFromHandOrLibraryThisTurn;
@@ -373,6 +374,8 @@ public class AmountEvaluationService {
                     ctx.sourceCard() == null ? 0 : gameData.getSpellCastDesertManaSpent(ctx.sourceCard().getId());
             case EventValue ignored ->
                     ctx.eventValue();
+            case CardsLookedAtWhileScrying ignored ->
+                    ctx.stackEntry() == null ? 0 : ctx.stackEntry().getCardsLookedAtWhileScrying();
             case TotalManaValueOfDestroyedPermanents ignored ->
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventManaValues().stream()
                             .mapToInt(Integer::intValue).sum();

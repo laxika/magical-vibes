@@ -1,20 +1,43 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BogardanHellkite.class, BenalishCavalry.class})
 class BogardanHellkiteTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Bogardan Hellkite has flying")
+    void hasFlying() {
+        Permanent hellkite = addCreatureReady(player1, new BogardanHellkite());
+
+        assertThat(gqs.hasKeyword(gd, hellkite, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bogardan Hellkite can be cast during an opponent's turn because it has flash")
+    void canCastDuringOpponentsTurnWithFlash() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+
+        castBogardanHellkite();
+
+        assertThat(gd.stack).hasSize(1);
+    }
 
     // ===== ETB trigger: deal 5 divided damage =====
 
@@ -39,33 +62,31 @@ class BogardanHellkiteTest extends BaseCardTest {
         @Test
         @DisplayName("ETB deals all 5 damage to a single creature, killing it")
         void etbDeals5DamageToSingleCreature() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
-            gd.pendingETBDamageAssignments = Map.of(bearsId, 5);
+            gd.pendingETBDamageAssignments = Map.of(cavalry.getId(), 5);
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Benalish Cavalry");
         }
 
         @Test
         @DisplayName("ETB divides damage among a creature and a player")
         void etbDividesDamageAmongCreatureAndPlayer() {
             harness.setLife(player2, 20);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
-            gd.pendingETBDamageAssignments = Map.of(bearsId, 2, player2.getId(), 3);
+            gd.pendingETBDamageAssignments = Map.of(cavalry.getId(), 2, player2.getId(), 3);
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            // Bears took 2 damage — lethal for 2/2
-            harness.assertInGraveyard(player2, "Grizzly Bears");
+            // Cavalry took 2 damage, which is lethal for a 2/2.
+            harness.assertInGraveyard(player2, "Benalish Cavalry");
 
             // Player took 3 damage
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -76,11 +97,10 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbDividesDamageAmongThreeTargets() {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
             gd.pendingETBDamageAssignments = Map.of(
-                    bearsId, 1,
+                    cavalry.getId(), 1,
                     player1.getId(), 2,
                     player2.getId(), 2
             );
@@ -89,14 +109,38 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell
             harness.passBothPriorities(); // resolve ETB trigger
 
-            Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .findFirst().orElse(null);
-            assertThat(bears).isNotNull();
-            assertThat(bears.getMarkedDamage()).isEqualTo(1);
+            assertThat(cavalry.getMarkedDamage()).isEqualTo(1);
 
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        }
+
+        @Test
+        @DisplayName("ETB can divide all 5 damage among five targets")
+        void etbDividesDamageAmongFiveTargets() {
+            List<Permanent> targets = List.of(
+                    harness.addToBattlefieldAndReturn(player1, new BenalishCavalry()),
+                    harness.addToBattlefieldAndReturn(player1, new BenalishCavalry()),
+                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry()),
+                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry()),
+                    harness.addToBattlefieldAndReturn(player2, new BenalishCavalry())
+            );
+
+            gd.pendingETBDamageAssignments = Map.of(
+                    targets.get(0).getId(), 1,
+                    targets.get(1).getId(), 1,
+                    targets.get(2).getId(), 1,
+                    targets.get(3).getId(), 1,
+                    targets.get(4).getId(), 1
+            );
+
+            castBogardanHellkite();
+            harness.passBothPriorities(); // resolve creature spell
+            harness.passBothPriorities(); // resolve ETB trigger
+
+            for (Permanent target : targets) {
+                assertThat(target.getMarkedDamage()).isEqualTo(1);
+            }
         }
 
         @Test

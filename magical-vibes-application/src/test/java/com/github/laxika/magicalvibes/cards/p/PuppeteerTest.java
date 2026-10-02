@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.e.EmberBeast;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.cards.m.MossfireEgg;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Puppeteer.class, GrizzlyBears.class, HowlingMine.class, EmberBeast.class, MossfireEgg.class})
+@CardUsed({Puppeteer.class, GrizzlyBears.class, HowlingMine.class, EmberBeast.class})
 class PuppeteerTest extends BaseCardTest {
 
     // ===== Activating ability =====

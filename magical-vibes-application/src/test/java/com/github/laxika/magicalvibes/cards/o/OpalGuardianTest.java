@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalGuardian.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({OpalGuardian.class, AshcoatBear.class, ChromaticStar.class, Cancel.class})
 class OpalGuardianTest extends BaseCardTest {
 
     private Permanent addOpalGuardian() {
@@ -31,9 +32,7 @@ class OpalGuardianTest extends BaseCardTest {
     }
 
     private void castOpponentCreature() {
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AshcoatBear(), "{1}{G}");
     }
 
     @Test
@@ -63,8 +62,7 @@ class OpalGuardianTest extends BaseCardTest {
         prepareOpponentCast();
 
         castOpponentCreature();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         castOpponentCreature();
 
         assertThat(gd.stack).hasSize(1);
@@ -78,11 +76,43 @@ class OpalGuardianTest extends BaseCardTest {
         Permanent opal = addOpalGuardian();
         prepareOpponentCast();
 
-        harness.setHand(player2, List.of(new Spellbook()));
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new ChromaticStar(), "{1}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isEnchantment(gd, opal)).isTrue();
         assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature spell cast by Opal Guardian's controller does not trigger it")
+    void doesNotTriggerForControllerCreatureSpell() {
+        Permanent opal = addOpalGuardian();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still resolves if the opponent's creature spell is countered")
+    void triggersWhenOpponentCreatureSpellIsCountered() {
+        Permanent opal = addOpalGuardian();
+        prepareOpponentCast();
+
+        castOpponentCreature();
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, gd.stack.getFirst().getCard().getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
     }
 }

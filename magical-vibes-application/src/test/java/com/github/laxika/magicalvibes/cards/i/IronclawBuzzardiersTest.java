@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
+import com.github.laxika.magicalvibes.cards.e.ErrantDoomsayers;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,16 +20,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IronclawBuzzardiers.class, FugitiveWizard.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({IronclawBuzzardiers.class, AshcoatBear.class, DurkwoodBaloth.class, ErrantDoomsayers.class})
 class IronclawBuzzardiersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can block an attacker with power 1")
     void canBlockPowerOne() {
         Permanent buzzardiers = addReadyBuzzardiers(player2);
-        Permanent attacker = addAttacker(new FugitiveWizard());
+        Permanent attacker = addCreatureReady(player1, new ErrantDoomsayers());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, buzzardiers), indexOf(player1, attacker)))))
@@ -41,9 +40,9 @@ class IronclawBuzzardiersTest extends BaseCardTest {
     @DisplayName("Cannot block an attacker with power 2")
     void cannotBlockPowerTwo() {
         Permanent buzzardiers = addReadyBuzzardiers(player2);
-        Permanent attacker = addAttacker(new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new AshcoatBear());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, buzzardiers), indexOf(player1, attacker)))))
@@ -55,9 +54,9 @@ class IronclawBuzzardiersTest extends BaseCardTest {
     @DisplayName("Cannot block an attacker with power greater than 2")
     void cannotBlockPowerGreaterThanTwo() {
         Permanent buzzardiers = addReadyBuzzardiers(player2);
-        Permanent attacker = addAttacker(new HillGiant());
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBaloth());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, buzzardiers), indexOf(player1, attacker)))))
@@ -83,14 +82,20 @@ class IronclawBuzzardiersTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, buzzardiers, Keyword.FLYING)).isFalse();
     }
 
-    private Permanent addReadyBuzzardiers(Player player) {
-        return addCreatureReady(player, new IronclawBuzzardiers());
+    @Test
+    @DisplayName("Requires red mana to activate the flying ability")
+    void requiresRedManaToActivateFlyingAbility() {
+        Permanent buzzardiers = addReadyBuzzardiers(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, buzzardiers), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addAttacker(Card card) {
-        Permanent attacker = addCreatureReady(player1, card);
-        attacker.setAttacking(true);
-        return attacker;
+    private Permanent addReadyBuzzardiers(Player player) {
+        return addCreatureReady(player, new IronclawBuzzardiers());
     }
 
     private int indexOf(Player player, Permanent permanent) {

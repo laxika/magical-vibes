@@ -767,6 +767,9 @@ public class CombatBlockService {
             }
         }
 
+        // Batched "one or more creatures you control become blocked" triggers.
+        checkAllyCreaturesBecomeBlockedTriggers(gameData, activeId, blockedAttackerIndices);
+
         // Global "whenever a creature becomes blocked / blocks a creature" watchers
         // (ON_ANY_CREATURE_BECOMES_BLOCKED) on every battlefield, once per attacker/blocker pair.
         checkAnyCreatureBecomesBlockedTriggers(gameData, attackerBattlefield, defenderBattlefield,
@@ -2133,6 +2136,43 @@ public class CombatBlockService {
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
                     gameData.id, perm.getCard().getName(), blockedAttacker.getCard().getName());
+        }
+    }
+
+    /** Fires ON_ALLY_CREATURES_BECOME_BLOCKED once for the whole declaration when at least one
+     *  creature controlled by the attacking player became blocked. */
+    private void checkAllyCreaturesBecomeBlockedTriggers(GameData gameData, UUID activeId,
+                                                         Set<Integer> blockedAttackerIndices) {
+        if (blockedAttackerIndices.isEmpty()) {
+            return;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activeId);
+        if (battlefield == null) {
+            return;
+        }
+        for (Permanent watcher : List.copyOf(battlefield)) {
+            List<CardEffect> effects = watcher.getCard().getEffectRegistrations(
+                            EffectSlot.ON_ALLY_CREATURES_BECOME_BLOCKED).stream()
+                    .filter(registration -> registration.triggerMode() == TriggerMode.NORMAL)
+                    .map(EffectRegistration::effect)
+                    .toList();
+            if (effects.isEmpty()) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    watcher.getCard(),
+                    activeId,
+                    watcher.getCard().getName() + "'s creatures-become-blocked trigger",
+                    new ArrayList<>(effects),
+                    null,
+                    watcher.getId()
+            );
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+            log.info("Game {} - {} batched ally becomes-blocked trigger pushed onto stack",
+                    gameData.id, watcher.getCard().getName());
         }
     }
 

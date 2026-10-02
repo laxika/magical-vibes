@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,12 +46,15 @@ class RanklePitilessTricksterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player2, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1Creature.getId()));
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
@@ -60,6 +62,7 @@ class RanklePitilessTricksterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(player1Creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(player2Creature);
+        Permanent rankle = findPermanent(player1, "Rankle, Pitiless Trickster");
         assertThat(rankle.getCard().getPower()).isEqualTo(3);
     }
 

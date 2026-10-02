@@ -23,8 +23,8 @@ class ZinniaValleysVoiceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        assertThat(zinnia.getEffectivePower()).isEqualTo(3);
-        assertThat(zinnia.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, zinnia)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zinnia)).isEqualTo(3);
     }
 
     @Test

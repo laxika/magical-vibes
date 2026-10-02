@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AbbyMercilessSoldier.class)
+@CardUsed({AbbyMercilessSoldier.class})
 class AbbyMercilessSoldierTest extends BaseCardTest {
 
     @Test
@@ -39,19 +39,27 @@ class AbbyMercilessSoldierTest extends BaseCardTest {
     @Test
     @DisplayName("Abby enters under an opponent's control")
     void entersUnderOpponentsControl() {
-        harness.setHand(player1, List.of(new AbbyMercilessSoldier()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AbbyMercilessSoldier(), "{1}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Abby, Merciless Soldier"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Abby, Merciless Soldier"));
+        harness.assertNotOnBattlefield(player1, "Abby, Merciless Soldier");
+        harness.assertOnBattlefield(player2, "Abby, Merciless Soldier");
+    }
+
+    @Test
+    @DisplayName("Abby enters under an opponent's control without a control-transfer trigger")
+    void opponentControlsAbbyAsSoonAsSpellResolves() {
+        harness.castFromHand(player1, new AbbyMercilessSoldier(), "{1}{R}{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Abby, Merciless Soldier");
+        harness.assertOnBattlefield(player2, "Abby, Merciless Soldier");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Cordyceps Infected")).hasSize(3);
+        assertThat(findPermanents(player2, "Cordyceps Infected")).isEmpty();
     }
 }

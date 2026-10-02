@@ -67,10 +67,10 @@ public class AlchemistsTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ConditionalEffect(
-                new SourceCounterThreshold(2, CounterType.LEVEL),
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 SpellCastTriggerEffect.usingTreasureMana(List.of(
                         new DealDamageToPlayersEffect(
-                                new TargetSpellManaValue(), DamageRecipient.EACH_OPPONENT)))));
+                                new TargetSpellManaValue(), DamageRecipient.EACH_OPPONENT)),
+                        new SourceCounterThreshold(2, CounterType.LEVEL)));
     }
 }

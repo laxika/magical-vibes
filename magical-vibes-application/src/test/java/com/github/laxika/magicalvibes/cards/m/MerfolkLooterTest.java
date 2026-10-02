@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -193,6 +194,27 @@ class MerfolkLooterTest extends BaseCardTest {
         // Should still be awaiting discard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gameLogContains("no cards to draw")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Empty-library draw still discards before the player loses")
+    void emptyLibraryDrawDiscardsBeforeLoss() {
+        addCreatureReady(player1, new MerfolkLooter());
+        GrizzlyBears cardToDiscard = new GrizzlyBears();
+        harness.setHand(player1, List.of(cardToDiscard));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cardToDiscard);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     @Test

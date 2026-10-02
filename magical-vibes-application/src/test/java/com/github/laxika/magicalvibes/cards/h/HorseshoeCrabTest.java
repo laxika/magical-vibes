@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -78,6 +77,22 @@ class HorseshoeCrabTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(crabPerm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolving ability does not untap another permanent")
+    void resolvingAbilityDoesNotUntapAnotherPermanent() {
+        Permanent crab = addCreatureReady(player1, new HorseshoeCrab());
+        Permanent otherCrab = addCreatureReady(player1, new HorseshoeCrab());
+        crab.tap();
+        otherCrab.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crab.isTapped()).isFalse();
+        assertThat(otherCrab.isTapped()).isTrue();
     }
 
     @Test
@@ -205,13 +220,9 @@ class HorseshoeCrabTest extends BaseCardTest {
     void dealsCombatDamageWhenUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent atkPerm = addCreatureReady(player1, new HorseshoeCrab());
-        atkPerm.setAttacking(true);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        addCreatureReady(player1, new HorseshoeCrab());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(OrderOfTheGoldenCricket.class)
 class OrderOfTheGoldenCricketTest extends BaseCardTest {
 
     @Test
@@ -66,6 +68,38 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying consumes white mana and leaves other mana untouched")
+    void payingConsumesWhiteMana() {
+        Permanent cricket = addReadyCricket(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Nonwhite mana cannot pay the white may-pay cost")
+    void nonWhiteManaCannotPay() {
+        Permanent cricket = addReadyCricket(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Flying wears off at end of turn")
     void flyingWearsOffAtEndOfTurn() {
         Permanent cricket = addReadyCricket(player1);
@@ -84,9 +118,6 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
     }
 
     private Permanent addReadyCricket(Player player) {
-        Permanent perm = new Permanent(new OrderOfTheGoldenCricket());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new OrderOfTheGoldenCricket());
     }
 }

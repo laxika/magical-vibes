@@ -207,6 +207,37 @@ class RobeOfMirrorsTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
+    @Test
+    @DisplayName("Robe of Mirrors can enchant a creature controlled by an opponent")
+    void canEnchantOpponentCreature() {
+        Permanent bearsPerm = addCreatureReady(player2, new GrizzlyBears());
+
+        RobeOfMirrors robe = new RobeOfMirrors();
+        harness.setHand(player1, List.of(robe));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.SHROUD)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == robe
+                        && p.isAttached()
+                        && p.getAttachedTo().equals(bearsPerm.getId()));
+    }
+
+    @Test
+    @DisplayName("Robe of Mirrors grants shroud only to the enchanted creature")
+    void doesNotAffectOtherCreatures() {
+        Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        attachRobe(enchantedCreature, player1);
+
+        assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.SHROUD)).isFalse();
+    }
+
     // ===== Targeting restriction =====
 
     @Test

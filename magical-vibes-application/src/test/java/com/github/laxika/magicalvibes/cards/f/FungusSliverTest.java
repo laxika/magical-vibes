@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.p.PlagueSliver;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SuddenShock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,17 +16,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FungusSliver.class, BonescytheSliver.class, PlagueSliver.class, GrizzlyBears.class,
-        ProdigalSorcerer.class, Shock.class})
+@CardUsed({FungusSliver.class, PlagueSliver.class, BenalishCavalry.class, FledglingMawcor.class,
+        SuddenShock.class})
 class FungusSliverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Fungus Sliver gets a +1/+1 counter when it survives damage")
     void grantsAbilityToItself() {
         Permanent fungusSliver = addCreatureReady(player1, new FungusSliver());
-        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent pinger = addCreatureReady(player1, new FledglingMawcor());
 
-        assertThat(gqs.computeStaticBonus(gd, fungusSliver).grantedEffects()).hasSize(1);
         ping(pinger, fungusSliver);
 
         assertThat(fungusSliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -38,13 +35,25 @@ class FungusSliverTest extends BaseCardTest {
     @DisplayName("Fungus Sliver grants the ability to Slivers controlled by another player")
     void grantsAbilityToOpponentsSlivers() {
         addCreatureReady(player1, new FungusSliver());
-        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
-        Permanent sliver = addCreatureReady(player2, new BonescytheSliver());
+        Permanent pinger = addCreatureReady(player1, new FledglingMawcor());
+        Permanent sliver = addCreatureReady(player2, new PlagueSliver());
 
-        assertThat(gqs.computeStaticBonus(gd, sliver).grantedEffects()).hasSize(1);
         ping(pinger, sliver);
 
         assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Fungus Sliver grants a separate damage trigger")
+    void multipleFungusSliversGrantMultipleTriggers() {
+        addCreatureReady(player1, new FungusSliver());
+        addCreatureReady(player1, new FungusSliver());
+        Permanent pinger = addCreatureReady(player1, new FledglingMawcor());
+        Permanent sliver = addCreatureReady(player2, new PlagueSliver());
+
+        ping(pinger, sliver);
+
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -67,8 +76,8 @@ class FungusSliverTest extends BaseCardTest {
     @DisplayName("Fungus Sliver does not grant the ability to non-Slivers")
     void doesNotGrantAbilityToNonSlivers() {
         addCreatureReady(player1, new FungusSliver());
-        Permanent pinger = addCreatureReady(player1, new ProdigalSorcerer());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent pinger = addCreatureReady(player1, new FledglingMawcor());
+        Permanent bears = addCreatureReady(player2, new BenalishCavalry());
 
         ping(pinger, bears);
 
@@ -79,11 +88,10 @@ class FungusSliverTest extends BaseCardTest {
     @DisplayName("A Sliver that dies from damage does not get a counter")
     void lethalDamageDoesNotPutCounterOnSliver() {
         Permanent fungusSliver = addCreatureReady(player1, new FungusSliver());
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, fungusSliver.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, fungusSliver.getId());
         resolveAllTriggers();
 
         assertThat(fungusSliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

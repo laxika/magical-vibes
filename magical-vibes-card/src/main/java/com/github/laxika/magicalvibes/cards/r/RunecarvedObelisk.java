@@ -35,7 +35,7 @@ public class RunecarvedObelisk extends Card {
                 true,
                 null,
                 List.of(
-                        new SacrificeSelfCost(),
+                        SacrificeSelfCost.recordingPermanentSnapshot(),
                         new SeekHighestManaValueCardEffect(new CountersOnSource(CounterType.CHARGE))
                 ),
                 "{T}, Sacrifice Runecarved Obelisk: Seek a card with the highest mana value among "

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
+import com.github.laxika.magicalvibes.cards.w.WanderersTwig;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,35 +14,50 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SurgeOfThoughtweft.class, GoldmeadowStalwart.class, HillcomberGiant.class, WanderersTwig.class})
 class SurgeOfThoughtweftTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts all creatures you control +1/+1")
     void boostsOwnCreatures() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstGiant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+        Permanent secondGiant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         cast();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+        assertThat(firstGiant.getEffectivePower()).isEqualTo(4);
+        assertThat(firstGiant.getEffectiveToughness()).isEqualTo(4);
+        assertThat(secondGiant.getEffectivePower()).isEqualTo(4);
+        assertThat(secondGiant.getEffectiveToughness()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
-        Permanent enemy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enemy = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
 
         cast();
 
-        assertThat(enemy.getEffectivePower()).isEqualTo(2);
-        assertThat(enemy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(enemy.getEffectivePower()).isEqualTo(3);
+        assertThat(enemy.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not boost noncreature permanents")
+    void doesNotBoostNoncreaturePermanents() {
+        Permanent twig = harness.addToBattlefieldAndReturn(player1, new WanderersTwig());
+
+        cast();
+
+        assertThat(twig.getEffectivePower()).isEqualTo(0);
+        assertThat(twig.getEffectiveToughness()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Draws a card if you control a Kithkin")
     void drawsWithKithkin() {
         harness.addToBattlefield(player1, new GoldmeadowStalwart());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new HillcomberGiant()));
 
         cast();
 
@@ -52,8 +68,20 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw a card without a Kithkin")
     void noDrawWithoutKithkin() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new HillcomberGiant());
+        harness.setLibrary(player1, List.of(new HillcomberGiant()));
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw for an opponent's Kithkin")
+    void noDrawForOpponentsKithkin() {
+        harness.addToBattlefield(player1, new HillcomberGiant());
+        harness.addToBattlefield(player2, new GoldmeadowStalwart());
+        harness.setLibrary(player1, List.of(new HillcomberGiant()));
 
         cast();
 
@@ -63,23 +91,21 @@ class SurgeOfThoughtweftTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void wearsOff() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         cast();
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
+        assertThat(giant.getEffectivePower()).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(giant.getEffectivePower()).isEqualTo(3);
+        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new SurgeOfThoughtweft()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new SurgeOfThoughtweft(), "{1}{W}");
+        harness.passBothPriorities();
     }
 }

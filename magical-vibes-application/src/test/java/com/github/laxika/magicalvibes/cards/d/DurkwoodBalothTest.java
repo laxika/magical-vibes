@@ -27,6 +27,22 @@ class DurkwoodBalothTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Suspend counters are removed only during Durkwood Baloth's owner's upkeep")
+    void suspendCountersAreRemovedOnlyDuringOwnersUpkeep() {
+        DurkwoodBaloth card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
     @DisplayName("The last suspend counter offers a free cast and grants haste")
     void lastCounterOffersFreeCastWithHaste() {
         DurkwoodBaloth card = suspendCard();
@@ -46,6 +62,25 @@ class DurkwoodBalothTest extends BaseCardTest {
 
         var permanent = findPermanent(player1, "Durkwood Baloth");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Durkwood Baloth in exile")
+    void decliningSuspendCastLeavesCardInExile() {
+        DurkwoodBaloth card = suspendCard();
+
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotInGraveyard(player1, "Durkwood Baloth");
     }
 
     private DurkwoodBaloth suspendCard() {

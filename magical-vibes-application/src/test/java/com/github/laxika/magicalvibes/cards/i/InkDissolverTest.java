@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AuntiesSnitch;
+import com.github.laxika.magicalvibes.cards.v.VendilionClique;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +12,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InkDissolver.class, AuntiesSnitch.class, VendilionClique.class})
 class InkDissolverTest extends BaseCardTest {
 
     @Test
     @DisplayName("Kinship prompts to reveal when the top card shares a creature type")
     void kinshipPromptsWhenSharedType() {
         addCreatureReady(player1, new InkDissolver());
-        setLibraryTop(new InkDissolver()); // Merfolk Wizard — shares a type
+        harness.setLibrary(player1, List.of(new InkDissolver())); // Merfolk Wizard — shares both types
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -31,7 +33,8 @@ class InkDissolverTest extends BaseCardTest {
     @DisplayName("Revealing the shared-type card mills three cards from each opponent")
     void revealMillsOpponent() {
         addCreatureReady(player1, new InkDissolver());
-        setLibraryTop(new InkDissolver());
+        InkDissolver topCard = new InkDissolver();
+        harness.setLibrary(player1, List.of(topCard));
 
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -41,13 +44,15 @@ class InkDissolverTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 3);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Declining to reveal mills nothing")
     void decliningDoesNothing() {
         addCreatureReady(player1, new InkDissolver());
-        setLibraryTop(new InkDissolver());
+        harness.setLibrary(player1, List.of(new InkDissolver()));
 
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -63,12 +68,24 @@ class InkDissolverTest extends BaseCardTest {
     @DisplayName("No reveal prompt when the top card shares no creature type")
     void noSharedTypeNoPrompt() {
         addCreatureReady(player1, new InkDissolver());
-        setLibraryTop(new GrizzlyBears()); // Bear — no shared type
+        harness.setLibrary(player1, List.of(new AuntiesSnitch())); // Goblin Rogue — no shared type
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Kinship recognizes a card sharing only one of the source's creature types")
+    void sharedSingleTypePrompts() {
+        addCreatureReady(player1, new InkDissolver());
+        harness.setLibrary(player1, List.of(new VendilionClique())); // Faerie Wizard — shares Wizard
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }
 
     @Test
@@ -81,11 +98,5 @@ class InkDissolverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-    }
-
-    private void setLibraryTop(Card card) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(card);
     }
 }

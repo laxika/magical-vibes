@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.t.Thoughtseize;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class})
 class GuileTest extends BaseCardTest {
 
     // ===== Counter replacement =====
@@ -136,15 +139,11 @@ class GuileTest extends BaseCardTest {
     @Test
     @DisplayName("Guile can't be blocked by fewer than three creatures")
     void cannotBeBlockedByFewerThanThree() {
-        Permanent guile = new Permanent(new Guile());
-        guile.setSummoningSick(false);
+        Permanent guile = addCreatureReady(player1, new Guile());
         guile.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(guile);
 
         for (int i = 0; i < 3; i++) {
-            Permanent blocker = new Permanent(new GrizzlyBears());
-            blocker.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(blocker);
+            addCreatureReady(player2, new GrizzlyBears());
         }
 
         harness.forceActivePlayer(player1);
@@ -161,15 +160,11 @@ class GuileTest extends BaseCardTest {
     @Test
     @DisplayName("Guile can be blocked by three creatures")
     void canBeBlockedByThree() {
-        Permanent guile = new Permanent(new Guile());
-        guile.setSummoningSick(false);
+        Permanent guile = addCreatureReady(player1, new Guile());
         guile.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(guile);
 
         for (int i = 0; i < 3; i++) {
-            Permanent blocker = new Permanent(new GrizzlyBears());
-            blocker.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(blocker);
+            addCreatureReady(player2, new GrizzlyBears());
         }
 
         harness.forceActivePlayer(player1);
@@ -200,5 +195,28 @@ class GuileTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Guile");
         assertThat(gd.playerDecks.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Guile"));
+    }
+
+    @Test
+    @DisplayName("When Guile is discarded from hand it is shuffled into its owner's library")
+    void discardedFromHandShufflesIntoLibrary() {
+        harness.setLibrary(player1, List.of());
+        Guile guile = new Guile();
+        harness.setHand(player1, List.of(guile));
+
+        harness.setHand(player2, List.of(new Thoughtseize()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castSorcery(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Guile");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(guile.getId()));
     }
 }

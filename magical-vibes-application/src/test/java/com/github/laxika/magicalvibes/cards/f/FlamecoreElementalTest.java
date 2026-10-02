@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(FlamecoreElemental.class)
@@ -36,7 +34,8 @@ class FlamecoreElementalTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Flamecore Elemental");
@@ -47,9 +46,7 @@ class FlamecoreElementalTest extends BaseCardTest {
     }
 
     private void castAndResolveFlamecoreElemental() {
-        harness.setHand(player1, List.of(new FlamecoreElemental()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new FlamecoreElemental(), "{2}{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Flamecore Elemental");

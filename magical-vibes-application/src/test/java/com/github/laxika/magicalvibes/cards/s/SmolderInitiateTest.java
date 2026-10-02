@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Facevaulter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshenmoorGouger;
+import com.github.laxika.magicalvibes.cards.c.Cinderbones;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,19 +16,32 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SmolderInitiate.class, AshenmoorGouger.class, Cinderbones.class, SafeholdSentry.class})
 class SmolderInitiateTest extends BaseCardTest {
 
-    /** Puts player2 on the active turn so their black spell isn't cast on player1's own turn (irrelevant here, but keeps mana clean). */
-    private void opponentCastsBlackSpell(Player caster) {
-        harness.setHand(caster, List.of(new Facevaulter()));
-        harness.addMana(caster, ManaColor.BLACK, 5);
+    private void castBlackSpell(Player caster) {
+        harness.addMana(caster, ManaColor.BLACK, 2);
+        harness.castFromHand(caster, new Cinderbones(), "{2}{B}");
     }
 
     @Test
     @DisplayName("A player casting a black spell prompts the controller's may-pay ability")
     void blackSpellTriggersMayPay() {
         harness.addToBattlefield(player1, new SmolderInitiate());
-        opponentCastsBlackSpell(player1);
+        castBlackSpell(player1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A multicolored black spell also prompts the controller's may-pay ability")
+    void multicoloredBlackSpellTriggersMayPay() {
+        harness.addToBattlefield(player1, new SmolderInitiate());
+        harness.setHand(player1, List.of(new AshenmoorGouger()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
 
@@ -45,11 +59,10 @@ class SmolderInitiateTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        opponentCastsBlackSpell(player2);
+        castBlackSpell(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player2, 20);
 
-        harness.castCreature(player2, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -66,11 +79,10 @@ class SmolderInitiateTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        opponentCastsBlackSpell(player2);
+        castBlackSpell(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
 
-        harness.castCreature(player2, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
@@ -82,10 +94,9 @@ class SmolderInitiateTest extends BaseCardTest {
     @DisplayName("Declining leaves life totals unchanged")
     void decliningDoesNothing() {
         harness.addToBattlefield(player1, new SmolderInitiate());
-        opponentCastsBlackSpell(player1);
+        castBlackSpell(player1);
         harness.setLife(player2, 20);
 
-        harness.castCreature(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
         while (!harness.getGameData().stack.isEmpty()) {
             harness.passBothPriorities();
@@ -98,10 +109,7 @@ class SmolderInitiateTest extends BaseCardTest {
     @DisplayName("Casting a non-black spell does not trigger the ability")
     void nonBlackSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new SmolderInitiate());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SafeholdSentry(), "{1}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

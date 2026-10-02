@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FurySliver.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({FurySliver.class, BonesplitterSliver.class, AshcoatBear.class})
 class FurySliverTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,7 @@ class FurySliverTest extends BaseCardTest {
     @DisplayName("Fury Sliver grants double strike to another Sliver")
     void grantsDoubleStrikeToAnotherSliver() {
         addCreatureReady(player1, new FurySliver());
-        Permanent sliver = addCreatureReady(player1, new MetallicSliver());
+        Permanent sliver = addCreatureReady(player1, new BonesplitterSliver());
 
         assertThat(gqs.hasKeyword(gd, sliver, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -35,7 +35,7 @@ class FurySliverTest extends BaseCardTest {
     @DisplayName("Fury Sliver grants double strike to an opponent's Sliver")
     void grantsDoubleStrikeToOpposingSliver() {
         addCreatureReady(player1, new FurySliver());
-        Permanent sliver = addCreatureReady(player2, new MetallicSliver());
+        Permanent sliver = addCreatureReady(player2, new BonesplitterSliver());
 
         assertThat(gqs.hasKeyword(gd, sliver, Keyword.DOUBLE_STRIKE)).isTrue();
     }
@@ -44,8 +44,8 @@ class FurySliverTest extends BaseCardTest {
     @DisplayName("Fury Sliver does not grant double strike to a non-Sliver")
     void doesNotGrantDoubleStrikeToNonSliver() {
         addCreatureReady(player1, new FurySliver());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new AshcoatBear());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

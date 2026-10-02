@@ -22,10 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BorderPatrol.class, BrigidClachansHeart.class, CephalidConstable.class, EpicStruggle.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({BorderPatrol.class, CephalidConstable.class, EpicStruggle.class, KrosanVerge.class, SuntailHawk.class})
 class CephalidConstableTest extends BaseCardTest {
-
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("Dealing combat damage to player triggers multi-permanent choice")
@@ -54,8 +52,7 @@ class CephalidConstableTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCombatDamage(gd, constable)).isEqualTo(2);
 
         declareAttackers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
                 .isEqualTo(2);

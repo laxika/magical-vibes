@@ -1,24 +1,25 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AcademyRuins;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ixidron.class, GrizzlyBears.class})
+@CardUsed({Ixidron.class, AshcoatBear.class, AcademyRuins.class})
 class IxidronTest extends BaseCardTest {
 
     @Test
     void turnsOtherNontokenCreaturesFaceDownAndCountsThem() {
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new AshcoatBear());
+        Permanent opposingCreature = addCreatureReady(player2, new AshcoatBear());
 
         castIxidron();
 
@@ -32,8 +33,8 @@ class IxidronTest extends BaseCardTest {
 
     @Test
     void excludesCreatureTokensFromTurningFaceDownAndFromItsCount() {
-        Permanent nontokenCreature = addCreatureReady(player1, new GrizzlyBears());
-        Card tokenCard = new GrizzlyBears();
+        Permanent nontokenCreature = addCreatureReady(player1, new AshcoatBear());
+        Card tokenCard = new AshcoatBear();
         tokenCard.setToken(true);
         Permanent tokenCreature = new Permanent(tokenCard);
         tokenCreature.setSummoningSick(false);
@@ -49,9 +50,28 @@ class IxidronTest extends BaseCardTest {
     }
 
     @Test
+    void countsExistingFaceDownCreaturesLeavesNoncreaturesFaceUpAndUsesTwoTwoCharacteristics() {
+        Permanent existingFaceDownCreature = addCreatureReady(player1, new AshcoatBear());
+        existingFaceDownCreature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new AcademyRuins());
+
+        castIxidron();
+
+        Permanent ixidron = findPermanent(player1, "Ixidron");
+        assertThat(existingFaceDownCreature.isFaceDown()).isTrue();
+        assertThat(creature.isFaceDown()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(noncreature.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, ixidron)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ixidron)).isEqualTo(2);
+    }
+
+    @Test
     void updatesItsPowerAndToughnessWhenFaceDownCreaturesLeave() {
-        Permanent removedCreature = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent removedCreature = addCreatureReady(player1, new AshcoatBear());
+        addCreatureReady(player2, new AshcoatBear());
 
         castIxidron();
 
@@ -66,10 +86,7 @@ class IxidronTest extends BaseCardTest {
     }
 
     private void castIxidron() {
-        harness.setHand(player1, List.of(new Ixidron()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Ixidron(), "{3}{U}{U}");
         harness.passBothPriorities();
     }
 }
