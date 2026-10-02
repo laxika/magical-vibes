@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SeaGateBanneret;
+import com.github.laxika.magicalvibes.cards.s.SeaGateColossus;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +23,59 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BaseCamp.class, SeaGateBanneret.class, SeaGateColossus.class})
 class BaseCampTest extends BaseCardTest {
+
+    @Test
+    void producedRestrictedManaCastsRealWarrior() {
+        harness.addToBattlefield(player1, new BaseCamp());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.setHand(player1, List.of(new SeaGateBanneret()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sea Gate Banneret");
+        assertThat(gd.playerManaPools.get(player1.getId()).getSubtypeSpellOrAbilityManaTotal(
+                Set.of(CardSubtype.WARRIOR))).isZero();
+    }
+
+    @Test
+    void producedRestrictedManaPaysGenericCostOfColorlessWarrior() {
+        harness.addToBattlefield(player1, new BaseCamp());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setHand(player1, List.of(new SeaGateColossus()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sea Gate Colossus");
+        assertThat(gd.playerManaPools.get(player1.getId()).getSubtypeSpellOrAbilityManaTotal(
+                Set.of(CardSubtype.WARRIOR))).isZero();
+    }
+
+    @Test
+    void producedRestrictedManaActivatesRealWarriorAbility() {
+        harness.addToBattlefield(player1, new BaseCamp());
+        harness.addToBattlefield(player1, new SeaGateBanneret());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        Permanent warrior = findPermanent(player1, "Sea Gate Banneret");
+        int powerBefore = gqs.getEffectivePower(gd, warrior);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, warrior);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(toughnessBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSubtypeSpellOrAbilityManaTotal(
+                Set.of(CardSubtype.WARRIOR))).isZero();
+    }
 
     private static Card createCreature(String name, String manaCost, CardColor color, CardSubtype subtype) {
         Card card = new Card();
