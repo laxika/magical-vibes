@@ -215,18 +215,28 @@ function Publish-ReviewTests {
     $message = "Review $($Task.setCode) $($Task.collectorNumber) tests`n`nReview run $($Task.runId), model $($Task.model), reasoning $($Task.reasoningEffort).`n`nCo-authored-by: OpenAI Codex <codex@openai.com>`n"
     [System.IO.File]::WriteAllText($messagePath, $message, [System.Text.UTF8Encoding]::new($false))
     Get-ReviewGitText $Root (@('commit', '--only', '--file', $messagePath, '--') + $Paths) | Out-Host
-    for ($attempt = 0; $attempt -lt 5; $attempt++) {
-        $push = Invoke-ReviewGit $Root @('push', 'origin', 'main')
-        if ($push.ExitCode -eq 0) { return Get-ReviewGitText $Root @('rev-parse', 'HEAD') }
-        if ($attempt -eq 4) { throw "Could not push after five attempts. Commit was preserved. $($push.Output)" }
+    $maximumAttempts = 30
+    for ($attempt = 0; $attempt -lt $maximumAttempts; $attempt++) {
         Get-ReviewGitText $Root @('fetch', 'origin', 'main') | Out-Null
         $isBehind = Invoke-ReviewGit $Root @('merge-base', '--is-ancestor', 'origin/main', 'HEAD')
-        if ($isBehind.ExitCode -eq 0) { throw "Push failed without a main race. Commit was preserved. $($push.Output)" }
-        $rebase = Invoke-ReviewGit $Root @('rebase', 'origin/main')
-        if ($rebase.ExitCode -ne 0) {
-            Invoke-ReviewGit $Root @('rebase', '--abort') | Out-Null
-            throw "Rebase conflict; the review commit was preserved for recovery. $($rebase.Output)"
+        if ($isBehind.ExitCode -notin @(0, 1)) { throw "Could not compare main histories. Commit was preserved. $($isBehind.Output)" }
+        if ($isBehind.ExitCode -eq 1) {
+            $rebase = Invoke-ReviewGit $Root @('rebase', 'origin/main')
+            if ($rebase.ExitCode -ne 0) {
+                Invoke-ReviewGit $Root @('rebase', '--abort') | Out-Null
+                throw "Rebase conflict; the review commit was preserved for recovery. $($rebase.Output)"
+            }
         }
+        $push = Invoke-ReviewGit $Root @('push', 'origin', 'main')
+        if ($push.ExitCode -eq 0) { return Get-ReviewGitText $Root @('rev-parse', 'HEAD') }
+        if ($attempt -eq ($maximumAttempts - 1)) { throw "Could not push after $maximumAttempts attempts. Commit was preserved. $($push.Output)" }
+        Get-ReviewGitText $Root @('fetch', 'origin', 'main') | Out-Null
+        $isBehind = Invoke-ReviewGit $Root @('merge-base', '--is-ancestor', 'origin/main', 'HEAD')
+        if ($isBehind.ExitCode -notin @(0, 1)) { throw "Could not compare main histories after a failed push. Commit was preserved. $($isBehind.Output)" }
+        if ($isBehind.ExitCode -eq 0) { throw "Push failed without a main race. Commit was preserved. $($push.Output)" }
+        $delayMilliseconds = 500 * [Math]::Min($attempt + 1, 10) + (Get-Random -Minimum 0 -Maximum 1001)
+        Write-Warning "Remote main advanced during publication. Retrying push ($($attempt + 2)/$maximumAttempts) in $delayMilliseconds ms."
+        Start-Sleep -Milliseconds $delayMilliseconds
     }
 }
 

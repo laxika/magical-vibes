@@ -14,7 +14,13 @@ $script:mockInvalidTestSource = $false
 $script:reviewInvocations = 0
 $script:simulatePushFailure = $false
 $script:simulatePushRace = $false
+$script:remainingPushRaces = 0
+$script:conflictingRemoteChange = $false
 $script:raceInjected = $false
+$script:pushAttempts = 0
+$script:retryDelays = @()
+$script:captureFirstPush = $false
+$script:firstPushWasSynced = $false
 $script:taskTestPath = 'magical-vibes-application/src/test/java/example/cards/a/FirstCardTest.java'
 
 function Assert-ReviewTest {
@@ -41,16 +47,47 @@ function Invoke-ReviewCodex {
 
 function Invoke-ReviewGit {
     param([string] $Root, [string[]] $Arguments)
+    if ($Arguments[0] -eq 'push') {
+        $script:pushAttempts++
+        if ($script:captureFirstPush -and $script:pushAttempts -eq 1) {
+            $ancestor = & $script:actualGit $Root @('merge-base', '--is-ancestor', 'origin/main', 'HEAD')
+            $script:firstPushWasSynced = $ancestor.ExitCode -eq 0
+        }
+    }
     if ($Arguments[0] -eq 'push' -and $script:simulatePushFailure) { return [pscustomobject] @{ ExitCode = 1; Output = 'Simulated push failure' } }
-    if ($Arguments[0] -eq 'push' -and $script:simulatePushRace -and -not $script:raceInjected) {
+    if ($Arguments[0] -eq 'push' -and $script:simulatePushRace -and $script:remainingPushRaces -gt 0) {
         $script:raceInjected = $true
-        Add-Content -LiteralPath (Join-Path $script:racerRoot 'other.txt') -Value 'concurrent change'
-        & $script:actualGit $script:racerRoot @('add', '--', 'other.txt') | Out-Null
-        & $script:actualGit $script:racerRoot @('commit', '-m', 'Concurrent test change') | Out-Null
-        $racePush = & $script:actualGit $script:racerRoot @('push', 'origin', 'main')
-        Assert-ReviewTest ($racePush.ExitCode -eq 0) 'The competing local test push failed'
+        $script:remainingPushRaces--
+        Add-ReviewTestRemoteChange
     }
     return & $script:actualGit $Root $Arguments
+}
+
+function Start-Sleep {
+    param([int] $Milliseconds)
+    $script:retryDelays += $Milliseconds
+}
+
+function New-ReviewTestRacer {
+    param([string] $Checkout)
+    $script:racerRoot = $Checkout + '-racer'
+    Get-ReviewGitText $testRoot @('clone', ($Checkout + '-origin.git'), $script:racerRoot) | Out-Null
+    Get-ReviewGitText $script:racerRoot @('config', 'user.name', 'Review worker test') | Out-Null
+    Get-ReviewGitText $script:racerRoot @('config', 'user.email', 'review-test@example.invalid') | Out-Null
+    $script:pushAttempts = 0
+    $script:retryDelays = @()
+    $script:raceInjected = $false
+}
+
+function Add-ReviewTestRemoteChange {
+    $path = if ($script:conflictingRemoteChange) { $script:taskTestPath } else { 'other.txt' }
+    Add-Content -LiteralPath (Join-Path $script:racerRoot $path) -Value '// concurrent change'
+    $added = & $script:actualGit $script:racerRoot @('add', '--', $path)
+    Assert-ReviewTest ($added.ExitCode -eq 0) 'Could not stage the competing test change'
+    $committed = & $script:actualGit $script:racerRoot @('commit', '-m', 'Concurrent test change')
+    Assert-ReviewTest ($committed.ExitCode -eq 0) 'Could not commit the competing test change'
+    $racePush = & $script:actualGit $script:racerRoot @('push', 'origin', 'main')
+    Assert-ReviewTest ($racePush.ExitCode -eq 0) 'The competing local test push failed'
 }
 
 function New-ReviewTestCheckout {
@@ -173,22 +210,62 @@ try {
 
     $checkout = New-ReviewTestCheckout 'push-failure'
     $script:mockOutcome = 'FINDINGS'
+    $script:pushAttempts = 0
+    $script:retryDelays = @()
+    $before = Get-ReviewGitText $checkout @('rev-parse', 'HEAD')
     $script:simulatePushFailure = $true
     $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-push')
     Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'FAILED' -and $result.Stop) 'Push failure discarded completed findings'
+    Assert-ReviewTest ($script:pushAttempts -eq 1 -and $script:retryDelays.Count -eq 0 -and $result.Result.publicationError -match 'Push failed without a main race') 'A failure without remote advancement was retried'
+    Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -ne $before -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'The failed push did not preserve its local commit'
     $script:simulatePushFailure = $false
     Write-Host 'PASS push failures preserve the review verdict and commit'
 
+    $checkout = New-ReviewTestCheckout 'remote-ahead'
+    New-ReviewTestRacer $checkout
+    Add-ReviewTestRemoteChange
+    $script:captureFirstPush = $true
+    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-remote-ahead')
+    Assert-ReviewTest ($result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop -and $script:firstPushWasSynced -and $script:pushAttempts -eq 1) 'Remote commits were not rebased before the first push'
+    Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $script:racerRoot @('ls-remote', 'origin', 'refs/heads/main')).Split()[0]) 'The published commit was not present on the remote'
+    $script:captureFirstPush = $false
+    Write-Host 'PASS remote advancement is incorporated before the first push'
+
     $checkout = New-ReviewTestCheckout 'race'
-    $script:racerRoot = Join-Path $testRoot 'racer'
-    Get-ReviewGitText $testRoot @('clone', (Join-Path $testRoot 'race-origin.git'), $script:racerRoot) | Out-Null
-    Get-ReviewGitText $script:racerRoot @('config', 'user.name', 'Review worker test') | Out-Null
-    Get-ReviewGitText $script:racerRoot @('config', 'user.email', 'review-test@example.invalid') | Out-Null
+    New-ReviewTestRacer $checkout
+    $script:remainingPushRaces = 7
     $script:simulatePushRace = $true
     $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-race')
     Assert-ReviewTest ($result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop -and $script:raceInjected) 'A non-conflicting push race did not recover'
+    Assert-ReviewTest ($script:pushAttempts -eq 8 -and $script:retryDelays.Count -eq 7 -and $script:remainingPushRaces -eq 0) 'Repeated races did not recover beyond the old five-attempt limit'
+    for ($index = 0; $index -lt $script:retryDelays.Count; $index++) {
+        $minimumDelay = 500 * [Math]::Min($index + 1, 10)
+        Assert-ReviewTest ($script:retryDelays[$index] -ge $minimumDelay -and $script:retryDelays[$index] -le ($minimumDelay + 1000)) 'The retry delay did not use bounded increasing backoff'
+    }
+    Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Repeated races left unpublished or unfinished changes'
     $script:simulatePushRace = $false
-    Write-Host 'PASS concurrent main push is fetched, rebased, and retried'
+    Write-Host 'PASS repeated concurrent pushes recover with staggered retries'
+
+    $checkout = New-ReviewTestCheckout 'race-exhausted'
+    New-ReviewTestRacer $checkout
+    $script:remainingPushRaces = 30
+    $script:simulatePushRace = $true
+    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-exhausted')
+    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'FAILED' -and $result.Stop -and $result.Result.publicationError -match 'Could not push after 30 attempts') 'Exhausted races did not stop with the review verdict preserved'
+    Assert-ReviewTest ($script:pushAttempts -eq 30 -and $script:retryDelays.Count -eq 29) 'The retry limit or final-attempt delay was incorrect'
+    Assert-ReviewTest ((Get-ReviewGitText $checkout @('log', '-1', '--format=%s')) -eq 'Review INR 14b tests' -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Exhausted races lost the review commit or left a rebase unfinished'
+    $script:simulatePushRace = $false
+    Write-Host 'PASS exhausted races stop after 30 pushes and preserve the review commit'
+
+    $checkout = New-ReviewTestCheckout 'rebase-conflict'
+    New-ReviewTestRacer $checkout
+    $script:conflictingRemoteChange = $true
+    Add-ReviewTestRemoteChange
+    $script:conflictingRemoteChange = $false
+    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-conflict')
+    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'FAILED' -and $result.Stop -and $result.Result.publicationError -match 'Rebase conflict') 'A rebase conflict did not stop publication with the review preserved'
+    Assert-ReviewTest ($script:pushAttempts -eq 0 -and (Get-ReviewGitText $checkout @('branch', '--show-current')) -eq 'main' -and (Get-ReviewGitText $checkout @('log', '-1', '--format=%s')) -eq 'Review INR 14b tests' -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'A conflicting rebase was not aborted with the local review commit restored'
+    Write-Host 'PASS conflicting remote changes abort the rebase and preserve the review commit'
 
     $script:localTestRunnerCalls = 0
     function powershell.exe {
@@ -243,10 +320,10 @@ try {
     }
     Write-Host 'PASS reviews upload with validation deferred to CI without stopping the worker'
 
-    [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; publicationError='Could not push after five attempts'}; stop=$true} | ConvertTo-Json -Depth 5))
+    [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; publicationError='Could not push after 30 attempts'}; stop=$true} | ConvertTo-Json -Depth 5))
     $message = ''
     try { Send-ReviewPendingResult 'http://review.test' $pendingPath } catch { $message = $_.Exception.Message }
-    Assert-ReviewTest ($message -match 'Could not push after five attempts' -and -not (Test-Path -LiteralPath $pendingPath)) 'The final worker error hid the publication failure or retained an acknowledged result'
+    Assert-ReviewTest ($message -match 'Could not push after 30 attempts' -and -not (Test-Path -LiteralPath $pendingPath)) 'The final worker error hid the publication failure or retained an acknowledged result'
     Write-Host 'PASS final worker errors include the reason for stopping'
 }
 finally {
