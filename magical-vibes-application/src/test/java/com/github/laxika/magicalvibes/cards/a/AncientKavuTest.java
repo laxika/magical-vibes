@@ -54,4 +54,58 @@ class AncientKavuTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The color change waits for resolution and affects only its source")
+    void changesOnlyItsSourceOnResolution() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AncientKavu());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AncientKavu());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AncientKavu());
+        List<CardColor> originalColors = List.copyOf(gqs.getEffectiveColors(gd, kavu));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactlyElementsOf(originalColors);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, kavu)).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, other)).containsExactlyElementsOf(originalColors);
+        assertThat(gqs.getEffectiveColors(gd, opponent)).containsExactlyElementsOf(originalColors);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Kavu can activate repeatedly")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AncientKavu());
+        kavu.setTapped(true);
+        kavu.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveColors(gd, kavu)).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveColors(gd, kavu)).isEmpty();
+        assertThat(kavu.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One mana is insufficient to activate")
+    void cannotActivateWithOnlyOneMana() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AncientKavu());
+        List<CardColor> originalColors = List.copyOf(gqs.getEffectiveColors(gd, kavu));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactlyElementsOf(originalColors);
+    }
 }
