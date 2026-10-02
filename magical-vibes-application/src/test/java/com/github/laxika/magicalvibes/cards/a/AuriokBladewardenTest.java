@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AuriokBladewarden.class, AlphaMyr.class, AncientDen.class})
+@CardUsed({AuriokBladewarden.class, AlphaMyr.class, AncientDen.class, Terror.class})
 class AuriokBladewardenTest extends BaseCardTest {
 
     @Test
@@ -112,6 +116,72 @@ class AuriokBladewardenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Auriok Bladewarden can boost itself without recalculating X after the boost")
+    void canTargetItself() {
+        Permanent bladewarden = addReadyBladewarden(player1);
+
+        harness.activateAbility(player1, 0, null, bladewarden.getId());
+        harness.passBothPriorities();
+
+        assertThat(bladewarden.getEffectivePower()).isEqualTo(2);
+        assertThat(bladewarden.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Zero source power gives no boost")
+    void zeroPowerGivesNoBoost() {
+        Permanent bladewarden = addReadyBladewarden(player1);
+        bladewarden.setPowerModifier(-1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Bladewarden cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new AuriokBladewarden());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Bladewarden cannot pay the tap cost again")
+    void cannotActivateWhileTapped() {
+        Permanent bladewarden = addReadyBladewarden(player1);
+        bladewarden.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The boost uses power immediately before destruction, including changes after activation")
+    void usesLastKnownPowerWhenDestroyedInResponse() {
+        Permanent bladewarden = addReadyBladewarden(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        bladewarden.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, bladewarden.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bladewarden);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
     }
 
     private Permanent addReadyBladewarden(Player player) {
