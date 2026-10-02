@@ -24,10 +24,8 @@ class AltarOfBoneTest extends BaseCardTest {
         castWithSacrifice();
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof BalduvianBears);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(BalduvianBears.class::isInstance);
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
     }
 
     @Test
@@ -54,10 +52,8 @@ class AltarOfBoneTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof Plains);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(AltarOfBone.class::isInstance);
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertInHand(player1, "Altar of Bone");
     }
 
     @Test
@@ -89,12 +85,10 @@ class AltarOfBoneTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(BalduvianBears.class::isInstance);
+        harness.assertInHand(player1, "Balduvian Bears");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(BalduvianBears.class::isInstance);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(AltarOfBone.class::isInstance);
+        harness.assertInGraveyard(player1, "Altar of Bone");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -108,10 +102,8 @@ class AltarOfBoneTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(BalduvianBears.class::isInstance);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(AltarOfBone.class::isInstance);
+        harness.assertNotInHand(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Altar of Bone");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -125,8 +117,63 @@ class AltarOfBoneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(AltarOfBone.class::isInstance);
+        harness.assertInGraveyard(player1, "Altar of Bone");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new AltarOfBone()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInHand(player1, "Altar of Bone");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can pay the sacrifice cost")
+    void canSacrificeTappedSummoningSickCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        sacrifice.setTapped(true);
+        sacrifice.setSummoningSick(true);
+        harness.setHand(player1, List.of(new AltarOfBone()));
+        harness.setLibrary(player1, List.of(new Aurochs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Aurochs");
+        harness.assertInGraveyard(player1, "Altar of Bone");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library without refunding the sacrificed creature")
+    void emptyLibraryStillPaysSacrificeCost() {
+        castWithSacrifice();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Altar of Bone");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castWithSacrifice() {
