@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulScarMage;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -21,14 +24,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchaicsAgony.class, GrizzlyBears.class, RagingGoblin.class, Shock.class})
+@CardUsed({ArchaicsAgony.class, GrizzlyBears.class, RagingGoblin.class, Shock.class, SoulScarMage.class, Twincast.class})
 class ArchaicsAgonyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Converge X equals number of colors spent to cast")
     void convergeXEqualsColorsSpent() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ArchaicsAgony()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -46,8 +48,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Colorless mana alone gives converge X of 1 when only one colored mana is spent")
     void singleColorGivesConvergeOne() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ArchaicsAgony()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -61,16 +62,14 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Deals converge damage to target creature")
     void dealsConvergeDamage() {
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ArchaicsAgony()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -78,8 +77,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles top cards equal to excess damage and grants play permission")
     void exilesTopCardsForExcessDamage() {
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         Card topCard = new Shock();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
@@ -102,8 +100,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("No excess damage means no library cards exiled")
     void noExcessDamageExilesNothing() {
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         Card topCard = new Shock();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
@@ -123,8 +120,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Exile play permission expires at end of controller's next turn")
     void playPermissionExpiresAtCorrectTurn() {
-        Permanent target = new Permanent(new RagingGoblin()); // 1/1
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         Card topCard = new Shock();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
@@ -159,5 +155,163 @@ class ArchaicsAgonyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Five colors exile exactly three cards beyond a two-toughness creature")
+    void fiveColorsExileExactlyThreeTopCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card first = new Shock();
+        Card second = new RagingGoblin();
+        Card third = new GrizzlyBears();
+        Card fourth = new Shock();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new ArchaicsAgony()));
+        for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            harness.addMana(player1, color, 1);
+        }
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        for (Card card : List.of(first, second, third)) {
+            assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+        }
+    }
+
+    @Test
+    @DisplayName("Already marked damage reduces the damage needed before excess")
+    void markedDamageCountsTowardLethalDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setMarkedDamage(1);
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ArchaicsAgony()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Excess damage cannot exile more cards than the library contains")
+    void excessDamageWithShortLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ArchaicsAgony()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("An illegal target at resolution prevents the library exile")
+    void missingTargetPreventsExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ArchaicsAgony(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An exiled spell may be cast by paying its normal cost")
+    void canCastExiledCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ArchaicsAgony()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castFromExile(player1, topCard.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @CardUsed({ArchaicsAgony.class, GrizzlyBears.class, Shock.class, SoulScarMage.class})
+    @DisplayName("Damage replaced by Soul-Scar Mage does not cause excess-damage exile")
+    void replacedDamageExilesNothing() {
+        harness.addToBattlefield(player1, new SoulScarMage());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new ArchaicsAgony()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
+    }
+
+    @Test
+    @CardUsed({ArchaicsAgony.class, GrizzlyBears.class, Shock.class, Twincast.class})
+    @DisplayName("A spell copy has no colors spent and deals zero damage")
+    void spellCopyDoesNotCopyConvergeValue() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        ArchaicsAgony agony = new ArchaicsAgony();
+        harness.setHand(player1, List.of(agony, new Twincast()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, agony.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 }
