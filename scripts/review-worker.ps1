@@ -19,7 +19,7 @@ if (-not $WorkerId) { $WorkerId = Split-Path -Leaf $repositoryRoot }
 $ServerUrl = $ServerUrl.TrimEnd('/')
 $serverUri = [uri] $ServerUrl
 if (-not $serverUri.IsAbsoluteUri -or $serverUri.Scheme -notin @('http', 'https')) { throw 'ServerUrl must be an absolute HTTP URL.' }
-foreach ($command in @('git', 'codex', 'powershell.exe')) { Get-Command $command -ErrorAction Stop | Out-Null }
+foreach ($command in @('git', 'codex')) { Get-Command $command -ErrorAction Stop | Out-Null }
 $workerDirectory = Join-Path $repositoryRoot 'magical-vibes-review-server/build/worker'
 New-Item -ItemType Directory -Force -Path $workerDirectory | Out-Null
 $pendingPath = Join-Path $workerDirectory 'pending-result.json'

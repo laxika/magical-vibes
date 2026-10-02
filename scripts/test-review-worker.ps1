@@ -6,13 +6,12 @@ $testParent = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot 'magical-
 $testRoot = Join-Path $testParent ([guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $testRoot | Out-Null
 $script:actualGit = (Get-Item Function:\Invoke-ReviewGit).ScriptBlock
-$script:actualFocusedTests = (Get-Item Function:\Invoke-ReviewFocusedTests).ScriptBlock
 $script:mockOutcome = 'FINDINGS'
 $script:mockInvalid = $false
 $script:mockProduction = $false
 $script:mockPassWithTests = $false
+$script:mockInvalidTestSource = $false
 $script:reviewInvocations = 0
-$script:mockTestAssertionFailure = $false
 $script:simulatePushFailure = $false
 $script:simulatePushRace = $false
 $script:raceInjected = $false
@@ -36,12 +35,8 @@ function Invoke-ReviewCodex {
     if ($script:mockOutcome -eq 'FINDINGS' -or $script:mockPassWithTests) {
         Add-Content -LiteralPath (Join-Path $Root $script:taskTestPath) -Value '// focused regression'
     }
+    if ($script:mockInvalidTestSource) { [System.IO.File]::WriteAllText((Join-Path $Root $script:taskTestPath), 'Invalid Java source for CI to reject') }
     if ($script:mockProduction) { Add-Content -LiteralPath (Join-Path $Root 'production.txt') -Value 'unexpected edit' }
-}
-
-function Invoke-ReviewFocusedTests {
-    param([string] $Root, [string[]] $Paths, [string] $LogDirectory)
-    return $script:mockTestAssertionFailure
 }
 
 function Invoke-ReviewGit {
@@ -113,49 +108,9 @@ try {
     Write-Host 'PASS usage parsing handles cached tokens, custom pricing, zero usage, and unavailable estimates'
 
     $prompt = Get-ReviewCodexPrompt $task
-    Assert-ReviewTest ($prompt -match 'Do not launch Gradle or run tests yourself' -and $prompt -match '7200-second' -and $prompt -match 'Pending compilation is not a test failure') 'The worker did not delegate slow compilation and exact-class validation away from the reviewing agent'
-    Write-Host 'PASS reviewing agent delegates test execution to the worker'
-
-    $checkout = New-ReviewTestCheckout 'focused-class'
-    $script:focusedCalls = @()
-    function powershell.exe {
-        $script:focusedCalls += ,$args
-        $global:LASTEXITCODE = 0
-    }
-    try { & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot | Out-Null }
-    finally { Remove-Item Function:\powershell.exe }
-    Assert-ReviewTest ($script:focusedCalls.Count -eq 1) 'Validation invoked more than the reviewed class'
-    $call = $script:focusedCalls[0]
-    Assert-ReviewTest ($call[3] -eq 'example.cards.a.FirstCardTest' -and $call[4] -eq '-TimeoutSeconds' -and $call[5] -eq 7200) 'The focused class or two-hour timeout was not forwarded to the test runner'
-    Write-Host 'PASS worker validates only the exact changed class with a two-hour timeout'
-
-    $script:focusedXml = Join-Path $checkout 'magical-vibes-application/build/test-results/test/TEST-example.cards.a.FirstCardTest.xml'
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:focusedXml) | Out-Null
-    function powershell.exe {
-        if ($script:focusedResult -in @('assertion', 'interaction')) {
-            $failure = if ($script:focusedResult -eq 'assertion') { '<failure message="Expected 19 but was 20" />' } else { '<error message="Not awaiting PermanentChosen input" />' }
-            $counts = if ($script:focusedResult -eq 'assertion') { 'failures="1" errors="0"' } else { 'failures="0" errors="1"' }
-            [System.IO.File]::WriteAllText($script:focusedXml, "<testsuite tests=`"1`" $counts><testcase name=`"trampleDamageTriggersDestruction`">$failure</testcase></testsuite>")
-        }
-        $global:LASTEXITCODE = if ($script:focusedResult -eq 'timeout') { 124 } else { 1 }
-    }
-    try {
-        foreach ($mode in @('assertion', 'interaction')) {
-            $script:focusedResult = $mode
-            $failed = & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot
-            Assert-ReviewTest $failed "Focused validation rejected a compiled $mode failure"
-        }
-        Remove-Item -LiteralPath $script:focusedXml
-        foreach ($mode in @('build', 'timeout')) {
-            $script:focusedResult = $mode
-            $validationWarnings = @()
-            $failed = & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot -WarningVariable validationWarnings
-            $expected = if ($mode -eq 'build') { 'build or tooling failure' } else { 'two-hour' }
-            Assert-ReviewTest ($failed -and ($validationWarnings -join ' ') -match $expected) "Focused validation did not warn and continue after a $mode failure"
-        }
-    }
-    finally { Remove-Item Function:\powershell.exe }
-    Write-Host 'PASS focused validation accepts assertion/interaction failures and warns on build failures/timeouts'
+    Assert-ReviewTest ($prompt -match 'Do not launch Gradle or run tests yourself' -and $prompt -match 'without local compilation or test execution' -and $prompt -match 'CI server validates them') 'The reviewing agent was not instructed to defer validation to CI'
+    Assert-ReviewTest ($prompt -notmatch 'delegate all test execution to the worker|worker validates each changed class|worker runs scripts/run-card-test') 'The review prompt still promises local worker validation'
+    Write-Host 'PASS reviewing agent defers compilation and test execution to CI'
 
     $unicodePath = Join-Path $testRoot 'unicode-result.json'
     $unicodeName = 'A' + [char] 0x00e9 + 'ther Adept'
@@ -235,60 +190,38 @@ try {
     $script:simulatePushRace = $false
     Write-Host 'PASS concurrent main push is fetched, rebased, and retried'
 
-    $mockFocusedTests = (Get-Item Function:\Invoke-ReviewFocusedTests).ScriptBlock
-    Set-Item Function:\Invoke-ReviewFocusedTests -Value $script:actualFocusedTests
+    $script:localTestRunnerCalls = 0
     function powershell.exe {
-        Write-Output 'Simulated compileTestJava failure'
-        $global:LASTEXITCODE = 1
+        $script:localTestRunnerCalls++
+        throw 'The worker must leave compilation and test execution to CI.'
     }
-    $buildFailureResults = @()
+    $ciDeferredResults = @()
     try {
         foreach ($outcome in @('FINDINGS', 'PASS')) {
-            $checkout = New-ReviewTestCheckout "build-failure-$outcome"
+            $checkout = New-ReviewTestCheckout "ci-deferred-$outcome"
             $script:mockOutcome = $outcome
             $script:mockPassWithTests = $true
-            $directory = Join-Path $checkout 'magical-vibes-review-server/build/task-build'
+            $script:mockInvalidTestSource = $true
+            $directory = Join-Path $checkout 'magical-vibes-review-server/build/task-ci-deferred'
             $beforeInvocations = $script:reviewInvocations
-            $taskOutput = @(Invoke-ReviewTask $checkout $task $directory 3>&1)
-            $validationWarnings = @($taskOutput | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
-            $result = $taskOutput | Where-Object { $_ -isnot [System.Management.Automation.WarningRecord] }
-            Assert-ReviewTest ($result.Result.outcome -eq $outcome -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Test build failure stopped publication or changed the review verdict'
-            Assert-ReviewTest ($result.Result.findings.Count -eq $(if ($outcome -eq 'FINDINGS') { 1 } else { 0 }) -and $null -eq $result.Result.executionError -and $null -eq $result.Result.publicationError) 'Build diagnostics were classified as card findings or publication errors'
-            Assert-ReviewTest (($validationWarnings -join ' ') -match 'build or tooling failure' -and (Get-Content -LiteralPath (Join-Path $directory 'FirstCardTest.log') -Raw) -match 'Simulated compileTestJava failure') 'Build diagnostics or the focused validation log were lost'
-            Assert-ReviewTest ($script:reviewInvocations -eq $beforeInvocations + 1 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000296) 'Build failure triggered an extra review or discarded token usage'
-            Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Build failure left unpushed or unfinished test changes'
+            $result = Invoke-ReviewTask $checkout $task $directory
+            Assert-ReviewTest ($result.Result.outcome -eq $outcome -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Tests awaiting CI validation stopped publication or changed the review verdict'
+            Assert-ReviewTest ($result.Result.findings.Count -eq $(if ($outcome -eq 'FINDINGS') { 1 } else { 0 }) -and $null -eq $result.Result.executionError -and $null -eq $result.Result.publicationError) 'Deferred CI validation was classified as a review or publication failure'
+            Assert-ReviewTest ($script:localTestRunnerCalls -eq 0 -and -not (Test-Path -LiteralPath (Join-Path $directory 'FirstCardTest.log'))) 'The worker attempted local test validation'
+            Assert-ReviewTest ((Get-Content -LiteralPath (Join-Path $checkout $script:taskTestPath) -Raw) -eq 'Invalid Java source for CI to reject') 'The worker did not preserve test changes for CI validation'
+            Assert-ReviewTest ($script:reviewInvocations -eq $beforeInvocations + 1 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000296) 'Deferred validation triggered an extra review or discarded token usage'
+            Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Test changes awaiting CI validation were not pushed or left unfinished changes'
             Assert-ReviewCheckout $checkout -Pull
-            $buildFailureResults += $result
+            $ciDeferredResults += $result
         }
     }
     finally {
         Remove-Item Function:\powershell.exe
-        Set-Item Function:\Invoke-ReviewFocusedTests -Value $mockFocusedTests
         $script:mockOutcome = 'FINDINGS'
         $script:mockPassWithTests = $false
+        $script:mockInvalidTestSource = $false
     }
-    Write-Host 'PASS test build failures publish tests and allow the next claim for FINDINGS and PASS reviews'
-
-    $checkout = New-ReviewTestCheckout 'assertion-failure'
-    $script:mockTestAssertionFailure = $true
-    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-assertion')
-    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Bug-exposing test failures were not published'
-    $script:mockTestAssertionFailure = $false
-    Write-Host 'PASS bug-exposing failing tests publish with descriptions only'
-
-    $checkout = New-ReviewTestCheckout 'unconfirmed-test-failure'
-    $script:mockOutcome = 'PASS'
-    $script:mockPassWithTests = $true
-    $script:mockTestAssertionFailure = $true
-    $beforeInvocations = $script:reviewInvocations
-    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-unconfirmed-test-failure')
-    Assert-ReviewTest ($result.Result.outcome -eq 'PASS' -and $result.Result.findings.Count -eq 0 -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Compiled failing tests without a confirmed card bug were not published'
-    Assert-ReviewTest ($null -eq $result.Result.executionError -and $null -eq $result.Result.publicationError) 'A test failure was classified as an execution or publication failure'
-    Assert-ReviewTest ($script:reviewInvocations -eq $beforeInvocations + 1 -and $result.Result.inputTokens -eq 1000 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000296) 'A test failure triggered another review or an extra token charge'
-    Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Accepted failing tests were not pushed or left unfinished changes'
-    $script:mockPassWithTests = $false
-    $script:mockTestAssertionFailure = $false
-    Write-Host 'PASS compiled failing tests publish without findings or a follow-up review'
+    Write-Host 'PASS worker publishes tests without local validation for FINDINGS and PASS reviews'
 
     $pendingPath = Join-Path $testRoot 'pending.json'
     [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; inputTokens=1000; cachedInputTokens=800; outputTokens=200; estimatedCostUsd=[decimal] 0.000296}; stop=$false} | ConvertTo-Json -Depth 5))
@@ -303,17 +236,17 @@ try {
     Assert-ReviewTest ($script:uploaded.estimatedCostUsd -eq [decimal] 0.000296 -and $script:uploaded.cachedInputTokens -eq 800) 'Upload retry lost saved cost or usage'
     Write-Host 'PASS upload retries retain results until acknowledged'
 
-    foreach ($completed in $buildFailureResults) {
+    foreach ($completed in $ciDeferredResults) {
         [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=$completed.Result; stop=$completed.Stop} | ConvertTo-Json -Depth 12))
         Send-ReviewPendingResult 'http://review.test' $pendingPath
-        Assert-ReviewTest (-not (Test-Path -LiteralPath $pendingPath) -and $script:uploaded.outcome -eq $completed.Result.outcome -and $script:uploaded.findings.Count -eq $completed.Result.findings.Count -and $script:uploaded.publicationStatus -eq 'PUSHED') 'Build failure prevented upload or stopped the worker after acknowledgement'
+        Assert-ReviewTest (-not (Test-Path -LiteralPath $pendingPath) -and $script:uploaded.outcome -eq $completed.Result.outcome -and $script:uploaded.findings.Count -eq $completed.Result.findings.Count -and $script:uploaded.publicationStatus -eq 'PUSHED') 'Deferred CI validation prevented upload or stopped the worker after acknowledgement'
     }
-    Write-Host 'PASS reviews upload after build failures without stopping the worker'
+    Write-Host 'PASS reviews upload with validation deferred to CI without stopping the worker'
 
-    [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; publicationError='Compiler failed after validation'}; stop=$true} | ConvertTo-Json -Depth 5))
+    [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; publicationError='Could not push after five attempts'}; stop=$true} | ConvertTo-Json -Depth 5))
     $message = ''
     try { Send-ReviewPendingResult 'http://review.test' $pendingPath } catch { $message = $_.Exception.Message }
-    Assert-ReviewTest ($message -match 'Compiler failed after validation' -and -not (Test-Path -LiteralPath $pendingPath)) 'The final worker error hid the actual validation failure or retained an acknowledged result'
+    Assert-ReviewTest ($message -match 'Could not push after five attempts' -and -not (Test-Path -LiteralPath $pendingPath)) 'The final worker error hid the publication failure or retained an acknowledged result'
     Write-Host 'PASS final worker errors include the reason for stopping'
 }
 finally {

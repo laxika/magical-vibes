@@ -134,9 +134,9 @@ $instructions
 Review run $($Task.runId): $($Task.runName).
 The shared implementation is $($Task.className), at $($Task.sourcePath). Review the full shared implementation and related card faces even if the context helper calls this printing a reprint. A registration-only check is insufficient.
 Do not stage, commit, push, or switch branches. The worker publishes your permitted card-test changes. Production implementations, effects, predicates, docs, and test harness code are read-only.
-Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and permitted test edits, then return your structured review result. The worker runs scripts/run-card-test.ps1 for each changed test class with an exact fully-qualified class filter and a 7200-second (two-hour) timeout before publishing. Only edit test classes belonging to the card under review (including its related faces); never run other cards' tests, package filters, wildcards, module-wide tests, or the full suite. Compilation may legitimately compile more than 30,000 card/test classes even for one filtered test class. Pending compilation is not a test failure or executionError; do not return ERROR just because tests have not run yet. The worker handles validation and reports actual build/tool failures separately.
+Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and create or update the needed card tests, then return your structured review result. Only edit test classes belonging to the card under review (including its related faces). The worker publishes permitted test changes directly without local compilation or test execution; the CI server validates them and alerts us to failures. Tests that have not been run are not an executionError; do not return ERROR because validation is deferred to CI.
 Your final response MUST follow the provided JSON schema. outcome is PASS when there are no real findings, otherwise FINDINGS. findings is an array of individual bug descriptions: explain what is wrong and why it matters, like the current text reports. Include no test code, test names, test output, patches, or coverage commentary in findings or the text report. Return the actual oracle card name as cardName. Do not report tool failures as card bugs: if the review cannot be completed, return ERROR with an empty findings array and an executionError description. For completed reviews, executionError must be null.
-Permitted test changes are published even when compilation fails, test execution times out, assertions fail, or a test uses an invalid interaction sequence. Validation failures are logged for later repair on main and do not stop the worker or change the review verdict. Test failures do not require a confirmed card finding; PASS describes the card review verdict, not the test run.
+Permitted test changes are published for both PASS and FINDINGS reviews. PASS describes the card review verdict; it does not claim that compilation or tests succeeded. CI failures are handled separately from the review verdict.
 "@
 }
 
@@ -202,53 +202,6 @@ function Read-ReviewOutput {
     return $review
 }
 
-function Invoke-ReviewFocusedTests {
-    [CmdletBinding()]
-    param([string] $Root, [string[]] $Paths, [string] $LogDirectory)
-    $failed = $false
-    foreach ($path in $Paths) {
-        $file = Join-Path $Root $path
-        if (-not (Test-Path -LiteralPath $file)) { throw "Review deleted a test file: $path" }
-        $source = [System.IO.File]::ReadAllText($file)
-        $package = [regex]::Match($source, '\bpackage\s+([\w.]+)\s*;')
-        if (-not $package.Success) { throw "Cannot resolve test package: $path" }
-        $className = $package.Groups[1].Value + '.' + [System.IO.Path]::GetFileNameWithoutExtension($file)
-        $testLog = Join-Path $LogDirectory ([System.IO.Path]::GetFileNameWithoutExtension($file) + '.log')
-        Write-Host "Validating $className only; compilation and tests may take up to two hours. Log: $testLog"
-        $startTime = Get-Date
-        $savedPreference = $ErrorActionPreference
-        Push-Location -LiteralPath $Root
-        try {
-            $ErrorActionPreference = 'Continue'
-            & powershell.exe -NoProfile -File (Join-Path $Root 'scripts/run-card-test.ps1') $className -TimeoutSeconds 7200 *> $testLog
-            $testExit = $LASTEXITCODE
-        }
-        finally { $ErrorActionPreference = $savedPreference; Pop-Location }
-        if ($testExit -eq 124) {
-            $failed = $true
-            Write-Warning "Focused compilation/test execution exceeded the two-hour (7200-second) timeout: $className. Test changes will still be published for later repair. Log: $testLog"
-            continue
-        }
-        if ($testExit -ne 0) {
-            $xmlPath = Join-Path $Root "magical-vibes-application/build/test-results/test/TEST-$className.xml"
-            if (-not (Test-Path -LiteralPath $xmlPath) -or (Get-Item -LiteralPath $xmlPath).LastWriteTime -lt $startTime) {
-                $failed = $true
-                Write-Warning "Focused tests did not run successfully (build or tooling failure): $className. Test changes will still be published for later repair. Log: $testLog"
-                continue
-            }
-            $suite = ([xml](Get-Content -LiteralPath $xmlPath -Raw -Encoding UTF8)).testsuite
-            if ([int] $suite.failures + [int] $suite.errors -eq 0) {
-                $failed = $true
-                Write-Warning "Focused test execution failed without a behavioral test failure: $className. Test changes will still be published for later repair. Log: $testLog"
-                continue
-            }
-            $failed = $true
-            Write-Host "Compilation succeeded, but focused tests failed in $className. Test failures do not block publication. Log: $testLog"
-        }
-    }
-    return $failed
-}
-
 function Publish-ReviewTests {
     param([string] $Root, $Task, [string[]] $Paths, [string] $ReviewedCommit, [string] $Directory)
     if ((Get-ReviewGitText $Root @('branch', '--show-current')) -ne 'main' -or (Get-ReviewGitText $Root @('rev-parse', 'HEAD')) -ne $ReviewedCommit) {
@@ -299,9 +252,6 @@ function Invoke-ReviewTask {
         $result.cardName = $review.cardName
         $result.findings = @($review.findings)
         try {
-            # Validation failures are logged and accepted for later repair on main,
-            # independently of the card review verdict.
-            Invoke-ReviewFocusedTests $Root $changes $Directory | Out-Null
             $published = Publish-ReviewTests $Root $Task $changes $reviewedCommit $Directory
             if ($published) { $result.publicationStatus = 'PUSHED'; $result.publishedCommit = $published }
         }
