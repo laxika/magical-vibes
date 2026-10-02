@@ -41,4 +41,61 @@ class BatteringSliverTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, nonSliver, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Trample starts when Battering Sliver resolves, not while it is on the stack")
+    void grantsTrampleOnlyAfterResolving() {
+        Permanent ownSliver = addCreatureReady(player1, new SynchronousSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new SynchronousSliver());
+
+        harness.castFromHand(player1, new BatteringSliver(), "{5}{R}");
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Battering Sliver"), Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Slivers lose granted trample when Battering Sliver dies")
+    void removesTrampleWhenSourceDies() {
+        Permanent source = addCreatureReady(player1, new BatteringSliver());
+        Permanent ownSliver = addCreatureReady(player1, new SynchronousSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new SynchronousSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isTrue();
+
+        source.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trample remains until the last Battering Sliver leaves the battlefield")
+    void retainsTrampleWhileAnotherSourceRemains() {
+        Permanent firstSource = addCreatureReady(player1, new BatteringSliver());
+        Permanent secondSource = addCreatureReady(player2, new BatteringSliver());
+        Permanent sliver = addCreatureReady(player1, new SynchronousSliver());
+
+        firstSource.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstSource);
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.TRAMPLE)).isTrue();
+
+        secondSource.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondSource);
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.TRAMPLE)).isFalse();
+    }
 }
