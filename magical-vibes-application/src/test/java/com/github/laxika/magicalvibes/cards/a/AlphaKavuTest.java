@@ -98,7 +98,7 @@ class AlphaKavuTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new AlphaKavu());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -31,7 +31,7 @@ class AntManScottLangTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent antMan = harness.addToBattlefieldAndReturn(player1, new AntManScottLang());
         antMan.setSummoningSick(true);
-        antMan.setTapped(true);
+        antMan.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

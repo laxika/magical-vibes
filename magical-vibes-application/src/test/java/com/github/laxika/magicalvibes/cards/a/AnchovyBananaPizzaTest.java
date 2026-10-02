@@ -69,7 +69,7 @@ class AnchovyBananaPizzaTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Food cannot pay the activation's tap cost")
     void tappedFoodCannotBeActivated() {
-        harness.addToBattlefieldAndReturn(player1, new AnchovyBananaPizza()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new AnchovyBananaPizza()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

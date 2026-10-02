@@ -86,7 +86,7 @@ class AnjeFalkenrathTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent anje = addReadyAnje();
-        anje.setTapped(true);
+        anje.tap();
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -100,8 +100,8 @@ class AnjeFalkenrathTest extends BaseCardTest {
     void madnessDiscardFromAnotherSourceUntapsOnlyControllersAnje() {
         Permanent anje = addReadyAnje();
         Permanent opposingAnje = harness.addToBattlefieldAndReturn(player2, new AnjeFalkenrath());
-        anje.setTapped(true);
-        opposingAnje.setTapped(true);
+        anje.tap();
+        opposingAnje.tap();
         harness.setHand(player1, List.of(new FaithlessLooting(), new AsylumVisitor(), new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);

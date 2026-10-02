@@ -144,7 +144,7 @@ class AncientSilverbackTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ape = harness.addToBattlefieldAndReturn(player1, new AncientSilverback());
         ape.setSummoningSick(true);
-        ape.setTapped(true);
+        ape.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

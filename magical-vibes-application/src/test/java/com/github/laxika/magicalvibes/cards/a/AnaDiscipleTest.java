@@ -102,7 +102,7 @@ class AnaDiscipleTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void neitherAbilityCanBeActivatedWhileTapped(int abilityIndex) {
         Permanent disciple = addCreatureReady(player1, new AnaDisciple());
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, abilityIndex == 0 ? ManaColor.BLUE : ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, disciple.getId()))

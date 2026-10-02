@@ -98,7 +98,7 @@ class AnabaAncestorTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         setupAncestor();
-        findPermanent(player1, "Anaba Ancestor").setTapped(true);
+        findPermanent(player1, "Anaba Ancestor").tap();
         UUID targetId = harness.getPermanentId(player1, "Anaba Bodyguard");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

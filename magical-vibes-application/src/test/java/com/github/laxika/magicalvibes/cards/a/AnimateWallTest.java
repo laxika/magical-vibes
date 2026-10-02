@@ -182,7 +182,7 @@ class AnimateWallTest extends BaseCardTest {
     void enchantedTappedWallCannotAttack() {
         Permanent wall = addWall();
         attachAnimateWall(wall);
-        wall.setTapped(true);
+        wall.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

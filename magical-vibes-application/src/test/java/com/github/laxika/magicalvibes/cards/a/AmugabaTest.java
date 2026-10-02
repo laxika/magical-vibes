@@ -111,7 +111,7 @@ class AmugabaTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick using two generic and one blue mana")
     void canActivateWhileTappedAndSummoningSick() {
         var permanent = harness.addToBattlefieldAndReturn(player1, new Amugaba());
-        permanent.setTapped(true);
+        permanent.tap();
         permanent.setSummoningSick(true);
         harness.setHand(player1, List.of(new Amugaba()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

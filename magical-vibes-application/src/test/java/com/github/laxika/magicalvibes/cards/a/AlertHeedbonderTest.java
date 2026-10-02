@@ -76,7 +76,7 @@ class AlertHeedbonderTest extends BaseCardTest {
     @DisplayName("Tapped vigilant creatures still count")
     void tappedVigilantCreatureCounts() {
         var heedbonder = harness.addToBattlefieldAndReturn(player1, new AlertHeedbonder());
-        heedbonder.setTapped(true);
+        heedbonder.tap();
         harness.setLife(player1, 10);
 
         advanceToEndStep(player1);

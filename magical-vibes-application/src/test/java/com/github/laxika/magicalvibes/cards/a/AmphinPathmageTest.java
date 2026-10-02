@@ -56,7 +56,7 @@ class AmphinPathmageTest extends BaseCardTest {
     void canTargetItselfWhileSummoningSickAndTapped() {
         Permanent pathmage = harness.addToBattlefieldAndReturn(player1, new AmphinPathmage());
         pathmage.setSummoningSick(true);
-        pathmage.setTapped(true);
+        pathmage.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, pathmage.getId());

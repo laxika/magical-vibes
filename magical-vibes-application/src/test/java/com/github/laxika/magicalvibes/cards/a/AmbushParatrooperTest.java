@@ -47,7 +47,7 @@ class AmbushParatrooperTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Paratrooper can activate repeatedly")
     void repeatedActivationsStackWithoutTapping() {
         Permanent paratrooper = harness.addToBattlefieldAndReturn(player1, new AmbushParatrooper());
-        paratrooper.setTapped(true);
+        paratrooper.tap();
         paratrooper.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 

@@ -90,7 +90,7 @@ class AltarsReapTest extends BaseCardTest {
     @DisplayName("A tapped creature can pay the sacrifice cost")
     void canSacrificeTappedCreature() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new AltarsReap()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

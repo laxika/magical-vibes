@@ -74,7 +74,7 @@ class AnjesRavagerTest extends BaseCardTest {
 
     @Test
     void tappedRavagerIsNotRequiredToAttack() {
-        addCreatureReady(player1, new AnjesRavager()).setTapped(true);
+        addCreatureReady(player1, new AnjesRavager()).tap();
 
         declareAttackers(List.of());
 

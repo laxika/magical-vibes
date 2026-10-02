@@ -99,7 +99,7 @@ class AngryRabbleTest extends BaseCardTest {
     @Test
     void activatedAbilityCanBeRepeatedWhileTappedAndSummoningSick() {
         Permanent rabble = harness.addToBattlefieldAndReturn(player1, new AngryRabble());
-        rabble.setTapped(true);
+        rabble.tap();
         rabble.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 10);

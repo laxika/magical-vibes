@@ -155,7 +155,7 @@ class AlluringSirenTest extends BaseCardTest {
     void tappedTargetIsNotRequiredToAttack() {
         addReadySiren(player1);
         Permanent target = addCreatureReady(player2, new RuneclawBear());
-        target.setTapped(true);
+        target.tap();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 

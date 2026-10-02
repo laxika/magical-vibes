@@ -167,7 +167,7 @@ class AltarOfTheWretchedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private Permanent findBonemass() {

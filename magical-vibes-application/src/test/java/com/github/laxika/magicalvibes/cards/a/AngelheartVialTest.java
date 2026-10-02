@@ -139,7 +139,7 @@ class AngelheartVialTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent vial = harness.addToBattlefieldAndReturn(player1, new AngelheartVial());
         vial.setCounterCount(CounterType.CHARGE, 4);
-        vial.setTapped(true);
+        vial.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

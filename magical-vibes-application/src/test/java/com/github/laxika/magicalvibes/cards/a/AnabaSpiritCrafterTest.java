@@ -132,7 +132,7 @@ class AnabaSpiritCrafterTest extends BaseCardTest {
     void tappedSourceStillGrantsBonus() {
         Permanent crafter = harness.addToBattlefieldAndReturn(player1, new AnabaSpiritCrafter());
         Permanent bodyguard = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
-        crafter.setTapped(true);
+        crafter.tap();
 
         assertThat(gqs.getEffectivePower(gd, crafter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, crafter)).isEqualTo(3);

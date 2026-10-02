@@ -141,7 +141,7 @@ class AltarOfBoneTest extends BaseCardTest {
     @DisplayName("A tapped creature with summoning sickness can pay the sacrifice cost")
     void canSacrificeTappedSummoningSickCreature() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         sacrifice.setSummoningSick(true);
         harness.setHand(player1, List.of(new AltarOfBone()));
         harness.setLibrary(player1, List.of(new Aurochs()));

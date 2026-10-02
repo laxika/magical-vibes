@@ -58,7 +58,7 @@ class AnglerTurtleTest extends BaseCardTest {
     void tappedCreatureIsNotForced() {
         harness.addToBattlefield(player1, new AnglerTurtle());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
 
         declareAttackers(player2, List.of());
 

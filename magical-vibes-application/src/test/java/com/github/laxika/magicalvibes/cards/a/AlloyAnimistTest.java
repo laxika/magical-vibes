@@ -92,7 +92,7 @@ class AlloyAnimistTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent animist = harness.addToBattlefieldAndReturn(player1, new AlloyAnimist());
         animist.setSummoningSick(true);
-        animist.setTapped(true);
+        animist.tap();
         Permanent refractor = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);

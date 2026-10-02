@@ -89,7 +89,7 @@ class AliBabaTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent aliBaba = harness.addToBattlefieldAndReturn(player1, new AliBaba());
-        aliBaba.setTapped(true);
+        aliBaba.tap();
         aliBaba.setSummoningSick(true);
         Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
         harness.addMana(player1, ManaColor.RED, 1);

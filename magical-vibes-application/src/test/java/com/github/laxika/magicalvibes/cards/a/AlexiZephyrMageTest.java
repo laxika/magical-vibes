@@ -208,7 +208,7 @@ class AlexiZephyrMageTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent mage = addReadyMage();
-        mage.setTapped(true);
+        mage.tap();
         harness.setHand(player1, List.of(new PygmyRazorback(), new PygmyRazorback()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

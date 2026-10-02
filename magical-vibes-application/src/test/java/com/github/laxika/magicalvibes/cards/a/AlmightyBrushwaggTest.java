@@ -78,7 +78,7 @@ class AlmightyBrushwaggTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent brushwagg = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
         brushwagg.setSummoningSick(true);
-        brushwagg.setTapped(true);
+        brushwagg.tap();
         addMana(player1, 1);
 
         harness.activateAbility(player1, 0, null, null);

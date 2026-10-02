@@ -144,7 +144,7 @@ class AncientHydraTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent hydra = harness.addToBattlefieldAndReturn(player1, new AncientHydra());
         hydra.setSummoningSick(true);
-        hydra.setTapped(true);
+        hydra.tap();
         hydra.setCounterCount(CounterType.FADE, 1);
         int lifeBefore = gd.getLife(player2.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);

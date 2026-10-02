@@ -20,7 +20,7 @@ class AmbassadorLaquatusTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new AmbassadorLaquatus());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.setLibrary(player2, List.of(
                 new AmbassadorLaquatus(), new AmbassadorLaquatus(), new AmbassadorLaquatus()));
         harness.addMana(player1, ManaColor.BLUE, 3);

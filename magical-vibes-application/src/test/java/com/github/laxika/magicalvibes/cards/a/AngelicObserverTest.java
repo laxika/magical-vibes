@@ -34,7 +34,7 @@ class AngelicObserverTest extends BaseCardTest {
     @Test
     void tappedCitizensEachReduceCostByOne() {
         for (int i = 0; i < 2; i++) {
-            harness.addToBattlefieldAndReturn(player1, new CivilServant()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new CivilServant()).tap();
         }
         harness.setHand(player1, List.of(new AngelicObserver()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

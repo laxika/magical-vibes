@@ -118,7 +118,7 @@ class AnointedChoristerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent chorister = harness.addToBattlefieldAndReturn(player1, new AnointedChorister());
         chorister.setSummoningSick(true);
-        chorister.setTapped(true);
+        chorister.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -122,7 +122,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent amulet = addCreatureReady(player1, new AmuletOfUnmaking());
-        amulet.setTapped(true);
+        amulet.tap();
         Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.addMana(player1, ManaColor.WHITE, 5);
 

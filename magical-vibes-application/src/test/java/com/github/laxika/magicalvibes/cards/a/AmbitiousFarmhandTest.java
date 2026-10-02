@@ -162,7 +162,7 @@ class AmbitiousFarmhandTest extends BaseCardTest {
     void tappedSummoningSickFarmhandCanTransform() {
         Permanent farmhand = harness.addToBattlefieldAndReturn(player1, new AmbitiousFarmhand());
         farmhand.setSummoningSick(true);
-        farmhand.setTapped(true);
+        farmhand.tap();
         harness.addToBattlefield(player1, new HinterlandLogger());
         harness.addToBattlefield(player1, new CatharCommando());
         harness.addMana(player1, ManaColor.WHITE, 3);

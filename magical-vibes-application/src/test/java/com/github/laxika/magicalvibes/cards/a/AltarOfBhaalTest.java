@@ -167,7 +167,7 @@ class AltarOfBhaalTest extends BaseCardTest {
     @Test
     void cannotActivateTappedAltar() {
         LurkingRoper target = prepareActivation();
-        findPermanent(player1, "Altar of Bhaal").setTapped(true);
+        findPermanent(player1, "Altar of Bhaal").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))

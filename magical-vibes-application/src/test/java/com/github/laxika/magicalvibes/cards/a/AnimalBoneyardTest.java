@@ -190,7 +190,7 @@ class AnimalBoneyardTest extends BaseCardTest {
     void cannotActivateTappedLand() {
         Permanent forest = attachToForest();
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

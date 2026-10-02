@@ -182,7 +182,7 @@ class AlpineGuideTest extends BaseCardTest {
     @DisplayName("A tapped Alpine Guide is not required to attack")
     void tappedGuideNeedNotAttack() {
         Permanent guide = addCreatureReady(player1, new AlpineGuide());
-        guide.setTapped(true);
+        guide.tap();
 
         declareAttackers(List.of());
 

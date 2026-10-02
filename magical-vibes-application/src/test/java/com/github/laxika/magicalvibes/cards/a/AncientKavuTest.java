@@ -80,7 +80,7 @@ class AncientKavuTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Kavu can activate repeatedly")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AncientKavu());
-        kavu.setTapped(true);
+        kavu.tap();
         kavu.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

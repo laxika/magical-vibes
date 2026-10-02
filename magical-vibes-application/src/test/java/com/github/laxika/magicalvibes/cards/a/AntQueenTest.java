@@ -124,7 +124,7 @@ class AntQueenTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent queen = harness.addToBattlefieldAndReturn(player1, new AntQueen());
         queen.setSummoningSick(true);
-        queen.setTapped(true);
+        queen.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

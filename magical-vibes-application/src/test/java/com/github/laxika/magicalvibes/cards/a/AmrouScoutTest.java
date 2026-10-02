@@ -117,7 +117,7 @@ class AmrouScoutTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         addReadyScout();
-        findPermanent(player1, "Amrou Scout").setTapped(true);
+        findPermanent(player1, "Amrou Scout").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -92,7 +92,7 @@ class AnointerOfChampionsTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent anointer = addCreatureReady(player1, new AnointerOfChampions());
-        anointer.setTapped(true);
+        anointer.tap();
         Permanent wolf = addAttackingCreature(player1, new TimberpackWolf());
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 

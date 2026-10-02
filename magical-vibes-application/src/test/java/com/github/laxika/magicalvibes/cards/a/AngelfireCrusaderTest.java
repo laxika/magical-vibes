@@ -100,7 +100,7 @@ class AngelfireCrusaderTest extends BaseCardTest {
         Permanent crusader = addCreatureReady(player1, new AngelfireCrusader());
         Permanent otherCrusader = addCreatureReady(player1, new AngelfireCrusader());
         Permanent opposingCrusader = addCreatureReady(player2, new AngelfireCrusader());
-        crusader.setTapped(true);
+        crusader.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
