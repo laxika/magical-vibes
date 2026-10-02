@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnimistsMight.class, AirElemental.class, GrizzlyBears.class, IsamaruHoundOfKonda.class})
+@CardUsed({AnimistsMight.class, AirElemental.class, GrizzlyBears.class, IsamaruHoundOfKonda.class,
+        KarnScionOfUrza.class})
 class AnimistsMightTest extends BaseCardTest {
 
     @Test
@@ -31,8 +30,7 @@ class AnimistsMightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");
-        harness.castSorcery(player1, 0, List.of(source.getId(), targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), targetId));
 
         harness.assertInGraveyard(player2, "Air Elemental");
     }
@@ -41,12 +39,12 @@ class AnimistsMightTest extends BaseCardTest {
     @DisplayName("Can deal twice the source creature's power to a planeswalker")
     void dealsTwicePowerToPlaneswalker() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
-        Permanent planeswalker = addPlaneswalker(player2, 5);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new KarnScionOfUrza());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new AnimistsMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(source.getId(), planeswalker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), planeswalker.getId()));
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
@@ -90,14 +88,49 @@ class AnimistsMightTest extends BaseCardTest {
                 .hasMessageContaining("don't control");
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void nonlegendaryCreatureDealsDamageWhenFullCostIsPaid() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AnimistsMight()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void usesPowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AnimistsMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        source.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AnimistsMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Animist's Might");
     }
 }
