@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,16 +13,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArgentSphinx.class, Memnite.class})
 class ArgentSphinxTest extends BaseCardTest {
 
-    // ===== Metalcraft restriction =====
 
     @Test
     @DisplayName("Cannot activate ability without three artifacts")
     void cannotActivateWithoutThreeArtifacts() {
         addSphinxReady(player1);
-        harness.addToBattlefield(player1, new Spellbook());
-        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player1, new Memnite());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -46,7 +46,6 @@ class ArgentSphinxTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Argent Sphinx"));
     }
 
-    // ===== Exile and return =====
 
     @Test
     @DisplayName("Sphinx is exiled when ability resolves")
@@ -118,7 +117,6 @@ class ArgentSphinxTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Argent Sphinx");
     }
 
-    // ===== Mana cost =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
@@ -143,25 +141,116 @@ class ArgentSphinxTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    void returnUsesTheStackAtTheNextEndStep() {
+        addSphinxReady(player1);
+        addThreeArtifacts(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
+    }
+
+    @Test
+    void opponentsArtifactsDoNotEnableMetalcraft() {
+        addSphinxReady(player1);
+        addThreeArtifacts(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Metalcraft");
+    }
+
+    @Test
+    void stolenSphinxReturnsUnderTheActivatingPlayersControl() {
+        ArgentSphinx card = new ArgentSphinx();
+        card.setOwnerId(player2.getId());
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, card);
+        gd.stolenCreatures.put(sphinx.getId(), player2.getId());
+        addThreeArtifacts(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        advanceToEndStep();
+
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
+        harness.assertNotOnBattlefield(player2, "Argent Sphinx");
+    }
+
+    @Test
+    void losingMetalcraftAfterActivationDoesNotStopExileOrReturn() {
+        addSphinxReady(player1);
+        addThreeArtifacts(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof Memnite);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        advanceToEndStep();
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new ArgentSphinx());
+        sphinx.setSummoningSick(true);
+        sphinx.tap();
+        addThreeArtifacts(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        advanceToEndStep();
+        assertThat(findPermanent(player1, "Argent Sphinx").isTapped()).isFalse();
+    }
+
+    @Test
+    void activationDuringEndStepWaitsForTheFollowingEndStep() {
+        addSphinxReady(player1);
+        addThreeArtifacts(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Argent Sphinx");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Argent Sphinx");
+    }
 
     private Permanent addSphinxReady(Player player) {
-        Permanent perm = new Permanent(new ArgentSphinx());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ArgentSphinx());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void addThreeArtifacts(Player player) {
-        harness.addToBattlefield(player, new Spellbook());
-        harness.addToBattlefield(player, new LeoninScimitar());
-        harness.addToBattlefield(player, new Spellbook());
+        harness.addToBattlefield(player, new Memnite());
+        harness.addToBattlefield(player, new Memnite());
+        harness.addToBattlefield(player, new Memnite());
     }
 
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances POSTCOMBAT_MAIN -> END_STEP
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
     }
 }
