@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AuronVeneratedGuardian.class, GrizzlyBears.class, SerraAngel.class, Murder.class})
+@CardUsed({AuronVeneratedGuardian.class, GrizzlyBears.class, SerraAngel.class, Murder.class, GiantGrowth.class})
 class AuronVeneratedGuardianTest extends BaseCardTest {
 
     @Test
@@ -56,10 +57,94 @@ class AuronVeneratedGuardianTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castInstant(player2, 0, auron.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auron.getId());
 
         assertThat(findPermanents(player1, "Auron, Venerated Guardian")).isEmpty();
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    void counterIsPlacedEvenWhenDefenderHasNoCreatures() {
+        Permanent auron = addCreatureReady(player1, new AuronVeneratedGuardian());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(auron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(auron.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void ownCreaturesCannotBeExiledByShootingStar() {
+        Permanent auron = addCreatureReady(player1, new AuronVeneratedGuardian());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(auron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void killingAuronBeforeAttackTriggerResolvesDoesNotExileAnything() {
+        Permanent auron = addCreatureReady(player1, new AuronVeneratedGuardian());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        declareAttackers(List.of(0));
+        harness.castAndResolveInstant(player2, 0, auron.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Auron, Venerated Guardian");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void killingAuronInResponseToReflexiveTriggerDoesNotExileTarget() {
+        Permanent auron = addCreatureReady(player1, new AuronVeneratedGuardian());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, auron.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Auron, Venerated Guardian");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void targetThatGrowsBeyondAuronsPowerIsNotExiled() {
+        addCreatureReady(player1, new AuronVeneratedGuardian());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }
