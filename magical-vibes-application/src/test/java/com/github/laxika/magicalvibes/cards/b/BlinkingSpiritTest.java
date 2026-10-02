@@ -87,4 +87,58 @@ class BlinkingSpiritTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Blinking Spirit");
         harness.assertNotOnBattlefield(player2, "Blinking Spirit");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Spirit can return during an opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        var spirit = harness.addToBattlefieldAndReturn(player1, new BlinkingSpirit());
+        spirit.tap();
+        spirit.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Blinking Spirit");
+        harness.assertNotOnBattlefield(player1, "Blinking Spirit");
+    }
+
+    @Test
+    @DisplayName("Multiple activations return the source only once and leave other Spirits alone")
+    void repeatedActivationsDoNotReturnAnotherSpirit() {
+        harness.addToBattlefield(player1, new BlinkingSpirit());
+        var otherSpirit = harness.addToBattlefieldAndReturn(player1, new BlinkingSpirit());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherSpirit);
+    }
+
+    @Test
+    @DisplayName("An older activation cannot return the source after it leaves and reenters")
+    void olderActivationDoesNotReturnNewPermanent() {
+        var card = new BlinkingSpirit();
+        var original = harness.addToBattlefieldAndReturn(player1, card);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Blinking Spirit");
+
+        harness.setHand(player1, List.of());
+        var returned = harness.addToBattlefieldAndReturn(player1, card);
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(returned);
+        harness.assertNotInHand(player1, "Blinking Spirit");
+    }
 }
