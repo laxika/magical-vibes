@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -98,10 +100,57 @@ class BlotOutTest extends BaseCardTest {
     }
 
     private Permanent addReadyPlaneswalker(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GarrukWildspeaker());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         permanent.setCounterCount(CounterType.LOYALTY, 3);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void resolvesWithoutEligiblePermanents() {
+        harness.addToBattlefield(player1, new HillGiant());
+
+        castAtOpponent();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentCanChoosePlaneswalkerTiedWithCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent planeswalker = addReadyPlaneswalker(player2);
+
+        castAtOpponent();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(creature.getId(), planeswalker.getId());
+        harness.handlePermanentChosen(player2, planeswalker.getId());
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Garruk Wildspeaker"));
+    }
+
+    @Test
+    void faceDownCreatureHasZeroManaValue() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAtOpponent();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(faceDown.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 }
