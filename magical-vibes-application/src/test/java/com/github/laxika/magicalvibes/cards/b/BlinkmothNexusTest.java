@@ -95,14 +95,102 @@ class BlinkmothNexusTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, nexus)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, nexus)).isFalse();
         assertThat(gqs.isArtifact(gd, nexus)).isFalse();
         assertThat(gqs.isLand(gd, nexus)).isTrue();
         assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, nexus, CardSubtype.BLINKMOTH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An unanimated Nexus can boost an opponent's Blinkmoth")
+    void unanimatedNexusCanBoostOpponentsBlinkmoth() {
+        Permanent source = addCreatureReady(player1, new BlinkmothNexus());
+        Permanent target = addCreatureReady(player2, new BlinkmothNexus());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, source)).isFalse();
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A Nexus tapped for mana can still animate")
+    void tappedNexusCanAnimateUsingItsOwnMana() {
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
+        harness.tapPermanent(player1, 0);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(nexus.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, nexus)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nexus, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Animating again does not remove a resolved +1/+1 boost")
+    void repeatedAnimationPreservesBoost() {
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, nexus.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(2);
+        assertThat(nexus.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered Nexus can animate but cannot pay tap costs as a creature")
+    void newlyEnteredAnimatedNexusCannotTapForManaOrPump() {
+        Permanent nexus = harness.addToBattlefieldAndReturn(player1, new BlinkmothNexus());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, nexus)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, nexus.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(nexus.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Blinkmoth boost expires before the Nexus is animated on the next turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent nexus = addCreatureReady(player1, new BlinkmothNexus());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, nexus.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, nexus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nexus)).isEqualTo(1);
     }
 }
