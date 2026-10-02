@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AwakenerDruid.class, Forest.class})
 class AwakenerDruidTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Awakener Druid puts it on the stack with Forest target")
@@ -73,10 +73,7 @@ class AwakenerDruidTest extends BaseCardTest {
         UUID forestId = harness.getPermanentId(player1, "Forest");
         harness.castCreature(player1, 0, 0, forestId);
 
-        // Resolve creature spell
-        harness.passBothPriorities();
-        // Resolve ETB
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         Permanent forest = findPermanent(player1, "Forest");
@@ -90,8 +87,7 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(forest.getGrantedColors()).contains(CardColor.GREEN);
 
         // It's still a land
-        assertThat(forest.getCard().getType()).isEqualTo(CardType.LAND);
-        assertThat(forest.getCard().getSubtypes()).contains(CardSubtype.FOREST);
+        assertThat(gqs.getEffectiveCardTypes(gd, forest)).contains(CardType.LAND);
 
         // It's a creature now
         assertThat(gqs.isCreature(gd, forest)).isTrue();
@@ -99,8 +95,6 @@ class AwakenerDruidTest extends BaseCardTest {
         // Source-linked animation is tracked
         assertThat(gd.sourceLinkedAnimations).containsKey(forestId);
     }
-
-    // ===== Cleanup when source leaves =====
 
     @Test
     @DisplayName("Forest reverts when Awakener Druid is destroyed")
@@ -113,8 +107,7 @@ class AwakenerDruidTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, forestId);
 
         // Resolve creature spell + ETB
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
@@ -143,8 +136,7 @@ class AwakenerDruidTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, forestId);
 
         // Resolve creature spell + ETB
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
@@ -159,8 +151,6 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
-
-    // ===== Target fizzles =====
 
     @Test
     @DisplayName("ETB fizzles if target Forest is removed before resolution")
@@ -215,8 +205,6 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gd.sourceLinkedAnimations).isEmpty();
     }
 
-    // ===== Can cast without target =====
-
     @Test
     @DisplayName("Can cast without target when no Forests on battlefield")
     void canCastWithoutTarget() {
@@ -246,8 +234,6 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Multiple Druids =====
-
     @Test
     @DisplayName("Two Awakener Druids animating different Forests - removing one only reverts one")
     void twoDruidsAnimateDifferentForests() {
@@ -263,8 +249,7 @@ class AwakenerDruidTest extends BaseCardTest {
                 .filter(p -> p.getCard().getId().equals(forest1Card.getId()))
                 .findFirst().orElseThrow().getId();
         harness.castCreature(player1, 0, 0, forest1Id);
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         // Cast second Druid targeting second Forest
         harness.setHand(player1, List.of(new AwakenerDruid()));
@@ -273,8 +258,7 @@ class AwakenerDruidTest extends BaseCardTest {
                 .filter(p -> p.getCard().getId().equals(forest2Card.getId()))
                 .findFirst().orElseThrow().getId();
         harness.castCreature(player1, 0, 0, forest2Id);
-        harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.sourceLinkedAnimations).hasSize(2);
@@ -293,5 +277,50 @@ class AwakenerDruidTest extends BaseCardTest {
         assertThat(forest2.getEffectivePower()).isEqualTo(4);
         assertThat(forest2.getEffectiveToughness()).isEqualTo(5);
         assertThat(gd.sourceLinkedAnimations).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's Forest can be animated without changing its controller")
+    void animatesOpponentsForest() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new AwakenerDruid()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+
+        harness.castCreature(player1, 0, forestId);
+        resolveAllTriggers();
+
+        Permanent forest = findPermanent(player2, "Forest");
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(forest.getEffectivePower()).isEqualTo(4);
+        assertThat(forest.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Removing the second Druid preserves the first Druid's animation of the same Forest")
+    void overlappingAnimationsRemainGreenUntilBothDruidsLeave() {
+        harness.addToBattlefield(player1, new Forest());
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player1, List.of(new AwakenerDruid()));
+            harness.addMana(player1, ManaColor.GREEN, 3);
+            harness.castCreature(player1, 0, forestId);
+            resolveAllTriggers();
+        }
+        List<Permanent> druids = findPermanents(player1, "Awakener Druid");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, druids.getLast()));
+
+        Permanent forest = findPermanent(player1, "Forest");
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(forest.getEffectivePower()).isEqualTo(4);
+        assertThat(forest.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, druids.getFirst()));
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, forest)).isEmpty();
     }
 }
