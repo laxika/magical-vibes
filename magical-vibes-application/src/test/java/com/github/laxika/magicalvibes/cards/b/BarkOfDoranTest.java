@@ -1,50 +1,89 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BarkOfDoran.class, GrizzlyBears.class, GoblinPiker.class, HillGiant.class, LoxodonWarhammer.class})
 class BarkOfDoranTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
-    
-
     @Test
-    @DisplayName("Bark of Doran has equip {1} ability with correct properties")
-    void hasEquipAbility() {
-        BarkOfDoran card = new BarkOfDoran();
+    @DisplayName("Equip pays one mana and attaches only when it resolves")
+    void equipPaysOneManaAndResolves() {
+        Permanent bark = addBarkReady(player1);
+        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(bark.isAttached()).isFalse();
+        harness.passBothPriorities();
+        assertThat(bark.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCombatDamage(gd, creature)).isEqualTo(3);
     }
 
-    // ===== Casting =====
+    @Test
+    void equipRequiresMana() {
+        Permanent bark = addBarkReady(player1);
+        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(bark.isAttached()).isFalse();
+    }
+
+    @Test
+    void cannotEquipOpponentsCreature() {
+        Permanent bark = addBarkReady(player1);
+        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        assertThat(bark.isAttached()).isFalse();
+    }
+
+    @Test
+    void cannotEquipDuringCombat() {
+        Permanent bark = addBarkReady(player1);
+        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(bark.isAttached()).isFalse();
+    }
+
+    @Test
+    void multipleEquipmentUseFinalToughnessWithoutMultiplyingDamage() {
+        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+        addBarkReady(player1).setAttachedTo(creature.getId());
+        addBarkReady(player1).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
 
     @Test
     @DisplayName("Casting Bark of Doran and resolving puts it on the battlefield unattached")
@@ -59,8 +98,6 @@ class BarkOfDoranTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Bark of Doran")
                         && !p.isAttached());
     }
-
-    // ===== Static effects: toughness boost =====
 
     @Test
     @DisplayName("Equipped creature gets +0/+1")
@@ -100,8 +137,6 @@ class BarkOfDoranTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
     }
-
-    // ===== Combat damage: toughness > power → uses toughness =====
 
     @Test
     @DisplayName("Unblocked attacker with toughness > power deals toughness as combat damage")
@@ -180,8 +215,6 @@ class BarkOfDoranTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hill Giant");
     }
 
-    // ===== Combat damage: power >= toughness → uses power (normal) =====
-
     @Test
     @DisplayName("When power equals toughness after boost, creature uses power for combat damage")
     void powerEqualsToughnessUsesPower() {
@@ -224,8 +257,6 @@ class BarkOfDoranTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15); // 20 - 5
     }
 
-    // ===== Effect scope: only equipped creature =====
-
     @Test
     @DisplayName("Unequipped creature uses normal power for combat damage")
     void unequippedCreatureUsesNormalPower() {
@@ -247,8 +278,6 @@ class BarkOfDoranTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18); // 20 - 2
         assertThat(gqs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(2);
     }
-
-    // ===== Re-equip =====
 
     @Test
     @DisplayName("Bark of Doran can be moved to another creature")
@@ -274,26 +303,21 @@ class BarkOfDoranTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCombatDamage(gd, creature2)).isEqualTo(3);
     }
 
-    // ===== Helpers =====
-
     private Permanent addBarkReady(Player player) {
-        Permanent perm = new Permanent(new BarkOfDoran());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BarkOfDoran());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addEquipmentReady(Player player, com.github.laxika.magicalvibes.model.Card equipment) {
-        Permanent perm = new Permanent(equipment);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, equipment);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
