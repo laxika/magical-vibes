@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,11 +9,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HerdGnarr.class, GrizzlyBears.class})
+@CardUsed({HerdGnarr.class, AshcoatBear.class})
 class HerdGnarrTest extends BaseCardTest {
 
     @Test
@@ -23,7 +20,7 @@ class HerdGnarrTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HerdGnarr());
         Permanent gnarr = gd.playerBattlefields.get(player1.getId()).getFirst();
 
-        castGrizzlyBears(player1);
+        castAshcoatBear(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,7 +38,7 @@ class HerdGnarrTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        castGrizzlyBears(player2);
+        castAshcoatBear(player2);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, gnarr)).isEqualTo(2);
@@ -54,7 +51,7 @@ class HerdGnarrTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HerdGnarr());
         Permanent gnarr = gd.playerBattlefields.get(player1.getId()).getFirst();
 
-        castGrizzlyBears(player1);
+        castAshcoatBear(player1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -66,9 +63,24 @@ class HerdGnarrTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, gnarr)).isEqualTo(2);
     }
 
-    private void castGrizzlyBears(Player player) {
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("Does not trigger from its own entry")
+    void doesNotTriggerFromItsOwnEntry() {
+        harness.addToBattlefield(player1, new HerdGnarr());
+        Permanent existingGnarr = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.castFromHand(player1, new HerdGnarr(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent enteringGnarr = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(gqs.getEffectivePower(gd, existingGnarr)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, existingGnarr)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, enteringGnarr)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enteringGnarr)).isEqualTo(2);
+    }
+
+    private void castAshcoatBear(Player player) {
+        harness.castFromHand(player, new AshcoatBear(), "{1}{G}");
     }
 }

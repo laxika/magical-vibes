@@ -79,9 +79,9 @@ class TriumphantGetawayTest extends BaseCardTest {
     }
 
     private void chooseHeistCard() {
-        PendingInteraction.HeistCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HeistCardChoice.class);
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(choice).isNotNull();
-        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        harness.handleCardChosen(player1, 0);
     }
 }

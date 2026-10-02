@@ -80,4 +80,52 @@ class AbolishTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithDiscard(player1, 0, target.getId(), 1))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Discard is paid when casting, before the target is destroyed")
+    void discardIsPaidBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TripNoose());
+        harness.setHand(player1, List.of(new Plains(), new Abolish()));
+
+        harness.castInstantWithDiscard(player1, 1, target.getId(), 0);
+
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertNotInHand(player1, "Plains");
+        harness.assertNotInGraveyard(player1, "Abolish");
+        harness.assertOnBattlefield(player2, "Trip Noose");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Abolish");
+        harness.assertInGraveyard(player2, "Trip Noose");
+    }
+
+    @Test
+    @DisplayName("Paying the mana cost does not discard a Plains from hand")
+    void normalCostKeepsPlainsInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Crusade());
+        harness.setHand(player1, List.of(new Abolish(), new Plains()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player1, "Plains");
+        harness.assertNotInGraveyard(player1, "Plains");
+        harness.assertInGraveyard(player2, "Crusade");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its caster")
+    void canDestroyOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TripNoose());
+        harness.setHand(player1, List.of(new Abolish(), new Plains()));
+
+        harness.castInstantWithDiscard(player1, 0, target.getId(), 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Trip Noose");
+        harness.assertInGraveyard(player1, "Abolish");
+        harness.assertInGraveyard(player1, "Plains");
+    }
 }

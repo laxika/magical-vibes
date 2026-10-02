@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PunctureBlast.class, GrizzlyBears.class, GiantSpider.class})
 class PunctureBlastTest extends BaseCardTest {
 
     @Test
@@ -23,10 +25,9 @@ class PunctureBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PunctureBlast()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -36,8 +37,7 @@ class PunctureBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PunctureBlast()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         // 2/2 with three -1/-1 counters dies as a state-based action.
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -51,13 +51,9 @@ class PunctureBlastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PunctureBlast()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castInstant(player1, 0, spider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spider.getId());
 
-        Permanent resolved = harness.getGameData().playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(spider.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent resolved = findPermanent(player2, "Giant Spider");
         assertThat(resolved.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(resolved.getMarkedDamage()).isEqualTo(0);
     }

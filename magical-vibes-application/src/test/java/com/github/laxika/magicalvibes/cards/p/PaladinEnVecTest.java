@@ -24,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PaladinEnVec.class, BogWraith.class, Bandage.class, GiantSpider.class, GrizzlyBears.class,
-        HillGiant.class, HolyStrength.class, Shock.class, Terror.class, UnholyStrength.class})
+        HillGiant.class, HolyStrength.class, Pyroclasm.class, Shock.class, Terror.class,
+        UnholyStrength.class})
 class PaladinEnVecTest extends BaseCardTest {
 
     @Test
@@ -176,6 +177,18 @@ class PaladinEnVecTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() instanceof HillGiant);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof PaladinEnVec);
+    }
+
+    @Test
+    @DisplayName("Paladin en-Vec takes no noncombat damage from red")
+    void paladinTakesNoNoncombatDamageFromRed() {
+        Permanent paladin = addCreatureReady(player2, new PaladinEnVec());
+
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(paladin.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Paladin en-Vec");
     }
 
     @Test

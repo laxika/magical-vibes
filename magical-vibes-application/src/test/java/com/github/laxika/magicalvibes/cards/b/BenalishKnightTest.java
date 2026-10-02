@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.o.OdylicWraith;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishKnight.class, OdylicWraith.class})
+@CardUsed({BenalishKnight.class, GrizzlyBears.class, HillGiant.class})
 class BenalishKnightTest extends BaseCardTest {
 
     @Test
@@ -81,8 +82,8 @@ class BenalishKnightTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new OdylicWraith()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 4);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -106,7 +107,7 @@ class BenalishKnightTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new OdylicWraith());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -115,9 +116,9 @@ class BenalishKnightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof BenalishKnight);
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof OdylicWraith);
+                .noneMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card instanceof OdylicWraith);
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     @Test
@@ -126,10 +127,7 @@ class BenalishKnightTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         attacker.setAttacking(true);
 
-        OdylicWraith blockerCard = new OdylicWraith();
-        blockerCard.setPower(3);
-        blockerCard.setToughness(3);
-        Permanent blocker = addCreatureReady(player2, blockerCard);
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -140,7 +138,27 @@ class BenalishKnightTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof BenalishKnight);
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof OdylicWraith);
+                .anyMatch(permanent -> permanent.getCard() instanceof HillGiant);
+    }
+
+    @Test
+    @DisplayName("First strike also applies when blocking")
+    void firstStrikeAppliesWhenBlocking() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player1, new BenalishKnight());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof BenalishKnight);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
     }
 
     @Test

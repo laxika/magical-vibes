@@ -60,6 +60,33 @@ class ParadoxHazeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The additional upkeep occurs before the draw step")
+    void additionalUpkeepOccursBeforeDrawStep() {
+        Permanent clock = placeClock(player2);
+        placeHazeOnPlayer(player1, player2);
+        gd.turnNumber = 2;
+
+        advanceUntilDoomCounters(player2, clock, 2);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Only the enchanted player's upkeep gets an additional upkeep")
+    void onlyEnchantedPlayerGetsAdditionalUpkeep() {
+        Permanent clock = placeClock(player1);
+        placeHazeOnPlayer(player1, player2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player1);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(clock.getCounterCount(CounterType.DOOM)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Paradox Haze does not trigger when the upkeep is skipped")
     void doesNotTriggerWhenUpkeepIsSkipped() {
         harness.addToBattlefield(player1, new EonHub());
@@ -69,7 +96,7 @@ class ParadoxHazeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
         assertThat(clock.getCounterCount(CounterType.DOOM)).isZero();
@@ -80,17 +107,14 @@ class ParadoxHazeTest extends BaseCardTest {
     }
 
     private Permanent placeHazeOnPlayer(Player controller, Player enchantedPlayer) {
-        Permanent haze = new Permanent(new ParadoxHaze());
+        Permanent haze = harness.addToBattlefieldAndReturn(controller, new ParadoxHaze());
         haze.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(haze);
         return haze;
     }
 
     private void advanceUntilDoomCounters(Player activePlayer, Permanent clock, int expectedCount) {
         harness.setLibrary(activePlayer, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(activePlayer);
 
         int attempts = 0;
         while (clock.getCounterCount(CounterType.DOOM) < expectedCount && attempts++ < 20) {

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FatalBlow;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,10 +19,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Abduction.class, FatalBlow.class, RedwoodTreefolk.class})
+@CardUsed({Abduction.class, FatalBlow.class, RedwoodTreefolk.class, Disenchant.class, HowlingMine.class,
+        AuraGraft.class})
 class AbductionTest extends BaseCardTest {
-
-    // ===== Gaining control =====
 
     @Test
     @DisplayName("Resolving Abduction steals the enchanted creature")
@@ -36,8 +37,6 @@ class AbductionTest extends BaseCardTest {
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
     }
 
-    // ===== ETB untap =====
-
     @Test
     @DisplayName("Abduction untaps the enchanted creature as it enters")
     void untapsEnchantedCreature() {
@@ -48,8 +47,6 @@ class AbductionTest extends BaseCardTest {
 
         assertThat(creature.isTapped()).isFalse();
     }
-
-    // ===== Death trigger: return under owner's control =====
 
     @Test
     @DisplayName("When the enchanted creature dies, it returns to the battlefield under its owner's control")
@@ -137,14 +134,10 @@ class AbductionTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creatureCard.getId()));
     }
 
-    // ===== Target validation =====
-
     @Test
     @DisplayName("Abduction cannot enchant a non-creature permanent")
     void cannotEnchantNonCreature() {
-        // Put an enchantment (non-creature) permanent on the battlefield to target
-        Permanent nonCreature = new Permanent(new Abduction());
-        gd.playerBattlefields.get(player2.getId()).add(nonCreature);
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
 
         harness.setHand(player1, List.of(new Abduction()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -153,14 +146,77 @@ class AbductionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The untap trigger untaps the creature Abduction enchants when the trigger resolves")
+    void untapsNewEnchantedCreatureAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new RedwoodTreefolk());
+        Permanent replacement = addCreatureReady(player2, new RedwoodTreefolk());
+        original.tap();
+        replacement.tap();
+        harness.setHand(player1, List.of(new Abduction()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        assertThat(original.isTapped()).isTrue();
+        Permanent aura = findPermanent(player1, "Abduction");
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, replacement.getId());
+        resolveAllTriggers();
+
+        assertThat(original.isTapped()).isTrue();
+        assertThat(replacement.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The untap trigger still resolves after Abduction is destroyed")
+    void untapsAfterAuraLeavesInResponse() {
+        Permanent creature = addCreatureReady(player2, new RedwoodTreefolk());
+        creature.tap();
+        harness.setHand(player1, List.of(new Abduction()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Abduction");
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        harness.assertInGraveyard(player1, "Abduction");
+    }
+
+    @Test
+    @DisplayName("Removing Abduction before the creature dies prevents its return")
+    void doesNotReturnCreatureAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new RedwoodTreefolk());
+        castAbduction(player1, creature);
+        Permanent aura = findPermanent(player1, "Abduction");
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        gd.permanentsDealtDamageThisTurn.add(creature.getId());
+        harness.setHand(player1, List.of(new FatalBlow()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Redwood Treefolk");
+        harness.assertNotOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertNotOnBattlefield(player2, "Redwood Treefolk");
+    }
 
     private void castAbduction(Player controller, Permanent target) {
         harness.setHand(controller, List.of(new Abduction()));
         harness.addMana(controller, ManaColor.BLUE, 4);
 
         harness.castEnchantment(controller, 0, target.getId());
-        harness.passBothPriorities(); // resolve the aura (attach + gain control)
-        harness.passBothPriorities(); // resolve the ETB untap trigger
+        resolveAllTriggers();
     }
 }

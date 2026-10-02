@@ -72,7 +72,7 @@ class SolitaryDefianceTest extends BaseCardTest {
         declareAttackers(player1, List.of(1, 2));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 

@@ -7824,13 +7824,7 @@ public class AbilityActivationService {
         }
 
         // Predicate-count restriction (e.g. Leechridden Swamp's "Activate only if you control two or more black permanents")
-        if (ability.getRequiredControlledPermanentPredicate() != null) {
-            int count = gameQueryService.countControlledPermanentsMatching(gameData, playerId, ability.getRequiredControlledPermanentPredicate());
-            if (count < ability.getRequiredControlledPermanentCount()) {
-                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledPermanentCount()
-                        + " or more " + ability.getRequiredControlledPermanentDescription());
-            }
-        }
+        validateRequiredControlledPermanents(gameData, playerId, ability);
 
         // Graveyard-card-count restriction (e.g. Gate to the Afterlife's "Activate only if there are
         // six or more creature cards in your graveyard"). Counts non-token cards in the controller's graveyard.
@@ -7913,9 +7907,21 @@ public class AbilityActivationService {
         }
     }
 
+    private void validateRequiredControlledPermanents(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getRequiredControlledPermanentPredicate() != null) {
+            int count = gameQueryService.countControlledPermanentsMatching(
+                    gameData, playerId, ability.getRequiredControlledPermanentPredicate());
+            if (count < ability.getRequiredControlledPermanentCount()) {
+                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledPermanentCount()
+                        + " or more " + ability.getRequiredControlledPermanentDescription());
+            }
+        }
+    }
+
     private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability,
                                                      Card card) {
         validateHandSizeRestrictions(gameData, playerId, ability);
+        validateRequiredControlledPermanents(gameData, playerId, ability);
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
                 && !playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("This ability can only be activated during your turn");

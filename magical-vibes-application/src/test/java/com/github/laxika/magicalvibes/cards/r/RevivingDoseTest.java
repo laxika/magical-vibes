@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,5 +43,17 @@ class RevivingDoseTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+    }
+
+    @Test
+    @DisplayName("Reviving Dose causes a loss when its draw finds an empty library")
+    void drawingFromEmptyLibraryCausesLoss() {
+        harness.setLife(player1, 17);
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new RevivingDose(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }

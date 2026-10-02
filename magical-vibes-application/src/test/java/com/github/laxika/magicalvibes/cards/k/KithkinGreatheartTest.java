@@ -1,18 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KithkinGreatheart.class, HillcomberGiant.class, GoldmeadowStalwart.class})
 class KithkinGreatheartTest extends BaseCardTest {
 
     // ===== Conditional +1/+1 and first strike with a Giant =====
@@ -21,7 +20,7 @@ class KithkinGreatheartTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 and first strike when controller controls a Giant")
     void boostedWithGiant() {
         harness.addToBattlefield(player1, new KithkinGreatheart());
-        harness.addToBattlefield(player1, createGiant());
+        harness.addToBattlefield(player1, new HillcomberGiant());
 
         Permanent greatheart = findPermanent(player1, "Kithkin Greatheart");
         assertThat(gqs.getEffectivePower(gd, greatheart)).isEqualTo(3); // 2 base + 1
@@ -46,7 +45,7 @@ class KithkinGreatheartTest extends BaseCardTest {
     @DisplayName("Non-Giant creature does not grant bonus")
     void nonGiantDoesNotGrantBonus() {
         harness.addToBattlefield(player1, new KithkinGreatheart());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GoldmeadowStalwart());
 
         Permanent greatheart = findPermanent(player1, "Kithkin Greatheart");
         assertThat(gqs.getEffectivePower(gd, greatheart)).isEqualTo(2);
@@ -59,14 +58,13 @@ class KithkinGreatheartTest extends BaseCardTest {
     @DisplayName("Loses bonus when the Giant leaves the battlefield")
     void losesBonusWhenGiantLeaves() {
         harness.addToBattlefield(player1, new KithkinGreatheart());
-        harness.addToBattlefield(player1, createGiant());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
 
         Permanent greatheart = findPermanent(player1, "Kithkin Greatheart");
         assertThat(gqs.getEffectivePower(gd, greatheart)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, greatheart, Keyword.FIRST_STRIKE)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getSubtypes().contains(CardSubtype.GIANT));
+        gd.playerBattlefields.get(player1.getId()).remove(giant);
 
         assertThat(gqs.getEffectivePower(gd, greatheart)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, greatheart, Keyword.FIRST_STRIKE)).isFalse();
@@ -78,19 +76,11 @@ class KithkinGreatheartTest extends BaseCardTest {
     @DisplayName("Opponent's Giant does not grant bonus")
     void opponentGiantDoesNotCount() {
         harness.addToBattlefield(player1, new KithkinGreatheart());
-        harness.addToBattlefield(player2, createGiant());
+        harness.addToBattlefield(player2, new HillcomberGiant());
 
         Permanent greatheart = findPermanent(player1, "Kithkin Greatheart");
         assertThat(gqs.getEffectivePower(gd, greatheart)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, greatheart, Keyword.FIRST_STRIKE)).isFalse();
-    }
-
-    // ===== Helper methods =====
-
-    private Card createGiant() {
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.GIANT));
-        return card;
     }
 
 }

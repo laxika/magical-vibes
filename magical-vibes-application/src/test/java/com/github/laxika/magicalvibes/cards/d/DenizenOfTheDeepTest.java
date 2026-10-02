@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.a.Archangel;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DenizenOfTheDeep.class, AirElemental.class, Archangel.class, Island.class})
+@CardUsed({DenizenOfTheDeep.class, AirElemental.class, GrizzlyBears.class, Island.class, Unsummon.class})
 class DenizenOfTheDeepTest extends BaseCardTest {
 
     @Test
@@ -41,7 +43,7 @@ class DenizenOfTheDeepTest extends BaseCardTest {
     @DisplayName("ETB returns all other creatures controlled by its controller to their owners' hands")
     void etbReturnsAllOtherCreatures() {
         harness.addToBattlefield(player1, new AirElemental());
-        harness.addToBattlefield(player1, new Archangel());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
         resolveAllTriggers();
@@ -56,26 +58,67 @@ class DenizenOfTheDeepTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
-                .containsExactlyInAnyOrder("Air Elemental", "Archangel");
+                .containsExactlyInAnyOrder("Air Elemental", "Grizzly Bears");
     }
 
     @Test
     @DisplayName("ETB does not return opponent's creatures")
     void etbDoesNotReturnOpponentCreatures() {
         harness.addToBattlefield(player1, new AirElemental());
-        harness.addToBattlefield(player2, new Archangel());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
 
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
 
-        // Opponent's Archangel should still be on battlefield
-        harness.assertOnBattlefield(player2, "Archangel");
+        // Opponent's Grizzly Bears should still be on battlefield
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Air Elemental");
+    }
+
+    @Test
+    @DisplayName("ETB returns another Denizen but not the entering Denizen")
+    void etbReturnsAnotherCopyButNotEnteringDenizen() {
+        harness.addToBattlefield(player1, new DenizenOfTheDeep());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(1)
+                .allMatch(p -> p.getCard().getName().equals("Denizen of the Deep"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Denizen of the Deep");
+    }
+
+    @Test
+    @DisplayName("ETB treats a re-entered source card as another object")
+    void etbReturnsReenteredSourceCardAsAnotherObject() {
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, null, harness.getPermanentId(player1, "Denizen of the Deep"));
+        harness.passBothPriorities();
+
+        var reenteredDenizen = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Denizen of the Deep"))
+                .findFirst()
+                .orElseThrow();
+        harness.setHand(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, reenteredDenizen);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Denizen of the Deep");
     }
 
     @Test

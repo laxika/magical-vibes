@@ -37,14 +37,14 @@ class ThievingAvenTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.HeistCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HeistCardChoice.class);
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.cards()).hasSize(3)
+        assertThat(choice.params().cards()).hasSize(3)
                 .allMatch(card -> !card.hasType(CardType.LAND));
 
-        Card chosen = choice.cards().getFirst();
-        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        Card chosen = choice.params().cards().getFirst();
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.findExiledCard(chosen.getId())).isNotNull();
         assertThat(gd.findExiledCard(chosen.getId()).faceDown()).isTrue();

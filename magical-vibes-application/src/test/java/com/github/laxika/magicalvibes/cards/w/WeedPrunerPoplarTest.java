@@ -1,36 +1,42 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurrentonShieldBearers;
+import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WeedPrunerPoplar.class, BurrentonShieldBearers.class, Mutavault.class})
 class WeedPrunerPoplarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Upkeep trigger presents mandatory target selection")
     void upkeepTriggerPresentsTargetSelection() {
-        addCreatureReady(player1, new WeedPrunerPoplar());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent poplar = addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent target = addCreatureReady(player2, new BurrentonShieldBearers());
 
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId())
+                .doesNotContain(poplar.getId());
     }
 
     @Test
     @DisplayName("Chosen creature gets -1/-1 until end of turn")
     void chosenCreatureGetsMinusOneMinusOne() {
         addCreatureReady(player1, new WeedPrunerPoplar());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new BurrentonShieldBearers());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -43,15 +49,15 @@ class WeedPrunerPoplarTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
-        assertThat(bears.getEffectivePower()).isEqualTo(1);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Can target the controller's own creatures")
     void canTargetOwnCreature() {
         addCreatureReady(player1, new WeedPrunerPoplar());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new BurrentonShieldBearers());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -62,8 +68,40 @@ class WeedPrunerPoplarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not trigger when the Poplar is the only creature (cannot target itself)")
-    void doesNotTriggerWhenOnlyCreature() {
+    @DisplayName("Can target another copy of Weed-Pruner Poplar")
+    void canTargetAnotherCopyOfItself() {
+        Permanent source = addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent otherPoplar = addCreatureReady(player2, new WeedPrunerPoplar());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(otherPoplar.getId())
+                .doesNotContain(source.getId());
+
+        harness.handlePermanentChosen(player1, otherPoplar.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherPoplar.getPowerModifier()).isEqualTo(-1);
+        assertThat(otherPoplar.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Target selection includes creatures but not lands")
+    void targetSelectionIncludesCreaturesOnly() {
+        Permanent source = addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent creature = addCreatureReady(player2, new BurrentonShieldBearers());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mutavault());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(creature.getId())
+                .doesNotContain(source.getId(), land.getId());
+    }
+
+    @Test
+    @DisplayName("Presents no target choice when the Poplar is the only creature")
+    void presentsNoTargetChoiceWhenOnlyCreature() {
         addCreatureReady(player1, new WeedPrunerPoplar());
 
         advanceToUpkeep(player1);
@@ -73,10 +111,24 @@ class WeedPrunerPoplarTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers only during its controller's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        addCreatureReady(player1, new WeedPrunerPoplar());
+        Permanent target = addCreatureReady(player2, new BurrentonShieldBearers());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("The -1/-1 wears off at end of turn")
     void wearsOffAtEndOfTurn() {
         addCreatureReady(player1, new WeedPrunerPoplar());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new BurrentonShieldBearers());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());

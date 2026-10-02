@@ -1,91 +1,108 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.c.CandlesOfLeng;
+import com.github.laxika.magicalvibes.cards.g.GriffinGuide;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KrosanGrip.class, FountainOfYouth.class, GhostlyPrison.class, GrizzlyBears.class, Shock.class})
+@CardUsed({KrosanGrip.class, CandlesOfLeng.class, GriffinGuide.class, AshcoatBear.class,
+        ThinkTwice.class, PrismaticLens.class})
 class KrosanGripTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys target artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
         harness.setHand(player1, List.of(new KrosanGrip()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Candles of Leng");
+        harness.assertInGraveyard(player2, "Candles of Leng");
         harness.assertInGraveyard(player1, "Krosan Grip");
     }
 
     @Test
     @DisplayName("Destroys target enchantment")
     void destroysEnchantment() {
-        harness.addToBattlefield(player2, new GhostlyPrison());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GriffinGuide());
+        target.setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new KrosanGrip()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Ghostly Prison");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.assertNotOnBattlefield(player2, "Ghostly Prison");
+        harness.assertNotOnBattlefield(player2, "Griffin Guide");
+        harness.assertInGraveyard(player2, "Griffin Guide");
     }
 
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new KrosanGrip()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Split second prevents a spell response")
-    void splitSecondPreventsSpellResponse() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+    @DisplayName("Split second prevents spells and non-mana activated abilities")
+    void splitSecondPreventsSpellsAndNonManaAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
         harness.setHand(player1, List.of(new KrosanGrip()));
         addMana();
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new ThinkTwice()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, target.getId());
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Split second still allows mana abilities")
+    void splitSecondStillAllowsManaAbilities() {
+        Permanent lens = harness.addToBattlefieldAndReturn(player2, new PrismaticLens());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
+        harness.setHand(player1, List.of(new KrosanGrip()));
+        addMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(lens.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Fizzles if the target leaves before resolution")
     void fizzlesIfTargetLeavesBeforeResolution() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CandlesOfLeng());
         harness.setHand(player1, List.of(new KrosanGrip()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        GameData gd = harness.getGameData();
+        harness.castInstant(player1, 0, target.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
 
         harness.passBothPriorities();

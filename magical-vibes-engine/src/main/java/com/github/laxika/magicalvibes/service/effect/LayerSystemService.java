@@ -2115,7 +2115,8 @@ public class LayerSystemService {
                 }
             }
             case AnimatePermanentsEffect animate -> {
-                if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                if (animate.scope() == GrantScope.ALL_PERMANENTS
+                        || animate.scope() == GrantScope.OWN_PERMANENTS) {
                     for (PermanentSlot target : scopeTargets(gameData, instance, animate.scope(),
                             animate.filter(), slots, slotsById, board)) {
                         CharacteristicState state = states.get(target.permanent().getId());
@@ -3015,7 +3016,8 @@ public class LayerSystemService {
                                     }
                                 });
                 case AnimatePermanentsEffect animate -> {
-                    if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                    if (animate.scope() == GrantScope.ALL_PERMANENTS
+                            || animate.scope() == GrantScope.OWN_PERMANENTS) {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
                                     if (harvested.isBasePTOverridden()) {

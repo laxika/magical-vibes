@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +41,7 @@ class SapphireCollectorTest extends BaseCardTest {
     @Test
     @DisplayName("The second noncreature spell trigger works only once")
     void secondNoncreatureSpellTriggerWorksOnlyOnce() {
+        harness.setHand(player2, List.of());
         addSapphireCollector();
         harness.setHand(player1, List.of(
                 new MindStone(), new MindStone(), new MindStone(), new MindStone()));
@@ -49,6 +51,7 @@ class SapphireCollectorTest extends BaseCardTest {
         castAndResolveMindStone();
         assertThat(countCardsInHand("Mox Sapphire")).isEqualTo(1);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         castAndResolveMindStone();
@@ -66,7 +69,7 @@ class SapphireCollectorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.activateAbility(player1, 0, 0, null, shock.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
@@ -81,7 +84,7 @@ class SapphireCollectorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 

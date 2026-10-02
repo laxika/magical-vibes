@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.l.LiegeOfThePit;
+import com.github.laxika.magicalvibes.cards.p.PlagueSliver;
+import com.github.laxika.magicalvibes.cards.t.TendrilsOfCorruption;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DuskriderPeregrine.class, DarkNourishment.class})
+@CardUsed({DuskriderPeregrine.class, TendrilsOfCorruption.class, PlagueSliver.class,
+        LiegeOfThePit.class})
 class DuskriderPeregrineTest extends BaseCardTest {
 
     @Test
@@ -26,6 +31,17 @@ class DuskriderPeregrineTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suspend counters are removed only during the owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        DuskriderPeregrine card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
     }
 
     @Test
@@ -72,12 +88,42 @@ class DuskriderPeregrineTest extends BaseCardTest {
     @DisplayName("Protection from black prevents a black spell from targeting Duskrider Peregrine")
     void protectionFromBlackPreventsBlackSpellTargeting() {
         Permanent peregrine = harness.addToBattlefieldAndReturn(player1, new DuskriderPeregrine());
-        harness.setHand(player2, List.of(new DarkNourishment()));
+        harness.setHand(player2, List.of(new TendrilsOfCorruption()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, peregrine.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents a black creature from blocking Duskrider Peregrine")
+    void protectionFromBlackPreventsBlocking() {
+        Permanent peregrine = addCreatureReady(player1, new DuskriderPeregrine());
+        peregrine.setAttacking(true);
+        addCreatureReady(player2, new LiegeOfThePit());
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from black prevents combat damage from a black creature")
+    void protectionFromBlackPreventsCombatDamage() {
+        Permanent attacker = addCreatureReady(player2, new PlagueSliver());
+        attacker.setAttacking(true);
+        Permanent peregrine = addCreatureReady(player1, new DuskriderPeregrine());
+        peregrine.setBlocking(true);
+        peregrine.addBlockingTarget(0);
+
+        resolveCombat(player2);
+
+        assertThat(peregrine.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
     private DuskriderPeregrine suspendCard() {

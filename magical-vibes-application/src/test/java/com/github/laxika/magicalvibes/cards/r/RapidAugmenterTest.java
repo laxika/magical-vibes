@@ -64,9 +64,7 @@ class RapidAugmenterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Goblin");
         assertThat(tokens).hasSize(2);

@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekCardSharingCardTypeWithDiscardedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -464,6 +465,31 @@ public class DiscardTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard event (put {} counter(s))", gameData.id,
                 sourceCard.getName(), discardEvent.discardedCount());
+        return true;
+    }
+
+    @CollectsTrigger(value = SeekCardSharingCardTypeWithDiscardedCardsEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleSeekCardSharingTypeOnDiscardEvent(TriggerMatchContext match,
+            SeekCardSharingCardTypeWithDiscardedCardsEffect trigger, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.DiscardEvent discardEvent)
+                || discardEvent.discardedCards().isEmpty()) {
+            return false;
+        }
+        Card sourceCard = match.permanent().getCard();
+        CardEffect boundTrigger = trigger.withTriggeringCards(discardEvent.discardedCards());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(boundTrigger)),
+                null,
+                match.permanent().getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard event (seek shared card type)",
+                match.gameData().id, sourceCard.getName());
         return true;
     }
 

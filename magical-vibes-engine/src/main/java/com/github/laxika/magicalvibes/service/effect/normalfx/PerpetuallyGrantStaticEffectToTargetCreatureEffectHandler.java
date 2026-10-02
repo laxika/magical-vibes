@@ -41,10 +41,8 @@ public class PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler
             }
 
             var copy = target.getCard().createRuntimeCopy();
-            if (!copy.getEffects(EffectSlot.STATIC).contains(grant.staticEffect())) {
-                copy.addEffect(EffectSlot.STATIC, grant.staticEffect());
-                target.exchangeCard(copy);
-            }
+            copy.addEffect(EffectSlot.STATIC, grant.staticEffect());
+            target.exchangeCard(copy);
         }
     }
 }

@@ -77,6 +77,24 @@ class ArcanisTheOmnipotentTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Return ability can be activated while Arcanis has summoning sickness")
+    void returnAbilityCanBeActivatedWithSummoningSickness() {
+        ArcanisTheOmnipotent card = new ArcanisTheOmnipotent();
+        card.setOwnerId(player1.getId());
+        harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of());
+        forceMainPhase(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+    }
+
     private void forceMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

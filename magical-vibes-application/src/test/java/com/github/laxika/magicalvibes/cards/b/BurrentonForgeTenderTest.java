@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurrentonForgeTender.class, FireElemental.class, GrizzlyBears.class, LightningBolt.class})
 class BurrentonForgeTenderTest extends BaseCardTest {
 
     @Test
@@ -41,7 +40,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRedInstant() {
-        Permanent forgeTender = addReadyForgeTender(player2);
+        Permanent forgeTender = addCreatureReady(player2, new BurrentonForgeTender());
         Permanent otherTarget = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -57,8 +56,8 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability sacrifices Forge-Tender and puts ability on the stack")
     void activatingAbilitySacrificesAndPutsOnStack() {
-        addReadyForgeTender(player1);
-        addReadyRedCreature(player2);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -71,8 +70,8 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability prompts for a red source choice")
     void resolvingAbilityPromptsForRedSourceChoice() {
-        addReadyForgeTender(player1);
-        addReadyRedCreature(player2);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -83,8 +82,8 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen red source is prevented from dealing damage globally")
     void chosenRedSourcePreventedGlobally() {
-        addReadyForgeTender(player1);
-        Permanent redAttacker = addReadyRedCreature(player2);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent redAttacker = addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -100,8 +99,8 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     void preventsCombatDamageToAnyPlayer() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        addReadyForgeTender(player1);
-        Permanent redAttacker = addReadyRedCreature(player2);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent redAttacker = addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -115,24 +114,47 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents damage from a chosen red spell")
+    void preventsDamageFromChosenRedSpell() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new BurrentonForgeTender());
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        var boltId = gd.stack.getLast().getTargetableId();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(boltId);
+        harness.handlePermanentChosen(player1, boltId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Non-red creatures are not valid source choices")
     void nonRedSourceNotRecordedWhenOnlyGreenOnBattlefield() {
-        addReadyForgeTender(player1);
-        Permanent greenCreature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new BurrentonForgeTender());
+        addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
     @DisplayName("Prevention is cleared at end of turn")
     void preventionClearedAtEndOfTurn() {
-        addReadyForgeTender(player1);
-        Permanent redAttacker = addReadyRedCreature(player2);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent redAttacker = addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -152,26 +174,11 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @DisplayName("Can activate with summoning sickness")
     void canActivateWithSummoningSickness() {
         harness.addToBattlefield(player1, new BurrentonForgeTender());
-        addReadyRedCreature(player2);
+        addCreatureReady(player2, new FireElemental());
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
     }
 
-    private Permanent addReadyForgeTender(Player player) {
-        BurrentonForgeTender card = new BurrentonForgeTender();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    private Permanent addReadyRedCreature(Player player) {
-        FireElemental card = new FireElemental();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

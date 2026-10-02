@@ -356,6 +356,7 @@ public enum CardSet {
     SET_PZA("PZA"),
     SET_YDFT("YDFT"),
     SET_YSOS("YSOS"),
+    SET_YSNC("YSNC"),
     SET_YTDM("YTDM");
 
     @Getter

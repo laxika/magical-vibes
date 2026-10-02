@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoldwyrHeavyweights.class, Forest.class, GrizzlyBears.class, Plains.class})
 class BoldwyrHeavyweightsTest extends BaseCardTest {
 
     @Test
@@ -52,7 +53,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         int bearsIndex = indexOfCreature(search);
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(bearsIndex));
+        harness.handleCardChosen(player2, bearsIndex);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before + 1);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -70,7 +71,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int before = gd.playerBattlefields.get(player2.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player2, -1);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -80,9 +81,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
     @DisplayName("No prompt when opponent has no creature cards in library")
     void noCreaturesNoPrompt() {
         castHeavyweights();
-        List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest()));
+        harness.setLibrary(player2, List.of(new Plains(), new Forest()));
         resolveEtb();
 
         GameData gd = harness.getGameData();
@@ -111,8 +110,6 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
     }
 
     private void setupOpponentLibrary(Player player) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player, List.of(new Plains(), new GrizzlyBears(), new Forest()));
     }
 }

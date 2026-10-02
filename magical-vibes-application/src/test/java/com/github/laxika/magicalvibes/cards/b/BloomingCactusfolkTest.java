@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BloomingCactusfolk.class, GrizzlyBears.class, Forest.class})
 class BloomingCactusfolkTest extends BaseCardTest {
@@ -29,10 +30,13 @@ class BloomingCactusfolkTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
+        assertThat(gd.perpetualGenericCastCostIncreases).containsEntry(bears.getId(), -1);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 

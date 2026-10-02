@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
+import com.github.laxika.magicalvibes.cards.w.WanderersTwig;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StonybrookAngler.class, AxegrinderGiant.class, WanderersTwig.class})
 class StonybrookAnglerTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -24,7 +25,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -40,7 +41,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Activating ability taps Stonybrook Angler")
     void activatingTapsAngler() {
         Permanent angler = addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -54,13 +55,14 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Taps an untapped creature")
     void tapsUntappedCreature() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         assertThat(target.isTapped()).isFalse();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -71,7 +73,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Untaps a tapped creature")
     void untapsTappedCreature() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         target.tap();
         addAnglerMana(player1);
 
@@ -79,6 +81,21 @@ class StonybrookAnglerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("May decline to tap or untap the target creature")
+    void mayDeclineTapOrUntap() {
+        addReadyAngler(player1);
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
+        addAnglerMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -89,11 +106,12 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Can tap own untapped creature")
     void canTapOwnCreature() {
         addReadyAngler(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new AxegrinderGiant());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownCreature.isTapped()).isTrue();
     }
@@ -104,9 +122,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addReadyAngler(player1);
-        AngelsFeather artifact = new AngelsFeather();
-        Permanent artifactPerm = new Permanent(artifact);
-        gd.playerBattlefields.get(player2.getId()).add(artifactPerm);
+        Permanent artifactPerm = harness.addToBattlefieldAndReturn(player2, new WanderersTwig());
         addAnglerMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifactPerm.getId()))
@@ -120,7 +136,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -131,7 +147,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent angler = addReadyAngler(player1);
         angler.tap();
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -142,11 +158,9 @@ class StonybrookAnglerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        StonybrookAngler card = new StonybrookAngler();
-        Permanent angler = new Permanent(card);
+        harness.addToBattlefieldAndReturn(player1, new StonybrookAngler());
         // summoningSick is true by default
-        gd.playerBattlefields.get(player1.getId()).add(angler);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -160,7 +174,7 @@ class StonybrookAnglerTest extends BaseCardTest {
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -177,10 +191,8 @@ class StonybrookAnglerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private Permanent addReadyAngler(Player player) {
-        StonybrookAngler card = new StonybrookAngler();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new StonybrookAngler());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

@@ -493,6 +493,7 @@ public class StackResolutionService {
                     targetId, true, etbMode, entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
                     entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
         }
+        carrySacrificedCardToEtbEntries(gameData, card, entry, stackSizeBeforeEtb);
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
@@ -518,12 +519,30 @@ public class StackResolutionService {
                     true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
                     entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds());
         }
+        carrySacrificedCardToEtbEntries(gameData, card, entry, stackSizeBeforeEtb);
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
                 if (triggeredEntry.getTargetableId().equals(card.getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
+            }
+        }
+    }
+
+    private void carrySacrificedCardToEtbEntries(GameData gameData, Card card,
+                                                  StackEntry sourceEntry, int stackSizeBeforeEtb) {
+        Card sacrificedCard = sourceEntry.getSacrificedCard() != null
+                ? sourceEntry.getSacrificedCard() : sourceEntry.getSacrificedCardSnapshot();
+        if (sacrificedCard == null) {
+            return;
+        }
+        for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
+            StackEntry triggeredEntry = gameData.stack.get(i);
+            if (card.getId().equals(triggeredEntry.getTargetableId())) {
+                triggeredEntry.setSacrificedCardId(sourceEntry.getSacrificedCardId());
+                triggeredEntry.setSacrificedCardSnapshot(sacrificedCard);
+                triggeredEntry.setSacrificedCard(sacrificedCard);
             }
         }
     }
@@ -1841,5 +1860,4 @@ public class StackResolutionService {
     }
 
 }
-
 

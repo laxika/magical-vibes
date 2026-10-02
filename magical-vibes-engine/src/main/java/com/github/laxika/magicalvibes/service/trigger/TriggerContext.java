@@ -130,9 +130,13 @@ public sealed interface TriggerContext {
     record NonlandCardsMilled(UUID milledPlayerId, int nonlandCardCount) implements TriggerContext {}
 
     /** Context for controller-scry triggers. */
-    record Scry(UUID scryingPlayerId, int bottomedCardCount) implements TriggerContext {
+    record Scry(UUID scryingPlayerId, int bottomedCardCount, int cardsLookedAt) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {
-            this(scryingPlayerId, 0);
+            this(scryingPlayerId, 0, 0);
+        }
+
+        public Scry(UUID scryingPlayerId, int bottomedCardCount) {
+            this(scryingPlayerId, bottomedCardCount, 0);
         }
     }
 

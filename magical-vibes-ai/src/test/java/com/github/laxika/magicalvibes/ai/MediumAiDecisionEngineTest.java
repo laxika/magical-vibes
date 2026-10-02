@@ -1970,6 +1970,7 @@ class MediumAiDecisionEngineTest {
     }
 
     @Test
+    @CardUsed({CrypticCommand.class, AirElemental.class, Island.class})
     @DisplayName("Medium AI casts Cryptic Command with its choose-two target")
     void castsCrypticCommandWithChooseTwoTarget() {
         harness.forceActivePlayer(human);

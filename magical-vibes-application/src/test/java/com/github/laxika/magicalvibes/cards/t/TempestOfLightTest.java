@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FellwarStone;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         GloriousAnthem.class,
         GrizzlyBears.class,
         HolyStrength.class,
-        FellwarStone.class,
+        MindStone.class,
         Plains.class
 })
 class TempestOfLightTest extends BaseCardTest {
@@ -71,8 +71,7 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys auras attached to creatures")
     void destroysAurasAttachedToCreatures() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         HolyStrength aura = new HolyStrength();
         Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, aura);
@@ -103,14 +102,14 @@ class TempestOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Does not destroy artifacts or lands")
     void doesNotDestroyArtifactsOrLands() {
-        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player1, new MindStone());
         harness.addToBattlefield(player2, new Plains());
         harness.addToBattlefield(player1, new GloriousAnthem());
 
         harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Fellwar Stone");
+        harness.assertOnBattlefield(player1, "Mind Stone");
         harness.assertOnBattlefield(player2, "Plains");
         harness.assertNotOnBattlefield(player1, "Glorious Anthem");
     }

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.d.DarkRitual;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.d.DarkWithering;
+import com.github.laxika.magicalvibes.cards.f.FungalReaches;
+import com.github.laxika.magicalvibes.cards.h.HauntingHymn;
+import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,19 +19,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NightshadeAssassin.class, DarkRitual.class, FountainOfYouth.class, GrizzlyBears.class,
-        RavensCrime.class})
+@CardUsed({NightshadeAssassin.class, BenalishCavalry.class, DarkWithering.class, FungalReaches.class,
+        HauntingHymn.class, HavenwoodWurm.class})
 class NightshadeAssassinTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB gives target creature -X/-X for the number of selected black cards")
     void etbGivesTargetCreatureMinusForSelectedBlackCards() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        DarkRitual blackCard = new DarkRitual();
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        DarkWithering blackCard = new DarkWithering();
         harness.setHand(player1, List.of(new NightshadeAssassin(), blackCard));
         addCreatureMana();
 
-        harness.castCreature(player1, 0, 0, bears.getId());
+        harness.castCreature(player1, 0, 0, wurm.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,33 +42,99 @@ class NightshadeAssassinTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(blackCard.getId()));
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Counts every selected black card and ignores nonblack cards")
+    void countsEverySelectedBlackCard() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        DarkWithering firstBlackCard = new DarkWithering();
+        DarkWithering secondBlackCard = new DarkWithering();
+        FungalReaches nonblackCard = new FungalReaches();
+        harness.setHand(player1, List.of(new NightshadeAssassin(), firstBlackCard, secondBlackCard,
+                nonblackCard));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, 0, wurm.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
+                        gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(firstBlackCard.getId(), secondBlackCard.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstBlackCard.getId(), secondBlackCard.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Allows revealing zero black cards")
     void allowsRevealingZeroBlackCards() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new NightshadeAssassin(), new FountainOfYouth()));
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        harness.setHand(player1, List.of(new NightshadeAssassin(), new FungalReaches()));
         addCreatureMana();
 
-        harness.castCreature(player1, 0, 0, bears.getId());
+        harness.castCreature(player1, 0, 0, wurm.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("May reveal zero black cards even when eligible cards are available")
+    void mayRevealZeroBlackCards() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        DarkWithering blackCard = new DarkWithering();
+        harness.setHand(player1, List.of(new NightshadeAssassin(), blackCard));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, 0, wurm.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
+                        gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(blackCard.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Does not reveal cards when the ETB target is illegal on resolution")
+    void doesNotRevealWhenTargetLeavesBeforeResolution() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        DarkWithering blackCard = new DarkWithering();
+        harness.setHand(player1, List.of(new NightshadeAssassin(), blackCard));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, 0, wurm.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(wurm);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(blackCard);
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        harness.setHand(player1, List.of(new NightshadeAssassin(), new DarkRitual()));
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new FungalReaches());
+        harness.setHand(player1, List.of(new NightshadeAssassin(), new DarkWithering()));
         addCreatureMana();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, artifact.getId()))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -87,53 +154,83 @@ class NightshadeAssassinTest extends BaseCardTest {
     @DisplayName("Accepting madness casts Nightshade Assassin")
     void acceptingMadnessCastsCreature() {
         NightshadeAssassin assassin = discardAssassin();
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, wurm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(assassin.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining madness puts Nightshade Assassin into its owner's graveyard")
+    void decliningMadnessPutsAssassinInGraveyard() {
+        NightshadeAssassin assassin = discardAssassin();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(assassin);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(assassin.getId()));
     }
 
     @Test
     @DisplayName("The debuff wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        DarkRitual blackCard = new DarkRitual();
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new HavenwoodWurm());
+        DarkWithering blackCard = new DarkWithering();
         harness.setHand(player1, List.of(new NightshadeAssassin(), blackCard));
         addCreatureMana();
 
-        harness.castCreature(player1, 0, 0, bears.getId());
+        harness.castCreature(player1, 0, 0, wurm.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(blackCard.getId()));
 
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("First strike lets Nightshade Assassin survive combat with a 2/2 blocker")
+    void firstStrikeResolvesBeforeRegularDamage() {
+        Permanent attacker = addCreatureReady(player1, new NightshadeAssassin());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new BenalishCavalry());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Nightshade Assassin");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
     }
 
     private NightshadeAssassin discardAssassin() {
         NightshadeAssassin assassin = new NightshadeAssassin();
         harness.setHand(player1, List.of(assassin));
-        harness.setHand(player2, List.of(new RavensCrime()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new HauntingHymn()));
+        harness.addMana(player2, ManaColor.BLACK, 6);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
+        harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         return assassin;

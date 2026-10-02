@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,28 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LoyalSentry.class, GrizzlyBears.class})
 class LoyalSentryTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
+    private Permanent addSentryBlocker() {
+        return addCreatureReady(player2, new LoyalSentry());
+    }
+
+    private Permanent addAttacker(int power, int toughness) {
+        GrizzlyBears card = new GrizzlyBears();
+        card.setPower(power);
+        card.setToughness(toughness);
+        Permanent attacker = addCreatureReady(player1, card);
+        attacker.setAttacking(true);
+        return attacker;
+    }
+
+    private void declareBlock(Permanent blocker, Permanent attacker) {
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+    }
 
     @Test
     @DisplayName("Casting Loyal Sentry puts it on the stack")
@@ -33,7 +52,7 @@ class LoyalSentryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Loyal Sentry");
+        assertThat(entry.getCard()).isInstanceOf(LoyalSentry.class);
     }
 
     @Test
@@ -64,30 +83,17 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Declaring Loyal Sentry as blocker pushes a triggered ability onto the stack")
     void blockTriggerPushesOntoStack() {
-        // Player2 has Loyal Sentry as blocker
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
+        Permanent sentryPerm = addSentryBlocker();
+        Permanent atkPerm = addAttacker(2, 2);
 
-        // Player1 has an attacking Grizzly Bears
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(sentryPerm, atkPerm);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Loyal Sentry");
         assertThat(entry.getTargetId()).isEqualTo(atkPerm.getId());
         assertThat(entry.getSourcePermanentId()).isEqualTo(sentryPerm.getId());
+        assertThat(entry.isNonTargeting()).isTrue();
     }
 
     // ===== Block trigger resolves — both creatures destroyed =====
@@ -95,21 +101,7 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("When block trigger resolves, both Loyal Sentry and blocked creature are destroyed")
     void blockTriggerDestroysBothCreatures() {
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
-
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(addSentryBlocker(), addAttacker(2, 2));
 
         // Trigger is on the stack — resolve it
         harness.passBothPriorities();
@@ -126,25 +118,7 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Loyal Sentry destroys a large creature it blocks")
     void destroysLargeCreature() {
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
-
-        // 10/10 attacker
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(10);
-        bigCreature.setToughness(10);
-        Permanent atkPerm = new Permanent(bigCreature);
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(addSentryBlocker(), addAttacker(10, 10));
         harness.passBothPriorities();
 
         // Even the 10/10 is destroyed by the trigger
@@ -159,29 +133,12 @@ class LoyalSentryTest extends BaseCardTest {
     void destroyedAttackerDealsNoDamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
-
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(5);
-        bigCreature.setToughness(5);
-        Permanent atkPerm = new Permanent(bigCreature);
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(addSentryBlocker(), addAttacker(5, 5));
         // Resolve the block trigger
         harness.passBothPriorities();
 
         // Player2 should take no damage — attacker was destroyed before combat damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     // ===== Trigger does not destroy if creatures are already gone =====
@@ -189,24 +146,13 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does nothing if attacker is removed before resolution")
     void triggerDoesNothingIfAttackerAlreadyGone() {
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
+        Permanent sentryPerm = addSentryBlocker();
+        Permanent atkPerm = addAttacker(2, 2);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(sentryPerm, atkPerm);
 
         // Remove the attacker before trigger resolves
-        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player1.getId()).remove(atkPerm);
 
         harness.passBothPriorities();
 
@@ -218,24 +164,13 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Trigger does nothing to self if Loyal Sentry is removed before resolution")
     void triggerDoesNothingIfSentryAlreadyGone() {
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
+        Permanent sentryPerm = addSentryBlocker();
+        Permanent atkPerm = addAttacker(2, 2);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(sentryPerm, atkPerm);
 
         // Remove Loyal Sentry before trigger resolves
-        gd.playerBattlefields.get(player2.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).remove(sentryPerm);
 
         harness.passBothPriorities();
 
@@ -249,21 +184,7 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Block trigger generates appropriate game log entries")
     void blockTriggerGeneratesLogEntries() {
-        Permanent sentryPerm = new Permanent(new LoyalSentry());
-        sentryPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sentryPerm);
-
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(addSentryBlocker(), addAttacker(2, 2));
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Loyal Sentry") && log.contains("block") && log.contains("trigger"));
 
@@ -278,21 +199,10 @@ class LoyalSentryTest extends BaseCardTest {
     @Test
     @DisplayName("Normal creature blocking does not push any trigger onto the stack")
     void normalCreatureDoesNotTriggerOnBlock() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addAttacker(2, 2);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
-        atkPerm.setSummoningSick(false);
-        atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        declareBlock(blockerPerm, atkPerm);
 
         assertThat(gd.stack).isEmpty();
     }

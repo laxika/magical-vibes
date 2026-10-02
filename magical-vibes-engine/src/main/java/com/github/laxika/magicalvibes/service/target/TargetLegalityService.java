@@ -113,6 +113,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSour
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPowerOrToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueParityMatchesSourceChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
@@ -2078,7 +2079,7 @@ public class TargetLegalityService {
                 .anyMatch(EffectResolution::targetsSpellOnStack) ? 1 : 0;
         validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, false,
                 firstPermanentGroupIndex,
-                selectedEffects, giftPromised);
+                selectedEffects, null, giftPromised, true);
     }
 
     public void validateSpellTargetGroupsAfterPrimary(GameData gameData, Card card,
@@ -2111,8 +2112,20 @@ public class TargetLegalityService {
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
                                            List<CardEffect> selectedEffects,
                                            List<Integer> targetGroupSizes, boolean giftPromised) {
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, xValue, kicked,
+                firstGroupIndex, selectedEffects, targetGroupSizes, giftPromised, false);
+    }
+
+    private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
+                                           UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
+                                           List<CardEffect> selectedEffects,
+                                           List<Integer> targetGroupSizes, boolean giftPromised,
+                                           boolean skipStackTargetGroups) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
+                .filter(group -> !skipStackTargetGroups || selectedEffects.stream()
+                        .filter(effect -> card.getEffectTargetIndex(effect) == group.getIndex())
+                        .noneMatch(EffectResolution::targetsSpellOnStack))
                 .toList();
         int minTargets = targetGroups.stream()
                 .mapToInt(group -> {
@@ -4971,6 +4984,12 @@ public class TargetLegalityService {
             return manaValue == fixedNumber.number()
                     || power != null && power == fixedNumber.number()
                     || toughness != null && toughness == fixedNumber.number();
+        }
+        if (predicate instanceof StackEntryPowerOrToughnessAtMostPredicate atMost) {
+            Integer power = stackEntry.getCard().getPower();
+            Integer toughness = stackEntry.getCard().getToughness();
+            return power != null && power <= atMost.maxValue()
+                    || toughness != null && toughness <= atMost.maxValue();
         }
         if (predicate instanceof StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate) {
             if (source == null) {

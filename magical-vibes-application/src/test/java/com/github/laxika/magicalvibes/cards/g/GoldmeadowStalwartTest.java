@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoldmeadowStalwart.class, GoldmeadowHarrier.class})
 class GoldmeadowStalwartTest extends BaseCardTest {
 
     @Test
@@ -18,6 +20,17 @@ class GoldmeadowStalwartTest extends BaseCardTest {
     void requiresExtraThreeWithoutKithkin() {
         // The Stalwart itself is a Kithkin but is on the stack, so it cannot satisfy its own reveal.
         harness.setHand(player1, List.of(new GoldmeadowStalwart()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Kithkin in an opponent's hand does not satisfy the reveal")
+    void opponentKithkinDoesNotSatisfyReveal() {
+        harness.setHand(player1, List.of(new GoldmeadowStalwart()));
+        harness.setHand(player2, List.of(new GoldmeadowHarrier()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))

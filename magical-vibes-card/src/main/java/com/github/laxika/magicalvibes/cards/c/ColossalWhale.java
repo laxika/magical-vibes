@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M14", collectorNumber = "48")
 @CardRegistration(set = "LTC", collectorNumber = "186")
+@CardRegistration(set = "HOC", collectorNumber = "174")
 public class ColossalWhale extends Card {
 
     public ColossalWhale() {

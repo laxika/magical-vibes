@@ -1,15 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KithkinGreatheart;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpringjackKnight.class, KithkinGreatheart.class, Forest.class})
 class SpringjackKnightTest extends BaseCardTest {
 
     // ===== Attack trigger: target selection =====
@@ -24,8 +25,8 @@ class SpringjackKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking queues attack trigger for target selection")
     void attackTriggersTargetSelection() {
-        addReadyKnight(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SpringjackKnight());
+        addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
 
@@ -35,10 +36,25 @@ class SpringjackKnightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attack trigger can target any creature, but not a land")
+    void attackTriggerTargetsAnyCreature() {
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent ownCreature = addCreatureReady(player1, new KithkinGreatheart());
+        Permanent opposingCreature = addCreatureReady(player2, new KithkinGreatheart());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(ownCreature.getId(), opposingCreature.getId())
+                .doesNotContain(opposingLand.getId());
+    }
+
+    @Test
     @DisplayName("Choosing target puts the clash trigger on the stack")
     void choosingTargetPutsTriggerOnStack() {
-        Permanent knight = addReadyKnight(player1);
-        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knight = addCreatureReady(player1, new SpringjackKnight());
+        Permanent ally = addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -55,12 +71,12 @@ class SpringjackKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Winning the clash grants double strike to the target creature")
     void wonClashGrantsDoubleStrike() {
-        // Higher mana value on top for player1 (Grizzly Bears MV 2 > Forest MV 0) → player1 wins.
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new Forest());
+        // Higher mana value on top for player1 (Kithkin Greatheart MV 2 > Forest MV 0) → player1 wins.
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
 
-        addReadyKnight(player1);
-        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent ally = addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -74,12 +90,12 @@ class SpringjackKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the clash grants nothing")
     void lostClashGrantsNothing() {
-        // Lower mana value on top for player1 (Forest MV 0 < Grizzly Bears MV 2) → player1 loses.
-        gd.playerDecks.get(player1.getId()).addFirst(new Forest());
-        gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
+        // Lower mana value on top for player1 (Forest MV 0 < Kithkin Greatheart MV 2) → player1 loses.
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new KithkinGreatheart()));
 
-        addReadyKnight(player1);
-        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent ally = addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -88,16 +104,16 @@ class SpringjackKnightTest extends BaseCardTest {
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    // ===== Tie — a clash is only won on a strictly greater mana value (CR 701.29c) =====
+    // ===== Tie — a clash is only won on a strictly greater mana value =====
 
     @Test
     @DisplayName("An equal mana value tie is not a win, so nothing is granted")
     void tiedClashGrantsNothing() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new KithkinGreatheart()));
 
-        addReadyKnight(player1);
-        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent ally = addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -111,11 +127,11 @@ class SpringjackKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Double strike wears off at end of turn")
     void doubleStrikeWearsOffAtEndOfTurn() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new Forest());
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
 
-        addReadyKnight(player1);
-        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new SpringjackKnight());
+        Permanent ally = addCreatureReady(player1, new KithkinGreatheart());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, ally.getId());
@@ -129,12 +145,4 @@ class SpringjackKnightTest extends BaseCardTest {
         assertThat(ally.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyKnight(Player player) {
-        Permanent perm = new Permanent(new SpringjackKnight());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

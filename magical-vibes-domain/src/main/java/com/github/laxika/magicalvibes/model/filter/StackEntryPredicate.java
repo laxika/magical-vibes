@@ -37,6 +37,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValueAtMostSourcePowerPredicate,
         StackEntryManaValuePowerOrToughnessEqualsPredicate,
         StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate,
+        StackEntryPowerOrToughnessAtMostPredicate,
         StackEntryManaValueParityMatchesSourceChosenParityPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,
         StackEntryManaValueAtMostControllerGraveyardCountPredicate,

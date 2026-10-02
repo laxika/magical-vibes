@@ -38,6 +38,7 @@ class SwitchgrassGrazerTest extends BaseCardTest {
     @Test
     @DisplayName("The saddled attack can target a player")
     void saddledAttackCanTargetPlayer() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(TurnStep.DECLARE_BLOCKERS));
         Permanent grazer = addCreatureReady(player1, new SwitchgrassGrazer());
         grazer.setSaddled(true);
         int lifeBefore = gd.getLife(player2.getId());

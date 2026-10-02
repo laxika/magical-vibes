@@ -1,27 +1,28 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DAvenantHealer.class, GrizzlyBears.class})
+@CardUsed({DAvenantHealer.class, AshcoatBear.class, Island.class})
 class DAvenantHealerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 1 damage to target attacking creature")
     void damagesAttackingCreature() {
-        Permanent healer = addReadyHealer();
-        Permanent attacker = addReadyCreature(player2);
+        Permanent healer = addCreatureReady(player1, new DAvenantHealer());
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
         attacker.setAttacking(true);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -36,8 +37,8 @@ class DAvenantHealerTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target blocking creature")
     void damagesBlockingCreature() {
-        addReadyHealer();
-        Permanent blocker = addReadyCreature(player2);
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
         blocker.setBlocking(true);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -51,8 +52,8 @@ class DAvenantHealerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void rejectsNoncombatCreature() {
-        addReadyHealer();
-        Permanent creature = addReadyCreature(player2);
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -60,10 +61,35 @@ class DAvenantHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damage ability cannot target a player")
+    void rejectsPlayerTarget() {
+        addCreatureReady(player1, new DAvenantHealer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Fizzles when its target stops attacking before resolution")
+    void fizzlesWhenTargetStopsAttacking() {
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
+        attacker.setAttacking(true);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Prevents the next 1 damage to a target creature")
     void preventsDamageToCreature() {
-        addReadyHealer();
-        Permanent creature = addReadyCreature(player2);
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
 
         activatePrevention(creature.getId());
 
@@ -73,23 +99,52 @@ class DAvenantHealerTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents the next 1 damage to a target player")
     void preventsDamageToPlayer() {
-        addReadyHealer();
+        addCreatureReady(player1, new DAvenantHealer());
 
         activatePrevention(player2.getId());
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 
-    private Permanent addReadyHealer() {
-        Permanent healer = harness.addToBattlefieldAndReturn(player1, new DAvenantHealer());
-        healer.setSummoningSick(false);
-        return healer;
+    @Test
+    @DisplayName("Prevents only the next 1 damage to the target player")
+    void preventsOnlyNextDamageToPlayer() {
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent attacker = addCreatureReady(player1, new AshcoatBear());
+        harness.setLife(player2, 20);
+
+        activatePrevention(player2.getId());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Prevention shield expires at the end of the turn")
+    void preventionShieldExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new DAvenantHealer());
+
+        activatePrevention(player2.getId());
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The prevention ability cannot target a land")
+    void rejectsLandTarget() {
+        addCreatureReady(player1, new DAvenantHealer());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void activatePrevention(UUID targetId) {

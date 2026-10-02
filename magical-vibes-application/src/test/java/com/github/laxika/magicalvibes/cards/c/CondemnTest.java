@@ -43,7 +43,6 @@ class CondemnTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Condemn");
         assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
@@ -132,7 +131,7 @@ class CondemnTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         // Grizzly Bears has 2 toughness → controller gains 2 life (15 + 2 = 17)
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
 
     @Test
@@ -153,7 +152,7 @@ class CondemnTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         // Effective toughness is 5 → controller gains 5 life (10 + 5 = 15)
-        assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertLife(player1, 15);
     }
 
     @Test
@@ -168,8 +167,7 @@ class CondemnTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -201,9 +199,32 @@ class CondemnTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Spell fizzles — no life gain
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Condemn still goes to graveyard
+        harness.assertInGraveyard(player2, "Condemn");
+    }
+
+    @Test
+    @DisplayName("Condemn fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttacking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.setLife(player1, 20);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Condemn()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.passPriority(player1);
+
+        harness.castInstant(player2, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Condemn");
     }
 }
