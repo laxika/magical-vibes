@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AdvancedReconstruction.class, Disentomb.class, GrizzlyBears.class})
+@CardUsed({AdvancedReconstruction.class, Disentomb.class, GrizzlyBears.class, Naturalize.class})
 class AdvancedReconstructionTest extends BaseCardTest {
 
     @Test
@@ -46,8 +47,7 @@ class AdvancedReconstructionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -66,11 +66,125 @@ class AdvancedReconstructionTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         gd.graveyardPlayPermissions.put(creature.getId(), player1.getId());
+        gd.playerManaPools.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void levelOneDoesNotDealDamageWhenACardLeavesItsGraveyard() {
+        harness.addToBattlefield(player1, new AdvancedReconstruction());
+        prepareForSorcery();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void levelThreeCanCastTheCardExiledByItsMainPhaseAbilityForTwoLess() {
+        Permanent reconstruction = harness.addToBattlefieldAndReturn(player1, new AdvancedReconstruction());
+        levelUpToThree(reconstruction);
+        Card milled = new AdvancedReconstruction();
+        harness.setLibrary(player1, List.of(milled));
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, milled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, milled.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(milled);
+    }
+
+    @Test
+    void damageTriggerStillResolvesAfterTheClassIsDestroyed() {
+        Permanent reconstruction = harness.addToBattlefieldAndReturn(player1, new AdvancedReconstruction());
+        levelUpToTwo(reconstruction);
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, reconstruction.getId());
+        harness.assertNotOnBattlefield(player1, "Advanced Reconstruction");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void levelThreeCannotBeActivatedBeforeLevelTwo() {
+        Permanent reconstruction = harness.addToBattlefieldAndReturn(player1, new AdvancedReconstruction());
+        prepareForSorcery();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(reconstruction), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void levelOneExiledCardRequiresItsNormalManaCost() {
+        harness.addToBattlefield(player1, new AdvancedReconstruction());
+        Card milled = new AdvancedReconstruction();
+        harness.setLibrary(player1, List.of(milled));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.castFromExile(player1, milled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, milled.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void exiledCardPermissionExpiresAtTheEndOfTheTurn() {
+        harness.addToBattlefield(player1, new AdvancedReconstruction());
+        Card milled = new AdvancedReconstruction();
+        harness.setLibrary(player1, List.of(milled));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(milled);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(milled.getId());
     }
 
     private void levelUpToTwo(Permanent reconstruction) {
