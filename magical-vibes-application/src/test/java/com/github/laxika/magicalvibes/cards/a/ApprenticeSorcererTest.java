@@ -27,7 +27,7 @@ class ApprenticeSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -81,8 +81,7 @@ class ApprenticeSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -115,6 +114,61 @@ class ApprenticeSorcererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("Can activate during upkeep")
+    void canActivateDuringUpkeep() {
+        harness.setLife(player2, 20);
+        setupSorcererOnMyTurn(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase or end step")
+    void cannotActivateLaterInTurn() {
+        setupSorcererOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        for (TurnStep step : new TurnStep[]{TurnStep.POSTCOMBAT_MAIN, TurnStep.END_STEP}) {
+            harness.forceStep(step);
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("before attackers are declared");
+            assertThat(findPermanent(player1, "Apprentice Sorcerer").isTapped()).isFalse();
+            assertThat(gd.stack).isEmpty();
+        }
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies from its own damage")
+    void canTargetItself() {
+        setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Apprentice Sorcerer"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Apprentice Sorcerer");
+        harness.assertInGraveyard(player1, "Apprentice Sorcerer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupSorcererOnMyTurn(TurnStep step) {
