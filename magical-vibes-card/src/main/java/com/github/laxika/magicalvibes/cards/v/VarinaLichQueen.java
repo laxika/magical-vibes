@@ -28,6 +28,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "861")
 @CardRegistration(set = "SLD", collectorNumber = "1355")
 @CardRegistration(set = "2X2", collectorNumber = "291")
+@CardRegistration(set = "C18", collectorNumber = "48")
 public class VarinaLichQueen extends Card {
 
     public VarinaLichQueen() {

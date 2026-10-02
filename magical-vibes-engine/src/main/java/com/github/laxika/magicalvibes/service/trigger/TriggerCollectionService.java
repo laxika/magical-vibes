@@ -459,6 +459,30 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires triggers watching the source controller's commander entering the command zone. */
+    public void checkYourCommanderPutIntoCommandZoneTriggers(GameData gameData, Card commander,
+                                                               UUID commanderOwnerId) {
+        if (commander == null || commanderOwnerId == null
+                || gameData.playerCommanders.getOrDefault(commanderOwnerId, List.of()).stream()
+                .noneMatch(card -> card.getId().equals(commander.getId())
+                        || card.getBackFaceCard() != null
+                        && card.getBackFaceCard().getId().equals(commander.getId()))) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(commanderOwnerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.CommanderPutIntoCommandZone(
+                commander, commanderOwnerId);
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            dispatchSlot(gameData, permanent, commanderOwnerId,
+                    EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE, context);
+        }
+    }
+
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
     }

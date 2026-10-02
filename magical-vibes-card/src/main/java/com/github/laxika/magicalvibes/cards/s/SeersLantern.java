@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "165")
+@CardRegistration(set = "C18", collectorNumber = "220")
 public class SeersLantern extends Card {
 
     public SeersLantern() {

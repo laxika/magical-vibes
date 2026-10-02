@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "16")
+@CardRegistration(set = "C18", collectorNumber = "68")
 public class Lightform extends Card {
 
     public Lightform() {

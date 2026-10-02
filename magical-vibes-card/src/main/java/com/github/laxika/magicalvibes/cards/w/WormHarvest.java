@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "131")
 @CardRegistration(set = "MMA", collectorNumber = "195")
+@CardRegistration(set = "C18", collectorNumber = "194")
 public class WormHarvest extends Card {
 
     public WormHarvest() {

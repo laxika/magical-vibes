@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 
 @CardRegistration(set = "PC2", collectorNumber = "88")
 @CardRegistration(set = "PCA", collectorNumber = "88")
+@CardRegistration(set = "C18", collectorNumber = "177")
 public class ElderwoodScion extends Card {
 
     public ElderwoodScion() {

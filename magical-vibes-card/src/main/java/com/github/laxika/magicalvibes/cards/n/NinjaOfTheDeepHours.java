@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "SLD", collectorNumber = "1912")
 @CardRegistration(set = "TSR", collectorNumber = "313")
 @CardRegistration(set = "C15", collectorNumber = "99")
+@CardRegistration(set = "C18", collectorNumber = "95")
 public class NinjaOfTheDeepHours extends Card {
 
     public NinjaOfTheDeepHours() {

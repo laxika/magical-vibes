@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "73")
 @CardRegistration(set = "JOU", collectorNumber = "52")
+@CardRegistration(set = "C18", collectorNumber = "102")
 public class SigiledStarfish extends Card {
 
     public SigiledStarfish() {

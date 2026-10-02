@@ -7651,6 +7651,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if an opponent controls more lands than you");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_AT_LEAST_TWO_MORE_LANDS) {
+                if (!gameQueryService.anyOpponentControlsAtLeastTwoMoreLands(gameData, playerId)) {
+                    throw new IllegalStateException(
+                            "Activate only if an opponent controls at least two more lands than you");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING) {
                 if (!permanent.isAttacking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking");

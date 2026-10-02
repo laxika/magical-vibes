@@ -2952,6 +2952,19 @@ public class GameQueryService {
         return false;
     }
 
+    /** Returns whether an opponent controls at least two more lands than the given player. */
+    public boolean anyOpponentControlsAtLeastTwoMoreLands(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int controllerLands = countLandsControlled(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countLandsControlled(gameData, candidateOpponentId) >= controllerLands + 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns whether {@code playerId} controls strictly more lands than {@code comparedPlayerId}. */
     public boolean controlsMoreLandsThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
         return countLandsControlled(gameData, playerId) > countLandsControlled(gameData, comparedPlayerId);

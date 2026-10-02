@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "JUD", collectorNumber = "72")
 @CardRegistration(set = "CMD", collectorNumber = "102")
 @CardRegistration(set = "FIC", collectorNumber = "286")
+@CardRegistration(set = "C18", collectorNumber = "119")
 public class StitchTogether extends Card {
 
     public StitchTogether() {

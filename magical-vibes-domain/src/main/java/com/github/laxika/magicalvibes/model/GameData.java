@@ -937,6 +937,9 @@ public class GameData {
     /** Progress state for each-player may-discard effects with discard-type riders. */
     public final EachPlayerMayDiscardOneThenApplyEffectsState eachPlayerMayDiscardOneThenApplyEffects =
             new EachPlayerMayDiscardOneThenApplyEffectsState();
+    /** Progress state for each player's optional discard followed by a basic-land search. */
+    public final EachPlayerMayDiscardThenSearchBasicLandState eachPlayerMayDiscardThenSearchBasicLand =
+            new EachPlayerMayDiscardThenSearchBasicLandState();
     /** Progress state for Kroxa's opponent discard and nonland comparison. */
     public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
@@ -6502,6 +6505,18 @@ public class GameData {
                 this.eachPlayerMayDiscardOneThenApplyEffects.remaining);
         copy.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded.addAll(
                 this.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded);
+        copy.eachPlayerMayDiscardThenSearchBasicLand.active =
+                this.eachPlayerMayDiscardThenSearchBasicLand.active;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.controllerId =
+                this.eachPlayerMayDiscardThenSearchBasicLand.controllerId;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId =
+                this.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore =
+                this.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.remaining.addAll(
+                this.eachPlayerMayDiscardThenSearchBasicLand.remaining);
+        copy.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded.addAll(
+                this.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded);
         copy.kroxaDiscard.active = this.kroxaDiscard.active;
         copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
         copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;

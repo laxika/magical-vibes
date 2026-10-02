@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "40")
+@CardRegistration(set = "C18", collectorNumber = "4")
 public class LoyalUnicorn extends Card {
 
     public LoyalUnicorn() {

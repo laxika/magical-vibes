@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "203")
+@CardRegistration(set = "C18", collectorNumber = "201")
 public class CrystalBall extends Card {
 
     public CrystalBall() {

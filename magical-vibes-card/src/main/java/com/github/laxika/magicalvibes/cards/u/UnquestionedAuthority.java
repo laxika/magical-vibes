@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "JUD", collectorNumber = "31")
+@CardRegistration(set = "C18", collectorNumber = "78")
 public class UnquestionedAuthority extends Card {
 
     public UnquestionedAuthority() {

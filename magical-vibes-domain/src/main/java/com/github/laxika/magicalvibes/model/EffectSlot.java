@@ -69,6 +69,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CARD_EXILED,
     /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
     COMMAND_ZONE_STATIC,
+    /** Triggers when the source controller's commander is put into the command zone. */
+    ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,

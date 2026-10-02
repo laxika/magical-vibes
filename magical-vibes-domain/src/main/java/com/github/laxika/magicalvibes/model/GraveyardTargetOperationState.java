@@ -80,6 +80,8 @@ public class GraveyardTargetOperationState {
     public Integer triggeringPermanentPowerAtTrigger;
     /** Permanent that caused a triggered ability, retained through graveyard target selection. */
     public UUID triggeringPermanentId;
+    /** Attack destination captured for an attack trigger whose graveyard target is chosen interactively. */
+    public UUID attackedTargetId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */
     public String chapterName;
     /**

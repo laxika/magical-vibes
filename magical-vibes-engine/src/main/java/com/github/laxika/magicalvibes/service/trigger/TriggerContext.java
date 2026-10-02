@@ -739,6 +739,9 @@ public sealed interface TriggerContext {
         }
     }
 
+    /** Context for a controller's commander entering the command zone. */
+    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) implements TriggerContext {}
+
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}
 

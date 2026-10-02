@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "58")
+@CardRegistration(set = "C18", collectorNumber = "112")
 public class WhitewaterNaiads extends Card {
 
     public WhitewaterNaiads() {

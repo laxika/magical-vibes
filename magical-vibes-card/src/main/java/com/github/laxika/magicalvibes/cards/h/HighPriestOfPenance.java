@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "171")
+@CardRegistration(set = "C18", collectorNumber = "183")
 public class HighPriestOfPenance extends Card {
 
     public HighPriestOfPenance() {

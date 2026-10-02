@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "164")
 @CardRegistration(set = "BRR", collectorNumber = "61")
+@CardRegistration(set = "C18", collectorNumber = "228")
 public class UnwindingClock extends Card {
 
     public UnwindingClock() {

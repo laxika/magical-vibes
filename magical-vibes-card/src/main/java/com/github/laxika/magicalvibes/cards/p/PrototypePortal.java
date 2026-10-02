@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "195")
+@CardRegistration(set = "C18", collectorNumber = "216")
 public class PrototypePortal extends Card {
 
     public PrototypePortal() {

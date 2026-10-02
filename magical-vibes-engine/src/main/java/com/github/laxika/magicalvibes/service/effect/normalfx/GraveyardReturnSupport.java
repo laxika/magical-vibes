@@ -2266,7 +2266,26 @@ public class GraveyardReturnSupport {
                                          Set<Keyword> additionalKeywords, boolean enterTapped,
                                          boolean removeLegendary, Set<CardType> additionalTypes,
                                          boolean sacrificeAtEndStep) {
+        createTokenCopyFromCard(gameData, entry, sourceCard, additionalSubtypes, grantHaste,
+                exileAtEndStep, colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                grantHasteUntilEndOfTurn, simultaneouslyEntered, additionalKeywords, enterTapped,
+                removeLegendary, additionalTypes, sacrificeAtEndStep, false, false);
+    }
+
+    /** Variant that can make the copied token enter tapped and attacking and exile it at end of combat. */
+    public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep, CardColor colorOverride,
+                                         Integer powerOverride, Integer toughnessOverride,
+                                         boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                         List<Permanent> simultaneouslyEntered,
+                                         Set<Keyword> additionalKeywords, boolean enterTapped,
+                                         boolean removeLegendary, Set<CardType> additionalTypes,
+                                         boolean sacrificeAtEndStep, boolean enterTappedAndAttacking,
+                                         boolean exileAtEndOfCombat) {
         UUID controllerId = entry.getControllerId();
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         List<CardSubtype> tokenSubtypes = new ArrayList<>();
         if (!replaceSubtypes && sourceCard.getSubtypes() != null) {
             tokenSubtypes.addAll(sourceCard.getSubtypes());
@@ -2347,7 +2366,13 @@ public class GraveyardReturnSupport {
             if (grantHasteUntilEndOfTurn) {
                 tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
             }
-            if (enterTapped) {
+            if (enterTappedAndAttacking) {
+                UUID attackTargetId = sourcePermanent == null
+                        ? entry.getAttackedTargetId() : sourcePermanent.getAttackTarget();
+                tokenPermanent.setAttackTarget(attackTargetId);
+                tokenPermanent.tap();
+                tokenPermanent.setAttacking(true);
+            } else if (enterTapped) {
                 tokenPermanent.tap();
             }
             battlefieldEntryService.putPermanentOntoBattlefield(
@@ -2357,6 +2382,10 @@ public class GraveyardReturnSupport {
 
             if (exileAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+            }
+            if (exileAtEndOfCombat) {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
             }
             if (sacrificeAtEndStep) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));

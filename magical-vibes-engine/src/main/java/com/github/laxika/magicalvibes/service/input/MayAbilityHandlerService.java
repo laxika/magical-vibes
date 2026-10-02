@@ -553,7 +553,10 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(
+                        graveyard.get(i), filter, ability.sourceCard().getId(), gameData, pid,
+                        ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue(),
+                        ability.sourcePermanentSnapshot())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }
@@ -1108,7 +1111,10 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(
+                        graveyard.get(i), filter, ability.sourceCard().getId(), gameData, pid,
+                        ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue(),
+                        ability.sourcePermanentSnapshot())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }

@@ -860,6 +860,8 @@ public class PredicateEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
                         : sourcePowerAtTrigger != null
                         ? sourcePowerAtTrigger
+                        : sourcePermanentSnapshot != null
+                        ? sourcePermanentSnapshot.getEffectivePower()
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 yield sourcePower != null && power != null && power < sourcePower;
