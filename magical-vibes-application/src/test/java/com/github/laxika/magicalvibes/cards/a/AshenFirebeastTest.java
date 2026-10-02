@@ -31,4 +31,47 @@ class AshenFirebeastTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent firebeast = harness.addToBattlefieldAndReturn(player1, new AshenFirebeast());
+        firebeast.setSummoningSick(true);
+        firebeast.setTapped(true);
+        Permanent groundCreature = addCreatureReady(player2, new Anarchist());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firebeast.getMarkedDamage()).isEqualTo(1);
+        assertThat(firebeast.isTapped()).isTrue();
+        assertThat(groundCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations kill ground creatures on both sides and spare flyers")
+    void repeatedActivationsDealLethalDamageToBothPlayersGroundCreatures() {
+        Permanent firebeast = addCreatureReady(player1, new AshenFirebeast());
+        addCreatureReady(player1, new Anarchist());
+        addCreatureReady(player2, new Anarchist());
+        Permanent flyingCreature = addCreatureReady(player2, new AvenFlock());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firebeast.getMarkedDamage()).isEqualTo(2);
+        assertThat(firebeast.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Anarchist");
+        harness.assertNotOnBattlefield(player2, "Anarchist");
+        harness.assertInGraveyard(player1, "Anarchist");
+        harness.assertInGraveyard(player2, "Anarchist");
+        assertThat(flyingCreature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
