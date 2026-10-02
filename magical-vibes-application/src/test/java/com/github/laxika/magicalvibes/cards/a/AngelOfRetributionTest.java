@@ -39,8 +39,7 @@ class AngelOfRetributionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new Aquamoeba());
         Permanent angel = addCreatureReady(player2, new AngelOfRetribution());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(angel);
@@ -55,8 +54,7 @@ class AngelOfRetributionTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new LaquatussChampion());
         Permanent angel = addCreatureReady(player2, new AngelOfRetribution());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(angel);
@@ -66,5 +64,34 @@ class AngelOfRetributionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(angel);
+    }
+
+    @Test
+    @DisplayName("Flying creatures can block the Angel and first strike damage is simultaneous")
+    void flyingBlockerWithFirstStrikeTradesWithAngel() {
+        Permanent attacker = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent blocker = addCreatureReady(player2, new AngelOfRetribution());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Angel of Retribution");
+        harness.assertInGraveyard(player2, "Angel of Retribution");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Angel deals combat damage once despite first strike")
+    void unblockedAngelDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new AngelOfRetribution());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
     }
 }
