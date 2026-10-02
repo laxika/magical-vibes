@@ -90,4 +90,42 @@ class AdarkarSentinelTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped Sentinel can pay its generic activation cost with colored mana")
+    void canActivateWhileTappedUsingColoredMana() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new AdarkarSentinel());
+        sentinel.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(sentinel.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(sentinel.isTapped()).isTrue();
+        assertThat(sentinel.getEffectivePower()).isEqualTo(3);
+        assertThat(sentinel.getEffectiveToughness()).isEqualTo(4);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source, even with other Sentinels on the battlefield")
+    void boostsOnlyTheActivatingSentinel() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AdarkarSentinel());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AdarkarSentinel());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AdarkarSentinel());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(3);
+    }
 }
