@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -79,5 +80,119 @@ class AegisSculptorTest extends BaseCardTest {
         assertThat(sculptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exactlyTwoCardsAreExiledWithoutFurtherSelection() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        Card first = new AegisSculptor();
+        Card second = new AegisSculptor();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(sculptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cardsAddedBeforeResolutionCanPayEvenWhenGraveyardWasEmptyAtTriggerTime() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        harness.setGraveyard(player1, List.of());
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        Card first = new AegisSculptor();
+        Card second = new AegisSculptor();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sculptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cardsRemovedBeforeResolutionPreventPaymentAndCounter() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        Card first = new AegisSculptor();
+        harness.setGraveyard(player1, List.of(first, new AegisSculptor()));
+        advanceToUpkeep(player1);
+
+        harness.setGraveyard(player1, List.of(first));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(sculptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        Card first = new AegisSculptor();
+        Card second = new AegisSculptor();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(sculptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void wardCountersOpponentsSpellWhenTheyCannotPay() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, sculptor.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aegis Sculptor");
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        assertThat(gd.stack).isEmpty();
+        assertThat(sculptor.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void payingWardAllowsOpponentsSpellToResolve() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, sculptor.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aegis Sculptor");
+        harness.assertInGraveyard(player1, "Aegis Sculptor");
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+    }
+
+    @Test
+    void wardDoesNotTriggerForControllersOwnSpell() {
+        Permanent sculptor = addCreatureReady(player1, new AegisSculptor());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, sculptor.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aegis Sculptor");
+        harness.assertInGraveyard(player1, "Aegis Sculptor");
     }
 }
