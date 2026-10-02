@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -23,6 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BirthingPod.class, AirElemental.class, BenalishKnight.class, GoldMyr.class,
+        HillGiant.class, LlanowarElves.class, Memnite.class})
 class BirthingPodTest extends BaseCardTest {
 
     @Test
@@ -34,8 +38,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         // Seed library with MV 2 creature
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -68,8 +71,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         // Library has MV 4 and MV 2 creatures
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new HillGiant(), new GoldMyr()));
+        harness.setLibrary(player1, List.of(new HillGiant(), new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -95,8 +97,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         // Library has MV 1, 3, 4, 5 creatures but NO MV 2
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),    // MV 1
                 new BenalishKnight(),   // MV 3
                 new HillGiant(),        // MV 4
@@ -181,8 +182,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -201,8 +201,7 @@ class BirthingPodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new GoldMyr());
+        harness.setLibrary(player1, List.of(new GoldMyr()));
 
         assertThat(pod.isTapped()).isFalse();
         harness.activateAbility(player1, 0, null, null);
@@ -214,29 +213,20 @@ class BirthingPodTest extends BaseCardTest {
     void sacrificeMV0SearchForMV1() {
         addPodReady(player1);
 
-        // Create a 0-cost creature token on the battlefield
-        // Use GoldMyr with MV 2 to search for MV 3 instead, or use an actual MV 0 token
-        // Actually let's test with MV 4 creature searching for MV 5
-        addCreature(player1, new HillGiant());
+        addCreature(player1, new Memnite());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new AirElemental());
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new GoldMyr()));
 
         harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Memnite");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-
-        // Only MV 5 should be offered
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .hasSize(1)
-                .allMatch(c -> c.getName().equals("Air Elemental"));
-
+                .allMatch(c -> c.getName().equals("Llanowar Elves"));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-
-        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test
@@ -251,17 +241,74 @@ class BirthingPodTest extends BaseCardTest {
                 .hasMessageContaining("mana");
     }
 
+    @Test
+    void chosenSacrificeDeterminesSearchManaValue() {
+        addPodReady(player1);
+        addCreature(player1, new LlanowarElves());
+        Permanent knight = addCreature(player1, new BenalishKnight());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new GoldMyr(), new HillGiant(), new AirElemental()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, knight.getId());
+        harness.assertInGraveyard(player1, "Benalish Knight");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .hasSize(1)
+                .allMatch(c -> c.getName().equals("Hill Giant"));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(findPermanent(player1, "Hill Giant").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayFailToFindEvenWhenMatchingCreatureExists() {
+        addPodReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new GoldMyr()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        Permanent pod = addPodReady(player1);
+        addCreature(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        pod.untap();
+        addCreature(player1, new LlanowarElves());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(pod.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private Permanent addPodReady(Player player) {
-        harness.addToBattlefield(player, new BirthingPod());
-        return findPermanent(player, "Birthing Pod");
+        return harness.addToBattlefieldAndReturn(player, new BirthingPod());
     }
 
     private Permanent addCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        harness.addToBattlefield(player, card);
-        Permanent creature = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(card.getName()))
-                .reduce((first, second) -> second)  // get last added
-                .orElseThrow();
+        Permanent creature = harness.addToBattlefieldAndReturn(player, card);
         creature.setSummoningSick(false);
         return creature;
     }
