@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AegisOfTheMeek.class, BalduvianBears.class, FyndhornElves.class})
+@CardUsed({AegisOfTheMeek.class, BalduvianBears.class, Disenchant.class, FyndhornElves.class})
 class AegisOfTheMeekTest extends BaseCardTest {
 
     @Test
@@ -117,5 +120,44 @@ class AegisOfTheMeekTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Aegis cannot activate even with enough mana and a legal target")
+    void cannotActivateWhileTapped() {
+        Permanent aegis = harness.addToBattlefieldAndReturn(player1, new AegisOfTheMeek());
+        Permanent elves = addCreatureReady(player1, new FyndhornElves());
+        aegis.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Aegis is destroyed in response")
+    void abilityResolvesAfterSourceIsDestroyed() {
+        Permanent aegis = harness.addToBattlefieldAndReturn(player1, new AegisOfTheMeek());
+        Permanent elves = addCreatureReady(player1, new FyndhornElves());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.castAndResolveInstant(player2, 0, aegis.getId());
+
+        harness.assertInGraveyard(player1, "Aegis of the Meek");
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
