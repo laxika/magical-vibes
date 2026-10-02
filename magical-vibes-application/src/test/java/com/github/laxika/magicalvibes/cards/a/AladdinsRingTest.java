@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AladdinsRing.class, ChandraNalaar.class, GrizzlyBears.class})
+@CardUsed({AladdinsRing.class, ChandraNalaar.class, GrizzlyBears.class, Naturalize.class})
 class AladdinsRingTest extends BaseCardTest {
 
     @Test
@@ -131,6 +134,42 @@ class AladdinsRingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void abilityResolvesAfterRingIsDestroyed() {
+        harness.setLife(player2, 20);
+        Permanent ring = addReadyRing(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castInstant(player2, 0, ring.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aladdin's Ring");
+        harness.assertInGraveyard(player1, "Aladdin's Ring");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newlyEnteredNoncreatureRingCanActivate() {
+        harness.setLife(player2, 20);
+        Permanent ring = addReadyRing(player1);
+        ring.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(ring.isTapped()).isTrue();
+        harness.assertLife(player2, 16);
     }
 
     private Permanent addReadyRing(Player player) {
