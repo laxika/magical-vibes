@@ -59,6 +59,76 @@ class AssassinInitiateTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, initiate, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("One activation grants only the chosen keyword to its source")
+    void grantsOnlyChosenKeywordToSource() {
+        Permanent initiate = addInitiateReady();
+        Permanent other = addCreatureReady(player1, new AssassinInitiate());
+        Permanent opposing = addCreatureReady(player2, new AssassinInitiate());
+
+        activateAndChoose("FLYING");
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations can grant all three keywords simultaneously")
+    void repeatedActivationsAccumulateKeywords() {
+        Permanent initiate = addInitiateReady();
+
+        activateAndChoose("FLYING");
+        activateAndChoose("DEATHTOUCH");
+        activateAndChoose("LIFELINK");
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Initiate can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new AssassinInitiate());
+        initiate.setSummoningSick(true);
+        initiate.setTapped(true);
+
+        activateAndChoose("LIFELINK");
+
+        assertThat(gqs.hasKeyword(gd, initiate, Keyword.LIFELINK)).isTrue();
+        assertThat(initiate.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An ability whose source left does not grant a keyword to another Initiate")
+    void sourceLeavingBeforeResolutionDoesNotAffectAnotherInitiate() {
+        Permanent initiate = addInitiateReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(initiate);
+        gd.playerGraveyards.get(player1.getId()).add(initiate.getCard());
+        Permanent other = addCreatureReady(player1, new AssassinInitiate());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
+    }
+
     private Permanent addInitiateReady() {
         return addCreatureReady(player1, new AssassinInitiate());
     }
