@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,16 +45,14 @@ class AtalyaSamiteMasterTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isZero();
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         assertThat(bears.getDamagePreventionShield()).isZero();
@@ -103,5 +102,77 @@ class AtalyaSamiteMasterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void preventionModeAllowsZeroXWithoutMana() {
+        Permanent atalya = addCreatureReady(player1, new AtalyaSamiteMaster());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(atalya.isTapped()).isTrue();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    void lifeModeAllowsZeroXWithoutMana() {
+        Permanent atalya = addCreatureReady(player1, new AtalyaSamiteMaster());
+        harness.setLife(player1, 10);
+
+        harness.activateAbility(player1, 0, 1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        assertThat(atalya.isTapped()).isTrue();
+    }
+
+    @Test
+    void nonwhiteManaCannotSupplementWhiteManaForX() {
+        Permanent atalya = addCreatureReady(player1, new AtalyaSamiteMaster());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(atalya.isTapped()).isFalse();
+    }
+
+    @Test
+    void preventionModeCannotTargetAPlayer() {
+        addCreatureReady(player1, new AtalyaSamiteMaster());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateTapAbilityWhileSummoningSick() {
+        harness.addToBattlefield(player1, new AtalyaSamiteMaster());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 1, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void unusedPreventionExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new AtalyaSamiteMaster());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, 0, 3, bears.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
     }
 }

@@ -50,6 +50,27 @@ class AtlanteanSkirmisherTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("An empty hand still draws and discards, and only the attacker gets a counter")
+    void emptyHandConnivesOnlyAttackingSkirmisher() {
+        Permanent attacker = addReadySkirmisher();
+        Permanent nonattacker = addReadySkirmisher();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        discardByName("Grizzly Bears");
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nonattacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadySkirmisher() {
         return addCreatureReady(player1, new AtlanteanSkirmisher());
     }

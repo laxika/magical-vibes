@@ -24,8 +24,7 @@ class AstralSteelTest extends BaseCardTest {
     void boostsTargetCreature() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new SilverKnight());
         castAstralSteel(knight);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
@@ -74,8 +73,7 @@ class AstralSteelTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new SilverKnight());
         castAstralSteel(knight);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -95,6 +93,54 @@ class AstralSteelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, stabilizer.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature")
+    void boostsOpponentsCreature() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new SilverKnight());
+        castAstralSteel(knight);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Spells cast after Astral Steel do not increase its storm count")
+    void laterSpellsDoNotIncreaseStormCount() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new SilverKnight());
+        gd.recordSpellCast(player1.getId(), new SilverKnight());
+        castAstralSteel(knight);
+        gd.recordSpellCast(player2.getId(), new SilverKnight());
+
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Storm can retarget a copy after the original target leaves the battlefield")
+    void retargetsCopyAfterOriginalTargetLeaves() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new SilverKnight());
+        Permanent newTarget = harness.addToBattlefieldAndReturn(player2, new SilverKnight());
+        gd.recordSpellCast(player1.getId(), new SilverKnight());
+        castAstralSteel(originalTarget);
+        gd.playerBattlefields.get(player1.getId()).remove(originalTarget);
+        gd.playerGraveyards.get(player1.getId()).add(originalTarget.getCard());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, newTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newTarget)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castAstralSteel(Permanent target) {

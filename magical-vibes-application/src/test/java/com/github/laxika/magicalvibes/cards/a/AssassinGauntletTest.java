@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -53,7 +51,7 @@ class AssassinGauntletTest extends BaseCardTest {
 
     @Test
     void equipsAndGrantsLootAbilityToEquippedCreature() {
-        Permanent gauntlet = addPermanentReady(player1, new AssassinGauntlet());
+        Permanent gauntlet = addCreatureReady(player1, new AssassinGauntlet());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -69,16 +67,13 @@ class AssassinGauntletTest extends BaseCardTest {
     @Test
     void equippedCreatureDrawsThenDiscardsWhenItDealsCombatDamage() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent gauntlet = addPermanentReady(player1, new AssassinGauntlet());
+        Permanent gauntlet = addCreatureReady(player1, new AssassinGauntlet());
         gauntlet.setAttachedTo(creature.getId());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         creature.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -99,10 +94,56 @@ class AssassinGauntletTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.of());
     }
 
-    private Permanent addPermanentReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void attachesBeforeTappingOpponentsCreatures() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castGauntlet(creature.getId(), player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        List<String> instructions = gd.gameLog.stream()
+                .map(entry -> entry.plainText())
+                .filter(text -> text.startsWith("Assassin Gauntlet is now attached to ")
+                        || text.equals("Assassin Gauntlet taps 1 permanent(s)."))
+                .toList();
+        assertThat(instructions).containsExactly(
+                "Assassin Gauntlet is now attached to Grizzly Bears.",
+                "Assassin Gauntlet taps 1 permanent(s).");
+    }
+
+    @Test
+    void stillTapsWhenCreatureTargetLeavesBeforeTriggerResolves() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        castGauntlet(creature.getId(), player2.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Assassin Gauntlet").getAttachedTo()).isNull();
+        assertThat(opponentCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    void lootWithEmptyHandDiscardsTheDrawnCard() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent gauntlet = addCreatureReady(player1, new AssassinGauntlet());
+        gauntlet.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+
+        creature.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Forest");
     }
 }
