@@ -64,7 +64,7 @@ class AirMarshalTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent marshal = harness.addToBattlefieldAndReturn(player1, new AirMarshal());
         marshal.setSummoningSick(true);
-        marshal.setTapped(true);
+        marshal.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, marshal.getId());

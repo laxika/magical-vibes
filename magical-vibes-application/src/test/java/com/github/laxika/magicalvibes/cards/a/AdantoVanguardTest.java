@@ -134,7 +134,7 @@ class AdantoVanguardTest extends BaseCardTest {
         Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new AdantoVanguard());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new AdantoVanguard());
         vanguard.setSummoningSick(true);
-        vanguard.setTapped(true);
+        vanguard.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

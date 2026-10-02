@@ -114,7 +114,7 @@ class AcademicDisputeTest extends BaseCardTest {
     void tappedCreatureCannotBeForcedToBlock() {
         Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
         Permanent target = addReadyCreature(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         castAcademicDispute(target);
         harness.handleMayAbilityChosen(player1, false);

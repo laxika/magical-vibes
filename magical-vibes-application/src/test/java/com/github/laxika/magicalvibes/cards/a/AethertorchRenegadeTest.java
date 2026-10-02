@@ -161,7 +161,7 @@ class AethertorchRenegadeTest extends BaseCardTest {
     @Test
     void tappedRenegadeCannotActivateEitherAbility() {
         Permanent renegade = addReadyRenegade();
-        renegade.setTapped(true);
+        renegade.tap();
         gd.playerEnergyCounters.put(player1.getId(), 8);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, renegade.getId()))

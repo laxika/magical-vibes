@@ -115,7 +115,7 @@ class AetherflameWallTest extends BaseCardTest {
     void firebreathingStacksWithoutTapOrHasteRequirement() {
         Permanent wall = addCreatureReady(player1, new AetherflameWall());
         wall.setSummoningSick(true);
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

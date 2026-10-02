@@ -65,7 +65,7 @@ class AdarkarWindformTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent windform = harness.addToBattlefieldAndReturn(player1, new AdarkarWindform());
         windform.setSummoningSick(true);
-        windform.setTapped(true);
+        windform.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
 

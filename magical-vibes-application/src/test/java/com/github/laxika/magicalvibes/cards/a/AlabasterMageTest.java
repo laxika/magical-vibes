@@ -75,7 +75,7 @@ class AlabasterMageTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent mage = harness.addToBattlefieldAndReturn(player1, new AlabasterMage());
         mage.setSummoningSick(true);
-        mage.setTapped(true);
+        mage.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, mage.getId());

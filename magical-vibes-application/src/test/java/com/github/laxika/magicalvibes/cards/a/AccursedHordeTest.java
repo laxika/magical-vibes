@@ -76,7 +76,7 @@ class AccursedHordeTest extends BaseCardTest {
     void canTargetItselfWhileTapped() {
         Permanent horde = addCreatureReady(player1, new AccursedHorde());
         horde.setAttacking(true);
-        horde.setTapped(true);
+        horde.tap();
         addManaForAbility();
 
         harness.activateAbility(player1, 0, 0, null, horde.getId());

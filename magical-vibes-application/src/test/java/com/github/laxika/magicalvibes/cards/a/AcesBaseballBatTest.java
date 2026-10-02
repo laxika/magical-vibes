@@ -136,7 +136,7 @@ class AcesBaseballBatTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new CybermanPatrol());
         Permanent dalek = addCreatureReady(player2, new DalekDrone());
-        dalek.setTapped(true);
+        dalek.tap();
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

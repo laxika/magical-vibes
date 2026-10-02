@@ -107,7 +107,7 @@ class AcolyteOfTheInfernoTest extends BaseCardTest {
         assertThat(acolyte.isRenowned()).isTrue();
         assertThat(acolyte.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        acolyte.setTapped(false);
+        acolyte.untap();
         acolyte.setAttacking(false);
         declareAttackers(player1, List.of(0));
         resolveCombat();

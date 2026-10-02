@@ -93,7 +93,7 @@ class AirdropCondorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent condor = harness.addToBattlefieldAndReturn(player1, new AirdropCondor());
         condor.setSummoningSick(true);
-        condor.setTapped(true);
+        condor.tap();
         addCreatureReady(player1, new GoblinPiledriver());
         harness.addMana(player1, ManaColor.RED, 2);
 

@@ -161,7 +161,7 @@ class AgentOfShaukuTest extends BaseCardTest {
     void tappedSummoningSickAgentCanTargetItself() {
         Permanent agent = harness.addToBattlefieldAndReturn(player1, new AgentOfShauku());
         harness.inMutationScope(() -> {
-            agent.setTapped(true);
+            agent.tap();
             agent.setSummoningSick(true);
         });
         harness.addToBattlefield(player1, new WintermoonMesa());

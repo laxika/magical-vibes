@@ -61,7 +61,7 @@ class AkkiRoninTest extends BaseCardTest {
     @Test
     @DisplayName("An opposing Samurai attacking alone does not trigger your Akki Ronin")
     void opposingSamuraiDoesNotTrigger() {
-        addCreatureReady(player1, new AkkiRonin()).setTapped(true);
+        addCreatureReady(player1, new AkkiRonin()).tap();
         addCreatureReady(player2, new AkkiRonin());
         Forest retained = new Forest();
         harness.setHand(player1, List.of(retained));

@@ -127,7 +127,7 @@ class AegisOfTheMeekTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent aegis = harness.addToBattlefieldAndReturn(player1, new AegisOfTheMeek());
         Permanent elves = addCreatureReady(player1, new FyndhornElves());
-        aegis.setTapped(true);
+        aegis.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))

@@ -85,7 +85,7 @@ class AerieMysticsTest extends BaseCardTest {
     @Test
     void canActivateWhileSummoningSickTappedAndAlreadyShrouded() {
         Permanent mystics = harness.addToBattlefieldAndReturn(player1, new AerieMystics());
-        mystics.setTapped(true);
+        mystics.tap();
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.addMana(player1, ManaColor.BLUE, 2);
 

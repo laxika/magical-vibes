@@ -128,7 +128,7 @@ class AdvancedHoverguardTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent hoverguard = harness.addToBattlefieldAndReturn(player1, new AdvancedHoverguard());
         hoverguard.setSummoningSick(true);
-        hoverguard.setTapped(true);
+        hoverguard.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

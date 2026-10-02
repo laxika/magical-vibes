@@ -67,7 +67,7 @@ class AgentOfStromgaldTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent agent = harness.addToBattlefieldAndReturn(player1, new AgentOfStromgald());
         agent.setSummoningSick(true);
-        agent.setTapped(true);
+        agent.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

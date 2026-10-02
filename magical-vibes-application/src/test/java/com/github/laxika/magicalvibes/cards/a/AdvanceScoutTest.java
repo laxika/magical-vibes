@@ -64,7 +64,7 @@ class AdvanceScoutTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent scout = harness.addToBattlefieldAndReturn(player1, new AdvanceScout());
         scout.setSummoningSick(true);
-        scout.setTapped(true);
+        scout.tap();
         Permanent target = addCreatureReady(player1, new MoggFanatic());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

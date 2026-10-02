@@ -100,7 +100,7 @@ class AkroanJailerTest extends BaseCardTest {
     @DisplayName("An already tapped jailer cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent jailer = addCreatureReady(player1, new AkroanJailer());
-        jailer.setTapped(true);
+        jailer.tap();
         payMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, jailer.getId()))
@@ -128,7 +128,7 @@ class AkroanJailerTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new AkroanJailer());
         Permanent target = addCreatureReady(player2, new AkroanJailer());
-        target.setTapped(true);
+        target.tap();
         payMana();
 
         harness.activateAbility(player1, 0, null, target.getId());

@@ -62,7 +62,7 @@ class AgencyCoronerTest extends BaseCardTest {
     void tappedSummoningSickCoronerCanActivate() {
         Permanent coroner = harness.addToBattlefieldAndReturn(player1, new AgencyCoroner());
         coroner.setSummoningSick(true);
-        coroner.setTapped(true);
+        coroner.tap();
         harness.addToBattlefield(player1, new BasilicaStalker());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

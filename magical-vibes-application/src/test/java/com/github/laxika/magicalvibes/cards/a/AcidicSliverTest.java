@@ -134,7 +134,7 @@ class AcidicSliverTest extends BaseCardTest {
         addCreatureReady(player1, new AcidicSliver());
         Permanent sliver = harness.addToBattlefieldAndReturn(player1, new SpinedSliver());
         sliver.setSummoningSick(true);
-        sliver.setTapped(true);
+        sliver.tap();
         harness.setLife(player2, 20);
 
         activateGrantedAbility(1, player2.getId());

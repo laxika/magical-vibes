@@ -89,7 +89,7 @@ class AcolyteOfAclazotzTest extends BaseCardTest {
     @DisplayName("A tapped Acolyte cannot activate its tap ability")
     void cannotActivateWhileTapped() {
         addReadyAcolyte();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addToBattlefield(player1, new Millstone());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

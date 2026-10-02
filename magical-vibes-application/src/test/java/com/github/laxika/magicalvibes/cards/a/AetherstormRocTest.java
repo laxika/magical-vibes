@@ -179,7 +179,7 @@ class AetherstormRocTest extends BaseCardTest {
     void losingTheChosenTargetPreventsPaymentAndGrowth() {
         Permanent roc = addCreatureReady(player1, new AetherstormRoc());
         Permanent victim = addCreatureReady(player2, new ConsulateSkygate());
-        victim.setTapped(true);
+        victim.tap();
         gd.playerEnergyCounters.put(player1.getId(), 2);
         harness.setHand(player1, List.of(new SelectForInspection()));
         harness.setLibrary(player1, List.of());

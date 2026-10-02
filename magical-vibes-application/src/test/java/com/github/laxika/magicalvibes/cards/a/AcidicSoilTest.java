@@ -60,9 +60,9 @@ class AcidicSoilTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped lands but excludes nonlands and lands outside the battlefield")
     void countsOnlyLandsOnBattlefieldRegardlessOfTappedStatus() {
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
         harness.addToBattlefield(player1, new CaveTiger());
-        harness.addToBattlefieldAndReturn(player2, new Mountain()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Mountain()).tap();
         harness.addToBattlefield(player2, new CaveTiger());
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.setGraveyard(player2, List.of(new Mountain()));

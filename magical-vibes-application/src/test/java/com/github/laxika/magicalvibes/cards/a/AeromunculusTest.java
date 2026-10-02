@@ -78,7 +78,7 @@ class AeromunculusTest extends BaseCardTest {
     void adaptCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent aeromunculus = harness.addToBattlefieldAndReturn(player1, new Aeromunculus());
         aeromunculus.setSummoningSick(true);
-        aeromunculus.setTapped(true);
+        aeromunculus.tap();
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);

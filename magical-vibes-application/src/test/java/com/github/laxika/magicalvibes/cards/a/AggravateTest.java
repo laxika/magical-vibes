@@ -115,7 +115,7 @@ class AggravateTest extends BaseCardTest {
     @DisplayName("Tapped and summoning-sick creatures take damage but cannot be required to attack")
     void creaturesUnableToAttackCanStayBack() {
         Permanent tappedBear = addCreatureReady(player2, new GrizzlyBears());
-        tappedBear.setTapped(true);
+        tappedBear.tap();
         Permanent sickBear = addCreatureReady(player2, new GrizzlyBears());
         sickBear.setSummoningSick(true);
         harness.forceActivePlayer(player2);

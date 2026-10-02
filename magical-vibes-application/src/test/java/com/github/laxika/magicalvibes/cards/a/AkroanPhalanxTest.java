@@ -50,7 +50,7 @@ class AkroanPhalanxTest extends BaseCardTest {
     @Test
     void tappedNewCreatureCanActivateRepeatedlyAndBoostsStack() {
         Permanent phalanx = harness.addToBattlefieldAndReturn(player1, new AkroanPhalanx());
-        phalanx.setTapped(true);
+        phalanx.tap();
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.activateAbility(player1, 0, null, null);

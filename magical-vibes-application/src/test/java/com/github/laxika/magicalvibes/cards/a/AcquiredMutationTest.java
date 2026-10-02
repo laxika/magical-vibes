@@ -75,7 +75,7 @@ class AcquiredMutationTest extends BaseCardTest {
     @Test
     void unenchantedCreatureAttackingDoesNotGiveRadCounters() {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
-        enchanted.setTapped(true);
+        enchanted.tap();
         addCreatureReady(player1, new GrizzlyBears());
         attachMutation(player1, enchanted);
 

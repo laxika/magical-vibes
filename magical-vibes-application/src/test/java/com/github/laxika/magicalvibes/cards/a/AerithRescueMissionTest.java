@@ -98,7 +98,7 @@ class AerithRescueMissionTest extends BaseCardTest {
     @Test
     void stairsStunsAnAlreadyTappedCreatureYouControl() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new JumboCactuar());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new AerithRescueMission()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 

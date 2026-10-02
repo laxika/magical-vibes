@@ -94,7 +94,7 @@ class AhrimanTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Ahriman());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Ahriman());
         Ahriman drawn = new Ahriman();
         harness.setHand(player1, List.of());

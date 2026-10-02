@@ -138,7 +138,7 @@ class AetherwindBaskerTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent basker = harness.addToBattlefieldAndReturn(player1, new AetherwindBasker());
-        basker.setTapped(true);
+        basker.tap();
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         harness.activateAbility(player1, 0, null, null);

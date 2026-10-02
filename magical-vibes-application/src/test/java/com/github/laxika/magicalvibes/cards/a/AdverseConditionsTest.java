@@ -99,7 +99,7 @@ class AdverseConditionsTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsNextUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CoralhelmGuide());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new AdverseConditions()));
         addMana();
 

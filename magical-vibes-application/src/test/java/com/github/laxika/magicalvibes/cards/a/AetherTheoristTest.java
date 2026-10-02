@@ -118,7 +118,7 @@ class AetherTheoristTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent theorist = addCreatureReady(player1, new AetherTheorist());
-        theorist.setTapped(true);
+        theorist.tap();
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

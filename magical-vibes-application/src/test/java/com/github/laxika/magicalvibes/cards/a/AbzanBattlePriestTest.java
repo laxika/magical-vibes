@@ -106,7 +106,7 @@ class AbzanBattlePriestTest extends BaseCardTest {
     @DisplayName("Outlast cannot be activated while the priest is tapped")
     void outlastRequiresUntappedPriest() {
         Permanent priest = addPriestReady(player1);
-        priest.setTapped(true);
+        priest.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

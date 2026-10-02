@@ -108,7 +108,7 @@ class AeromoebaTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent aeromoeba = addReadyAeromoeba();
-        aeromoeba.setTapped(true);
+        aeromoeba.tap();
         harness.setHand(player1, List.of(new Aeromoeba()));
         harness.forceActivePlayer(player2);
 

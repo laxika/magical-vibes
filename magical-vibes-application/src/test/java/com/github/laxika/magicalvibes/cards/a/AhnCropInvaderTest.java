@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinAssailant;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -98,7 +98,7 @@ class AhnCropInvaderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent invader = harness.addToBattlefieldAndReturn(player1, new AhnCropInvader());
         invader.setSummoningSick(true);
-        invader.setTapped(true);
+        invader.tap();
         harness.addToBattlefield(player1, new GoblinAssailant());
         harness.forceActivePlayer(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

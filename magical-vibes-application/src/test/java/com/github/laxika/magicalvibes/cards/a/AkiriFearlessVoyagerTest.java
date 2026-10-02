@@ -120,7 +120,7 @@ class AkiriFearlessVoyagerTest extends BaseCardTest {
     void alreadyTappedCreatureGainsIndestructibleAndKeepsOtherEquipment() {
         addCreatureReady(player1, new AkiriFearlessVoyager());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         Permanent remaining = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         chosen.setAttachedTo(creature.getId());

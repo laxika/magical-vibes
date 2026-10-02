@@ -95,7 +95,7 @@ class AdarkarSentinelTest extends BaseCardTest {
     @DisplayName("A tapped Sentinel can pay its generic activation cost with colored mana")
     void canActivateWhileTappedUsingColoredMana() {
         Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new AdarkarSentinel());
-        sentinel.setTapped(true);
+        sentinel.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

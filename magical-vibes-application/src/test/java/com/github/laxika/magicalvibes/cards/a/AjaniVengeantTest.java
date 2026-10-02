@@ -115,7 +115,7 @@ class AjaniVengeantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isFalse();
-        land.setTapped(true);
+        land.tap();
         harness.performUntapStep(player1);
         harness.performUntapStep(player2);
         assertThat(land.isTapped()).isTrue();
@@ -131,7 +131,7 @@ class AjaniVengeantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, land.getId());
         harness.passBothPriorities();
         harness.performUntapStep(player2);
-        land.setTapped(true);
+        land.tap();
         harness.performUntapStep(player2);
 
         assertThat(land.isTapped()).isFalse();

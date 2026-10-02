@@ -175,7 +175,7 @@ class AcornCatapultTest extends BaseCardTest {
     @DisplayName("A tapped Catapult cannot activate")
     void cannotActivateWhileTapped() {
         Permanent catapult = addReadyCatapult(player1);
-        catapult.setTapped(true);
+        catapult.tap();
         addMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

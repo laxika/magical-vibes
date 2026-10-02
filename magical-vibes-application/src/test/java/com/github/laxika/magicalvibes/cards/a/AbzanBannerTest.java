@@ -105,7 +105,7 @@ class AbzanBannerTest extends BaseCardTest {
     @DisplayName("A tapped Banner cannot activate either ability")
     void tappedBannerCannotActivateEitherAbility() {
         Permanent banner = addReadyBanner();
-        banner.setTapped(true);
+        banner.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

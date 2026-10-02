@@ -130,7 +130,7 @@ class AdricMathematicalGeniusTest extends BaseCardTest {
     @Test
     void sacrificesSummoningSickTappedAdricToCounterTriggeredAbility() {
         Permanent adric = harness.addToBattlefieldAndReturn(player1, new AdricMathematicalGenius());
-        adric.setTapped(true);
+        adric.tap();
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castCreature(player1, 0);

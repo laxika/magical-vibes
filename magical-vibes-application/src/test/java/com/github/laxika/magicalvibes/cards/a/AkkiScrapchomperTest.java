@@ -130,7 +130,7 @@ class AkkiScrapchomperTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent chomper = addCreatureReady(player1, new AkkiScrapchomper());
-        chomper.setTapped(true);
+        chomper.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         addActivationMana();
 

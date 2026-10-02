@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -66,7 +66,7 @@ class AgentOfHorizonsTest extends BaseCardTest {
     void abilityDoesNotRequireTapOrHaste() {
         Permanent agent = harness.addToBattlefieldAndReturn(player1, new AgentOfHorizons());
         agent.setSummoningSick(true);
-        agent.setTapped(true);
+        agent.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

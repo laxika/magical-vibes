@@ -125,7 +125,7 @@ class AcademyRuinsTest extends BaseCardTest {
     @DisplayName("A tapped Academy Ruins cannot activate either ability")
     void rejectsActivationsWhileTapped() {
         Permanent ruins = addReadyRuins();
-        ruins.setTapped(true);
+        ruins.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         Card artifact = new PrismaticLens();

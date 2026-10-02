@@ -101,7 +101,7 @@ class AinokBondKinTest extends BaseCardTest {
     @Test
     void outlastCannotBeActivatedWhileTapped() {
         Permanent bondKin = addBondKinReady(player1);
-        bondKin.setTapped(true);
+        bondKin.tap();
         prepareOutlast();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

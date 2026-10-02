@@ -51,7 +51,7 @@ class AccordersShieldTest extends BaseCardTest {
     void resolvingEquipAttachesToCreature() {
         Permanent shield = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
         Permanent creature = addCreatureReady(player1, new MoriokReaver());
-        shield.setTapped(true);
+        shield.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());

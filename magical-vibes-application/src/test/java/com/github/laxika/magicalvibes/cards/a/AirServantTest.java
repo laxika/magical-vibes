@@ -135,9 +135,9 @@ class AirServantTest extends BaseCardTest {
     @DisplayName("Tapped Air Servant can target an already tapped flyer")
     void canActivateWhileTappedAndTargetTappedFlyer() {
         Permanent servant = addReadyServant(player1);
-        servant.setTapped(true);
+        servant.tap();
         Permanent target = addReadyFlyer(player2);
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());

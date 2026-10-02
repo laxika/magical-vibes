@@ -85,7 +85,7 @@ class AegisAutomatonTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Automaton can activate repeatedly")
     void canActivateRepeatedlyWhileTapped() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new AegisAutomaton());
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent otherAutomaton = harness.addToBattlefieldAndReturn(player1, new AegisAutomaton());
