@@ -59,7 +59,7 @@ class AspectOfManticoreTest extends BaseCardTest {
     void canEnchantOpponentsCreatureAtInstantSpeed() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NyxbornCourser());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new AspectOfManticore()));
         harness.addMana(player1, ManaColor.RED, 3);

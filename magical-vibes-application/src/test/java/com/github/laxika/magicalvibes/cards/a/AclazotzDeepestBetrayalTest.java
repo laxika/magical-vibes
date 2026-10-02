@@ -147,10 +147,11 @@ class AclazotzDeepestBetrayalTest extends BaseCardTest {
         harness.setHand(player2, List.of(protectedCard));
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = gd.playerBattlefields.get(player2.getId()).getLast();
+        tamiyo.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
         Permanent aclazotz = addAclazotzReady(player1);
         declareAttackers(List.of(indexOf(player1, aclazotz)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(protectedCard);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);

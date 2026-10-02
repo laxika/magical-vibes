@@ -1266,6 +1266,12 @@ public class AmountEvaluationService {
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
+        if (count.declaredAttackersOnly()) {
+            return ctx.stackEntry() == null ? 0 : (int) ctx.stackEntry().getAttackingPermanentSnapshots().stream()
+                    .filter(attacker -> count.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, count.filter(), FilterContext.empty().withSourceControllerId(ctx.controllerId())))
+                    .count();
+        }
         return countPermanents(gameData, count, ctx, false);
     }
 
@@ -2334,6 +2340,18 @@ public class AmountEvaluationService {
 
     private int greatestPowerAmongControlled(
             GameData gameData, GreatestPowerAmongControlled amount, AmountContext ctx) {
+        if (amount.declaredAttackersOnly()) {
+            if (ctx.stackEntry() == null) return 0;
+            java.util.OptionalInt greatest = ctx.stackEntry().getAttackingPermanentSnapshots().stream()
+                    .filter(attacker -> amount.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, amount.filter(), FilterContext.empty().withSourceControllerId(ctx.controllerId())))
+                    .mapToInt(attacker -> {
+                        Permanent current = gameQueryService.findPermanentById(gameData, attacker.getId());
+                        return current == null ? attacker.getLastKnownPower()
+                                : gameQueryService.getEffectivePower(gameData, current);
+                    }).max();
+            return greatest.isEmpty() ? 0 : amount.floorAtZero() ? Math.max(0, greatest.getAsInt()) : greatest.getAsInt();
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         FilterContext filterContext = null;
         if (amount.filter() != null) {

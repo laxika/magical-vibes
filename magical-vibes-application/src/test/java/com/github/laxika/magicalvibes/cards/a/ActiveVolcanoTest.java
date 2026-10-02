@@ -95,6 +95,7 @@ class ActiveVolcanoTest extends BaseCardTest {
 
         @Test
         void returnsIslandToOwnerRatherThanController() {
+            harness.setHand(player2, List.of());
             Island card = new Island();
             card.setOwnerId(player1.getId());
             Permanent island = harness.addToBattlefieldAndReturn(player2, card);

@@ -102,7 +102,7 @@ class AssassinInitiateTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new AssassinInitiate());
         initiate.setSummoningSick(true);
-        initiate.setTapped(true);
+        initiate.tap();
 
         activateAndChoose("LIFELINK");
 

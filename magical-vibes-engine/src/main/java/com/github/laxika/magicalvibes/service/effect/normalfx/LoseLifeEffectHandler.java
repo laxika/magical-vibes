@@ -108,6 +108,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
     }
 
     private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
+        if (entry.getDefendingPlayerId() != null) return entry.getDefendingPlayerId();
         // The attacked player/planeswalker was baked onto the combat trigger as attackedTargetId.
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (attackedTargetId == null) {

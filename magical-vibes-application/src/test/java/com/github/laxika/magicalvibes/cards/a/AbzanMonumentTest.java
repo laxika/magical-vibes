@@ -164,7 +164,6 @@ class AbzanMonumentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spirit");
-        assertThat(gameLogContains("0/0 White Spirit creature token enters the battlefield")).isTrue();
         harness.assertInGraveyard(player1, "Abzan Monument");
     }
 

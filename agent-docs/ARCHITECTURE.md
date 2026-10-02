@@ -60,6 +60,34 @@ Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/C
 
 Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar cards are command-zone objects, never battlefield permanents. See [PLANECHASE.md](PLANECHASE.md) for actions, source snapshots, projection, and extension rules.
 
+## Trigger and entry state
+
+Delayed graveyard returns use stack entries and `CardIdSetPredicate` with graveyard entry versions.
+Divided damage assignments belong to the individual stack entry; copies retain their division
+while offering legal replacement targets. Additional ETB abilities on token copies can register
+with `TriggerMode.INDEPENDENT` to keep their targets and resolution separate from the copied abilities.
+
+`CharacteristicState.meleeInstances` preserves multiple melee abilities. Each instance triggers
+separately and counts players attacked by declared attackers, excluding planeswalkers and battles.
+`GameData.lastNormalTurnPlayerId` preserves the normal turn order while extra turns interrupt it.
+An exert untap restriction records its resolving controller and expires during that player's
+next untap step, even after a control change.
+The exert decision happens during attack declaration; accepting it immediately exerts the creature
+and queues the resulting reflexive ability for target selection and normal stack resolution.
+Separate next-spell-copy effects each create their own triggered stack entry.
+
+Dungeon progress follows the room arrows and offers choices at branches. Bottom-room abilities
+complete the dungeon when the last such ability leaves the stack, including being countered.
+Room modifiers retain their printed duration, including Fungi Cavern's until-next-turn reduction.
+Text changes replace printed creature types as well as basic land types before later type layers.
+Explicit graveyard targets are retained on the spell entry before paying delve costs.
+
+`DelayedZoneChangeTrigger` registers a one-shot watch on a permanent's identity and maps its departure destination to an existing effect. It is independent of that permanent's abilities, so Earthbend returns survive ability removal. Every departure consumes the watch, including destinations without an effect. The triggered entry stores the departed card's identity; graveyard entry versions bind after the card reaches the graveyard and prevent an old trigger from returning a later incarnation.
+
+`Permanent.transformationSequence` changes whenever its face changes and is copied into source snapshots. `TransformSelfEffectHandler` compares the live sequence against the ability's snapshot to reject obsolete transformation instructions. Departure also records effective toughness before battlefield removal for damaged-creature death triggers.
+
+Use `EnterWithCountersEffect` in a battlefield entry request for reanimation with counters, then collect entry triggers after the entire simultaneous batch has entered. Intrinsic Echo registration belongs in `STATIC` and runs during placement. `ChooseOpponentGainsControlOfSourceEffect` in `STATIC` changes the entering controller; its normal triggered form remains available. Fabricate uses `MayEffect` with counters on the source and token creation as its alternative, chosen during resolution.
+
 ## Nested games
 
 See [SUBGAMES.md](SUBGAMES.md) for transitions, card transfers, runtime routing, and focused verification.

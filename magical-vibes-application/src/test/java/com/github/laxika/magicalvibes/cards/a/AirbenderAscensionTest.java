@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -118,8 +123,11 @@ class AirbenderAscensionTest extends BaseCardTest {
     @Test
     void flickeredStolenCreatureReturnsToItsOwner() {
         Permanent ascension = addAscension();
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TurtleDuck());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), creature,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
         ascension.setCounterCount(CounterType.QUEST, 4);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, creature.getId());

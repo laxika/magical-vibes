@@ -45,7 +45,6 @@ class AgadeemOccultistTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()));

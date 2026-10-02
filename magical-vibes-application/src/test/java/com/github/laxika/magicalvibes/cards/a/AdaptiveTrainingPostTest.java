@@ -108,12 +108,14 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
 
     @Test
     void separateActivationsCreateSeparateDelayedTriggers() {
+        gd.orderedPlayerIds.forEach(id -> gd.playerAutoStopSteps.put(id, java.util.Set.of(
+                com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN)));
         Permanent post = harness.addToBattlefieldAndReturn(player1, new AdaptiveTrainingPost());
         post.setCounterCount(CounterType.CHARGE, 6);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -132,6 +134,7 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ConeOfFlame()));
         harness.addMana(player1, ManaColor.RED, 5);
 
@@ -142,8 +145,13 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(post.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isTrue();
+        while (gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(post.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     private void castLightningBolt() {

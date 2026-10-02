@@ -2672,6 +2672,16 @@ public class MultiPermanentChoiceHandlerService {
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)) {
+                    if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
+                        int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
+                        if (added > 0) {
+                            gameData.setPlayerEnergyCounters(permId,
+                                    gameData.playerEnergyCounters.get(permId) + added);
+                            triggerCollectionService.checkEnergyGainTriggers(gameData, permId, added);
+                            triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, added);
+                            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                        }
+                    }
                     if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
                         lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
                         proliferatedPlayers.add(gameData.playerIdToName.get(permId));

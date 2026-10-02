@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -66,9 +72,12 @@ class AcademyJourneymageTest extends BaseCardTest {
         void bouncesToOwnerInsteadOfController() {
             harness.setHand(player1, List.of(new AcademyJourneymage()));
             harness.setHand(player2, List.of());
-            harness.addToBattlefield(player2, new PrimordialWurm());
-            UUID targetId = harness.getPermanentId(player2, "Primordial Wurm");
-            gd.stolenCreatures.put(targetId, player1.getId());
+            Permanent target = harness.addToBattlefieldAndReturn(player1, new PrimordialWurm());
+            harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                    .applyControlEffect(gd, player2.getId(), target,
+                            new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                            null, "Test setup"));
+            UUID targetId = target.getId();
             harness.addMana(player1, ManaColor.BLUE, 5);
 
             harness.castCreature(player1, 0, targetId);

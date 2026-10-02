@@ -149,7 +149,7 @@ class AetherplasmTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player2, true);
         }
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.HandCardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId()))
                 .containsExactlyInAnyOrder(aetherplasm.getCard(), replacementCard);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

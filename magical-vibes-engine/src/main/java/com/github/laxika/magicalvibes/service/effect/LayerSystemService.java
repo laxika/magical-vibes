@@ -2551,13 +2551,19 @@ public class LayerSystemService {
         for (TextReplacement replacement : permanent.getTextReplacements()) {
             CardSubtype from = TextChangeTransformer.basicLandTypeForWord(replacement.fromWord());
             CardSubtype to = TextChangeTransformer.basicLandTypeForWord(replacement.toWord());
+            boolean landTypeReplacement = from != null && to != null;
+            if (!landTypeReplacement) {
+                from = TextChangeTransformer.creatureTypeForWord(replacement.fromWord());
+                to = TextChangeTransformer.creatureTypeForWord(replacement.toWord());
+            }
             if (from == null || to == null || !state.hasSubtype(from)) {
                 continue;
             }
-            state.removeSubtypesIf(subtype -> subtype == from);
+            CardSubtype replacedSubtype = from;
+            state.removeSubtypesIf(subtype -> subtype == replacedSubtype);
             state.addSubtype(to);
             if (state.hasCardType(CardType.LAND)) {
-                landTypeOverrides.put(permanent.getId(), List.of(to));
+                if (landTypeReplacement) landTypeOverrides.put(permanent.getId(), List.of(to));
             }
         }
     }

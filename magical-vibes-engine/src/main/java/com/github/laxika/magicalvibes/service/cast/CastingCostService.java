@@ -1328,6 +1328,7 @@ public class CastingCostService {
     public boolean hasFreePowerUpAbilityCost(GameData gameData, UUID activatingPlayerId,
                                              ActivatedAbility ability) {
         if (!ability.isPowerUpAbility()
+                || !activatingPlayerId.equals(gameData.activePlayerId)
                 || gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(activatingPlayerId)) {
             return false;
         }

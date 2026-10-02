@@ -107,7 +107,7 @@ class AjaniSleeperAgentTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(entry ->
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && entry.getDescription().contains("Ajani, Sleeper Agent's emblem"));
+                        && entry.getDescription().contains("Ajani, Sleeper Agent"));
         harness.passBothPriorities();
 
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);

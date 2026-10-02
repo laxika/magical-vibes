@@ -6331,3 +6331,17 @@ Use `PlaneswalkEffect()`, `ChaosEnsuesEffect()`, and `RollPlanarDieEffect()` for
 - `RemovePerpetualTriggeredAbilityEffect(EffectSlot, Class<? extends CardEffect>)` — removes matching perpetual triggered effects from the source card's grant and current permanent after a one-shot ability succeeds.
 - `TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect()` — makes the targeted creature a permanent copy of a face-up creature card exiled with the source permanent (Reflection Net, YLCI 27).
 - `ChooseCardFromHandAndApplyPerpetualBlitzEffect()` - prompts the controller to choose a creature card in hand without blitz and replaces it with a runtime copy that perpetually gains blitz at its mana cost. Used by Riveteers Provocateur (YSNC 26).
+
+- `IncreaseControllerSpeedEffect()` - resolves the inherent speed-increase triggered ability. Increases an already-started speed below four; collecting the trigger does not increase speed immediately.
+- `CanBlockCreaturesWithShadowEffect(true)` - treats the shadow attacker as though it lacked shadow for blocking restrictions (Aether Web). The default form permits a creature without shadow to block one with shadow.
+- `SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype, false)` - adds the subtype while preserving other creature types (Adrestia); the default replaces creature types.
+- `ExileTopCardsAndMayCastSpellsEffect.controllerMayPlayWithNormalCost(int)` - exiles library cards and offers immediate plays during resolution, paying normal spell costs and respecting land-turn and land-play restrictions (Mad Mage Runestone Caverns).
+- `CantAttackThisTurnEffect(TapUntapScope, PermanentPredicate, GrantDuration.UNTIL_YOUR_NEXT_TURN)` - tracks the affected identities until the resolving controller starts their next turn, including creatures that change controllers.
+- `MayCastAnySpellFromHandWithoutPayingManaCostEffect` supports drawn-card-only offers and revealing the drawn card. Every alternative shares one cast allowance; mandatory additional costs must be payable.
+- `CardSharesCreatureTypeWithLibraryCreaturePredicate(true)` restricts matching creature cards to the most prevalent creature types in the controller's library, including ties.
+- `PermanentCount` and `GreatestPowerAmongControlled` support counting only the declared attackers retained on a trigger entry, including last-known characteristics of departed attackers.
+- `ControllerHasCompletedDungeon(Dungeon)` checks completion of that particular dungeon; the default checks any completion.
+- `TriggerMode.INDEPENDENT` collects separate triggered abilities rather than bundling successive effects into one landfall ability.
+- `SkipNextUntapEffect` supports `controllerStepOnly` for exert restrictions that expire at the exerting player's next untap step.
+- `CardIdSetPredicate(Set<UUID>, Map<UUID, Long>)` restricts delayed graveyard returns to the recorded graveyard entry versions.
+- `SearchZonesForCardNamedToBattlefieldEffect(List<String>)` searches for multiple named cards and puts the found cards onto the battlefield together.

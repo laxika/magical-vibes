@@ -2104,7 +2104,7 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
             return (e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId))
-                    && (e.maxManaValue() == null
+                    && (e.maxManaValue() == null || e.checkManaValueOnlyOnResolution()
                     || c.getManaValue() <= amountEvaluationService.evaluate(
                     gameData, e.maxManaValue(), AmountContext.forCasting(controllerId)));
         } else if (effect instanceof ReturnCardFromGraveyardEffect e) {

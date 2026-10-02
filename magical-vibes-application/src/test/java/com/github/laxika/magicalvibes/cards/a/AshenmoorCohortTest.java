@@ -56,7 +56,7 @@ class AshenmoorCohortTest extends BaseCardTest {
     void boostWithTappedMulticoloredBlackCreature() {
         Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
         Permanent gouger = harness.addToBattlefieldAndReturn(player1, new AshenmoorGouger());
-        gouger.setTapped(true);
+        gouger.tap();
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);

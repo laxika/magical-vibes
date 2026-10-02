@@ -78,7 +78,7 @@ class AssemblyWorkerTest extends BaseCardTest {
     void canBoostOpponentsTappedWorker() {
         Permanent source = addCreatureReady(player1, new AssemblyWorker());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AssemblyWorker());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -107,7 +107,7 @@ class AssemblyWorkerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent source = addCreatureReady(player1, new AssemblyWorker());
         Permanent target = addCreatureReady(player1, new AssemblyWorker());
-        source.setTapped(true);
+        source.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

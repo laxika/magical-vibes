@@ -133,8 +133,11 @@ class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
 
     @Test
     void returnedCreatureCanAttackAPlaneswalkerInsteadOfAleshasDefender() {
+        gd.orderedPlayerIds.forEach(id -> gd.playerAutoStopSteps.put(id,
+                java.util.EnumSet.allOf(com.github.laxika.magicalvibes.model.TurnStep.class)));
         addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
         Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        ugin.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 7);
         Card returnedCard = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(returnedCard));
         harness.addMana(player1, ManaColor.WHITE, 2);

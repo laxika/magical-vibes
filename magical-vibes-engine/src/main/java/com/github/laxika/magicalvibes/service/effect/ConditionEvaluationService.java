@@ -916,8 +916,11 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.initiativePlayerId);
             case ControllerHasEnduringStory ignored ->
                     ctx.controllerId() != null && gameData.playersWithEnduringStory.contains(ctx.controllerId());
-            case ControllerHasCompletedDungeon ignored ->
-                    ctx.controllerId() != null && gameData.playersWhoCompletedDungeon.contains(ctx.controllerId());
+            case ControllerHasCompletedDungeon completed ->
+                    ctx.controllerId() != null && (completed.dungeon() == null
+                            ? gameData.playersWhoCompletedDungeon.contains(ctx.controllerId())
+                            : gameData.completedDungeonsByPlayer.getOrDefault(ctx.controllerId(), Set.of())
+                            .contains(completed.dungeon()));
             case ControllerHasBoon ignored ->
                     ctx.controllerId() != null
                             && gameData.boons.stream()

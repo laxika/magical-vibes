@@ -207,7 +207,7 @@ class AerialCaravanTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         addAbilityMana();
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))

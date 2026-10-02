@@ -73,8 +73,8 @@ class AetherMembraneTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInHand(player1, "Giant Dustwasp");
     }
 
     @Test
@@ -87,7 +87,7 @@ class AetherMembraneTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
         harness.assertInHand(player1, "Giant Dustwasp");
@@ -103,7 +103,7 @@ class AetherMembraneTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(membrane.getMarkedDamage()).isEqualTo(3);
         harness.assertInHand(player1, "Giant Dustwasp");
@@ -137,7 +137,7 @@ class AetherMembraneTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player2.getId()).removeIf(p -> p.getId().equals(membrane.getId()));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertInHand(player1, "Giant Dustwasp");
     }

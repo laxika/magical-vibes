@@ -95,6 +95,7 @@ class AdelineResplendentCatharTest extends BaseCardTest {
         addCreatureReady(player1, new AdelineResplendentCathar());
         addCreatureReady(player2, new NoviceOccultist());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TeferiWhoSlowsTheSunset());
+        planeswalker.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();

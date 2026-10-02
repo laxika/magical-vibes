@@ -13,6 +13,6 @@ public class AbzanBeastmaster extends Card {
     public AbzanBeastmaster() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControlsCreatureWithGreatestToughness(),
-                new DrawCardEffect(1)));
+                new DrawCardEffect(1), false));
     }
 }

@@ -23,7 +23,7 @@ public class Adrestia extends Card {
                 new SourceWasCrewedBySubtypeThisTurn(CardSubtype.ASSASSIN),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.ASSASSIN))));
+                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.ASSASSIN, false))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

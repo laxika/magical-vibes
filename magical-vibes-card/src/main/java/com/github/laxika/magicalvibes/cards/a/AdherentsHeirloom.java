@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
-import com.github.laxika.magicalvibes.model.effect.NoteMostPrevalentCreatureTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithLibraryCreaturePredicate;
 
 import java.util.List;
 
@@ -17,9 +16,7 @@ public class AdherentsHeirloom extends Card {
 
     public AdherentsHeirloom() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new NoteMostPrevalentCreatureTypeOnEnterEffect(false));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SeekLibraryEffect(1, new CardHasSourceChosenSubtypePredicate()));
+                new SeekLibraryEffect(1, new CardSharesCreatureTypeWithLibraryCreaturePredicate(true)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

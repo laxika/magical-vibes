@@ -38,9 +38,9 @@ class AhnCropCrasherTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new HyenaPack());
 
         declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(bears.isCantBlockThisTurn()).isTrue();
         assertThat(crasher.getSkipUntapCount()).isGreaterThan(0);
@@ -53,8 +53,6 @@ class AhnCropCrasherTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new HyenaPack());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.isCantBlockThisTurn()).isFalse();
@@ -68,9 +66,9 @@ class AhnCropCrasherTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HyenaPack());
 
         declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.performUntapStep(player1);
         assertThat(crasher.isTapped()).isTrue();
@@ -85,9 +83,9 @@ class AhnCropCrasherTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HyenaPack());
 
         declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new LayClaim()));

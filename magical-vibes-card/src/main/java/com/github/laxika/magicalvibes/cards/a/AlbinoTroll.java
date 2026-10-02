@@ -15,7 +15,7 @@ import java.util.List;
 public class AlbinoTroll extends Card {
 
     public AlbinoTroll() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{1}{G}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{1}{G}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",

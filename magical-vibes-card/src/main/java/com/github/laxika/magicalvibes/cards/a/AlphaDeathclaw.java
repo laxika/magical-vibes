@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,14 +17,12 @@ import java.util.List;
 public class AlphaDeathclaw extends Card {
 
     public AlphaDeathclaw() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
-
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{B}{G}",
                 List.of(new MonstrosityEffect(4)),
                 "{5}{B}{G}: Monstrosity 4."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         DestroyTargetPermanentEffect destroyTargetPermanent = new DestroyTargetPermanentEffect();
         target(TargetFilters.permanent())

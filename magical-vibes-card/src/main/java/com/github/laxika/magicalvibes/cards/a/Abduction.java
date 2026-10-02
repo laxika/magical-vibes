@@ -17,7 +17,7 @@ public class Abduction extends Card {
         // Enchant creature
         target(TargetFilters.creature())
         // When this Aura enters, untap enchanted creature.
-        .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(TapUntapScope.TARGET));
+        .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(TapUntapScope.ENCHANTED));
 
         // You control enchanted creature.
         addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());

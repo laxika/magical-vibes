@@ -87,7 +87,7 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RuneclawBear());
         destroyBear();
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(4);

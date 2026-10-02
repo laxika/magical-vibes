@@ -165,8 +165,9 @@ class AfterlifeFromTheLoamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstantWithMultipleGraveyardExile(player1, 0, null, List.of(0));
-        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(ownCreature.getId(), opponentCreature.getId()), List.of(),
+                false, null, null, null, null, List.of(0));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCreature);

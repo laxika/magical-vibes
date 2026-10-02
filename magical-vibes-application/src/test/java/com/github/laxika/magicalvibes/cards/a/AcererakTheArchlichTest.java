@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AcererakTheArchlich.class, DireWolfProwler.class})
+@CardUsed({AcererakTheArchlich.class, DireWolfProwler.class, Stifle.class})
 class AcererakTheArchlichTest extends BaseCardTest {
 
     @Test
@@ -154,8 +157,44 @@ class AcererakTheArchlichTest extends BaseCardTest {
         harness.castFromHand(player, new AcererakTheArchlich(), "{2}{B}");
     }
 
+    @Test
+    void counteringBottomRoomAbilityStillCompletesDungeon() {
+        gd.playerDungeonProgress.put(player1.getId(), new DungeonProgress(Dungeon.TOMB_OF_ANNIHILATION, 3));
+        castAcererak(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playersWhoCompletedDungeon).doesNotContain(player1.getId());
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getTargetableId());
+        harness.passBothPriorities();
+
+        assertThat(gd.completedDungeonsByPlayer.get(player1.getId())).contains(Dungeon.TOMB_OF_ANNIHILATION);
+        assertThat(countPermanents(player1, "The Atropal")).isZero();
+    }
+
     private void addAttackingAcererak() {
         addCreatureReady(player1, new AcererakTheArchlich());
+    }
+
+    @Test
+    void fungiCavernWeakensCreatureUntilVenturingPlayersNextTurn() {
+        Permanent target = addCreatureReady(player2, new DireWolfProwler());
+        int originalPower = gqs.getEffectivePower(gd, target);
+        gd.playerDungeonProgress.put(player1.getId(), new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        castAcererak(player1);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Fungi Cavern");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 4);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 4);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
     }
 
     private void resolveAttackTrigger() {

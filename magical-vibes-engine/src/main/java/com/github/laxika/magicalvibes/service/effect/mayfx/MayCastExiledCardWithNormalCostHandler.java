@@ -26,6 +26,7 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final com.github.laxika.magicalvibes.service.spell.SpellCastingService spellCastingService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +42,12 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
                 .orElseThrow();
 
         if (accepted && ability.targetCardId() != null) {
+            var exiled = gameData.findExiledCard(ability.targetCardId());
+            if (exiled != null && exiled.card().hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {
+                spellCastingService.playLandFromExileDuringResolution(gameData, player, ability.targetCardId());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             gameData.pendingMayAbilities.removeIf(pending -> pending != ability
                     && pending.effects().stream()
                     .anyMatch(candidate -> candidate instanceof MayCastExiledCardWithNormalCostEffect other

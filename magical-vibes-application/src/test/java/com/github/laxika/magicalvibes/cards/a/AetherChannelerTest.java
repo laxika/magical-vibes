@@ -66,7 +66,7 @@ class AetherChannelerTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
 
         assertThatThrownBy(() -> cast(1, island.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalArgumentException.class);
         harness.handleListChoice(player1, "Create a 1/1 white Bird creature token with flying");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Bird");
@@ -82,7 +82,7 @@ class AetherChannelerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1,
                 "Return another target nonland permanent to its owner's hand"))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalArgumentException.class);
         harness.handleListChoice(player1, "Create a 1/1 white Bird creature token with flying");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Bird");
@@ -132,6 +132,7 @@ class AetherChannelerTest extends BaseCardTest {
     void choosesDrawWhenNotCast() {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.enterBattlefieldAndReturn(player1, new AetherChanneler());
+        harness.passPriority(player1);
         harness.handleListChoice(player1, "Draw a card");
         harness.passBothPriorities();
 

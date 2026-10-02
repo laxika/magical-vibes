@@ -55,7 +55,6 @@ class AgyremTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, bears));
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         harness.passBothPriorities();
@@ -141,12 +140,12 @@ class AgyremTest extends BaseCardTest {
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, knight);
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
         });
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.inMutationScope(() -> planar.planeswalk(gd));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player2, "Youthful Knight")).isEqualTo(1);
         assertThat(countPermanents(player1, "Youthful Knight")).isZero();

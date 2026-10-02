@@ -835,6 +835,7 @@ public class TurnProgressionService {
         boolean skipUntapStep = false;
         boolean powerUpAbilitiesDisabled = false;
         boolean damageCantBePrevented = false;
+        if (!gameData.currentTurnIsExtraTurn) gameData.lastNormalTurnPlayerId = gameData.activePlayerId;
         UUID nextTurnPlayer = !gameData.extraTurns.isEmpty()
                 ? gameData.extraTurns.peekFirst()
                 : nextPlayerInTurnOrder(gameData);
@@ -862,7 +863,6 @@ public class TurnProgressionService {
                 String skippedName = gameData.playerIdToName.get(nextActive);
                 gameLogService.append(gameData, GameLog.text(skippedName + " skips their extra turn."));
                 log.info("Game {} - {} skips their extra turn", gameData.id, skippedName);
-                gameData.currentTurnIsExtraTurn = false;
                 gameData.powerUpAbilitiesCantBeActivatedThisTurn = false;
                 advanceTurn(gameData, false);
                 return;
@@ -889,6 +889,8 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their turn", gameData.id, skippedName);
             // Advance turn order past the skipped player so the next selection is correct.
             gameData.activePlayerId = nextActive;
+            gameData.currentTurnIsExtraTurn = currentTurnIsExtraTurn;
+            if (!currentTurnIsExtraTurn) gameData.lastNormalTurnPlayerId = nextActive;
             if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
             advanceTurn(gameData, false);
             return;
@@ -1288,6 +1290,8 @@ public class TurnProgressionService {
         // Gideon of the Trials +1: "until your next turn" damage-dealing prevention ends now for the
         // player whose turn is beginning (its entries are keyed by that controlling player).
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.values().removeIf(nextActive::equals);
+        gameData.permanentsCantAttackUntilNextTurn.values().forEach(controllers -> controllers.remove(nextActive));
+        gameData.permanentsCantAttackUntilNextTurn.values().removeIf(java.util.Set::isEmpty);
         gameData.permanentsProtectedFromDamageUntilNextTurn.values().removeIf(nextActive::equals);
         gameData.creatureControllerDamageRedirectShields.removeIf(
                 shield -> nextActive.equals(shield.protectedPlayerId()));
@@ -1552,6 +1556,9 @@ public class TurnProgressionService {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
         invalidateForAllPlayers(gameData);
+        if (gameData.currentStep == TurnStep.UNTAP) {
+            advanceStep(gameData);
+        }
     }
 
     /** Restarts the current turn from its untap step after a turn-start snapshot was restored. */
@@ -1672,7 +1679,8 @@ public class TurnProgressionService {
 
     private UUID nextPlayerInTurnOrder(GameData gameData) {
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        UUID currentActive = gameData.activePlayerId;
+        UUID currentActive = gameData.currentTurnIsExtraTurn && gameData.lastNormalTurnPlayerId != null
+                ? gameData.lastNormalTurnPlayerId : gameData.activePlayerId;
         int currentIndex = ids.indexOf(currentActive);
         if (currentIndex < 0 || ids.isEmpty()) {
             return currentActive;

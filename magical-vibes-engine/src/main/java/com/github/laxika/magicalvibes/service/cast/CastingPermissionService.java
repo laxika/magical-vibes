@@ -2646,6 +2646,13 @@ public class CastingPermissionService {
 
     /** Returns whether the player has an active direct permission to play the exiled card. */
     public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
+        for (var battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent permanent : battlefield.getValue()) {
+                if (permanent.isPrepared() && cardId.equals(permanent.getPreparedSpellCardId())) {
+                    return playerId.equals(battlefield.getKey());
+                }
+            }
+        }
         ExiledCardEntry exiledCard = gameData.findExiledCard(cardId);
         if (exiledCard != null
                 && !exiledCard.faceDown()

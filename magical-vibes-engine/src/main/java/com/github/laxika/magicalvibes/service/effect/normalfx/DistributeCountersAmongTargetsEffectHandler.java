@@ -146,7 +146,10 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
         }
         int total = amountEvaluationService.evaluate(gameData, e.total(),
                 AmountContext.forStackEntry(entry, null));
-        int countPerTarget = total / targetIds.size();
+        StackEntry declaredEntry = new StackEntry(entry);
+        declaredEntry.setDeclaredTargetIds(entry.getDeclaredTargetIds());
+        int declaredCount = declaredEntry.targetsForEffect(e).size();
+        int countPerTarget = declaredCount == 0 ? 0 : total / declaredCount;
         if (countPerTarget <= 0) {
             return Map.of();
         }

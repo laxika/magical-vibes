@@ -29,6 +29,11 @@ public class TransformSelfEffectHandler implements NormalEffectHandlerBean {
         if (self == null) {
             return;
         }
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        if (snapshot != null && snapshot.getId().equals(self.getId())
+                && snapshot.getTransformationSequence() != self.getTransformationSequence()) {
+            return;
+        }
 
         if (gameQueryService.isTransformPrevented(gameData, self)) {
             log.info("Game {} - {} can't transform (transform prevented)", gameData.id, self.getCard().getName());

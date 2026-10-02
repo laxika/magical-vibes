@@ -187,8 +187,11 @@ class AegarTheFreezingFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ExquisiteFirecraft()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castAndResolveSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> {
+            harness.getStackResolutionService().resolveTopOfStack(gd);
+            harness.getStackResolutionService().resolveTopOfStack(gd);
+        });
 
         harness.assertInGraveyard(player2, "Niko Aris");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

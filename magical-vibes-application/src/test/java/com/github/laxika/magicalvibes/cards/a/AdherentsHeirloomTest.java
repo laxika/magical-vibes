@@ -54,6 +54,7 @@ class AdherentsHeirloomTest extends BaseCardTest {
 
     @Test
     void determinesMostPrevalentTypeWhenTriggerResolves() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new LlanowarElves()));
         harness.enterBattlefieldAndReturn(player1, new AdherentsHeirloom());
@@ -69,6 +70,7 @@ class AdherentsHeirloomTest extends BaseCardTest {
 
     @Test
     void seeksEvenIfHeirloomIsDestroyedInResponse() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         Permanent heirloom = harness.enterBattlefieldAndReturn(player1, new AdherentsHeirloom());
         harness.setHand(player2, List.of(new Naturalize()));
@@ -85,6 +87,7 @@ class AdherentsHeirloomTest extends BaseCardTest {
 
     @Test
     void doesNothingWhenLibraryContainsNoCreatures() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new AdherentsHeirloom()));
         harness.enterBattlefieldAndReturn(player1, new AdherentsHeirloom());
         resolveAllTriggers();

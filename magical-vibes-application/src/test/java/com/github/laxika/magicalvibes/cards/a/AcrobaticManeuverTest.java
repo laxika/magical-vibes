@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -73,8 +78,11 @@ class AcrobaticManeuverTest extends BaseCardTest {
     void returnsToOwnerAndCasterDraws() {
         TerrorOfTheFairgrounds card = new TerrorOfTheFairgrounds();
         card.setOwnerId(player2.getId());
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), stolen,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         harness.setHand(player1, List.of(new AcrobaticManeuver()));
         harness.setLibrary(player1, List.of(new TerrorOfTheFairgrounds()));
         harness.addMana(player1, ManaColor.WHITE, 3);

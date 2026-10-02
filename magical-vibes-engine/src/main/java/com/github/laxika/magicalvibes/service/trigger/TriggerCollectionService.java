@@ -39,9 +39,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedExileReturnCounterTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
@@ -584,7 +587,9 @@ public class TriggerCollectionService {
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(delayed.resolvedEffects()),
+                    delayed.resolvedEffects().stream().map(effect -> effect instanceof CopyTriggeringSpellEffect copy
+                            ? (CardEffect) new CopyTriggeringSpellEffect(copy.tokenCopy(), copy.retargetToSource(),
+                            spellEntry == null ? null : new StackEntry(spellEntry)) : effect).toList(),
                     null,
                     delayed.sourcePermanentId());
             entry.setTriggeringCardId(spellCard.getId());
@@ -724,6 +729,21 @@ public class TriggerCollectionService {
         }
         var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone,
                 exiledSourcePermanentId);
+        if (!castFaceDown && !spellCard.hasType(CardType.CREATURE)) {
+            for (Permanent source : gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of())) {
+                if (!gameQueryService.hasKeyword(gameData, source, Keyword.PROWESS)) continue;
+                int triggerCount = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, castingPlayerId, source);
+                for (int triggerIndex = 0; triggerIndex < triggerCount; triggerIndex++) {
+                    StackEntry prowess = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                        castingPlayerId, source.getCard().getName() + "'s prowess ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.BoostSelfEffect(1, 1)),
+                        null, source.getId());
+                    prowess.setSourcePermanentSnapshot(new Permanent(source));
+                    gameData.enqueueTrigger(prowess);
+                }
+            }
+        }
         if (castZone != Zone.HAND) {
             gameData.recordSpellCastFromOutsideHand(castingPlayerId);
             gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(castingPlayerId);
@@ -1038,6 +1058,16 @@ public class TriggerCollectionService {
                     gameLogService.append(gameData, GameLog.text(desc + " triggers."));
                     log.info("Game {} - {} captured {} permanent spell targets for control",
                             gameData.id, desc, targetIds.size());
+                } else if (effect instanceof SpellCastTriggerEffect trigger
+                        && trigger.resolvedEffects().stream().anyMatch(resolved ->
+                        resolved instanceof GivePoisonCountersEffect poison
+                                && poison.recipient() == PoisonRecipient.TARGET_PLAYER)) {
+                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
+                    if (trigger.spellFilter() != null && !predicateEvaluationService.matchesCardPredicate(
+                            spellCard, trigger.spellFilter(), null, gameData, castingPlayerId)) continue;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            emblem.sourceCard(), emblem.controllerId(), trigger.resolvedEffects(), true,
+                            trigger.targetFilter()));
                 } else if (effect instanceof SpellCastTriggerEffect trigger
                         && isNonTargetingEmblemSpellCastTrigger(trigger)) {
                     if (!trigger.triggersOnAnyPlayer()
@@ -1386,17 +1416,12 @@ public class TriggerCollectionService {
                 int totalCopies = unrestrictedCopies + limitedCopies + dynamicCopies;
                 if (totalCopies > 0) {
                     StackEntry snapshot = new StackEntry(spellEntry);
-                    List<CardEffect> copyEffects = new ArrayList<>(totalCopies);
                     for (int i = 0; i < totalCopies; i++) {
-                        copyEffects.add(new CopyControllerCastSpellEffect(snapshot, castingPlayerId));
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY, spellCard, castingPlayerId,
+                                "Copy " + spellCard.getName(),
+                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId))));
                     }
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName(),
-                            copyEffects
-                    ));
                     if (unrestrictedCopies > 0) {
                         gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
                     }
@@ -2740,6 +2765,26 @@ public class TriggerCollectionService {
     }
 
     /** Fires battlefield and graveyard-resident triggers whenever a player completes a dungeon. */
+    /** Completes a bottom room after its last room ability leaves the stack. */
+    public void completeDungeonRoomIfReady(GameData gameData, StackEntry departedEntry) {
+        var completion = departedEntry.getEffectsToResolve().stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect.class::cast)
+                .findFirst().orElse(null);
+        if (completion == null) return;
+        var progress = gameData.playerDungeonProgress.get(departedEntry.getControllerId());
+        if (progress == null || progress.dungeon() != completion.dungeon() || !progress.isBottomRoom()) return;
+        boolean anotherRoomAbility = gameData.stack.stream().anyMatch(entry ->
+                entry.getControllerId().equals(departedEntry.getControllerId())
+                        && entry.getEffectsToResolve().stream().anyMatch(effect ->
+                        effect instanceof com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect other
+                                && other.dungeon() == completion.dungeon()));
+        if (anotherRoomAbility) return;
+        gameData.playerDungeonProgress.remove(departedEntry.getControllerId());
+        gameData.recordCompletedDungeon(departedEntry.getControllerId(), completion.dungeon());
+        checkDungeonCompletionTriggers(gameData, departedEntry.getControllerId());
+    }
+
     public void checkDungeonCompletionTriggers(GameData gameData, UUID completingPlayerId) {
         if (completingPlayerId == null) {
             return;
@@ -6334,6 +6379,11 @@ public class TriggerCollectionService {
             effects.addAll(perm.getPersistentTriggeredEffects(
                     EffectSlot.ON_OPPONENT_CREATURE_OR_PLANESWALKER_DEALT_EXCESS_DAMAGE));
             for (CardEffect effect : effects) {
+                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, playerId).withTargetId(damagedPermanent.getId()))) {
+                    continue;
+                }
                 if (effect instanceof DealDamageToAnyTargetEffect) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), false,
@@ -8838,12 +8888,15 @@ public class TriggerCollectionService {
         if (speed < 1 || speed >= 4 || !gameData.playersWhoseSpeedIncreasedThisTurn.add(activePlayerId)) {
             return;
         }
-        int newSpeed = speed + 1;
-        gameData.playerSpeeds.put(activePlayerId, newSpeed);
-        gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.get(activePlayerId) + " increases their speed to " + newSpeed + "."));
-        log.info("Game {} - {} increases speed to {}", gameData.id,
-                gameData.playerIdToName.get(activePlayerId), newSpeed);
+        Card source = new Card();
+        source.setName("Speed");
+        source.setOwnerId(activePlayerId);
+        source.freeze();
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, activePlayerId,
+                "Increase speed", List.of(new com.github.laxika.magicalvibes.model.effect.IncreaseControllerSpeedEffect()),
+                (UUID) null, (UUID) null);
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
     }
 
     public void checkLifeGainTriggers(GameData gameData, UUID gainingPlayerId, int lifeGainedAmount) {
@@ -10587,6 +10640,17 @@ public class TriggerCollectionService {
             }
         });
 
+        gameData.simultaneousDyingPermanents.forEach((permanentId, permanent) -> {
+            if (gameQueryService.findPermanentById(gameData, permanentId) != null) return;
+            UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(permanentId);
+            if (controllerId == null) return;
+            dispatchSlot(gameData, permanent, controllerId, EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            if (!controllerId.equals(artifactControllerId)) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            }
+        });
+
         collectEmblemArtifactGraveyardTriggers(gameData, graveyardOwnerId, artifactCard, ctx);
     }
 
@@ -11604,7 +11668,14 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
                 dyingPower, dyingToughness, dyingPermanent.getId(), dyingPermanent);
 
-        gameData.forEachPermanent((playerId, perm) -> {
+        java.util.Map<Permanent, UUID> watchers = new java.util.LinkedHashMap<>();
+        gameData.forEachPermanent((playerId, permanent) -> watchers.put(permanent, playerId));
+        gameData.simultaneousDyingPermanents.forEach((permanentId, permanent) -> {
+            if (gameQueryService.findPermanentById(gameData, permanentId) == null) {
+                watchers.put(permanent, gameData.simultaneousDyingPermanentControllers.get(permanentId));
+            }
+        });
+        watchers.forEach((perm, playerId) -> {
             if (playerId.equals(dyingCreatureControllerId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             List<CardEffect> effects = new ArrayList<>();
@@ -11645,6 +11716,24 @@ public class TriggerCollectionService {
 
     public void checkSelfLeavesTriggered(GameData gameData, Permanent target, UUID controllerId,
                                          Zone destination, boolean exiledWhileActivatingCraftAbility) {
+        for (var delayed : gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger.class,
+                action -> action.watchedPermanentId().equals(target.getId()))) {
+            CardEffect effect = delayed.effectsByDestination().get(destination);
+            if (effect == null) continue;
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed trigger",
+                    List.of(effect));
+            entry.setTriggeringCardId(target.getOriginalCard().getId());
+            if (destination == Zone.EXILE && gameData.findExiledCard(entry.getTriggeringCardId()) != null) {
+                entry.setTriggeringCardExileEntryVersion(
+                        gameData.exileEntryVersions.getOrDefault(entry.getTriggeringCardId(), 0L));
+            }
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    destination == Zone.GRAVEYARD ? -1L : 0L);
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
         List<CardEffect> cardEffects = target.getCard().getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD);
         List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);
         effects.addAll(target.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD));
@@ -14903,13 +14992,18 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            for (int i = 0; i < permanentTriggerCount; i++) {
+            boolean independent = perm.getCard().getEffectRegistrations(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD)
+                    .stream().anyMatch(registration -> registration.triggerMode() == TriggerMode.INDEPENDENT);
+            List<List<CardEffect>> abilities = independent
+                    ? resolvedEffects.stream().map(List::of).toList() : List.of(resolvedEffects);
+            for (List<CardEffect> abilityEffects : abilities) {
+                for (int i = 0; i < permanentTriggerCount; i++) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         landControllerId,
                         perm.getCard().getName() + "'s ability",
-                        resolvedEffects,
+                        abilityEffects,
                         null,
                         perm.getId()
                 );
@@ -14919,6 +15013,7 @@ public class TriggerCollectionService {
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
+            }
             }
             oncePerTurnEffects.forEach(once -> OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, once));
         }

@@ -72,6 +72,7 @@ class AgentsToolkitTest extends BaseCardTest {
     void movesExactlyOneOfTheOnlyRemainingCounterType(CounterType counterType) {
         Permanent toolkit = addToolkit();
         for (CounterType type : CounterType.values()) {
+            if (type == CounterType.ANY || type == CounterType.SILVER) continue;
             toolkit.setCounterCount(type, type == counterType ? 2 : 0);
         }
         castBears(player1);
@@ -115,6 +116,7 @@ class AgentsToolkitTest extends BaseCardTest {
     void canMoveACounterOtherThanTheFourInitialKinds() {
         Permanent toolkit = addToolkit();
         for (CounterType type : CounterType.values()) {
+            if (type == CounterType.ANY || type == CounterType.SILVER) continue;
             toolkit.setCounterCount(type, type == CounterType.HASTE ? 1 : 0);
         }
         castBears(player1);
@@ -151,6 +153,7 @@ class AgentsToolkitTest extends BaseCardTest {
     void triggersWithoutCountersAndCanMoveACounterAddedBeforeResolution() {
         Permanent toolkit = addToolkit();
         for (CounterType type : CounterType.values()) {
+            if (type == CounterType.ANY || type == CounterType.SILVER) continue;
             toolkit.setCounterCount(type, 0);
         }
         castBears(player1);

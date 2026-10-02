@@ -17,6 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AinokStrikeLeader.class, GrizzlyBears.class, ZurgoStormrender.class})
 class AinokStrikeLeaderTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void keepAttackTriggersInCombat() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.DECLARE_ATTACKERS));
+    }
+
     @Test
     @DisplayName("Attacking with Ainok Strike Leader creates a tapped and attacking Goblin")
     void leaderAttackCreatesGoblin() {
@@ -102,8 +108,13 @@ class AinokStrikeLeaderTest extends BaseCardTest {
         addCreatureReady(player1, new AinokStrikeLeader());
         Permanent commander = addCreatureReady(player2, new ZurgoStormrender());
         gd.makeCommander(player2.getId(), commander.getCard());
-        gd.playerBattlefields.get(player2.getId()).remove(commander);
-        gd.playerBattlefields.get(player1.getId()).add(commander);
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), commander,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test setup"));
+        commander.setSummoningSick(false);
 
         declareAttackers(List.of(1));
         resolveAllTriggers();

@@ -5,6 +5,11 @@ import com.github.laxika.magicalvibes.cards.r.RenegadeMap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -108,8 +113,11 @@ class AegisAutomatonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AegisAutomaton());
         Ornithopter card = new Ornithopter();
         card.setOwnerId(player2.getId());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, card);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -128,9 +136,10 @@ class AegisAutomatonTest extends BaseCardTest {
         addAbilityMana();
         harness.activateAbility(player1, 0, null, target.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ornithopter");

@@ -251,7 +251,8 @@ public class UntapStepService {
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                         || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
-                boolean skipsNextUntap = p.getSkipUntapCount() > 0;
+                boolean skipsNextUntap = p.getSkipUntapCount() > 0
+                        && (p.getSkipUntapControllerId() == null || activePlayerId.equals(p.getSkipUntapControllerId()));
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
                 boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
                 // Paralyzation counters (Dread Wight): doesn't untap during the untap step for as
@@ -422,6 +423,12 @@ public class UntapStepService {
 
     /** Queues the batched untap-step triggers after all untap choices are complete. */
     public void finishUntapStep(GameData gameData, UUID activePlayerId) {
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (activePlayerId.equals(permanent.getSkipUntapControllerId())) {
+                permanent.setSkipUntapCount(0);
+                permanent.setSkipUntapControllerId(null);
+            }
+        });
         if (activePlayerId.equals(gameData.untapStepPlayerId)) {
             triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
                     gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);
