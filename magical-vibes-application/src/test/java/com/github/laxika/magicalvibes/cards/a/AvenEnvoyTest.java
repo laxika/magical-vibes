@@ -42,4 +42,28 @@ class AvenEnvoyTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Aven Envoy can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new CloudreachCavalry());
+        Permanent blocker = addCreatureReady(player2, new AvenEnvoy());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Aven Envoy can be blocked by a creature that gains flying")
+    void canBeBlockedByCreatureWithGrantedFlying() {
+        addCreatureReady(player1, new AvenEnvoy());
+        Permanent blocker = addCreatureReady(player2, new CloudreachCavalry());
+        addCreatureReady(player2, new AvenEnvoy());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
