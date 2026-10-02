@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZurgoStormrender;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AinokStrikeLeader.class, GrizzlyBears.class})
+@CardUsed({AinokStrikeLeader.class, GrizzlyBears.class, ZurgoStormrender.class})
 class AinokStrikeLeaderTest extends BaseCardTest {
 
     @Test
@@ -36,15 +37,78 @@ class AinokStrikeLeaderTest extends BaseCardTest {
     @DisplayName("Attacking with your commander creates a Goblin even if the leader stays back")
     void commanderAttackCreatesGoblin() {
         addCreatureReady(player1, new AinokStrikeLeader());
-        Permanent commander = addCreatureReady(player1, new GrizzlyBears());
+        Permanent commander = addCreatureReady(player1, new ZurgoStormrender());
         gd.makeCommander(player1.getId(), commander.getCard());
 
         declareAttackers(List.of(1));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin"))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Attacking with both the leader and your commander creates only one Goblin per opponent")
+    void leaderAndCommanderAttackTriggersOnlyOnce() {
+        addCreatureReady(player1, new AinokStrikeLeader());
+        Permanent commander = addCreatureReady(player1, new ZurgoStormrender());
+        gd.makeCommander(player1.getId(), commander.getCard());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(1);
+        Permanent goblin = findPermanent(player1, "Goblin");
+        assertThat(goblin.isTapped()).isTrue();
+        assertThat(goblin.isAttacking()).isTrue();
+        assertThat(goblin.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Sacrificing the attacking leader does not stop its trigger or protect later tokens")
+    void sacrificingLeaderInResponseStillCreatesUnprotectedGoblin() {
+        addCreatureReady(player1, new AinokStrikeLeader());
+
+        declareAttackers(List.of(0));
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Ainok Strike Leader");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(1);
+        Permanent goblin = findPermanent(player1, "Goblin");
+        assertThat(goblin.isTapped()).isTrue();
+        assertThat(goblin.isAttacking()).isTrue();
+        assertThat(goblin.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent attacking with their commander does not trigger your leader")
+    void opponentsCommanderDoesNotTriggerLeader() {
+        addCreatureReady(player1, new AinokStrikeLeader());
+        Permanent commander = addCreatureReady(player2, new ZurgoStormrender());
+        gd.makeCommander(player2.getId(), commander.getCard());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking with a stolen opponent's commander does not trigger the leader")
+    void stolenCommanderDoesNotTriggerLeader() {
+        addCreatureReady(player1, new AinokStrikeLeader());
+        Permanent commander = addCreatureReady(player2, new ZurgoStormrender());
+        gd.makeCommander(player2.getId(), commander.getCard());
+        gd.playerBattlefields.get(player2.getId()).remove(commander);
+        gd.playerBattlefields.get(player1.getId()).add(commander);
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
     }
 
     @Test
