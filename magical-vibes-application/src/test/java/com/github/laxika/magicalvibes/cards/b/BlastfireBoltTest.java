@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvariceAmulet;
 import com.github.laxika.magicalvibes.cards.b.BrawlersPlate;
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
+import com.github.laxika.magicalvibes.cards.d.DivineFavor;
+import com.github.laxika.magicalvibes.cards.s.ShieldOfTheAvatar;
 import com.github.laxika.magicalvibes.cards.s.SoulOfNewPhyrexia;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AvariceAmulet.class, BlastfireBolt.class, BrawlersPlate.class, BronzeSable.class,
-        SoulOfNewPhyrexia.class})
+        DivineFavor.class, ShieldOfTheAvatar.class, SoulOfNewPhyrexia.class})
 class BlastfireBoltTest extends BaseCardTest {
 
     @Test
@@ -43,15 +45,13 @@ class BlastfireBoltTest extends BaseCardTest {
     void destroysAllEquipmentOnTarget() {
         Permanent creature = addCreatureReady(player2, new SoulOfNewPhyrexia());
 
-        Permanent equip1 = new Permanent(new AvariceAmulet());
+        Permanent equip1 = harness.addToBattlefieldAndReturn(player2, new AvariceAmulet());
         equip1.setSummoningSick(false);
         equip1.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equip1);
 
-        Permanent equip2 = new Permanent(new BrawlersPlate());
+        Permanent equip2 = harness.addToBattlefieldAndReturn(player2, new BrawlersPlate());
         equip2.setSummoningSick(false);
         equip2.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equip2);
 
         harness.setHand(player1, List.of(new BlastfireBolt()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -72,10 +72,9 @@ class BlastfireBoltTest extends BaseCardTest {
 
         Permanent otherCreature = addCreatureReady(player2, new SoulOfNewPhyrexia());
 
-        Permanent equipment = new Permanent(new AvariceAmulet());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AvariceAmulet());
         equipment.setSummoningSick(false);
         equipment.setAttachedTo(otherCreature.getId());
-        gd.playerBattlefields.get(player2.getId()).add(equipment);
 
         harness.setHand(player1, List.of(new BlastfireBolt()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -114,5 +113,77 @@ class BlastfireBoltTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Avarice Amulet");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Attached Equipment prevents damage before Blastfire Bolt destroys it")
+    void appliesEquipmentPreventionBeforeDestroyingEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SoulOfNewPhyrexia());
+        Permanent shield = harness.addToBattlefieldAndReturn(player2, new ShieldOfTheAvatar());
+        shield.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new BlastfireBolt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Soul of New Phyrexia");
+        assertThat(creature.getMarkedDamage()).isEqualTo(4);
+        harness.assertInGraveyard(player2, "Shield of the Avatar");
+    }
+
+    @Test
+    @DisplayName("Blastfire Bolt destroys attached Equipment even when the damage is lethal")
+    void destroysEquipmentControlledByOpponentOfTargetController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BronzeSable());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new BrawlersPlate());
+        equipment.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new BlastfireBolt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bronze Sable");
+        harness.assertInGraveyard(player1, "Brawler's Plate");
+    }
+
+    @Test
+    @DisplayName("Blastfire Bolt does not destroy an Aura attached to a surviving creature")
+    void leavesAttachedAuraAlone() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SoulOfNewPhyrexia());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new DivineFavor());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new BlastfireBolt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Soul of New Phyrexia");
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Divine Favor");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Indestructible Equipment survives Blastfire Bolt")
+    void cannotDestroyIndestructibleEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SoulOfNewPhyrexia());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new BrawlersPlate());
+        equipment.setAttachedTo(creature.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new BlastfireBolt()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Soul of New Phyrexia");
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Brawler's Plate");
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
 }
