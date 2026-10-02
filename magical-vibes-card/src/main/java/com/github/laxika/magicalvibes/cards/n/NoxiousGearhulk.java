@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "NCC", collectorNumber = "254")
 @CardRegistration(set = "DSC", collectorNumber = "151")
 @CardRegistration(set = "TDC", collectorNumber = "191")
+@CardRegistration(set = "BRC", collectorNumber = "110")
 public class NoxiousGearhulk extends Card {
 
     public NoxiousGearhulk() {

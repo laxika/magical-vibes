@@ -1,4 +1,6 @@
 # CARD_PATTERN_INDEX
+| Saga with Powerstones, two-player opposing attacks, and artifact-count split damage | `t/TheBrothersWar.java` + `CreateTokenEffect.ofPowerstoneToken(Fixed(2))` + target-player pair attack requirements + two dynamic any-target damage effects |
+| ETB target-player Powerstone creation for nonland cards that entered that player's graveyard from the battlefield this turn | `w/WreckHunter.java` + `CreateTokenForTargetPlayerEffect(CreateTokenEffect.ofPowerstoneToken(CardsInGraveyard(..., TARGET_PLAYER)))` + `CardPutIntoGraveyardFromBattlefieldThisTurnPredicate` |
 | destroy target nonland permanent and, if a Dragon was beheld, perpetually boost its card | `t/TerritorialStrike.java` + `BeholdCost.optional(DRAGON)` + `ConditionalReplacementEffect` + `DestroyTargetPermanentThenPerpetuallyBoostEffect` |
 | self-reanimating creature that enters tapped and perpetually loses its death trigger on return | `r/RunebladeRaiser.java` + `STATIC EntersTappedEffect` + `ON_DEATH ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true)` |
 | ETB secretly chooses a graveyard card to duplicate into hand, granting flash to nonland duplicates | `n/NashiIllusionGadgeteer.java` + `ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffect` |
@@ -337,6 +339,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | counter target spell; creature spells perpetually get -2/-0; counter unless pays | CARD_PATTERNS_LANDS_SPELLS.md |
 | remove any number of counters from among permanents | CARD_PATTERNS_LANDS_SPELLS.md |
 | proliferate, then phase out permanents that received counters | `r/RipplesOfPotential.java` + `PhaseOutPermanentsThatReceivedCountersThisWayEffect` |
+| ETB: starting with you each player chooses up to five permanents; all other permanents except the source phase out and permanents can't phase in | `d/DiscipleOfCaelusNin.java` + `EachPlayerChoosesPermanentsThenPhaseOutRestEffect` + `PermanentsCantPhaseInEffect` |
 | cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `SpellCastTriggerEffect(new CardPutIntoHandThisTurnPredicate(), List.of(new ProliferateEffect()))` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
@@ -417,6 +420,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first instant, sorcery, or subtype spell each turn — exile the triggering spell, dig to a nonland, damage by mana-value difference, and offer a free cast | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage → random own-graveyard instant/sorcery, free cast at next upkeep | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | random player chooses a graveyard instant/sorcery, then a free copy cast | `w/WildfireDevils.java` + `RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect` |
+| end-step self-mill followed by a random nonland graveyard card copy with a free cast offer, plus global ward | `w/WondrousCrucible.java` + `MillEffect` + `ExileRandomCardFromGraveyardAndMayCastCopyEffect` + static `GrantKeywordEffect`/`GrantTriggeredAbilityEffect` |
 | chosen creature type, copy each matching creature you control, temporary hasty copies | `CreateTokenCopyOfEachCreatureOfChosenTypeEffect` + `CreateTokenCopyOfTargetPermanentEffect(true, true)` |
 | each player chooses a creature controlled by the player to their left, then creates a menace copy of it | `EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffect` |
 | each player chooses one or two creatures, copies the first as a nonlegendary token, then uses the second creature's power for +1/+1 counters | `EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffect` |
@@ -433,6 +437,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first token creation each turn may copy another creature | `e/EsixFractalBloom.java` + `EsixFractalBloomEffect` + `CreateTokenCopyOfChosenCreatureEffect` |
 | encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
 | static encore grant to creature cards matching any of several subtypes | `GrantEncoreToCreatureCardsOfSubtypesEffect` + a sorcery-speed graveyard ability |
+| static encore grant to artifact creature cards | `GrantEncoreToArtifactCreatureCardsEffect` + a sorcery-speed graveyard ability |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each player may put counters on a creature, and players who do cannot attack the trigger controller until their next turn | `o/OrzhovAdvokist.java` + `EachPlayerMayPutCountersOnCreatureEffect` |

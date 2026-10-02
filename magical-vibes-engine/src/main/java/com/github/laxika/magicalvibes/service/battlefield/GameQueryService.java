@@ -233,6 +233,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurn
 import com.github.laxika.magicalvibes.model.effect.OwnCardTypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnCreatureSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnLandSubtypeGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.OwnLandSupertypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.OwnEffectsCantAffectSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect;
@@ -1034,6 +1035,38 @@ public class GameQueryService {
                         && grant.cardType() == type
                         && predicateEvaluationService.matchesCardPredicate(
                         card, grant.filter(), source.getCard().getId(), gameData, playerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns whether a card has the given supertype, including static grants that apply to land
+     * cards in their owner's library and layered changes on permanents.
+     */
+    public boolean cardHasSupertype(Card card, CardSupertype supertype, GameData gameData, UUID cardOwnerId) {
+        if (gameData != null) {
+            Permanent permanent = findPermanentById(gameData, card.getId());
+            if (permanent != null) {
+                return hasEffectiveSupertype(gameData, permanent, supertype);
+            }
+        }
+        if (card.getSupertypes().contains(supertype)) return true;
+        if (gameData == null || cardOwnerId == null
+                || !cardHasType(card, CardType.LAND, gameData, cardOwnerId)
+                || !gameData.playerDecks.getOrDefault(cardOwnerId, List.of()).stream()
+                .anyMatch(libraryCard -> libraryCard.getId().equals(card.getId()))) {
+            return false;
+        }
+
+        List<Permanent> sources = gameData.playerBattlefields.get(cardOwnerId);
+        if (sources == null) return false;
+        for (Permanent source : sources) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof OwnLandSupertypeGrantingEffect grant
+                        && grant.supertype() == supertype) {
                     return true;
                 }
             }

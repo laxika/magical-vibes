@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCre
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesInAllZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnLandsAndLandCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToOwnLandsAndLandCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenBasicLandTypeToOwnLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -1823,6 +1824,17 @@ public class LayerSystemService {
                             state.addSubtype(subtype);
                             record(board, instance, target, new L4Contribution(
                                     subtype, false, false, null, null));
+                        }));
+            }
+            case GrantSupertypeToOwnLandsAndLandCardsEffect grant -> {
+                manage(board, instance);
+                applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                        (target, harvested) -> harvested.getGrantedSupertypes().stream().findFirst().ifPresent(supertype -> {
+                            CharacteristicState state = states.get(target.permanent().getId());
+                            if (state == null) return;
+                            state.addSupertype(supertype);
+                            record(board, instance, target, new L4Contribution(
+                                    null, false, false, null, supertype));
                         }));
             }
             case GrantChosenBasicLandTypeToOwnLandsEffect ignored -> {

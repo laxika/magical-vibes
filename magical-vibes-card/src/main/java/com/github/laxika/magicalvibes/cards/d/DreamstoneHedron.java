@@ -15,21 +15,22 @@ import java.util.List;
 @CardRegistration(set = "C14", collectorNumber = "236")
 @CardRegistration(set = "C15", collectorNumber = "252")
 @CardRegistration(set = "M3C", collectorNumber = "289")
+@CardRegistration(set = "BRC", collectorNumber = "139")
 public class DreamstoneHedron extends Card {
 
     public DreamstoneHedron() {
+        // {T}: Add {C}{C}{C}.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.COLORLESS, 3)),
-                "{T}: Add {C}{C}{C}."
-        ));
+                "{T}: Add {C}{C}{C}."));
 
+        // {3}, {T}, Sacrifice this artifact: Draw three cards.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
                 List.of(new SacrificeSelfCost(), new DrawCardEffect(3)),
-                "{3}, {T}, Sacrifice this artifact: Draw three cards."
-        ));
+                "{3}, {T}, Sacrifice Dreamstone Hedron: Draw three cards."));
     }
 }

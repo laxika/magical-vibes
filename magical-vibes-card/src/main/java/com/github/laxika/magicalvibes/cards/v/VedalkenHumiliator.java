@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 @CardRegistration(set = "MOC", collectorNumber = "243")
+@CardRegistration(set = "BRC", collectorNumber = "100")
 public class VedalkenHumiliator extends Card {
 
     public VedalkenHumiliator() {

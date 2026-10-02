@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "SOC", collectorNumber = "415")
 @CardRegistration(set = "C21", collectorNumber = "325")
 @CardRegistration(set = "DSC", collectorNumber = "312")
+@CardRegistration(set = "BRC", collectorNumber = "209")
 public class TempleOfSilence extends Card {
 
     public TempleOfSilence() {

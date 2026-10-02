@@ -33,6 +33,7 @@ import java.util.List;
 @CardRegistration(set = "DMC", collectorNumber = "182")
 @CardRegistration(set = "BLC", collectorNumber = "269")
 @CardRegistration(set = "NEC", collectorNumber = "150")
+@CardRegistration(set = "BRC", collectorNumber = "141")
 public class FellwarStone extends Card {
 
     public FellwarStone() {

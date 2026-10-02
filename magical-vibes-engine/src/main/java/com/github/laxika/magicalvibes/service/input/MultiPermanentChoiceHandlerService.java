@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCreaturesWit
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherCreatureWithManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutUpToNControlledPermanentsEffectHandler;
@@ -128,6 +129,8 @@ public class MultiPermanentChoiceHandlerService {
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
     private final PhaseOutUpToNControlledPermanentsEffectHandler phaseOutUpToNControlledPermanentsEffectHandler;
+    private final EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler
+            eachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PhaseOutPermanentsThatReceivedCountersThisWayEffectHandler phaseOutPermanentsThatReceivedCountersThisWayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -889,6 +892,8 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnUpToNControlledPermanentsToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PhaseOutUpToNControlledPermanents ctx) {
             handlePhaseOutUpToNControlledPermanents(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPermanentsThenPhaseOutRestChoice ctx) {
+            handleEachPlayerChoosesPermanentsThenPhaseOutRest(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PhaseOutPermanentsThatReceivedCountersThisWay) {
             handlePhaseOutPermanentsThatReceivedCountersThisWay(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
@@ -1966,6 +1971,17 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("No pending effect resolution entry");
         }
         phaseOutUpToNControlledPermanentsEffectHandler.completeChoice(gameData, permanentIds, context, entry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleEachPlayerChoosesPermanentsThenPhaseOutRest(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesPermanentsThenPhaseOutRestChoice context) {
+        eachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler.completeChoice(
+                gameData, permanentIds, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

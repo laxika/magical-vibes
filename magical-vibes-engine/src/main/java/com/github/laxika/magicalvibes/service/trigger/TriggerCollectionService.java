@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEf
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
@@ -8514,6 +8515,14 @@ public class TriggerCollectionService {
                 if (trigger.exhaustAbilityOnly() && !ability.isExhaustAbility()) {
                     continue;
                 }
+                if (trigger.requiresSacrificedPermanent()
+                        && abilityEntry.getSacrificedCardIds().isEmpty()
+                        && ability.getEffects().stream()
+                        .filter(CostEffect.class::isInstance)
+                        .map(CostEffect.class::cast)
+                        .noneMatch(CostEffect::sacrificesSourcePermanent)) {
+                    continue;
+                }
 
                 int lifePaid = trigger.lifePaymentOnly()
                         ? lifePaidForActivatedAbility(gameData, abilityEntry, ability, activatedPermanent,
@@ -8537,6 +8546,10 @@ public class TriggerCollectionService {
                             trigger.manaCost(),
                             copyEffect,
                             "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
+                } else if (trigger.optionalCopy()) {
+                    copyEffect = new MayEffect(
+                            copyEffect,
+                            "Copy " + abilityEntry.getCard().getName() + "'s ability?");
                 }
 
                 StackEntry copyTrigger = new StackEntry(

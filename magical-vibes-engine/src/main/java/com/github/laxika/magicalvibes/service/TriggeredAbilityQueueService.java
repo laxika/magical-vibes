@@ -2021,6 +2021,20 @@ public class TriggeredAbilityQueueService {
                 return;
             }
 
+            if (group.filter() instanceof AnyTargetPredicateTargetFilter) {
+                List<UUID> permanentTargets = validTargets.stream()
+                        .filter(id -> !gameData.playerIds.contains(id))
+                        .toList();
+                List<UUID> playerTargets = validTargets.stream()
+                        .filter(gameData.playerIds::contains)
+                        .toList();
+                playerInputService.beginAnyTargetChoice(
+                        gameData, pending.controllerId(), permanentTargets, playerTargets,
+                        pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
+                                + " - Choose target " + (groupIndex + 1) + ".");
+                return;
+            }
+
             boolean onePerControllerIfAble = pending.sourceCard().getMultiTargetConstraint()
                     == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
             boolean canSkip = !onePerControllerIfAble && (group.minTargets() == 0
@@ -2972,6 +2986,30 @@ public class TriggeredAbilityQueueService {
                 if (targetLegalityService.matchesPlayerPredicate(
                         gameData, pending.controllerId(), playerId, playerFilter.predicate())) {
                     validTargets.add(playerId);
+                }
+            }
+            return validTargets;
+        }
+
+        if (group.filter() instanceof AnyTargetPredicateTargetFilter anyFilter) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (!pending.chosenTargetsSoFar().contains(playerId)
+                        && targetLegalityService.matchesPlayerPredicate(
+                        gameData, pending.controllerId(), playerId, anyFilter.playerPredicate())) {
+                    validTargets.add(playerId);
+                }
+            }
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent permanent : battlefield) {
+                    if (!pending.chosenTargetsSoFar().contains(permanent.getId())
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, anyFilter.permanentPredicate(), filterContext)) {
+                        validTargets.add(permanent.getId());
+                    }
                 }
             }
             return validTargets;

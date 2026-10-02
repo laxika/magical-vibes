@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "82")
+@CardRegistration(set = "BRC", collectorNumber = "89")
 public class MuzzioVisionaryArchitect extends Card {
 
     public MuzzioVisionaryArchitect() {

@@ -2481,7 +2481,8 @@ public class LibraryChoiceHandlerService {
                                 card, pick.filter(), null, gameData, playerId)
                         : !pick.basicOnly()
                                 || (card.hasType(CardType.LAND)
-                                && card.getSupertypes().contains(CardSupertype.BASIC)))
+                                && gameQueryService.cardHasSupertype(
+                                card, CardSupertype.BASIC, gameData, playerId)))
                 .filter(card -> pick.subtype() == null || card.getSubtypes().contains(pick.subtype()))
                 .toList();
 
@@ -2753,7 +2754,9 @@ public class LibraryChoiceHandlerService {
             }
 
             List<Card> basicLands = deck.stream()
-                    .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                    .filter(card -> card.hasType(CardType.LAND)
+                            && gameQueryService.cardHasSupertype(
+                            card, CardSupertype.BASIC, gameData, nextPlayerId))
                     .toList();
 
             if (basicLands.isEmpty()) {

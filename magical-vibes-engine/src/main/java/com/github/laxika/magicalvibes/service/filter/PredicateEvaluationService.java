@@ -93,6 +93,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoHandThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredicate;
@@ -702,7 +703,7 @@ public class PredicateEvaluationService {
                             || card.getSupertypes().contains(CardSupertype.LEGENDARY)
                             || card.getSubtypes().contains(CardSubtype.SAGA);
             case CardSupertypePredicate p ->
-                    card.getSupertypes().contains(p.supertype());
+                    gameQueryService.cardHasSupertype(card, p.supertype(), gameData, cardOwnerId);
             case CardManaValueGreaterThanControllerHandSizePredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && card.getManaValue() > gameData.playerHands
@@ -946,6 +947,10 @@ public class PredicateEvaluationService {
             case CardPutIntoHandThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null
                             && gameData.cardsPutIntoHandThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
+            case CardPutIntoGraveyardFromBattlefieldThisTurnPredicate ignored ->
+                    gameData != null && cardOwnerId != null && card != null
+                            && gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                             .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
             case CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null

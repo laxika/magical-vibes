@@ -54,7 +54,7 @@ public class VerdantMasteryEffectHandler implements NormalEffectHandlerBean {
 
         int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
         List<Card> searchableCards = deck.subList(0, Math.min(topLimit, deck.size())).stream()
-                .filter(this::isBasicLand)
+                .filter(card -> isBasicLand(card, gameData, controllerId))
                 .toList();
         if (searchableCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
@@ -72,8 +72,8 @@ public class VerdantMasteryEffectHandler implements NormalEffectHandlerBean {
                         + " searches their library for up to four basic land cards."));
     }
 
-    private boolean isBasicLand(Card card) {
+    private boolean isBasicLand(Card card, GameData gameData, UUID cardOwnerId) {
         return card.hasType(CardType.LAND)
-                && card.getSupertypes().contains(CardSupertype.BASIC);
+                && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, cardOwnerId);
     }
 }
