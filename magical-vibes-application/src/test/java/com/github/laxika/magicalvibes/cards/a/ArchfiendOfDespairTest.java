@@ -53,13 +53,99 @@ class ArchfiendOfDespairTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         resolveEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void triggersDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        resolveEndStep(player2);
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotMakeControllerLoseLife() {
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void countsLifeLostBeforeEnteringAndDoesNotSubtractLifeGained() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void multipleArchfiendsCountLifeLostToEarlierTrigger() {
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    void countsLifeLostInResponseEvenWhenNoneWasLostAtTriggerTime() {
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.setLife(player2, 20);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void noLifeLostMeansNoAdditionalLifeLoss() {
+        harness.addToBattlefield(player1, new ArchfiendOfDespair());
+        harness.setLife(player2, 20);
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player2, 20);
     }
 
     private void resolveEndStep(Player activePlayer) {
