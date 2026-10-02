@@ -80,6 +80,55 @@ class BardTheBowmanTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 
+    @Test
+    @DisplayName("Bard can target itself on its controller's second draw during an opponent's turn")
+    void triggersDuringOpponentsTurnAndCanTargetItself() {
+        Permanent bard = harness.addToBattlefieldAndReturn(player1, new BardTheBowman());
+        harness.forceActivePlayer(player2);
+        harness.setLibrary(player1, List.of(new BardTheBowman(), new BardTheBowman()));
+
+        draw(player1.getId());
+        draw(player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bard.getId());
+        harness.passBothPriorities();
+
+        assertThat(bard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger Bard")
+    void opponentsDrawsDoNotTrigger() {
+        Permanent bard = harness.addToBattlefieldAndReturn(player1, new BardTheBowman());
+        harness.setLibrary(player2, List.of(new BardTheBowman(), new BardTheBowman()));
+
+        draw(player2.getId());
+        draw(player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(bard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The first draw counts even when Bard enters the battlefield afterward")
+    void countsDrawBeforeBardEntered() {
+        harness.setLibrary(player1, List.of(new BardTheBowman(), new BardTheBowman()));
+        draw(player1.getId());
+        Permanent bard = harness.addToBattlefieldAndReturn(player1, new BardTheBowman());
+
+        draw(player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bard.getId());
+        harness.passBothPriorities();
+
+        assertThat(bard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, bard, Keyword.LIFELINK)).isTrue();
+    }
+
     private void draw(java.util.UUID playerId) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, playerId));
     }
