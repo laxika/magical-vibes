@@ -106,7 +106,9 @@ class AegisAutomatonTest extends BaseCardTest {
     @DisplayName("A borrowed creature returns to its owner's hand")
     void returnsBorrowedCreatureToOwner() {
         harness.addToBattlefield(player1, new AegisAutomaton());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Ornithopter card = new Ornithopter();
+        card.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, card);
         gd.stolenCreatures.put(target.getId(), player2.getId());
         addAbilityMana();
 

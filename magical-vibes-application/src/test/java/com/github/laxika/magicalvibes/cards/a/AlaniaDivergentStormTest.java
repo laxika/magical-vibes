@@ -208,7 +208,6 @@ class AlaniaDivergentStormTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
     }
 
     private void declineTriggerAndResolveSpell() {

@@ -65,7 +65,7 @@ class AsgardianCitadelTest extends BaseCardTest {
     @DisplayName("A tapped Citadel cannot activate its mana ability")
     void tappedCitadelCannotProduceMana() {
         Permanent citadel = addReadyCitadel();
-        citadel.setTapped(true);
+        citadel.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

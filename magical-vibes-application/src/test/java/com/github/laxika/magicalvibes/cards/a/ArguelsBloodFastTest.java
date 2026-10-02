@@ -216,7 +216,7 @@ class ArguelsBloodFastTest extends BaseCardTest {
     @DisplayName("Temple cannot activate its sacrifice ability while tapped")
     void templeCannotActivateWhileTapped() {
         Permanent temple = addTransformedTemple(player1);
-        temple.setTapped(true);
+        temple.tap();
         addCreatureReady(player1, new LoomingAltisaur());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, temple), 0, null, null))

@@ -81,10 +81,10 @@ class AdvocateOfTheBeastTest extends BaseCardTest {
         Permanent advocate = harness.addToBattlefieldAndReturn(player1, new AdvocateOfTheBeast());
         Permanent beast = harness.addToBattlefieldAndReturn(player1, new MaraudingMaulhorn());
         harness.setHand(player1, List.of(new DoomBlade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
         advanceToEndStep(player1);
         harness.handlePermanentChosen(player1, beast.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, advocate.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Advocate of the Beast");
@@ -100,10 +100,10 @@ class AdvocateOfTheBeastTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new MaraudingMaulhorn());
         Permanent otherBeast = harness.addToBattlefieldAndReturn(player1, new MaraudingMaulhorn());
         harness.setHand(player1, List.of(new DoomBlade()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
 
         advanceToEndStep(player1);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Marauding Maulhorn");

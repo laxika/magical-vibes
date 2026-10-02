@@ -105,7 +105,6 @@ class AccessDeniedTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, opposingCounter.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -130,7 +129,6 @@ class AccessDeniedTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, bears.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

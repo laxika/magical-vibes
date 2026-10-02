@@ -51,7 +51,7 @@ class ArmorerGuildmageTest extends BaseCardTest {
     @CsvSource({"0, BLACK", "1, GREEN"})
     void cannotActivateWhileTapped(int abilityIndex, ManaColor manaColor) {
         Permanent guildmage = addCreatureReady(player1, new ArmorerGuildmage());
-        guildmage.setTapped(true);
+        guildmage.tap();
         harness.addMana(player1, manaColor, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, guildmage.getId()))

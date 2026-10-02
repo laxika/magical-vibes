@@ -59,6 +59,8 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RuneclawBear());
 
         destroyBear();
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
         Permanent bloodseeker = findBloodseeker();
@@ -78,6 +80,8 @@ class AltacBloodseekerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AltacBloodseeker());
         harness.addToBattlefield(player2, new RuneclawBear());
         destroyBear();
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
         harness.addToBattlefield(player2, new RuneclawBear());

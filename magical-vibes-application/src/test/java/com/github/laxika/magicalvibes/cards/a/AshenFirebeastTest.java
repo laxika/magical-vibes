@@ -37,7 +37,7 @@ class AshenFirebeastTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent firebeast = harness.addToBattlefieldAndReturn(player1, new AshenFirebeast());
         firebeast.setSummoningSick(true);
-        firebeast.setTapped(true);
+        firebeast.tap();
         Permanent groundCreature = addCreatureReady(player2, new Anarchist());
         harness.addMana(player1, ManaColor.RED, 2);
 

@@ -85,7 +85,7 @@ class AridMesaTest extends BaseCardTest {
     @DisplayName("A tapped Arid Mesa cannot activate its search ability")
     void tappedMesaCannotActivate() {
         harness.addToBattlefield(player1, new AridMesa());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

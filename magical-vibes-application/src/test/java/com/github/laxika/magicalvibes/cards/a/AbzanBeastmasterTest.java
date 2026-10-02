@@ -102,10 +102,10 @@ class AbzanBeastmasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AbzanBeastmaster());
         harness.addToBattlefield(player2, new HornedTurtle());
         harness.setHand(player1, List.of(new ReachOfShadows()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLACK, 5);
         harness.castAndResolveInstant(player1, 0, findPermanent(player2, "Horned Turtle").getId());
         harness.assertInGraveyard(player2, "Horned Turtle");
         int handSize = gd.playerHands.get(player1.getId()).size();
@@ -121,10 +121,10 @@ class AbzanBeastmasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HornedTurtle());
         harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player2, List.of(new ReachOfShadows()));
-        harness.addMana(player2, ManaColor.BLACK, 5);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 5);
         harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Horned Turtle").getId());
         harness.assertInGraveyard(player1, "Horned Turtle");
         harness.passBothPriorities();
@@ -139,10 +139,10 @@ class AbzanBeastmasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HornedTurtle());
         harness.addToBattlefield(player2, new HillGiant());
         harness.setHand(player2, List.of(new ReachOfShadows()));
-        harness.addMana(player2, ManaColor.BLACK, 5);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 5);
         harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Abzan Beastmaster").getId());
         harness.assertInGraveyard(player1, "Abzan Beastmaster");
         harness.passBothPriorities();

@@ -26,7 +26,7 @@ class AdagiaWindsweptBastionTest extends BaseCardTest {
     void entersTapped() {
         harness.setHand(player1, List.of(new AdagiaWindsweptBastion()));
 
-        harness.playLand(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.playLand(player1, 0));
 
         assertThat(findPermanent(player1, "Adagia, Windswept Bastion").isTapped()).isTrue();
     }
@@ -35,7 +35,7 @@ class AdagiaWindsweptBastionTest extends BaseCardTest {
     void tapsForWhiteManaWithoutChargeCounters() {
         Permanent adagia = harness.addToBattlefieldAndReturn(player1, new AdagiaWindsweptBastion());
 
-        harness.activateAbility(player1, battlefieldIndex(adagia), 0, null, null);
+        harness.tapPermanent(player1, battlefieldIndex(adagia));
 
         assertThat(adagia.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);

@@ -129,7 +129,7 @@ class ArwenMortalQueenTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent target = addCreatureReady(player1, new ElvishMystic());
         Permanent arwen = castArwen();
-        arwen.setTapped(true);
+        arwen.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, battlefieldIndex(arwen), null, target.getId());

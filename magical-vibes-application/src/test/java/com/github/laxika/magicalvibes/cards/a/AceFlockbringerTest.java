@@ -90,6 +90,7 @@ class AceFlockbringerTest extends BaseCardTest {
     @Test
     void anOpponentsCreatureSpellDoesNotTriggerAce() {
         addCreatureReady(player1, new AceFlockbringer());
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 2);
@@ -124,6 +125,7 @@ class AceFlockbringerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         castGrizzlyBears();
 
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.END_STEP);

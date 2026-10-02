@@ -56,7 +56,7 @@ class AshioksSkulkerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent skulker = harness.addToBattlefieldAndReturn(player1, new AshioksSkulker());
         skulker.setSummoningSick(true);
-        skulker.setTapped(true);
+        skulker.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);

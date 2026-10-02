@@ -85,7 +85,7 @@ class ArmoredGalleonTest extends BaseCardTest {
     void canAttackWhenDefendersIslandIsTapped() {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player2, new Island());
-        findPermanent(player2, "Island").setTapped(true);
+        findPermanent(player2, "Island").tap();
         addCreatureReady(player1, new ArmoredGalleon());
 
         declareAttackers(List.of(0));

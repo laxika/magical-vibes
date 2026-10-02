@@ -109,7 +109,10 @@ class AethertowTest extends BaseCardTest {
 
     @Test
     void stolenAttackerReturnsToOwnersLibrary() {
-        Permanent attacker = addAttacker(player2);
+        SafeholdElite card = new SafeholdElite();
+        card.setOwnerId(player1.getId());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, card);
+        attacker.setAttacking(true);
         gd.stolenCreatures.put(attacker.getId(), player1.getId());
         int controllerLibrarySize = gd.playerDecks.get(player2.getId()).size();
 

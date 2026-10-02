@@ -90,7 +90,7 @@ class AronBenaliasRuinTest extends BaseCardTest {
     @Test
     void tappedAronCannotActivate() {
         Permanent aron = addCreatureReady(player1, new AronBenaliasRuin());
-        aron.setTapped(true);
+        aron.tap();
         addCreatureReady(player1, new AcademyWall());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

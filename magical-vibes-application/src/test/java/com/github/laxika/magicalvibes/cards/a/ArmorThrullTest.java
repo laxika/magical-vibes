@@ -114,7 +114,7 @@ class ArmorThrullTest extends BaseCardTest {
     @DisplayName("A tapped Armor Thrull cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent source = addCreatureReady(player1, new ArmorThrull());
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player2, new ArmorThrull());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

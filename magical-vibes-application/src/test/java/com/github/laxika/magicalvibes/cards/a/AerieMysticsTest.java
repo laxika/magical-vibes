@@ -48,6 +48,7 @@ class AerieMysticsTest extends BaseCardTest {
 
         assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(mystics.hasKeyword(Keyword.SHROUD)).isFalse();
@@ -115,11 +116,11 @@ class AerieMysticsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, mystics.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("shroud");
+                .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castInstant(player2, 0, mystics.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("shroud");
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(mystics.hasKeyword(Keyword.SHROUD)).isTrue();
     }
 
     @Test

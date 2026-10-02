@@ -99,7 +99,7 @@ class ArnoDorianTest extends BaseCardTest {
         harness.castCreatureWithMorph(player1, 0);
         resolveAllTriggers();
         Permanent arno = gd.playerBattlefields.get(player1.getId()).getFirst();
-        arno.setTapped(true);
+        arno.tap();
 
         harness.activateAbility(player2, 0, null, arno.getId());
         resolveAllTriggers();

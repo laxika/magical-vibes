@@ -69,8 +69,8 @@ class AshnodsAltarTest extends BaseCardTest {
     void tappedAltarCanSacrificeTappedNewCreature() {
         Permanent altar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        altar.setTapped(true);
-        bear.setTapped(true);
+        altar.tap();
+        bear.tap();
         bear.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

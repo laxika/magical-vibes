@@ -71,7 +71,9 @@ class AcrobaticManeuverTest extends BaseCardTest {
     @Test
     @DisplayName("A controlled creature returns to its owner and the caster draws")
     void returnsToOwnerAndCasterDraws() {
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new TerrorOfTheFairgrounds());
+        TerrorOfTheFairgrounds card = new TerrorOfTheFairgrounds();
+        card.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, card);
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
         harness.setHand(player1, List.of(new AcrobaticManeuver()));
         harness.setLibrary(player1, List.of(new TerrorOfTheFairgrounds()));

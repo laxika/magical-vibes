@@ -65,6 +65,7 @@ class AgoraphobiaTest extends BaseCardTest {
     @Test
     @DisplayName("Returning the Aura restores an opponent's enchanted creature")
     void returnsAuraAttachedToOpponentsCreature() {
+        harness.setHand(player2, List.of());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Agoraphobia());
         aura.setAttachedTo(bears.getId());
@@ -83,6 +84,7 @@ class AgoraphobiaTest extends BaseCardTest {
     @Test
     @DisplayName("A second return ability does nothing after the first returns the Aura")
     void multipleActivationsReturnAuraOnlyOnce() {
+        harness.setHand(player1, List.of());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Agoraphobia());
         aura.setAttachedTo(bears.getId());

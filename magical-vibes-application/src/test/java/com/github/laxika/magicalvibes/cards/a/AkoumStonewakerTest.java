@@ -66,6 +66,7 @@ class AkoumStonewakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
@@ -97,6 +98,7 @@ class AkoumStonewakerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);

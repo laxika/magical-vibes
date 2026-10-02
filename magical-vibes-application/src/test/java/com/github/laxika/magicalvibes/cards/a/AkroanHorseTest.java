@@ -85,8 +85,8 @@ class AkroanHorseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AkroanHorse());
         harness.setHand(player1, List.of(new VoyagesEnd()));
         harness.setLibrary(player1, List.of());
-        harness.addMana(player1, ManaColor.BLUE, 2);
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Akroan Horse"));
         harness.assertNotOnBattlefield(player1, "Akroan Horse");

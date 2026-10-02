@@ -88,7 +88,7 @@ class AshenMonstrosityTest extends BaseCardTest {
     @DisplayName("A tapped Ashen Monstrosity is not required to attack")
     void tappedMonstrosityDoesNotHaveToAttack() {
         Permanent monstrosity = addCreatureReady(player1, new AshenMonstrosity());
-        monstrosity.setTapped(true);
+        monstrosity.tap();
         harness.setLife(player2, 20);
 
         declareAttackers(List.of());

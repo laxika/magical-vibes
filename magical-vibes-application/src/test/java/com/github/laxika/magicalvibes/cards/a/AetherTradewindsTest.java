@@ -148,7 +148,9 @@ class AetherTradewindsTest extends BaseCardTest {
     @Test
     @DisplayName("Returns controlled permanents to their owners rather than their controllers")
     void returnsStolenPermanentToOwner() {
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new SageOfShailasClaim());
+        SageOfShailasClaim card = new SageOfShailasClaim();
+        card.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, card);
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SageOfShailasClaim());
         harness.setHand(player1, List.of(new AetherTradewinds()));

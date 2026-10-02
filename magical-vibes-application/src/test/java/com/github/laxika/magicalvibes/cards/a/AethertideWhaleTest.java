@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -68,6 +70,7 @@ class AethertideWhaleTest extends BaseCardTest {
 
     @Test
     void returnsToOwnersHandUsingControllersEnergy() {
+        harness.setHand(player1, List.of());
         AethertideWhale card = new AethertideWhale();
         card.setOwnerId(player2.getId());
         Permanent whale = harness.addToBattlefieldAndReturn(player1, card);
@@ -104,6 +107,7 @@ class AethertideWhaleTest extends BaseCardTest {
 
     @Test
     void multipleActivationsPaySeparatelyButReturnWhaleOnlyOnce() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new AethertideWhale());
         gd.playerEnergyCounters.put(player1.getId(), 8);
 

@@ -102,6 +102,8 @@ class AjaniAdversaryOfTyrantsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Ajani, Adversary of Tyrants");
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         advanceIntoEndStep(player1);
         assertThat(findPermanents(player1, "Cat")).hasSize(3);
         advanceIntoEndStep(player2);

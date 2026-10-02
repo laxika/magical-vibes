@@ -50,7 +50,7 @@ class ArmoryGuardTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, guard, Keyword.VIGILANCE)).isFalse();
 
         Permanent firstGate = harness.addToBattlefieldAndReturn(player1, new RakdosGuildgate());
-        firstGate.setTapped(true);
+        firstGate.tap();
         assertThat(gqs.hasKeyword(gd, guard, Keyword.VIGILANCE)).isTrue();
 
         Permanent secondGate = harness.addToBattlefieldAndReturn(player1, new RakdosGuildgate());

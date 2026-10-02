@@ -131,7 +131,7 @@ class ArnjlotsAscentTest extends BaseCardTest {
     void tappedSourceCanGrantFlying() {
         Permanent ascent = harness.addToBattlefieldAndReturn(player1, new ArnjlotsAscent());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        ascent.setTapped(true);
+        ascent.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, bears.getId());

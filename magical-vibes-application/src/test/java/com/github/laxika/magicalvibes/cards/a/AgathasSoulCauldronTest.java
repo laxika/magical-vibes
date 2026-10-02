@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ class AgathasSoulCauldronTest extends BaseCardTest {
         Card skeletons = new DrudgeSkeletons();
         harness.setGraveyard(player1, new ArrayList<>(List.of(skeletons)));
 
-        harness.activateAbility(player1, 0, null, skeletons.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(skeletons.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(cauldron.getId())).containsExactly(skeletons);
@@ -47,7 +46,7 @@ class AgathasSoulCauldronTest extends BaseCardTest {
         Card rod = new RodOfRuin();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
 
-        harness.activateAbility(player1, 0, null, rod.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(rod.getId()));
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -87,7 +86,7 @@ class AgathasSoulCauldronTest extends BaseCardTest {
         Card skeletons = new DrudgeSkeletons();
         harness.setGraveyard(player2, new ArrayList<>(List.of(skeletons)));
 
-        harness.activateAbility(player1, 0, null, skeletons.getId(), Zone.GRAVEYARD);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(skeletons.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(cauldron.getId())).containsExactly(skeletons);

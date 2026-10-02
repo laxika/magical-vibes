@@ -91,7 +91,7 @@ class ArtfulTakedownTest extends BaseCardTest {
     @DisplayName("Tap mode can target an already tapped creature")
     void tapModeAcceptsTappedCreature() {
         Permanent creature = addCreatureReady(player1, new WishcoinCrab());
-        creature.setTapped(true);
+        creature.tap();
 
         cast(new int[]{0}, List.of(creature.getId()));
 

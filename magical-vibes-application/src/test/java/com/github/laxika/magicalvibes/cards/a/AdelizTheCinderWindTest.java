@@ -174,6 +174,7 @@ class AdelizTheCinderWindTest extends BaseCardTest {
         assertThat(adeliz.getPowerModifier()).isEqualTo(1);
         assertThat(adeliz.getToughnessModifier()).isEqualTo(1);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(adeliz.getPowerModifier()).isZero();

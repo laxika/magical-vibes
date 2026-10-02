@@ -141,7 +141,7 @@ class AshnodFleshMechanistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent ashnod = harness.addToBattlefieldAndReturn(player1, new AshnodFleshMechanist());
         ashnod.setSummoningSick(true);
-        ashnod.setTapped(true);
+        ashnod.tap();
         ArgothianSprite creature = new ArgothianSprite();
         Swamp land = new Swamp();
         harness.setGraveyard(player1, List.of(land, creature));
