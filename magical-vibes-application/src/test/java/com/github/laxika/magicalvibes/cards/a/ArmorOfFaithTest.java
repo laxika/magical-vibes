@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArmorOfFaith.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({ArmorOfFaith.class, GrizzlyBears.class, FountainOfYouth.class, Disenchant.class})
 class ArmorOfFaithTest extends BaseCardTest {
-
-    // ===== Static +1/+1 boost =====
 
     @Test
     @DisplayName("Enchanted creature gets +1/+1")
@@ -31,8 +30,6 @@ class ArmorOfFaithTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
     }
-
-    // ===== Activated ability: {W} for +0/+1 until end of turn =====
 
     @Test
     @DisplayName("Activating ability gives enchanted creature +0/+1 until end of turn")
@@ -92,8 +89,6 @@ class ArmorOfFaithTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
     }
 
-    // ===== Effects stop when aura removed =====
-
     @Test
     @DisplayName("Creature loses the static boost when Armor of Faith is removed")
     void staticBoostStopsWhenRemoved() {
@@ -108,8 +103,6 @@ class ArmorOfFaithTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(2);
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can enchant a creature")
@@ -148,6 +141,42 @@ class ArmorOfFaithTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An activation still boosts the creature after the Aura is destroyed")
+    void activationResolvesAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armor = addArmorAttachedTo(player1, bears);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, armor.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Armor of Faith");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A resolved temporary boost survives destruction of the Aura")
+    void resolvedBoostSurvivesAuraDestruction() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent armor = addArmorAttachedTo(player1, bears);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, armor.getId());
+
+        harness.assertInGraveyard(player1, "Armor of Faith");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 
     private Permanent addArmorAttachedTo(Player controller, Permanent creature) {
