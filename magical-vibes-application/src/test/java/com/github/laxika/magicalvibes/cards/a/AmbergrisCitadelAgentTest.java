@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -23,6 +25,73 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AmbergrisCitadelAgent.class, Forest.class, GrizzlyBears.class, Island.class,
         Mountain.class, Plains.class, Swamp.class})
 class AmbergrisCitadelAgentTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @CsvSource({"WHITE, 0, 2", "BLUE, 1, 3", "BLACK, 2, 2", "RED, 3, 2", "GREEN, 4, 2"})
+    void specializedFacesDrawEvenWhenTheHandIsEmpty(CardColor color, int abilityIndex, int drawCount) {
+        Card discardedCard = switch (color) {
+            case WHITE -> new Plains();
+            case BLUE -> new Island();
+            case BLACK -> new Swamp();
+            case RED -> new Mountain();
+            case GREEN -> new Forest();
+        };
+        Permanent ambergris = specialize(color, abilityIndex, discardedCard);
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new GrizzlyBears();
+        Card thirdDraw = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        List<Card> expectedDraws = drawCount == 3
+                ? List.of(firstDraw, secondDraw, thirdDraw) : List.of(firstDraw, secondDraw);
+        harness.setLibrary(player1, expectedDraws);
+
+        attackAndAccept(ambergris, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(expectedDraws);
+    }
+
+    @Test
+    void decliningTheBaseAttackAbilityKeepsTheHandAndLibrary() {
+        Permanent ambergris = addCreatureReady(player1, new AmbergrisCitadelAgent());
+        Card heldCard = new GrizzlyBears();
+        Card libraryCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(heldCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(ambergris)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(heldCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void whiteFaceBoostsCreaturesDuringTheAttackAbilityResolution() {
+        Permanent ambergris = specialize(CardColor.WHITE, 0, new Plains());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        attackAndAccept(ambergris, 2);
+
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(5);
+    }
+
+    @Test
+    void redFaceDealsDamageDuringTheAttackAbilityResolution() {
+        Permanent ambergris = specialize(CardColor.RED, 3, new Mountain());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        attackAndAccept(ambergris, 2);
+
+        harness.assertLife(player2, 17);
+    }
+
 
     @Test
     void baseFaceDiscardsItsHandAndDrawsTwoWhenItAttacks() {
