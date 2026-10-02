@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AysenHighway.class, AysenCrusader.class, AnHavvaTownship.class, Roterothopter.class})
+@CardUsed({AysenHighway.class, AysenCrusader.class, AnHavvaTownship.class, Roterothopter.class,
+        Plains.class, Opalescence.class})
 class AysenHighwayTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,35 @@ class AysenHighwayTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Roterothopter());
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Roterothopter"), Keyword.PLAINSWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Aysen Highway does not grant plainswalk to itself while it is only an enchantment")
+    void doesNotGrantToNonCreatureEnchantment() {
+        Permanent highway = harness.addToBattlefieldAndReturn(player1, new AysenHighway());
+
+        assertThat(gqs.hasKeyword(gd, highway, Keyword.PLAINSWALK)).isFalse();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Aysen Highway grants plainswalk to itself when Opalescence makes it a white creature")
+    void grantsPlainswalkToAnimatedHighway() {
+        Permanent highway = harness.addToBattlefieldAndReturn(player1, new AysenHighway());
+        harness.addToBattlefield(player2, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, highway)).isTrue();
+        assertThat(gqs.hasKeyword(gd, highway, Keyword.PLAINSWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("White creatures entering after Aysen Highway immediately have plainswalk")
+    void grantsPlainswalkToLaterCreature() {
+        harness.addToBattlefield(player1, new AysenHighway());
+
+        Permanent crusader = harness.addToBattlefieldAndReturn(player2, new AysenCrusader());
+
+        assertThat(gqs.hasKeyword(gd, crusader, Keyword.PLAINSWALK)).isTrue();
     }
 
     @Test
