@@ -94,4 +94,29 @@ class AngelfireCrusaderTest extends BaseCardTest {
         assertThat(crusader.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("A tapped Crusader can activate and boosts only itself when the ability resolves")
+    void tappedCrusaderBoostsOnlyItselfOnResolution() {
+        Permanent crusader = addCreatureReady(player1, new AngelfireCrusader());
+        Permanent otherCrusader = addCreatureReady(player1, new AngelfireCrusader());
+        Permanent opposingCrusader = addCreatureReady(player2, new AngelfireCrusader());
+        crusader.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(crusader.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(crusader.getPowerModifier()).isEqualTo(1);
+        assertThat(crusader.getToughnessModifier()).isZero();
+        assertThat(crusader.isTapped()).isTrue();
+        assertThat(otherCrusader.getPowerModifier()).isZero();
+        assertThat(otherCrusader.getToughnessModifier()).isZero();
+        assertThat(opposingCrusader.getPowerModifier()).isZero();
+        assertThat(opposingCrusader.getToughnessModifier()).isZero();
+    }
+
 }
