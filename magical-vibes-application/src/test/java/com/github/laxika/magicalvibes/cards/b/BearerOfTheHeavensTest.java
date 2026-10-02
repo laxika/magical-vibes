@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BearerOfTheHeavens.class, GrizzlyBears.class, LightningBolt.class, Forest.class, Plains.class})
 class BearerOfTheHeavensTest extends BaseCardTest {
 
     @Test
@@ -42,8 +44,7 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         destroyBearer();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -56,6 +57,67 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Plains");
     }
 
+    @Test
+    @DisplayName("Death during the end step waits until the following turn's end step")
+    void deathDuringEndStepWaitsForFollowingEndStep() {
+        harness.forceStep(TurnStep.END_STEP);
+        Permanent bearer = harness.addToBattlefieldAndReturn(player1, new BearerOfTheHeavens());
+        bearer.setMarkedDamage(7);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyBearer();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The delayed destruction includes permanents that enter after the death trigger resolves")
+    void destroysPermanentsThatEnterLater() {
+        Permanent bearer = harness.addToBattlefieldAndReturn(player1, new BearerOfTheHeavens());
+        bearer.setMarkedDamage(7);
+        destroyBearer();
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Regeneration saves a permanent and the delayed ability triggers only once")
+    void regenerationSavesPermanentAndDestructionDoesNotRepeat() {
+        Permanent bearer = harness.addToBattlefieldAndReturn(player1, new BearerOfTheHeavens());
+        bearer.setMarkedDamage(7);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyBearer();
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+        bears.setRegenerationShield(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getRegenerationShield()).isZero();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void addBearerWithOneToughness() {
         BearerOfTheHeavens bearer = new BearerOfTheHeavens();
         bearer.setToughness(1);
@@ -66,7 +128,6 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         Permanent bearer = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bearer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearer.getId());
     }
 }
