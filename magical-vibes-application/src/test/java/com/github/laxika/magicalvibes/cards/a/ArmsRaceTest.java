@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArmsRace.class, GrizzlyBears.class, Ornithopter.class})
 class ArmsRaceTest extends BaseCardTest {
 
     @Test
@@ -71,11 +74,83 @@ class ArmsRaceTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 
-    private Permanent addReadyArmsRace() {
-        Permanent armsRace = new Permanent(new ArmsRace());
-        armsRace.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(armsRace);
-        return armsRace;
+    @Test
+    @DisplayName("End-step sacrifice uses the stack and can be responded to")
+    void sacrificeWaitsForItsTriggerToResolve() {
+        putOrnithopterWithArmsRace();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Activating during the end step grants haste beyond cleanup")
+    void hastePersistsAcrossCleanup() {
+        harness.passUntil(TurnStep.END_STEP);
+        putOrnithopterWithArmsRace();
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+        assertThat(ornithopter.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("An artifact controlled by another player is not sacrificed")
+    void artifactSurvivesAfterChangingController() {
+        putOrnithopterWithArmsRace();
+        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+        gd.playerBattlefields.get(player1.getId()).remove(ornithopter);
+        gd.playerBattlefields.get(player2.getId()).add(ornithopter);
+
+        harness.passUntil(TurnStep.END_STEP);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Accepting with no artifact in hand finishes without a card choice")
+    void noArtifactInHandFinishesResolution() {
+        addReadyArmsRace();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    private void putOrnithopterWithArmsRace() {
+        addReadyArmsRace();
+        harness.setHand(player1, List.of(new Ornithopter()));
+        addAbilityMana();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+    }
+
+    private void addReadyArmsRace() {
+        harness.addToBattlefield(player1, new ArmsRace());
     }
 
     private void addAbilityMana() {
