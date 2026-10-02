@@ -60,9 +60,7 @@ class AvenWarcraftTest extends BaseCardTest {
     void thresholdIsCheckedAtResolution() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setGraveyard(player1, fillerGraveyard(6));
-        prepareAvenWarcraft();
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new AvenWarcraft(), "{2}{W}");
         harness.setGraveyard(player1, fillerGraveyard(7));
         harness.passBothPriorities();
 
@@ -105,14 +103,8 @@ class AvenWarcraftTest extends BaseCardTest {
     }
 
     private void castAvenWarcraft() {
-        prepareAvenWarcraft();
-        harness.castAndResolveInstant(player1, 0);
-    }
-
-    private void prepareAvenWarcraft() {
-        harness.setHand(player1, List.of(new AvenWarcraft()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new AvenWarcraft(), "{2}{W}");
+        harness.passBothPriorities();
     }
 
     private List<Card> fillerGraveyard(int count) {
@@ -128,7 +120,7 @@ class AvenWarcraftTest extends BaseCardTest {
         harness.setGraveyard(player1, fillerGraveyard(6));
         harness.setGraveyard(player2, fillerGraveyard(7));
 
-        castAvenWarcraftForJudReview();
+        castAvenWarcraft();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
@@ -140,7 +132,7 @@ class AvenWarcraftTest extends BaseCardTest {
     void chosenProtectionPreventsChosenColorSpellFromTargeting() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setGraveyard(player1, fillerGraveyard(7));
-        castAvenWarcraftForJudReview();
+        castAvenWarcraft();
         harness.handleListChoice(player1, CardColor.RED.name());
 
         harness.setHand(player2, List.of(new EmberShot()));
@@ -156,7 +148,7 @@ class AvenWarcraftTest extends BaseCardTest {
     void effectsWearOffAtEndOfTurn() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setGraveyard(player1, fillerGraveyard(7));
-        castAvenWarcraftForJudReview();
+        castAvenWarcraft();
         harness.handleListChoice(player1, CardColor.BLUE.name());
 
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
@@ -170,8 +162,72 @@ class AvenWarcraftTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
     }
 
-    private void castAvenWarcraftForJudReview() {
+    @Test
+    @DisplayName("Losing threshold before resolution removes only the protection clause")
+    void losingThresholdBeforeResolutionStillBoostsCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(7));
         harness.castFromHand(player1, new AvenWarcraft(), "{2}{W}");
+        harness.setGraveyard(player1, fillerGraveyard(6));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution receive both effects")
+    void creaturesEnteringBeforeResolutionReceiveBothEffects() {
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        harness.castFromHand(player1, new AvenWarcraft(), "{2}{W}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution receive neither effect")
+    void creaturesEnteringAfterResolutionReceiveNeitherEffect() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        castAvenWarcraft();
+        harness.handleListChoice(player1, "RED");
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, original, CardColor.RED)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(1);
+        assertThat(gqs.hasProtectionFrom(gd, newcomer, CardColor.RED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection persists if threshold is lost after resolution")
+    void protectionPersistsAfterLosingThreshold() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        castAvenWarcraft();
+        harness.handleListChoice(player1, "BLUE");
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.BLUE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("At threshold a color is chosen even when you control no creatures")
+    void choosesColorWithoutCreatures() {
+        harness.setGraveyard(player1, fillerGraveyard(7));
+        castAvenWarcraft();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Aven Warcraft");
     }
 }
