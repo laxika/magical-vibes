@@ -159,7 +159,7 @@ class ArcSloggerTest extends BaseCardTest {
     @DisplayName("Can activate a tapped Arc-Slogger twice before either ability resolves")
     void canActivateRepeatedlyWhileTapped() {
         var slogger = harness.addToBattlefieldAndReturn(player1, new ArcSlogger());
-        slogger.setTapped(true);
+        slogger.tap();
         var library = IntStream.range(0, 21).mapToObj(i -> new Island()).toList();
         harness.setLibrary(player1, library);
         harness.setLife(player2, 20);

@@ -102,7 +102,7 @@ class AquamoebaTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent aquamoeba = addReadyAquamoeba();
-        aquamoeba.setTapped(true);
+        aquamoeba.tap();
         harness.setHand(player1, List.of(new Aquamoeba()));
         harness.forceActivePlayer(player2);
         harness.ensurePriority(player1);

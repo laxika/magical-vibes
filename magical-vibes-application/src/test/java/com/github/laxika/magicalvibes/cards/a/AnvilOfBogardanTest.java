@@ -201,7 +201,7 @@ class AnvilOfBogardanTest extends BaseCardTest {
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
         gd.turnNumber = 2;
         advanceToUpkeep(player2);
-        anvil.setTapped(true);
+        anvil.tap();
 
         harness.passBothPriorities();
         harness.passBothPriorities();

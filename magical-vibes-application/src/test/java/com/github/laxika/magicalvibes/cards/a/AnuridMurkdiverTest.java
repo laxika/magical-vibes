@@ -70,7 +70,7 @@ class AnuridMurkdiverTest extends BaseCardTest {
     @DisplayName("Anurid Murkdiver can't be blocked when the defending player's Swamp is tapped")
     void cannotBeBlockedWhenDefendersSwampIsTapped() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
         Permanent attacker = addCreatureReady(player1, new AnuridMurkdiver());
         attacker.setAttacking(true);

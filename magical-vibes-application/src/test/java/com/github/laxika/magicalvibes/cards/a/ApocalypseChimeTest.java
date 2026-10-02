@@ -143,7 +143,7 @@ class ApocalypseChimeTest extends BaseCardTest {
     @DisplayName("A tapped Chime cannot pay its activation cost")
     void cannotActivateWhileTapped() {
         chimeReady();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

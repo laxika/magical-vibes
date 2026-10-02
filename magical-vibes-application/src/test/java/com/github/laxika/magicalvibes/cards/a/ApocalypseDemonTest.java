@@ -146,7 +146,7 @@ class ApocalypseDemonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DefiantKhenra());
 
         advanceToUpkeep(player1);
-        perm.setTapped(true);
+        perm.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

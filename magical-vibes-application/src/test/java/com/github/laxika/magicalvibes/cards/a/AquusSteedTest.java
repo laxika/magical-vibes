@@ -93,7 +93,7 @@ class AquusSteedTest extends BaseCardTest {
     @DisplayName("A tapped Steed cannot pay the tap cost again")
     void cannotActivateWhileTapped() {
         setupSteed();
-        findPermanent(player1, "Aquus Steed").setTapped(true);
+        findPermanent(player1, "Aquus Steed").tap();
         UUID targetId = harness.getPermanentId(player2, "Deadbridge Goliath");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

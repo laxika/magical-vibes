@@ -173,7 +173,7 @@ class ApocalypseHydraTest extends BaseCardTest {
     void tappedSummoningSickHydraCanActivateRepeatedly() {
         Permanent hydra = addReadyHydra(player1, 3);
         hydra.setSummoningSick(true);
-        hydra.setTapped(true);
+        hydra.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player2, 20);

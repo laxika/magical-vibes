@@ -144,7 +144,7 @@ class AntlerSkulkinTest extends BaseCardTest {
     @Test
     void abilityCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new AntlerSkulkin());
-        skulkin.setTapped(true);
+        skulkin.tap();
         Permanent target = addReadyWhiteCreature(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

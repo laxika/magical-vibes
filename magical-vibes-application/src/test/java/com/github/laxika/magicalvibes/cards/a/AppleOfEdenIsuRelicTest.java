@@ -163,7 +163,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
     @DisplayName("A tapped Apple cannot pay its tap cost")
     void cannotActivateWhenTapped() {
         Permanent apple = addApple();
-        apple.setTapped(true);
+        apple.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
