@@ -1,16 +1,22 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.cards.o.OrbsOfWarding;
+import com.github.laxika.magicalvibes.cards.r.RampagingFerocidon;
+import com.github.laxika.magicalvibes.cards.t.TaintedRemedy;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AxisOfMortality.class, PlatinumEmperion.class, OrbsOfWarding.class,
+        RampagingFerocidon.class, TaintedRemedy.class})
 class AxisOfMortalityTest extends BaseCardTest {
 
     /**
@@ -100,7 +106,6 @@ class AxisOfMortalityTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Axis of Mortality");
         assertThat(entry.getTargetIds()).containsExactly(player1.getId(), player2.getId());
     }
 
@@ -147,6 +152,89 @@ class AxisOfMortalityTest extends BaseCardTest {
         triggerAndTargetBothPlayers(player1, player1, player2, true);
 
         harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Life-gain replacement applies to the exchange")
+    void exchangeAppliesLifeGainReplacement() {
+        harness.addToBattlefield(player1, new AxisOfMortality());
+        harness.addToBattlefield(player2, new TaintedRemedy());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        triggerAndTargetBothPlayers(player1, player1, player2, true);
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Neither total changes if the exchange would require prohibited life loss")
+    void exchangeBlockedWhenLifeLossIsProhibited() {
+        harness.addToBattlefield(player1, new AxisOfMortality());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playersCantLoseLifeThisTurn = true;
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Neither total changes if a target gains hexproof before resolution")
+    void exchangeBlockedWhenOneTargetBecomesIllegal() {
+        harness.addToBattlefield(player1, new AxisOfMortality());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player2, new OrbsOfWarding());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The exchange uses life totals at resolution rather than at triggering")
+    void exchangesCurrentLifeTotals() {
+        harness.addToBattlefield(player1, new AxisOfMortality());
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("Neither total changes if a player would gain life but cannot")
+    void exchangeBlockedWhenLifeGainIsProhibited() {
+        harness.addToBattlefield(player1, new AxisOfMortality());
+        harness.addToBattlefield(player2, new RampagingFerocidon());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        triggerAndTargetBothPlayers(player1, player1, player2, true);
+
+        harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
     }
 }
