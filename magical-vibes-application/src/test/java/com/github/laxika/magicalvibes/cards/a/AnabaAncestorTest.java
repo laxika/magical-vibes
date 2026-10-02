@@ -53,9 +53,7 @@ class AnabaAncestorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent minotaur = findPermanent(player1, "Anaba Bodyguard");
         assertThat(minotaur.getPowerModifier()).isEqualTo(0);
@@ -81,6 +79,62 @@ class AnabaAncestorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, thopterId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupAncestor();
+        findPermanent(player1, "Anaba Ancestor").setSummoningSick(true);
+        UUID targetId = harness.getPermanentId(player1, "Anaba Bodyguard");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Anaba Ancestor").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        setupAncestor();
+        findPermanent(player1, "Anaba Ancestor").setTapped(true);
+        UUID targetId = harness.getPermanentId(player1, "Anaba Bodyguard");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Anaba Ancestor is a legal target")
+    void boostsAnotherAncestor() {
+        setupAncestor();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AnabaAncestor());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Anaba Ancestor").getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        setupAncestor();
+        Permanent source = findPermanent(player1, "Anaba Ancestor");
+        Permanent target = findPermanent(player1, "Anaba Bodyguard");
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupAncestor() {
