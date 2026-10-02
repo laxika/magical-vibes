@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MagitekArmor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalthierAndFran.class, DuskLegionDreadnought.class, GrizzlyBears.class})
+@CardUsed({BalthierAndFran.class, DuskLegionDreadnought.class, GrizzlyBears.class, MagitekArmor.class})
 class BalthierAndFranTest extends BaseCardTest {
 
     @Test
@@ -73,6 +74,53 @@ class BalthierAndFranTest extends BaseCardTest {
         assertThat(vehicle.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Crewing does not put a Balthier and Fran ability on the stack")
+    void crewingDoesNotTriggerAnAbility() {
+        addCreatureReady(player1, new BalthierAndFran());
+        Permanent vehicle = addCreatureReady(player1, new MagitekArmor());
+
+        harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Balthier and Fran"));
+    }
+
+    @Test
+    @DisplayName("The Vehicle bonuses exclude opposing Vehicles and non-Vehicles")
+    void bonusesOnlyAffectOwnVehicles() {
+        Permanent source = addCreatureReady(player1, new BalthierAndFran());
+        Permanent ownVehicle = addCreatureReady(player1, new MagitekArmor());
+        Permanent opposingVehicle = addCreatureReady(player2, new MagitekArmor());
+
+        assertThat(gqs.getEffectivePower(gd, ownVehicle)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownVehicle)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, ownVehicle, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownVehicle, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opposingVehicle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingVehicle)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opposingVehicle, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingVehicle, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining payment does not add a combat phase")
+    void canDeclinePayment() {
+        Permanent vehicle = crewVehicle();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        declareAttackers(player1, List.of(indexOf(player1, vehicle)), 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+    }
+
     private Permanent crewVehicle() {
         addCreatureReady(player1, new BalthierAndFran());
         Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
@@ -85,12 +133,8 @@ class BalthierAndFranTest extends BaseCardTest {
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices, int combatPhaseNumber) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         gd.combatPhasesThisTurn = combatPhaseNumber;
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
+        declareAttackers(player, attackerIndices);
     }
 
     private int indexOf(Player player, Permanent permanent) {
