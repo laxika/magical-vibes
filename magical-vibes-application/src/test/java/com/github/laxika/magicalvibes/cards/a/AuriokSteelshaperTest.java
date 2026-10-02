@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Frogmite;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
 import com.github.laxika.magicalvibes.cards.n.NeurokHoversail;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -64,5 +65,99 @@ class AuriokSteelshaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void reducesTwoManaEquipCostToOne() {
+        harness.addToBattlefield(player1, new AuriokSteelshaper());
+        Permanent hoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Frogmite());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        assertThat(hoversail.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void multipleSteelshapersReduceEquipCostToZero() {
+        harness.addToBattlefield(player1, new AuriokSteelshaper());
+        harness.addToBattlefield(player1, new AuriokSteelshaper());
+        Permanent hoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Frogmite());
+
+        harness.activateAbility(player1, 2, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(hoversail.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void opponentSteelshaperDoesNotReduceEquipCost() {
+        harness.addToBattlefield(player2, new AuriokSteelshaper());
+        Permanent hoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Frogmite());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(hoversail.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void movingEquipmentAwayRemovesSoldierAndKnightBonus() {
+        Permanent steelshaper = harness.addToBattlefieldAndReturn(player1, new AuriokSteelshaper());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        Permanent hoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        hoversail.setAttachedTo(steelshaper.getId());
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, null, knight.getId());
+        harness.passBothPriorities();
+
+        assertThat(hoversail.getAttachedTo()).isEqualTo(knight.getId());
+        assertThat(gqs.getEffectivePower(gd, steelshaper)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, steelshaper)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    void equipmentControlledByOpponentStillEnablesBonus() {
+        Permanent steelshaper = harness.addToBattlefieldAndReturn(player1, new AuriokSteelshaper());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        Permanent hoversail = harness.addToBattlefieldAndReturn(player2, new NeurokHoversail());
+        hoversail.setAttachedTo(steelshaper.getId());
+
+        assertThat(gqs.getEffectivePower(gd, steelshaper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, steelshaper)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
+    }
+
+    @Test
+    void equippedSteelshapersBonusesStackButMultipleEquipmentDoesNotMultiplyBonus() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AuriokSteelshaper());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AuriokSteelshaper());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        Permanent firstHoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        Permanent secondHoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        Permanent extraHoversail = harness.addToBattlefieldAndReturn(player1, new NeurokHoversail());
+        firstHoversail.setAttachedTo(first.getId());
+        secondHoversail.setAttachedTo(second.getId());
+        extraHoversail.setAttachedTo(first.getId());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
     }
 }
