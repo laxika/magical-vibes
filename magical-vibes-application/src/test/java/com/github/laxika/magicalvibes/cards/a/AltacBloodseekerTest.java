@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FleshToDust;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,42 +15,37 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AltacBloodseeker.class, FleshToDust.class, RuneclawBear.class})
 class AltacBloodseekerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Opponent's creature dying gives +2/+0, first strike and haste")
+    @DisplayName("Opponent's creature dying gives +2/+0, first strike and haste together")
     void pumpsWhenOpponentCreatureDies() {
         harness.addToBattlefield(player1, new AltacBloodseeker());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RuneclawBear());
 
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve Cruel Edict → Grizzly Bears dies
-        harness.passBothPriorities(); // resolve first Bloodseeker trigger
-        harness.passBothPriorities(); // resolve second Bloodseeker trigger
+        destroyBear();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
         assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
         assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Does not trigger when the controller's own creature dies")
     void doesNotTriggerOnOwnCreatureDeath() {
         harness.addToBattlefield(player1, new AltacBloodseeker());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new FleshToDust()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Runeclaw Bear"));
 
-        harness.setHand(player2, List.of(new CruelEdict()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities(); // resolve Cruel Edict → player1's Bears dies
-
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
         assertThat(gd.stack).isEmpty();
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
@@ -57,27 +53,68 @@ class AltacBloodseekerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Boost and keywords wear off at end of turn")
+    @DisplayName("Boost and keywords last through the end step and wear off at cleanup")
     void wearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new AltacBloodseeker());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RuneclawBear());
 
-        harness.setHand(player1, List.of(new CruelEdict()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        destroyBear();
+        harness.passUntil(TurnStep.END_STEP);
 
         Permanent bloodseeker = findBloodseeker();
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(2);
+        assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(bloodseeker.getPowerModifier()).isEqualTo(0);
+        assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
         assertThat(bloodseeker.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("Each opponent creature death adds another +2/+0")
+    void multipleDeathsAccumulateBoosts() {
+        harness.addToBattlefield(player1, new AltacBloodseeker());
+        harness.addToBattlefield(player2, new RuneclawBear());
+        destroyBear();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.addToBattlefield(player2, new RuneclawBear());
+        destroyBear();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        Permanent bloodseeker = findBloodseeker();
+        assertThat(bloodseeker.getPowerModifier()).isEqualTo(4);
+        assertThat(bloodseeker.getToughnessModifier()).isEqualTo(0);
+        assertThat(bloodseeker.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE, Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("A pending death trigger does not boost a replacement Bloodseeker")
+    void pendingTriggerDoesNotAffectNewPermanent() {
+        harness.addToBattlefield(player1, new AltacBloodseeker());
+        harness.addToBattlefield(player2, new RuneclawBear());
+        destroyBear();
+
+        harness.setHand(player1, List.of(new FleshToDust()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player1, 0, findBloodseeker().getId());
+        harness.assertInGraveyard(player1, "Altac Bloodseeker");
+        harness.addToBattlefield(player1, new AltacBloodseeker());
+        harness.passUntil(TurnStep.END_STEP);
+
+        Permanent replacement = findBloodseeker();
+        assertThat(replacement.getPowerModifier()).isEqualTo(0);
+        assertThat(replacement.getGrantedKeywords()).doesNotContain(Keyword.FIRST_STRIKE, Keyword.HASTE);
+    }
+
+    private void destroyBear() {
+        harness.setHand(player1, List.of(new FleshToDust()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Runeclaw Bear"));
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     private Permanent findBloodseeker() {
