@@ -55,4 +55,32 @@ class AssaultZeppelidTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before damaging the player")
+    void trampleRequiresLethalDamageBeforeOverflow() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new AssaultZeppelid());
+        Permanent blocker = addCreatureReady(player2, new MistralCharger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Trample");
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Mistral Charger");
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 1,
+                player2.getId(), 2
+        ));
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Mistral Charger");
+        harness.assertOnBattlefield(player1, "Assault Zeppelid");
+    }
 }
