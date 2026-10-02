@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(AtarkaMonument.class)
 class AtarkaMonumentTest extends BaseCardTest {
@@ -63,19 +64,90 @@ class AtarkaMonumentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, monument)).isFalse();
         assertThat(gqs.isArtifact(monument)).isTrue();
         assertThat(monument.getTransientSubtypes()).doesNotContain(CardSubtype.DRAGON);
         assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, monument)).isEmpty();
+    }
+
+    @Test
+    void newlyEnteredNoncreatureCanProduceGreenMana() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new AtarkaMonument());
+        monument.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedMonumentCanAnimateWithoutUntapping() {
+        Permanent monument = addReadyMonument();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gqs.isCreature(gd, monument)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, monument)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void newlyEnteredMonumentCanAnimateButCannotTapForManaAsCreature() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new AtarkaMonument());
+        monument.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(monument.isTapped()).isFalse();
+    }
+
+    @Test
+    void establishedAnimatedMonumentRetainsItsManaAbility() {
+        Permanent monument = addReadyMonument();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyMonument() {
-        Permanent monument = new Permanent(new AtarkaMonument());
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new AtarkaMonument());
         monument.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(monument);
         return monument;
     }
 }
