@@ -47,6 +47,9 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ApplejackToyChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.StingingStudyCommanderChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SpellbookCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.DraftTwiceSpellbookChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PerpetualHandOrGraveyardCardChoice.class, 1));
+        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PerpetualCreatureCardOrPermanentChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.RevealedMatchingHandCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HeistCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));

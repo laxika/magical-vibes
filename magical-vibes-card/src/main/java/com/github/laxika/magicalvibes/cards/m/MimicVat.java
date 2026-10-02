@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "115")
 @CardRegistration(set = "C20", collectorNumber = "246")
 @CardRegistration(set = "C19", collectorNumber = "219")
+@CardRegistration(set = "C18", collectorNumber = "209")
 public class MimicVat extends Card {
 
     public MimicVat() {

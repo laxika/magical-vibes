@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardInt
 @CardRegistration(set = "ARB", collectorNumber = "106")
 @CardRegistration(set = "PC2", collectorNumber = "89")
 @CardRegistration(set = "PCA", collectorNumber = "89")
+@CardRegistration(set = "C18", collectorNumber = "178")
 public class EnigmaSphinx extends Card {
 
     public EnigmaSphinx() {

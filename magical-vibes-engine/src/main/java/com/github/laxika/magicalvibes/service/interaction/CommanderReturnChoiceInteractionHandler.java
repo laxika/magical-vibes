@@ -7,7 +7,9 @@ import java.util.ArrayList;
 public class CommanderReturnChoiceInteractionHandler implements InteractionHandler<PendingInteraction.CommanderReturnChoice> {
     private final InputCompletionService completion;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards;
-    public CommanderReturnChoiceInteractionHandler(InputCompletionService completion, com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards) { this.completion = completion; this.graveyards = graveyards; }
+    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers;
+    public CommanderReturnChoiceInteractionHandler(InputCompletionService completion, com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyards,
+                                                   com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggers) { this.completion = completion; this.graveyards = graveyards; this.triggers = triggers; }
     public Class<PendingInteraction.CommanderReturnChoice> handledType() { return PendingInteraction.CommanderReturnChoice.class; }
     public Class<? extends InteractionAnswer> answerType() { return InteractionAnswer.MayAbilityChosen.class; }
     public void handleAnswer(GameData game, Player player, PendingInteraction.CommanderReturnChoice choice, InteractionAnswer answer) {
@@ -21,7 +23,10 @@ public class CommanderReturnChoiceInteractionHandler implements InteractionHandl
                 removed = game.playerGraveyards.get(choice.playerId()).removeIf(card -> card.getId().equals(choice.card().getId()));
                 if (removed) graveyards.notifyCardsLeftGraveyard(game, choice.playerId(), choice.card());
             }
-            if (removed) game.playerCommandZones.computeIfAbsent(choice.playerId(), id -> new ArrayList<>()).add(choice.card());
+            if (removed) {
+                game.playerCommandZones.computeIfAbsent(choice.playerId(), id -> new ArrayList<>()).add(choice.card());
+                triggers.checkYourCommanderPutIntoCommandZoneTriggers(game, choice.card(), choice.playerId());
+            }
         }
         game.interaction.clearAwaitingInput();
         completion.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(game);

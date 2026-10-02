@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "PIO", collectorNumber = "258")
 @CardRegistration(set = "RVR", collectorNumber = "272")
 @CardRegistration(set = "C13", collectorNumber = "275")
+@CardRegistration(set = "C18", collectorNumber = "234")
 public class AzoriusGuildgate extends Card {
 
     public AzoriusGuildgate() {

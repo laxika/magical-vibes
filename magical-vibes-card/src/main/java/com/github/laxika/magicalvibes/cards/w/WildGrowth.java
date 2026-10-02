@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "AFC", collectorNumber = "174")
 @CardRegistration(set = "PIP", collectorNumber = "208")
 @CardRegistration(set = "PIP", collectorNumber = "736")
+@CardRegistration(set = "C18", collectorNumber = "165")
 public class WildGrowth extends Card {
 
     public WildGrowth() {

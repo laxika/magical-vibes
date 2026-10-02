@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "CMM", collectorNumber = "72")
 @CardRegistration(set = "C21", collectorNumber = "113")
 @CardRegistration(set = "DSC", collectorNumber = "109")
+@CardRegistration(set = "C18", collectorNumber = "80")
 public class AetherGale extends Card {
 
     public AetherGale() {

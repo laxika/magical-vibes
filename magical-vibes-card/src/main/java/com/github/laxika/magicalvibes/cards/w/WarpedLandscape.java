@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "280")
+@CardRegistration(set = "C18", collectorNumber = "291")
 public class WarpedLandscape extends Card {
 
     public WarpedLandscape() {

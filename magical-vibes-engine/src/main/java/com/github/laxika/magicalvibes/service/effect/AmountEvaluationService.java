@@ -222,6 +222,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastSinceBeginningOfLastTurn;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastFromOutsideHandThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
@@ -750,6 +751,8 @@ public class AmountEvaluationService {
                     countLifeLostThisTurn(gameData, c, ctx);
             case SpellsCastThisTurn c ->
                     countSpellsCastThisTurn(gameData, c, ctx);
+            case SpellsCastSinceBeginningOfLastTurn c ->
+                    countSpellsCastSinceBeginningOfLastTurn(gameData, c, ctx);
             case SpellsCastFromOutsideHandThisTurn c ->
                     countSpellsCastFromOutsideHandThisTurn(gameData, c, ctx);
             case TargetPlayerPoisonCounters ignored ->
@@ -2770,6 +2773,25 @@ public class AmountEvaluationService {
                     .filter(spell -> count.filter() == null
                             || predicateEvaluationService.matchesCardPredicate(
                             spell, count.filter(), sourceCardId, gameData, playerId))
+                    .count();
+        }
+        return total;
+    }
+
+    private int countSpellsCastSinceBeginningOfLastTurn(
+            GameData gameData, SpellsCastSinceBeginningOfLastTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
+            total += (int) gameData.getSpellsCastLastTurn(playerId).stream()
+                    .filter(spell -> count.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            spell, count.filter(), null, gameData, playerId))
+                    .count();
+            total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
+                    .filter(spell -> count.filter() == null
+                            || predicateEvaluationService.matchesCardPredicate(
+                            spell, count.filter(), null, gameData, playerId))
                     .count();
         }
         return total;

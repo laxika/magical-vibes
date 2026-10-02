@@ -103,7 +103,8 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
                 e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
                 e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
                 new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary(),
-                e.additionalTypes(), e.sacrificeAtEndStep());
+                e.additionalTypes(), e.sacrificeAtEndStep(), e.tappedAndAttacking(),
+                e.exileAtEndOfCombat());
 
         if (e.exileOtherControlledTokensOfSubtype() != null) {
             Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()

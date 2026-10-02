@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "GK1", collectorNumber = "61")
 @CardRegistration(set = "C21", collectorNumber = "217")
 @CardRegistration(set = "C20", collectorNumber = "214")
+@CardRegistration(set = "C18", collectorNumber = "181")
 public class GazeOfGranite extends Card {
 
     public GazeOfGranite() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardIfOddMayCastFree
 
 @CardRegistration(set = "CMM", collectorNumber = "363")
 @CardRegistration(set = "CMM", collectorNumber = "596")
+@CardRegistration(set = "C18", collectorNumber = "51")
 public class YennettCrypticSovereign extends Card {
 
     public YennettCrypticSovereign() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastFromTargetPlayerHandWi
 @CardRegistration(set = "PC2", collectorNumber = "105")
 @CardRegistration(set = "PCA", collectorNumber = "105")
 @CardRegistration(set = "OTC", collectorNumber = "241")
+@CardRegistration(set = "C18", collectorNumber = "191")
 public class SilentBladeOni extends Card {
 
     public SilentBladeOni() {

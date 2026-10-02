@@ -220,6 +220,7 @@ public enum CardSubtype {
     THRULL("Thrull"),
     EQUIPMENT("Equipment"),
     FORTIFICATION("Fortification"),
+    LEECH("Leech"),
     LEMUR("Lemur"),
     LIZARD("Lizard"),
     LLAMA("Llama"),

@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "DGM", collectorNumber = "111")
 @CardRegistration(set = "MM3", collectorNumber = "197")
 @CardRegistration(set = "PIO", collectorNumber = "250")
+@CardRegistration(set = "C18", collectorNumber = "192")
 public class UnflinchingCourage extends Card {
 
     public UnflinchingCourage() {

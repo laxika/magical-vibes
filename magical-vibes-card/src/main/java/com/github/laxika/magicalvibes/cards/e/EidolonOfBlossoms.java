@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "122")
 @CardRegistration(set = "EA3", collectorNumber = "5")
+@CardRegistration(set = "C18", collectorNumber = "140")
 public class EidolonOfBlossoms extends Card {
 
     public EidolonOfBlossoms() {

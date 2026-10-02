@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "2XM", collectorNumber = "251")
 @CardRegistration(set = "40K", collectorNumber = "237")
+@CardRegistration(set = "C18", collectorNumber = "55")
 public class EndlessAtlas extends Card {
 
     public EndlessAtlas() {

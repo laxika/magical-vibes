@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OtherChosenPlayerLosesLifeEff
 
 @CardRegistration(set = "CMM", collectorNumber = "187")
 @CardRegistration(set = "CMM", collectorNumber = "522")
+@CardRegistration(set = "C18", collectorNumber = "19")
 public class SowerOfDiscord extends Card {
 
     public SowerOfDiscord() {

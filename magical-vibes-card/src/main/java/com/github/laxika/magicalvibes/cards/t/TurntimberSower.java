@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OTC", collectorNumber = "211")
+@CardRegistration(set = "C18", collectorNumber = "35")
 public class TurntimberSower extends Card {
 
     public TurntimberSower() {

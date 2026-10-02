@@ -283,6 +283,8 @@ public class GameData {
     public final Set<UUID> oncePerTurnGraveyardSpellPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
+    /** Snapshot of the actual spells cast during the previous turn for filtered history queries. */
+    public final Map<UUID, List<Card>> spellsCastLastTurnCards = new ConcurrentHashMap<>();
     /** The game's current day/night designation. */
     public DayNight dayNight = DayNight.NEITHER;
     /** The player who currently is the monarch, or {@code null} when no player is monarch. */
@@ -943,6 +945,9 @@ public class GameData {
     /** Progress state for each-player may-discard effects with discard-type riders. */
     public final EachPlayerMayDiscardOneThenApplyEffectsState eachPlayerMayDiscardOneThenApplyEffects =
             new EachPlayerMayDiscardOneThenApplyEffectsState();
+    /** Progress state for each player's optional discard followed by a basic-land search. */
+    public final EachPlayerMayDiscardThenSearchBasicLandState eachPlayerMayDiscardThenSearchBasicLand =
+            new EachPlayerMayDiscardThenSearchBasicLandState();
     /** Progress state for Kroxa's opponent discard and nonland comparison. */
     public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
@@ -2762,9 +2767,6 @@ public class GameData {
      *  new turn; graveyard-card entries are removed when those cards leave the graveyard. */
     public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Tracks source permanents whose once-only triggered ability has already fired. */
-    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
-
     /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
     public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
 
@@ -2775,6 +2777,9 @@ public class GameData {
     /** Tracks source permanent object IDs whose Survival ability has been evaluated. A new object
      *  created when the card leaves and returns can evaluate again. */
     public final Set<UUID> survivalTriggersEvaluated = ConcurrentHashMap.newKeySet();
+
+    /** Tracks source permanent object IDs whose one-shot triggered ability has fired. */
+    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
 
     /** Tracks source permanent IDs to creature IDs whose first counter-placement trigger has fired
      *  this turn. Cleared at start of new turn. */
@@ -5012,6 +5017,11 @@ public class GameData {
         return Collections.unmodifiableList(spellsCastThisTurn.getOrDefault(playerId, List.of()));
     }
 
+    /** Returns an unmodifiable view of the spells the given player cast during the previous turn. */
+    public List<Card> getSpellsCastLastTurn(UUID playerId) {
+        return Collections.unmodifiableList(spellsCastLastTurnCards.getOrDefault(playerId, List.of()));
+    }
+
     public boolean hasSpellCastTargetingCreatureThisTurn(UUID playerId) {
         return !spellsCastTargetingCreatureThisTurn.getOrDefault(playerId, Set.of()).isEmpty();
     }
@@ -5071,7 +5081,9 @@ public class GameData {
      */
     public void snapshotSpellCountsAndClear(Map<UUID, Integer> target) {
         target.clear();
+        spellsCastLastTurnCards.clear();
         spellsCastThisTurn.forEach((id, spells) -> target.put(id, spells.size()));
+        spellsCastThisTurn.forEach((id, spells) -> spellsCastLastTurnCards.put(id, new ArrayList<>(spells)));
         spellsCastThisTurn.clear();
         spellsCastTargetingCreatureThisTurn.clear();
         spellsCastUsingTreasureManaThisTurn.clear();
@@ -6534,6 +6546,18 @@ public class GameData {
                 this.eachPlayerMayDiscardOneThenApplyEffects.remaining);
         copy.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded.addAll(
                 this.eachPlayerMayDiscardOneThenApplyEffects.playersWhoDiscarded);
+        copy.eachPlayerMayDiscardThenSearchBasicLand.active =
+                this.eachPlayerMayDiscardThenSearchBasicLand.active;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.controllerId =
+                this.eachPlayerMayDiscardThenSearchBasicLand.controllerId;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId =
+                this.eachPlayerMayDiscardThenSearchBasicLand.currentPlayerId;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore =
+                this.eachPlayerMayDiscardThenSearchBasicLand.currentDiscardCountBefore;
+        copy.eachPlayerMayDiscardThenSearchBasicLand.remaining.addAll(
+                this.eachPlayerMayDiscardThenSearchBasicLand.remaining);
+        copy.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded.addAll(
+                this.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded);
         copy.kroxaDiscard.active = this.kroxaDiscard.active;
         copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
         copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
@@ -7024,6 +7048,8 @@ public class GameData {
         this.cardNameCycleCountsThisGame.forEach((k, v) ->
                 copy.cardNameCycleCountsThisGame.put(k, new ConcurrentHashMap<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
+        this.spellsCastLastTurnCards.forEach((k, v) ->
+                copy.spellsCastLastTurnCards.put(k, new ArrayList<>(v)));
         copy.manaSpentToCastSpellsThisTurn.putAll(this.manaSpentToCastSpellsThisTurn);
         copy.dayNight = this.dayNight;
         copy.monarchPlayerId = this.monarchPlayerId;

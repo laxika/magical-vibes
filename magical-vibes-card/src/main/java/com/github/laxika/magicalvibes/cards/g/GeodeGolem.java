@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastCommanderFromCommandZoneWithoutPayingManaCostEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "386")
+@CardRegistration(set = "C18", collectorNumber = "56")
 public class GeodeGolem extends Card {
 
     public GeodeGolem() {

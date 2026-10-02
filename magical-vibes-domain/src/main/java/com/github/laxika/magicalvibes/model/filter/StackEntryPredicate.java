@@ -31,6 +31,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaSpentLessThanManaValuePredicate,
         StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueEqualsSourceCountersPredicate,
+        StackEntryManaValueEqualsSourceChosenNumberPredicate,
         StackEntryManaValueGreaterThanControllerExperienceCountersPredicate,
         StackEntryManaValueEqualsSourcePowerPredicate,
         StackEntryManaValueAtMostSourcePowerPredicate,

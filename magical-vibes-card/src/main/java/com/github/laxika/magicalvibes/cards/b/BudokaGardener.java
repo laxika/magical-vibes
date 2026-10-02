@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "202")
+@CardRegistration(set = "C18", collectorNumber = "134")
 public class BudokaGardener extends Card {
 
     public BudokaGardener() {

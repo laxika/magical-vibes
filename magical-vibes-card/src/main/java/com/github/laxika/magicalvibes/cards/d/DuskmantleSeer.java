@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHandEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "159")
+@CardRegistration(set = "C18", collectorNumber = "176")
 public class DuskmantleSeer extends Card {
 
     public DuskmantleSeer() {

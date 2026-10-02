@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THS", collectorNumber = "152")
 @CardRegistration(set = "PIO", collectorNumber = "167")
+@CardRegistration(set = "C18", collectorNumber = "132")
 public class BoonSatyr extends Card {
 
     public BoonSatyr() {

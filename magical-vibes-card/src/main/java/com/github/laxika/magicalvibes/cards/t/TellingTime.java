@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLD", collectorNumber = "2157")
 @CardRegistration(set = "GK1", collectorNumber = "4")
 @CardRegistration(set = "DSC", collectorNumber = "75")
+@CardRegistration(set = "C18", collectorNumber = "105")
 public class TellingTime extends Card {
 
     public TellingTime() {

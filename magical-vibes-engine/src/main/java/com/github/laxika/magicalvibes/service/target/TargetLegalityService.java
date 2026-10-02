@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueGreaterThanControllerExperienceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
@@ -4949,6 +4950,13 @@ public class TargetLegalityService {
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                         : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return manaValue == source.getCounterCount(equalsCounters.counterType());
+        }
+        if (predicate instanceof StackEntryManaValueEqualsSourceChosenNumberPredicate) {
+            if (source == null) {
+                return false;
+            }
+            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            return source.getChosenNumber() > 0 && manaValue == source.getChosenNumber();
         }
         if (predicate instanceof StackEntryManaValueGreaterThanControllerExperienceCountersPredicate) {
             if (controllerId == null) {

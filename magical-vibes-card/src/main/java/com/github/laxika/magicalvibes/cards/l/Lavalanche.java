@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "ARB", collectorNumber = "118")
 @CardRegistration(set = "2X2", collectorNumber = "240")
 @CardRegistration(set = "DMC", collectorNumber = "157")
+@CardRegistration(set = "C18", collectorNumber = "184")
 public class Lavalanche extends Card {
 
     public Lavalanche() {
