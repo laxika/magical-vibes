@@ -5736,13 +5736,24 @@ public class SpellCastingService {
                         returnToBattlefieldEffect.dynamicMaxTargets(),
                         new com.github.laxika.magicalvibes.service.effect.AmountContext(
                                 playerId, null, null, resolvedXValue, 0)));
+                int returnTargetGroupIndex = card.getEffectTargetIndex(returnToBattlefieldEffect);
+                GraveyardCardPredicateTargetFilter returnTargetFilter = returnTargetGroupIndex >= 0
+                        && returnTargetGroupIndex < card.getSpellTargets().size()
+                        && card.getSpellTargets().get(returnTargetGroupIndex).getFilter()
+                        instanceof GraveyardCardPredicateTargetFilter filter
+                        ? filter : null;
                 long matchingCount = graveyardOwners.stream()
                         .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
                                 .filter(c -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
                                         || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                                         .getOrDefault(ownerId, Set.of()).contains(c.getId()))
                                 .filter(c -> !returnToBattlefieldEffect.hasTotalManaValueCap()
-                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue()))
+                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue())
+                                .filter(c -> returnTargetFilter == null
+                                        || returnTargetFilter.minimumPoisonCounters() == null
+                                        || ownerId.equals(playerId)
+                                        || gameData.playerPoisonCounters.getOrDefault(ownerId, 0)
+                                        >= returnTargetFilter.minimumPoisonCounters()))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                 c, returnToBattlefieldEffect.filter(), card.getId(), gameData,
                                 playerId, null, null, targetXValue))

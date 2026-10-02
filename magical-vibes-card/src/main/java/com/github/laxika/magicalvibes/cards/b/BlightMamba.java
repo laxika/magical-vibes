@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "112")
+@CardRegistration(set = "ONC", collectorNumber = "105")
 public class BlightMamba extends Card {
 
     public BlightMamba() {

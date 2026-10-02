@@ -1034,6 +1034,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
+        gameData.playersWhoAttackedWithTokenThisTurn.clear();
         gameData.playersWhoAttackedWithCommanderThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.permanentsWithCountersPutByPlayerThisTurn.clear();

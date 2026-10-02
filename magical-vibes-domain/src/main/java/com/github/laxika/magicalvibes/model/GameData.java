@@ -294,6 +294,8 @@ public class GameData {
     public final Map<UUID, UUID> ringBearerIds = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Tracks which players declared at least one token as an attacker this turn. */
+    public final Set<UUID> playersWhoAttackedWithTokenThisTurn = ConcurrentHashMap.newKeySet();
     /** Tracks which players declared a commander as an attacker this turn. */
     public final Set<UUID> playersWhoAttackedWithCommanderThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
@@ -7017,6 +7019,7 @@ public class GameData {
                 .addAll(this.playersWhoControlledPermanentThatExploredThisTurn);
         copy.playersWhoWereWayBehindThisTurn.addAll(this.playersWhoWereWayBehindThisTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.playersWhoAttackedWithTokenThisTurn.addAll(this.playersWhoAttackedWithTokenThisTurn);
         copy.playersWhoAttackedWithCommanderThisTurn.addAll(this.playersWhoAttackedWithCommanderThisTurn);
         copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
         this.ragingRiverBlockRestrictionsThisCombat.forEach((attackerId, restrictions) ->

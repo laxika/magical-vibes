@@ -888,6 +888,9 @@ public class CombatAttackService {
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
+        if (declaredAttackers.stream().anyMatch(attacker -> attacker.getCard().isToken())) {
+            gameData.playersWhoAttackedWithTokenThisTurn.add(playerId);
+        }
         gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
         Map<CardSubtype, Integer> subtypeCounts = gameData.creaturesAttackedCountBySubtypeThisTurn
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());

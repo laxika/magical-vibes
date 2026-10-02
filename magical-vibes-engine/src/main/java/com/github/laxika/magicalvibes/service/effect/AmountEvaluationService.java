@@ -179,6 +179,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
@@ -701,6 +702,8 @@ public class AmountEvaluationService {
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
+            case OpponentsWithAtLeastPoisonCounters c ->
+                    opponentsWithAtLeastPoisonCounters(gameData, c, ctx);
             case DefendingPlayerPoisonCounters ignored ->
                     countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
@@ -3109,6 +3112,19 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int opponentsWithAtLeastPoisonCounters(
+            GameData gameData, OpponentsWithAtLeastPoisonCounters count, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0) >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
     }
 
     private int countDefendingPlayerPoisonCounters(GameData gameData, AmountContext ctx) {

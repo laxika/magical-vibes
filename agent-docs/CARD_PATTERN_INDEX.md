@@ -1,4 +1,6 @@
 # CARD_PATTERN_INDEX
+| activated artifact exiles a spell you control, then targets an opponent's library for exact mana-value matching and a free cast | `s/SynthesisPod.java` + `ExileInstantOrSorcerySpellCost.anySpellCost()` + `ExileTopCardsOfTargetPlayerUntilManaValueAndCastEffect` |
+| each opponent gets poison, then their creatures shrink by their controller's poison total | `p/PhyresisOutbreak.java` + `GivePoisonCountersEffect(1, EACH_OPPONENT)` + `BoostOpponentCreaturesByPoisonCountersEffect()` |
 | destroy target nonland permanent and, if a Dragon was beheld, perpetually boost its card | `t/TerritorialStrike.java` + `BeholdCost.optional(DRAGON)` + `ConditionalReplacementEffect` + `DestroyTargetPermanentThenPerpetuallyBoostEffect` |
 | self-reanimating creature that enters tapped and perpetually loses its death trigger on return | `r/RunebladeRaiser.java` + `STATIC EntersTappedEffect` + `ON_DEATH ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true)` |
 | ETB secretly chooses a graveyard card to duplicate into hand, granting flash to nonland duplicates | `n/NashiIllusionGadgeteer.java` + `ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffect` |
@@ -467,6 +469,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | saga, chapter, lore counter | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |
 | Saga searches until a legendary card, then grants source-duration normal-cost play permission | `t/TheDayOfTheDoctor.java` + `ExileUntilCardPredicateMayPlayWhileSourceControlledEffect` |
 | upkeep life loss, exile top card, and indefinite play permission | `r/RassilonTheWarPresident.java` + `ExileTopCardMayPlayWhileExiledEffect` |
+| attacking tokens gain double strike and exile a top card with a turn-condition play permission | `n/NeyaliSunsVanguard.java` + `GrantKeywordEffect` + `ON_ALLY_CREATURES_ATTACK_PLAYER ConditionalEffect(HasAttacker(token), ExileTopCardMayPlayWhileExiledEffect(AttackedWithTokenThisTurn))` |
 | Saga chooses matching creatures, then optionally exiles the rest and deals damage | `t/TheDayOfTheDoctor.java` + `ChooseUpToNMatchingCreaturesThenMayExileRestEffect` |
 | Saga reveal of up to five nonland hand cards, grouped by mana value into Treasure tokens | `v/Vault21HouseGambit.java` + `RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffect` |
 | template, copy-paste, skeleton | CARD_COPY_PASTE_TEMPLATES.md |

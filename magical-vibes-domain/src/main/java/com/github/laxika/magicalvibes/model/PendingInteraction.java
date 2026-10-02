@@ -1337,11 +1337,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choice of an instant or sorcery spell to exile as an activated-ability cost. */
+    /** Choice of a spell to exile as an activated-ability cost. */
     record ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
                                                 int abilityIndex, int xValue,
-                                                java.util.List<UUID> validCardIds)
+                                                java.util.List<UUID> validCardIds,
+                                                boolean anySpell)
             implements PendingInteraction {
+
+        public ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                     int abilityIndex, int xValue,
+                                                     java.util.List<UUID> validCardIds) {
+            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, false);
+        }
 
         public ExileInstantOrSorcerySpellCostChoice {
             validCardIds = java.util.List.copyOf(validCardIds);

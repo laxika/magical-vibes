@@ -213,7 +213,8 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                    "to your hand", returnTargets.maxTargets(), returnTargets.minTargets());
+                    "to your hand", returnTargets.maxTargets(), returnTargets.minTargets(), null,
+                    false, null, returnTargets.dynamicMaxTargets());
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnTargets) {
             int maxTargets = returnTargets.xScaled() ? 1
@@ -272,10 +273,20 @@ public class GraveyardTargetingSupport {
      * @param maxTargets how many graveyard cards the step may target — {@code 1} for the
      *                   single-target effects, larger for "up to N"/"any number of target cards"
      * @param minTargets how many graveyard targets the step requires
+     * @param maximumTargetCount optional dynamic upper bound evaluated when the reflexive target
+     *                           choice is created
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                          int maxTargets, int minTargets, DynamicAmount maximumManaValue,
-                         boolean singleGraveyard, Integer maximumTotalPower) {
+                         boolean singleGraveyard, Integer maximumTotalPower,
+                         DynamicAmount maximumTargetCount) {
+
+        public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
+                int maxTargets, int minTargets, DynamicAmount maximumManaValue,
+                boolean singleGraveyard, Integer maximumTotalPower) {
+            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue,
+                    singleGraveyard, maximumTotalPower, null);
+        }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets, DynamicAmount maximumManaValue,

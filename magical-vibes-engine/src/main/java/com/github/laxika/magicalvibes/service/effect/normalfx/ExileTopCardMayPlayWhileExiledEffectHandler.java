@@ -32,6 +32,8 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileTopCardMayPlayWhileExiledEffect exileEffect =
+                (ExileTopCardMayPlayWhileExiledEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -44,6 +46,9 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
         Card topCard = deck.removeFirst();
         exileService.exileCard(gameData, controllerId, topCard);
         exileSupport.grantPlayWhileExiled(gameData, topCard.getId(), controllerId);
+        if (exileEffect.permissionCondition() != null) {
+            gameData.exilePlayPermissionConditions.put(topCard.getId(), exileEffect.permissionCondition());
+        }
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(controllerName + " exiles ").card(topCard)

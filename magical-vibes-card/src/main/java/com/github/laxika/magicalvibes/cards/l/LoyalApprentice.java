@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "718")
 @CardRegistration(set = "TDC", collectorNumber = "222")
 @CardRegistration(set = "AFC", collectorNumber = "132")
+@CardRegistration(set = "ONC", collectorNumber = "102")
 public class LoyalApprentice extends Card {
 
     public LoyalApprentice() {
