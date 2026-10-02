@@ -12,7 +12,6 @@ $script:mockInvalid = $false
 $script:mockProduction = $false
 $script:mockPassWithTests = $false
 $script:reviewInvocations = 0
-$script:mockTestBuildFailure = $false
 $script:mockTestAssertionFailure = $false
 $script:simulatePushFailure = $false
 $script:simulatePushRace = $false
@@ -42,7 +41,6 @@ function Invoke-ReviewCodex {
 
 function Invoke-ReviewFocusedTests {
     param([string] $Root, [string[]] $Paths, [string] $LogDirectory)
-    if ($script:mockTestBuildFailure) { throw 'Tests did not compile' }
     return $script:mockTestAssertionFailure
 }
 
@@ -150,14 +148,14 @@ try {
         Remove-Item -LiteralPath $script:focusedXml
         foreach ($mode in @('build', 'timeout')) {
             $script:focusedResult = $mode
-            $message = ''
-            try { & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot | Out-Null } catch { $message = $_.Exception.Message }
+            $validationWarnings = @()
+            $failed = & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot -WarningVariable validationWarnings
             $expected = if ($mode -eq 'build') { 'build or tooling failure' } else { 'two-hour' }
-            Assert-ReviewTest ($message -match $expected) "Focused validation accepted a $mode failure"
+            Assert-ReviewTest ($failed -and ($validationWarnings -join ' ') -match $expected) "Focused validation did not warn and continue after a $mode failure"
         }
     }
     finally { Remove-Item Function:\powershell.exe }
-    Write-Host 'PASS focused validation accepts assertion/interaction failures and rejects build failures/timeouts'
+    Write-Host 'PASS focused validation accepts assertion/interaction failures and warns on build failures/timeouts'
 
     $unicodePath = Join-Path $testRoot 'unicode-result.json'
     $unicodeName = 'A' + [char] 0x00e9 + 'ther Adept'
@@ -237,12 +235,39 @@ try {
     $script:simulatePushRace = $false
     Write-Host 'PASS concurrent main push is fetched, rebased, and retried'
 
-    $checkout = New-ReviewTestCheckout 'build-failure'
-    $script:mockTestBuildFailure = $true
-    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-build')
-    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'FAILED' -and $result.Stop) 'Test build failures were published or discarded completed findings'
-    $script:mockTestBuildFailure = $false
-    Write-Host 'PASS test build failures preserve changes for recovery'
+    $mockFocusedTests = (Get-Item Function:\Invoke-ReviewFocusedTests).ScriptBlock
+    Set-Item Function:\Invoke-ReviewFocusedTests -Value $script:actualFocusedTests
+    function powershell.exe {
+        Write-Output 'Simulated compileTestJava failure'
+        $global:LASTEXITCODE = 1
+    }
+    $buildFailureResults = @()
+    try {
+        foreach ($outcome in @('FINDINGS', 'PASS')) {
+            $checkout = New-ReviewTestCheckout "build-failure-$outcome"
+            $script:mockOutcome = $outcome
+            $script:mockPassWithTests = $true
+            $directory = Join-Path $checkout 'magical-vibes-review-server/build/task-build'
+            $beforeInvocations = $script:reviewInvocations
+            $taskOutput = @(Invoke-ReviewTask $checkout $task $directory 3>&1)
+            $validationWarnings = @($taskOutput | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $result = $taskOutput | Where-Object { $_ -isnot [System.Management.Automation.WarningRecord] }
+            Assert-ReviewTest ($result.Result.outcome -eq $outcome -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Test build failure stopped publication or changed the review verdict'
+            Assert-ReviewTest ($result.Result.findings.Count -eq $(if ($outcome -eq 'FINDINGS') { 1 } else { 0 }) -and $null -eq $result.Result.executionError -and $null -eq $result.Result.publicationError) 'Build diagnostics were classified as card findings or publication errors'
+            Assert-ReviewTest (($validationWarnings -join ' ') -match 'build or tooling failure' -and (Get-Content -LiteralPath (Join-Path $directory 'FirstCardTest.log') -Raw) -match 'Simulated compileTestJava failure') 'Build diagnostics or the focused validation log were lost'
+            Assert-ReviewTest ($script:reviewInvocations -eq $beforeInvocations + 1 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000296) 'Build failure triggered an extra review or discarded token usage'
+            Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Build failure left unpushed or unfinished test changes'
+            Assert-ReviewCheckout $checkout -Pull
+            $buildFailureResults += $result
+        }
+    }
+    finally {
+        Remove-Item Function:\powershell.exe
+        Set-Item Function:\Invoke-ReviewFocusedTests -Value $mockFocusedTests
+        $script:mockOutcome = 'FINDINGS'
+        $script:mockPassWithTests = $false
+    }
+    Write-Host 'PASS test build failures publish tests and allow the next claim for FINDINGS and PASS reviews'
 
     $checkout = New-ReviewTestCheckout 'assertion-failure'
     $script:mockTestAssertionFailure = $true
@@ -277,6 +302,13 @@ try {
     Assert-ReviewTest (-not (Test-Path -LiteralPath $pendingPath)) 'An acknowledged result was not cleared'
     Assert-ReviewTest ($script:uploaded.estimatedCostUsd -eq [decimal] 0.000296 -and $script:uploaded.cachedInputTokens -eq 800) 'Upload retry lost saved cost or usage'
     Write-Host 'PASS upload retries retain results until acknowledged'
+
+    foreach ($completed in $buildFailureResults) {
+        [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=$completed.Result; stop=$completed.Stop} | ConvertTo-Json -Depth 12))
+        Send-ReviewPendingResult 'http://review.test' $pendingPath
+        Assert-ReviewTest (-not (Test-Path -LiteralPath $pendingPath) -and $script:uploaded.outcome -eq $completed.Result.outcome -and $script:uploaded.findings.Count -eq $completed.Result.findings.Count -and $script:uploaded.publicationStatus -eq 'PUSHED') 'Build failure prevented upload or stopped the worker after acknowledgement'
+    }
+    Write-Host 'PASS reviews upload after build failures without stopping the worker'
 
     [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; publicationError='Compiler failed after validation'}; stop=$true} | ConvertTo-Json -Depth 5))
     $message = ''

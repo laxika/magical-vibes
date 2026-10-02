@@ -136,7 +136,7 @@ The shared implementation is $($Task.className), at $($Task.sourcePath). Review 
 Do not stage, commit, push, or switch branches. The worker publishes your permitted card-test changes. Production implementations, effects, predicates, docs, and test harness code are read-only.
 Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and permitted test edits, then return your structured review result. The worker runs scripts/run-card-test.ps1 for each changed test class with an exact fully-qualified class filter and a 7200-second (two-hour) timeout before publishing. Only edit test classes belonging to the card under review (including its related faces); never run other cards' tests, package filters, wildcards, module-wide tests, or the full suite. Compilation may legitimately compile more than 30,000 card/test classes even for one filtered test class. Pending compilation is not a test failure or executionError; do not return ERROR just because tests have not run yet. The worker handles validation and reports actual build/tool failures separately.
 Your final response MUST follow the provided JSON schema. outcome is PASS when there are no real findings, otherwise FINDINGS. findings is an array of individual bug descriptions: explain what is wrong and why it matters, like the current text reports. Include no test code, test names, test output, patches, or coverage commentary in findings or the text report. Return the actual oracle card name as cardName. Do not report tool failures as card bugs: if the review cannot be completed, return ERROR with an empty findings array and an executionError description. For completed reviews, executionError must be null.
-Compiled test changes are published even when assertions fail or a test uses an invalid interaction sequence. Test failures do not require a confirmed card finding; PASS describes the card review verdict, not the test run.
+Permitted test changes are published even when compilation fails, test execution times out, assertions fail, or a test uses an invalid interaction sequence. Validation failures are logged for later repair on main and do not stop the worker or change the review verdict. Test failures do not require a confirmed card finding; PASS describes the card review verdict, not the test run.
 "@
 }
 
@@ -203,6 +203,7 @@ function Read-ReviewOutput {
 }
 
 function Invoke-ReviewFocusedTests {
+    [CmdletBinding()]
     param([string] $Root, [string[]] $Paths, [string] $LogDirectory)
     $failed = $false
     foreach ($path in $Paths) {
@@ -223,14 +224,24 @@ function Invoke-ReviewFocusedTests {
             $testExit = $LASTEXITCODE
         }
         finally { $ErrorActionPreference = $savedPreference; Pop-Location }
-        if ($testExit -eq 124) { throw "Focused compilation/test execution exceeded the two-hour (7200-second) timeout: $className. Log: $testLog. Changes were preserved." }
+        if ($testExit -eq 124) {
+            $failed = $true
+            Write-Warning "Focused compilation/test execution exceeded the two-hour (7200-second) timeout: $className. Test changes will still be published for later repair. Log: $testLog"
+            continue
+        }
         if ($testExit -ne 0) {
             $xmlPath = Join-Path $Root "magical-vibes-application/build/test-results/test/TEST-$className.xml"
             if (-not (Test-Path -LiteralPath $xmlPath) -or (Get-Item -LiteralPath $xmlPath).LastWriteTime -lt $startTime) {
-                throw "Focused tests did not run successfully (build or tooling failure): $className. Log: $testLog. Changes were preserved."
+                $failed = $true
+                Write-Warning "Focused tests did not run successfully (build or tooling failure): $className. Test changes will still be published for later repair. Log: $testLog"
+                continue
             }
             $suite = ([xml](Get-Content -LiteralPath $xmlPath -Raw -Encoding UTF8)).testsuite
-            if ([int] $suite.failures + [int] $suite.errors -eq 0) { throw "Focused test execution failed without a behavioral test failure: $className" }
+            if ([int] $suite.failures + [int] $suite.errors -eq 0) {
+                $failed = $true
+                Write-Warning "Focused test execution failed without a behavioral test failure: $className. Test changes will still be published for later repair. Log: $testLog"
+                continue
+            }
             $failed = $true
             Write-Host "Compilation succeeded, but focused tests failed in $className. Test failures do not block publication. Log: $testLog"
         }
@@ -288,8 +299,8 @@ function Invoke-ReviewTask {
         $result.cardName = $review.cardName
         $result.findings = @($review.findings)
         try {
-            # Compilation/tooling failures throw; completed failing tests are accepted
-            # independently of the card review verdict and can be fixed later.
+            # Validation failures are logged and accepted for later repair on main,
+            # independently of the card review verdict.
             Invoke-ReviewFocusedTests $Root $changes $Directory | Out-Null
             $published = Publish-ReviewTests $Root $Task $changes $reviewedCommit $Directory
             if ($published) { $result.publicationStatus = 'PUSHED'; $result.publishedCommit = $published }
