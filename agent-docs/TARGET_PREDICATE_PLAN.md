@@ -26,7 +26,7 @@ steps, so every step must be self-contained: this file is the only state that ca
    not a substitute for looking. If a premise no longer holds, say so and stop rather than forcing
    the change.
 3. Read `agent-docs/ARCHITECTURE.md` before any change beyond a card class + its test
-   (per `CLAUDE.md`) — card freezing, CR 613 layers, thread safety, Jackson 3 imports,
+   (per `AGENTS.md`) — card freezing, CR 613 layers, thread safety, Jackson 3 imports,
    view immutability.
 4. **Behavior must stay identical** unless the step explicitly says otherwise. Where a step notes
    a behavior change or a latent bug, make the change deliberately and cover it with a test.
@@ -1274,7 +1274,7 @@ Kazarov + Death Pits classes with exactly 4 failing; 5 in `BellowingFiendTest` w
 
 Also cleaned in `KazarovSengirPurebloodTest`: fifteen accidental duplicate
 `import …model.amount.Fixed;` lines interleaved through the import block, and three `// ===== … =====`
-divider comments (one of them heading an empty section) that `CLAUDE.md` forbids. No test logic
+divider comments (one of them heading an empty section) that `AGENTS.md` forbids. No test logic
 touched.
 
 ### Where the gate was placed, and why not inside the trigger services

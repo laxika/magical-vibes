@@ -13,7 +13,7 @@ This is a **read-only review of implementation**. Do **not** edit card classes, 
 
 **Tests are the exception:** you **should** add new focused tests when coverage is incomplete or you spot plausible edge cases (see Step 4). Do not rewrite or delete existing behavioral tests unless they are clearly wrong (wrong oracle expectation); prefer adding cases. Remove all unused code from the test class, including unused imports, variables, setup, helpers, and dead test code. New tests follow CLAUDE.md conventions (harness/`gs`/`gd` behavior only — no Scryfall metadata or white-box wiring assertions).
 
-The hard rules in `CLAUDE.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
+The hard rules in `AGENTS.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
 
 ## Test execution limits
 

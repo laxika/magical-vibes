@@ -9,7 +9,7 @@ Input is a **set code + one or more collector numbers** from that set (e.g. `DKA
 
 **Multiple collector numbers:** implement each card independently, one at a time — run Steps 2–7 fully for one collector number before moving to the next. This keeps each card's context small and lets a failing card not block the others. Report a short per-card summary (implemented / reprint / tests pass-fail) at the end.
 
-The hard rules in `CLAUDE.md` (main branch, no commits, rules accuracy, reuse over creation) apply throughout.
+The hard rules in `AGENTS.md` (main branch, no commits, rules accuracy, reuse over creation) apply throughout.
 
 ## Step 1 — Gather context
 
@@ -45,7 +45,7 @@ Detailed references — grep these when the three above aren't enough:
 - `agent-docs/EFFECTS_INDEX.md` — full per-effect descriptions and usage notes.
 - `agent-docs/CARD_IMPLEMENTATION_PLAYBOOK.md` — canonical patterns, targeting checklist, anti-patterns, new-effect/predicate checklists.
 
-Apply the reuse-over-creation rule from `CLAUDE.md` when choosing effects.
+Apply the reuse-over-creation rule from `AGENTS.md` when choosing effects.
 
 ## Step 4 — Write the card class
 
@@ -70,7 +70,7 @@ After confirming no existing effect/combination works — read `agent-docs/ARCHI
 Skip tests only when the script says **basic land** or **vanilla** — it prints nothing here otherwise, which means tests are needed. Add
 `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
-- Follow the Testing rules in `CLAUDE.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
+- Follow the Testing rules in `AGENTS.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
 - Typical cases: each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
 - Model new tests on a recent sibling test such as `cards/t/TragicSlipTest.java`.
