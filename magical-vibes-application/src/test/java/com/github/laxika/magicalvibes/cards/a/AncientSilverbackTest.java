@@ -12,13 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.TurnStep;
 
 @CardUsed({AncientSilverback.class, GrizzlyBears.class})
 class AncientSilverbackTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activating {G} regeneration ability puts it on the stack targeting itself")
+    @DisplayName("Activating {G} regeneration ability puts it on the stack referring to its source")
     void activatingAbilityPutsOnStack() {
         Permanent apePerm = addCreatureReady(player1, new AncientSilverback());
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -135,6 +134,69 @@ class AncientSilverbackTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new AncientSilverback());
         attacker.setAttacking(true);
         resolveCombat(player2);
+
+        harness.assertNotOnBattlefield(player1, "Ancient Silverback");
+        harness.assertInGraveyard(player1, "Ancient Silverback");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent ape = harness.addToBattlefieldAndReturn(player1, new AncientSilverback());
+        ape.setSummoningSick(true);
+        ape.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(ape.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a shield does not immediately tap the creature or heal damage")
+    void creatingShieldDoesNotRegenerateImmediately() {
+        Permanent ape = addCreatureReady(player1, new AncientSilverback());
+        ape.setMarkedDamage(2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(ape.isTapped()).isFalse();
+        assertThat(ape.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations protect against separate lethal damage events")
+    void multipleActivationsProtectAgainstSeparateDestructions() {
+        Permanent ape = addCreatureReady(player1, new AncientSilverback());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(ape.getRegenerationShield()).isEqualTo(2);
+
+        ape.setMarkedDamage(5);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        assertThat(ape.getRegenerationShield()).isEqualTo(1);
+        assertThat(ape.getMarkedDamage()).isZero();
+        assertThat(ape.isTapped()).isTrue();
+
+        ape.setMarkedDamage(5);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Ancient Silverback");
+        assertThat(ape.getRegenerationShield()).isZero();
+        assertThat(ape.getMarkedDamage()).isZero();
+
+        ape.setMarkedDamage(5);
+        harness.runStateBasedActions();
 
         harness.assertNotOnBattlefield(player1, "Ancient Silverback");
         harness.assertInGraveyard(player1, "Ancient Silverback");
