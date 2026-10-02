@@ -68,4 +68,51 @@ class AliBabaTest extends BaseCardTest {
 
         assertThat(wall.isTapped()).isTrue();
     }
+
+    @Test
+    void canTapOwnWallWithoutTappingAliBaba() {
+        Permanent aliBaba = harness.addToBattlefieldAndReturn(player1, new AliBaba());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfAir());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(aliBaba.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(aliBaba.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent aliBaba = harness.addToBattlefieldAndReturn(player1, new AliBaba());
+        aliBaba.setTapped(true);
+        aliBaba.setSummoningSick(true);
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(aliBaba.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterAliBabaDies() {
+        Permanent aliBaba = harness.addToBattlefieldAndReturn(player1, new AliBaba());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+        aliBaba.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Ali Baba");
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isTrue();
+    }
 }
