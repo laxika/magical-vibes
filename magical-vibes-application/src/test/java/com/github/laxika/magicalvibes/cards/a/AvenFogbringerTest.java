@@ -20,8 +20,7 @@ class AvenFogbringerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB returns the targeted land to its owner's hand")
     void etbReturnsTargetedLand() {
-        harness.addToBattlefield(player2, new KrosanVerge());
-        UUID targetId = harness.getPermanentId(player2, "Krosan Verge");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new KrosanVerge()).getId();
         castAvenFogbringer(targetId);
 
         harness.passBothPriorities();
@@ -35,8 +34,7 @@ class AvenFogbringerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can target a land its controller owns")
     void etbReturnsOwnLand() {
-        harness.addToBattlefield(player1, new KrosanVerge());
-        UUID targetId = harness.getPermanentId(player1, "Krosan Verge");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new KrosanVerge()).getId();
         castAvenFogbringer(targetId);
 
         harness.passBothPriorities();
@@ -50,8 +48,7 @@ class AvenFogbringerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target a creature")
     void etbRejectsCreatureTarget() {
-        harness.addToBattlefield(player2, new SuntailHawk());
-        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new SuntailHawk()).getId();
         harness.setHand(player1, List.of(new AvenFogbringer()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -63,6 +60,39 @@ class AvenFogbringerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AvenFogbringer()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castCreature(player1, 0, List.of(targetId));
+    }
+
+    @Test
+    @DisplayName("ETB returns a land to its owner rather than its controller")
+    void etbReturnsLandToOwner() {
+        KrosanVerge land = new KrosanVerge();
+        land.setOwnerId(player1.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, land).getId();
+        castAvenFogbringer(targetId);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Krosan Verge");
+        harness.assertInHand(player1, "Krosan Verge");
+        harness.assertNotInHand(player2, "Krosan Verge");
+    }
+
+    @Test
+    @DisplayName("ETB does not return a target that left the battlefield before resolution")
+    void etbDoesNotReturnDepartedLand() {
+        var land = harness.addToBattlefieldAndReturn(player2, new KrosanVerge());
+        castAvenFogbringer(land.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerGraveyards.get(player2.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Krosan Verge");
+        harness.assertNotInHand(player2, "Krosan Verge");
+        harness.assertOnBattlefield(player1, "Aven Fogbringer");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
