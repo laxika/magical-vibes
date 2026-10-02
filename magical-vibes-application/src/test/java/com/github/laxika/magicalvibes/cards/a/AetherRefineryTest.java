@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AetherRefinery.class)
+@CardUsed({AetherRefinery.class})
 class AetherRefineryTest extends BaseCardTest {
 
     @Test
@@ -42,6 +42,66 @@ class AetherRefineryTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void canPayPreviouslyStoredEnergyAlongWithNewEnergy() {
+        harness.addToBattlefield(player1, new AetherRefinery());
+        gd.setPlayerEnergyCounters(player1.getId(), 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(5);
+        harness.handleXValueChosen(player1, 5);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getEffectivePower()).isEqualTo(5);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(5);
+                });
+    }
+
+    @Test
+    void canPayOnlyOneEnergyAndKeepTheRest() {
+        harness.addToBattlefield(player1, new AetherRefinery());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getEffectivePower()).isEqualTo(1);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(1);
+                });
+    }
+
+    @Test
+    void multipleRefineriesMultiplyEnergyWithoutUsingOpponentsRefinery() {
+        harness.addToBattlefield(player1, new AetherRefinery());
+        harness.addToBattlefield(player1, new AetherRefinery());
+        harness.addToBattlefield(player2, new AetherRefinery());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getEffectivePower()).isEqualTo(4);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(4);
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }
