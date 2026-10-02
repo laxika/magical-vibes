@@ -66,4 +66,20 @@ class AnuridMurkdiverTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Anurid Murkdiver can't be blocked when the defending player's Swamp is tapped")
+    void cannotBeBlockedWhenDefendersSwampIsTapped() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
+        Permanent attacker = addCreatureReady(player1, new AnuridMurkdiver());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
