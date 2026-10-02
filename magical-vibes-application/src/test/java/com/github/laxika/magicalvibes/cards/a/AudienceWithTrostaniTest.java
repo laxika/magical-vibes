@@ -30,7 +30,7 @@ class AudienceWithTrostaniTest extends BaseCardTest {
         castAudienceWithTrostani();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
-        assertThat(findPermanents(player1, "Plant")).singleElement()
+        assertThat(findPermanents(player1, "Plant Token")).singleElement()
                 .satisfies(plant -> {
                     assertThat(plant.getEffectivePower()).isZero();
                     assertThat(plant.getEffectiveToughness()).isEqualTo(1);
@@ -46,13 +46,39 @@ class AudienceWithTrostaniTest extends BaseCardTest {
         castAudienceWithTrostani();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
-        assertThat(findPermanents(player1, "Plant")).hasSize(1);
+        assertThat(findPermanents(player1, "Plant Token")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An existing Plant Token does not increase the number of distinct names")
+    void existingPlantTokenSharesTheCreatedTokensName() {
+        harness.setHand(player1, List.of(new AudienceWithTrostani()));
+        harness.addToBattlefield(player1, creatureToken("Plant Token"));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        castAudienceWithTrostani();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        assertThat(findPermanents(player1, "Plant Token")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Repeated casts create multiple Plants but draw once per cast")
+    void repeatedCastsDoNotIncreaseDistinctNames() {
+        harness.setHand(player1, List.of(new AudienceWithTrostani()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        castAudienceWithTrostani();
+        harness.setHand(player1, List.of(new AudienceWithTrostani()));
+        castAudienceWithTrostani();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
+        assertThat(findPermanents(player1, "Plant Token")).hasSize(2);
     }
 
     private void castAudienceWithTrostani() {
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private Card creatureToken(String name) {
