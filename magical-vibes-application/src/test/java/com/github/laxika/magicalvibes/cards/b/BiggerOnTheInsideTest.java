@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BiggerOnTheInside.class, Forest.class, GrizzlyBears.class, DarkRitual.class})
+@CardUsed({BiggerOnTheInside.class, Forest.class, GrizzlyBears.class, DarkRitual.class,
+        Fireball.class, SolRing.class})
 class BiggerOnTheInsideTest extends BaseCardTest {
 
     @Test
@@ -50,5 +54,134 @@ class BiggerOnTheInsideTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
         assertThat(search.params().cards()).extracting(card -> card.getName()).containsExactly("Dark Ritual");
+    }
+
+    @Test
+    void enchantedArtifactAbilityUsesTheStackAndCanTargetItsController() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        harness.setHand(player1, List.of(new BiggerOnTheInside()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, ring.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(ring.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotEnchantANonartifactCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BiggerOnTheInside()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cascadeIncludesChosenXInTheSpellsManaValue() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BiggerOnTheInside());
+        aura.setAttachedTo(forest.getId());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.setLibrary(player1, List.of(new SolRing()));
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().playerId()).isEqualTo(player1.getId());
+        assertThat(search.params().cards()).extracting(card -> card.getName()).containsExactly("Sol Ring");
+    }
+
+    @Test
+    void onlyTheNextSpellGetsCascadeEvenWhenTheCascadeCastIsDeclined() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BiggerOnTheInside());
+        aura.setAttachedTo(forest.getId());
+        harness.setLibrary(player1, List.of(new SolRing()));
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Sol Ring");
+    }
+
+    @Test
+    void unusedCascadeGrantExpiresWhenTheTurnEnds() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BiggerOnTheInside());
+        aura.setAttachedTo(forest.getId());
+        harness.setLibrary(player2, List.of(new Forest(), new SolRing()));
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, ManaColor.GREEN.name());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new SolRing(), "{1}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Sol Ring");
+    }
+
+    @Test
+    void twoActivationsGiveTheNextSpellTwoCascadeInstances() {
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent secondForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new BiggerOnTheInside());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new BiggerOnTheInside());
+        firstAura.setAttachedTo(firstForest.getId());
+        secondAura.setAttachedTo(secondForest.getId());
+        harness.setLibrary(player1, List.of(new SolRing()));
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.activateAbility(player1, 1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
