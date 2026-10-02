@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -91,8 +92,108 @@ class BanditsHaulTest extends BaseCardTest {
     }
 
     private void castCrimeSpell() {
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+    }
+
+    @Test
+    void crimeCounterResolvesBeforeCrimeSpell() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
         harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isZero();
+        assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+        harness.assertLife(player2, lifeBefore);
+        resolveAllTriggers();
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    void secondCrimeBeforeFirstTriggerResolvesDoesNotTriggerAgain() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+    }
+
+    @Test
+    void targetingYourselfDoesNotUseCrimeTrigger() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isZero();
+
+        castCrimeSpell();
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsCrimeDoesNotTriggerYourHaul() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isZero();
+    }
+
+    @Test
+    void eachHaulHasItsOwnOncePerTurnTrigger() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        castCrimeSpell();
+        castCrimeSpell();
+
+        assertThat(first.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+    }
+
+    @Test
+    void crimeTriggerResetsOnOpponentsTurn() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        commitCrime();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        commitCrime();
+
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isEqualTo(2);
+    }
+
+    @Test
+    void drawCostsArePaidBeforeResolutionAndRemoveExactlyTwoCounters() {
+        Permanent haul = harness.addToBattlefieldAndReturn(player1, new BanditsHaul());
+        haul.setCounterCount(CounterType.LOOT, 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(haul.getCounterCount(CounterType.LOOT)).isEqualTo(1);
+        assertThat(haul.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
