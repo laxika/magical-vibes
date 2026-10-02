@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOC", collectorNumber = "221")
+@CardRegistration(set = "C18", collectorNumber = "7")
 public class EchoStorm extends Card {
 
     public EchoStorm() {

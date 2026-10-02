@@ -2985,6 +2985,19 @@ public class GameQueryService {
         return false;
     }
 
+    /** Returns whether an opponent controls at least two more lands than the given player. */
+    public boolean anyOpponentControlsAtLeastTwoMoreLands(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int controllerLands = countLandsControlled(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countLandsControlled(gameData, candidateOpponentId) >= controllerLands + 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Returns whether {@code playerId} controls strictly more lands than {@code comparedPlayerId}. */
     public boolean controlsMoreLandsThan(GameData gameData, UUID playerId, UUID comparedPlayerId) {
         return countLandsControlled(gameData, playerId) > countLandsControlled(gameData, comparedPlayerId);
@@ -3125,6 +3138,14 @@ public class GameQueryService {
 
     public boolean hasSpellCastingAbilityGrant(GameData gameData, UUID playerId, Card card,
                                                 Keyword ability, Zone sourceZone) {
+        if (card != null && gameData.perpetualCardSpellCastingAbilityGrants
+                .getOrDefault(card.getId(), List.of()).stream()
+                .anyMatch(grant -> grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                        gameData, playerId))) {
+            return true;
+        }
         if (ability == Keyword.CONVOKE && gameData.hasNextSpellConvokeGrant(playerId)) {
             return true;
         }
@@ -3191,6 +3212,16 @@ public class GameQueryService {
                                                             Card card, Keyword ability,
                                                             Zone sourceZone) {
         List<Integer> values = new ArrayList<>();
+        if (card != null) {
+            gameData.perpetualCardSpellCastingAbilityGrants
+                    .getOrDefault(card.getId(), List.of()).stream()
+                    .filter(grant -> grant.grantedAbility() == ability
+                            && grant.appliesToSourceZone(sourceZone)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                            gameData, playerId))
+                    .map(SpellCastingAbilityGrantingEffect::abilityValue)
+                    .forEach(values::add);
+        }
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) {

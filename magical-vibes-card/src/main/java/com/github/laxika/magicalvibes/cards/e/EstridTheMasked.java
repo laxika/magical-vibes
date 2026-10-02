@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1327")
+@CardRegistration(set = "C18", collectorNumber = "40")
 public class EstridTheMasked extends Card {
 
     public EstridTheMasked() {

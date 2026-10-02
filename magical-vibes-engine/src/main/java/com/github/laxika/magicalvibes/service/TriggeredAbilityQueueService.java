@@ -1101,7 +1101,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
                     List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
-                    pending.triggeringPermanentId());
+                    pending.triggeringPermanentId(), pending.rememberLastChosenMode());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -2484,6 +2484,26 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
+            SpellTarget declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
+            int requestedMaxTargets = oneOfEachFilterEffect != null
+                    ? oneOfEachFilterEffect.filters().size()
+                    : pending.maxCount() > 0
+                    ? pending.maxCount()
+                    : describedTarget == null ? 1
+                    : describedTarget.maximumTargetCount() != null
+                    ? Math.max(0, amountEvaluationService.evaluate(gameData,
+                    describedTarget.maximumTargetCount(),
+                    new AmountContext(pending.controllerId(), null, null, pending.xValue(), 0)))
+                    : describedTarget.maxTargets();
+            if (pending.maxCount() == 0 && declaredGroup != null
+                    && (describedTarget == null || describedTarget.maximumTargetCount() == null)) {
+                requestedMaxTargets = declaredGroup.getMaxTargets();
+            }
+            if (requestedMaxTargets <= 0) {
+                pushSpellGraveyardTriggeredAbilityWithoutTargets(gameData, pending);
+                continue;
+            }
+
             String filterLabel = oneOfEachFilterEffect != null && !oneOfEachFilterEffect.filters().isEmpty()
                     ? CardPredicateUtils.describeFilter(oneOfEachFilterEffect.filters().getFirst())
                     : CardPredicateUtils.describeFilter(filter);
@@ -2492,15 +2512,6 @@ public class TriggeredAbilityQueueService {
                 case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                 case CONTROLLERS_GRAVEYARD -> "your graveyard";
             };
-            int requestedMaxTargets = oneOfEachFilterEffect != null
-                    ? oneOfEachFilterEffect.filters().size()
-                    : pending.maxCount() > 0
-                    ? pending.maxCount()
-                    : describedTarget == null ? 1 : describedTarget.maxTargets();
-            SpellTarget declaredGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
-            if (pending.maxCount() == 0 && declaredGroup != null) {
-                requestedMaxTargets = declaredGroup.getMaxTargets();
-            }
             int maxTargets = Math.min(requestedMaxTargets, matchingCards.size());
             if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
                 int graveyardCount = (int) matchingCards.stream()

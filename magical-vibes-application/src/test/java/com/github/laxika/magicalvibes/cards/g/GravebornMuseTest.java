@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,10 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GravebornMuse.class, GempalmPolluter.class, EnormousBaloth.class})
+@CardUsed({GravebornMuse.class, EnormousBaloth.class, WoodlandChangeling.class})
 class GravebornMuseTest extends BaseCardTest {
-
-    // ===== Triggering =====
 
     @Test
     @DisplayName("Draws 1 and loses 1 life when only Graveborn Muse is the only Zombie")
@@ -34,7 +33,7 @@ class GravebornMuseTest extends BaseCardTest {
     @DisplayName("Draws and loses life equal to total Zombie count")
     void drawsAndLosesLifeEqualToZombieCount() {
         harness.addToBattlefield(player1, new GravebornMuse());
-        harness.addToBattlefield(player1, new GempalmPolluter());
+        harness.addToBattlefield(player1, new GravebornMuse());
         harness.setHand(player1, List.of());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -42,7 +41,7 @@ class GravebornMuseTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        // 2 Zombies: Graveborn Muse + Gempalm Polluter
+        // 2 Zombies: two Graveborn Muse permanents
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
         harness.assertLife(player1, lifeBefore - 2);
     }
@@ -100,7 +99,7 @@ class GravebornMuseTest extends BaseCardTest {
     @DisplayName("Only counts Zombies controller controls, not opponent's")
     void onlyCountsOwnZombies() {
         harness.addToBattlefield(player1, new GravebornMuse());
-        harness.addToBattlefield(player2, new GempalmPolluter()); // opponent's Zombie
+        harness.addToBattlefield(player2, new GravebornMuse()); // opponent's Zombie
         harness.setHand(player1, List.of());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -108,9 +107,25 @@ class GravebornMuseTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        // Only 1 Zombie (Graveborn Muse) — opponent's Gempalm Polluter doesn't count
+        // Only 1 Zombie (Graveborn Muse) — opponent's Graveborn Muse doesn't count
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
         harness.assertLife(player1, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Counts Changeling creatures as Zombies")
+    void changelingsCountAsZombies() {
+        harness.addToBattlefield(player1, new GravebornMuse());
+        harness.addToBattlefield(player1, new WoodlandChangeling());
+        harness.setHand(player1, List.of());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 2);
+        harness.assertLife(player1, lifeBefore - 2);
     }
 }
 

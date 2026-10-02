@@ -43,6 +43,11 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         if (targetIds.isEmpty() && entry.targetsForBoundEffectGroup(e) == null && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
+        resolve(gameData, entry, e, targetIds);
+    }
+
+    void resolve(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e,
+                 List<UUID> targetIds) {
         for (UUID targetId : targetIds) {
             createAttachedToken(gameData, entry, e, targetId);
         }

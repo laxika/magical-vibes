@@ -114,6 +114,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAnotherCreatu
 import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 
@@ -228,6 +229,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport counterSupport;
     private final PutCounterOnEitherTargetPermanentEffectHandler putCounterOnEitherTargetEffectHandler;
     private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
+    private final ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler
+            returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentBlightsEffectHandler eachOpponentBlightsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler eachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler;
@@ -1678,6 +1681,13 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleBouncePermanentAndPerpetuallyBecomeAngel(
+            GameData gameData, UUID permanentId,
+            PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel context) {
+        returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler.completeChoice(
+                gameData, permanentId, context);
     }
 
     public void handleReturnPermanentAndPutCounterOnSource(

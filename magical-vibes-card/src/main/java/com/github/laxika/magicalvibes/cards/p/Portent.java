@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 @CardRegistration(set = "ICE", collectorNumber = "90")
 @CardRegistration(set = "ME2", collectorNumber = "60")
 @CardRegistration(set = "DSC", collectorNumber = "74")
+@CardRegistration(set = "C18", collectorNumber = "97")
 public class Portent extends Card {
 
     public Portent() {

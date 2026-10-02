@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.s.Sprout;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NorinTheWary.class, GrizzlyBears.class})
+@CardUsed({NorinTheWary.class, Sprout.class, AshcoatBear.class})
 class NorinTheWaryTest extends BaseCardTest {
 
     @Test
@@ -24,10 +26,10 @@ class NorinTheWaryTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Sprout()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
 
-        harness.castCreature(player2, 0);
+        harness.castInstant(player2, 0);
         harness.passBothPriorities();
 
         assertExiled(norin);
@@ -39,18 +41,61 @@ class NorinTheWaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles when its controller casts a spell and returns at the next end step")
+    void exilesWhenItsControllerCastsSpell() {
+        Permanent norin = harness.addToBattlefieldAndReturn(player1, new NorinTheWary());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Sprout()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertExiled(norin);
+
+        harness.passBothPriorities();
+        advanceToEndStep(player1);
+
+        assertReturned(norin);
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's battlefield after being controlled by another player")
+    void returnsUnderOwnersControl() {
+        Card norinCard = new NorinTheWary();
+        norinCard.setOwnerId(player1.getId());
+        Permanent norin = harness.addToBattlefieldAndReturn(player2, norinCard);
+        gd.stolenCreatures.put(norin.getId(), player1.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sprout()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        assertExiled(norin);
+
+        harness.passBothPriorities();
+        advanceToEndStep(player2);
+
+        assertReturned(norin);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(norin.getCard().getId()));
+    }
+
+    @Test
     @DisplayName("Exiles when any creature attacks and returns at the next end step")
     void exilesWhenAnyCreatureAttacks() {
         Permanent norin = harness.addToBattlefieldAndReturn(player1, new NorinTheWary());
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        addCreatureReady(player2, new AshcoatBear());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
 
         assertExiled(norin);
@@ -74,9 +119,6 @@ class NorinTheWaryTest extends BaseCardTest {
     }
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "209")
 @CardRegistration(set = "ANB", collectorNumber = "93")
+@CardRegistration(set = "C18", collectorNumber = "142")
 public class EpicProportions extends Card {
 
     public EpicProportions() {

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,29 +17,40 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ViashinoBladescout.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({ViashinoBladescout.class, DurkwoodBaloth.class, ChromaticStar.class})
 class ViashinoBladescoutTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature gains first strike when Viashino Bladescout enters")
     void grantsFirstStrikeToTargetCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        castBladescout(bears.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        castBladescout(target.getId());
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Target creature may be controlled by an opponent")
+    void grantsFirstStrikeToOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DurkwoodBaloth());
+        castBladescout(target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("Granted first strike wears off at cleanup")
     void firstStrikeWearsOffAtCleanup() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        castBladescout(bears.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBaloth());
+        castBladescout(target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -48,8 +59,8 @@ class ViashinoBladescoutTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ViashinoBladescout()));
         addBladescoutMana();
 
-        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, fountain.getId()))
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

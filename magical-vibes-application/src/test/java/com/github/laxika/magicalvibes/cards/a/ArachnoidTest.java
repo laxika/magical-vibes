@@ -47,6 +47,34 @@ class ArachnoidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Reach also lets Arachnoid block a creature without flying")
+    void reachCanBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new DrossCrocodile());
+        Permanent arachnoid = addCreatureReady(player2, new Arachnoid());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, arachnoid), indexOf(player1, attacker))));
+
+        assertThat(arachnoid.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not stop a ground creature from blocking Arachnoid")
+    void reachDoesNotGrantFlyingEvasion() {
+        Permanent arachnoid = addCreatureReady(player1, new Arachnoid());
+        Permanent crocodile = addCreatureReady(player2, new DrossCrocodile());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, arachnoid)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, crocodile), indexOf(player1, arachnoid))));
+
+        assertThat(crocodile.isBlocking()).isTrue();
+    }
+
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);
     }

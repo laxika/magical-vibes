@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "280")
 @CardRegistration(set = "C20", collectorNumber = "258")
 @CardRegistration(set = "MIC", collectorNumber = "166")
+@CardRegistration(set = "C18", collectorNumber = "236")
 public class BlightedWoodland extends Card {
 
     public BlightedWoodland() {

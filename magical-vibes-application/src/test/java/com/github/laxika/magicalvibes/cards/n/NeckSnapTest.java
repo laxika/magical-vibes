@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NeckSnap.class, HillcomberGiant.class})
 class NeckSnapTest extends BaseCardTest {
 
     @Test
@@ -24,14 +26,13 @@ class NeckSnapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeckSnap()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(attacker.getId()));
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hillcomber Giant");
     }
 
     @Test
@@ -41,43 +42,54 @@ class NeckSnapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NeckSnap()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
+        harness.assertInGraveyard(player2, "Hillcomber Giant");
     }
 
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new HillcomberGiant());
         harness.setHand(player1, List.of(new NeckSnap()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Fizzles if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttackingBeforeResolution() {
+        Permanent attacker = addAttacker(player2);
+        harness.setHand(player1, List.of(new NeckSnap()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(attacker.getId()));
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
 
     // ===== Helpers =====
 
     private Permanent addAttacker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = findPermanent(owner, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new HillcomberGiant());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = findPermanent(owner, "Grizzly Bears");
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(owner, new HillcomberGiant());
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());
         return blocker;

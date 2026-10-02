@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WarriorsHonor.class, LongbowArcher.class, FountainOfYouth.class})
+@CardUsed({WarriorsHonor.class, GrizzlyBears.class, FountainOfYouth.class})
 class WarriorsHonorTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,8 @@ class WarriorsHonorTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving boosts all own creatures +1/+1")
     void resolvingBoostsAllOwnCreatures() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castWarriorsHonor();
         harness.passBothPriorities();
@@ -49,8 +49,8 @@ class WarriorsHonorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost opponent's creatures")
     void doesNotBoostOpponentCreatures() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new LongbowArcher());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castWarriorsHonor();
         harness.passBothPriorities();
@@ -64,7 +64,7 @@ class WarriorsHonorTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at cleanup step")
     void boostResetsAtCleanup() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castWarriorsHonor();
         harness.passBothPriorities();
@@ -83,12 +83,12 @@ class WarriorsHonorTest extends BaseCardTest {
     @DisplayName("Affects only creatures present under its controller at resolution")
     void affectsOnlyCreaturesPresentAtResolution() {
         castWarriorsHonor();
-        Permanent presentCreature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent presentCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
 
         harness.passBothPriorities();
 
-        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(presentCreature.getEffectivePower()).isEqualTo(3);
         assertThat(presentCreature.getEffectiveToughness()).isEqualTo(3);

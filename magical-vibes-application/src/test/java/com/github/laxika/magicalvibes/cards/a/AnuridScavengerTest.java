@@ -51,6 +51,44 @@ class AnuridScavengerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The upkeep payment can use a noncreature card chosen from multiple cards")
+    void canChooseNoncreatureCardForPayment() {
+        Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
+        Card creatureCard = new GrizzlyBears();
+        Card instantCard = new DarkBanishing();
+        Card libraryCard = new HillGiant();
+        harness.setGraveyard(player1, List.of(creatureCard, instantCard));
+        harness.setLibrary(player1, new ArrayList<>(List.of(libraryCard)));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0, 1);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scavenger);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creatureCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard, instantCard);
+    }
+
+    @Test
+    @DisplayName("Anurid Scavenger does not require payment during its opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scavenger);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Declining the payment sacrifices Anurid Scavenger")
     void decliningPaymentSacrificesIt() {
         Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
@@ -95,8 +133,7 @@ class AnuridScavengerTest extends BaseCardTest {
         Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
         Permanent zombies = addCreatureReady(player2, new ScatheZombies());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(zombies),
@@ -110,8 +147,7 @@ class AnuridScavengerTest extends BaseCardTest {
         Permanent scavenger = addCreatureReady(player1, new AnuridScavenger());
         Permanent zombies = addCreatureReady(player2, new ScatheZombies());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(scavenger),
                 gd.playerBattlefields.get(player2.getId()).indexOf(zombies))));

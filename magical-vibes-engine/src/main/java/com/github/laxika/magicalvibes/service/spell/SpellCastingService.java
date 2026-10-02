@@ -301,9 +301,17 @@ public class SpellCastingService {
 
     private List<Integer> spellCastingAbilityGrantValuesForCard(GameData gameData, UUID playerId,
                                                                  Card card, Keyword ability, Zone sourceZone) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return List.of();
         List<Integer> values = new ArrayList<>();
+        gameData.perpetualCardSpellCastingAbilityGrants
+                .getOrDefault(card.getId(), List.of()).stream()
+                .filter(grant -> grant.grantedAbility() == ability
+                        && grant.appliesToSourceZone(sourceZone)
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null,
+                        gameData, playerId))
+                .map(SpellCastingAbilityGrantingEffect::abilityValue)
+                .forEach(values::add);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return values;
         for (Permanent permanent : battlefield) {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
@@ -3830,6 +3838,8 @@ public class SpellCastingService {
                 ManaPool.MulticoloredSpellManaState multicoloredMana =
                         gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                                 ? pool.promoteMulticoloredSpellOnlyMana() : null;
+                ManaPool.MonocoloredSpellManaState monocoloredMana =
+                        promoteMonocoloredSpellMana(gameData, card, pool);
                 int faceDownCostReduction = card.getMorphCost() != null
                         ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card) : 0;
                 int alternateCostModifier = castingCostService.getAlternateHandCastCostModifier(
@@ -3864,6 +3874,9 @@ public class SpellCastingService {
                     }
                     if (multicoloredMana != null) {
                         pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+                    }
+                    if (monocoloredMana != null) {
+                        pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredMana);
                     }
                 }
                 if (!canPay) {
@@ -3937,6 +3950,8 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState multicoloredMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.MonocoloredSpellManaState monocoloredMana =
+                promoteMonocoloredSpellMana(gameData, card, pool);
             ManaPool.ColorlessSpellOnlyManaState colorlessSpellOnlyMana =
                     !card.hasType(CardType.LAND)
                             && gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()
@@ -4048,6 +4063,9 @@ public class SpellCastingService {
                 }
                 if (multicoloredMana != null) {
                     pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+                }
+                if (monocoloredMana != null) {
+                    pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredMana);
                 }
                 if (seanceBoardMana != null) {
                     pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
@@ -5736,13 +5754,24 @@ public class SpellCastingService {
                         returnToBattlefieldEffect.dynamicMaxTargets(),
                         new com.github.laxika.magicalvibes.service.effect.AmountContext(
                                 playerId, null, null, resolvedXValue, 0)));
+                int returnTargetGroupIndex = card.getEffectTargetIndex(returnToBattlefieldEffect);
+                GraveyardCardPredicateTargetFilter returnTargetFilter = returnTargetGroupIndex >= 0
+                        && returnTargetGroupIndex < card.getSpellTargets().size()
+                        && card.getSpellTargets().get(returnTargetGroupIndex).getFilter()
+                        instanceof GraveyardCardPredicateTargetFilter filter
+                        ? filter : null;
                 long matchingCount = graveyardOwners.stream()
                         .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
                                 .filter(c -> !returnToBattlefieldEffect.fromBattlefieldThisTurn()
                                         || gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                                         .getOrDefault(ownerId, Set.of()).contains(c.getId()))
                                 .filter(c -> !returnToBattlefieldEffect.hasTotalManaValueCap()
-                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue()))
+                                        || c.getManaValue() <= returnToBattlefieldEffect.maxTotalManaValue())
+                                .filter(c -> returnTargetFilter == null
+                                        || returnTargetFilter.minimumPoisonCounters() == null
+                                        || ownerId.equals(playerId)
+                                        || gameData.playerPoisonCounters.getOrDefault(ownerId, 0)
+                                        >= returnTargetFilter.minimumPoisonCounters()))
                         .filter(c -> predicateEvaluationService.matchesCardPredicate(
                                 c, returnToBattlefieldEffect.filter(), card.getId(), gameData,
                                 playerId, null, null, targetXValue))
@@ -10926,6 +10955,8 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState state =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.MonocoloredSpellManaState monocoloredState =
+                promoteMonocoloredSpellMana(gameData, card, pool);
         try {
             return action.get();
         } finally {
@@ -10935,7 +10966,22 @@ public class SpellCastingService {
             if (state != null) {
                 pool.restorePromotedMulticoloredSpellOnlyMana(state);
             }
+            if (monocoloredState != null) {
+                pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredState);
+            }
         }
+    }
+
+    private ManaPool.MonocoloredSpellManaState promoteMonocoloredSpellMana(
+            GameData gameData, Card card, ManaPool pool) {
+        var colors = gameQueryService.getEffectiveCardColors(gameData, card);
+        if (colors.size() != 1) {
+            return null;
+        }
+        ManaColor color = ManaColor.valueOf(colors.iterator().next().name());
+        return pool.getMonocoloredSpellOnlyMana(color) > 0
+                ? pool.promoteMonocoloredSpellOnlyMana(color)
+                : null;
     }
 
     private void payLandPlayCost(GameData gameData, UUID playerId, Card card) {
@@ -11587,6 +11633,8 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState multicoloredMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.MonocoloredSpellManaState monocoloredMana =
+                promoteMonocoloredSpellMana(gameData, card, pool);
         ManaPool.ColorlessSpellOnlyManaState colorlessSpellOnlyMana =
                 !card.hasType(CardType.LAND)
                         && gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()
@@ -11678,6 +11726,9 @@ public class SpellCastingService {
             }
             if (multicoloredMana != null) {
                 pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+            }
+            if (monocoloredMana != null) {
+                pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredMana);
             }
             if (commanderMana != null) {
                 pool.restorePromotedCommanderOnlyMana(commanderMana);
@@ -12738,6 +12789,8 @@ public class SpellCastingService {
             ManaPool.MulticoloredSpellManaState multicoloredMana =
                     gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                             ? pool.promoteMulticoloredSpellOnlyMana() : null;
+            ManaPool.MonocoloredSpellManaState monocoloredMana =
+                    promoteMonocoloredSpellMana(gameData, card, pool);
             ManaPool.InstantSorceryOrSubtypeSpellManaState seanceBoardMana = isSeanceBoardSpell(
                     gameData, playerId, card)
                     ? pool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES) : null;
@@ -12767,6 +12820,9 @@ public class SpellCastingService {
                 pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(previousUnionInstantPermission);
                 if (multicoloredMana != null) {
                     pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+                }
+                if (monocoloredMana != null) {
+                    pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredMana);
                 }
                 if (seanceBoardMana != null) {
                     pool.restorePromotedInstantSorceryOrSubtypeSpellOnlyMana(seanceBoardMana);
@@ -14229,6 +14285,8 @@ public class SpellCastingService {
         ManaPool.MulticoloredSpellManaState multicoloredMana =
                 gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
                         ? pool.promoteMulticoloredSpellOnlyMana() : null;
+        ManaPool.MonocoloredSpellManaState monocoloredMana =
+                promoteMonocoloredSpellMana(gameData, card, pool);
         try {
             if (altCast.reduceManaBySacrificedManaCost()) {
                 if (manaCostOpt.get().treasureManaOnly()) {
@@ -14252,6 +14310,9 @@ public class SpellCastingService {
             }
             if (multicoloredMana != null) {
                 pool.restorePromotedMulticoloredSpellOnlyMana(multicoloredMana);
+            }
+            if (monocoloredMana != null) {
+                pool.restorePromotedMonocoloredSpellOnlyMana(monocoloredMana);
             }
         }
         int manaSpent = before - pool.getTotalAllMana();

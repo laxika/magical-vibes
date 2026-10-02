@@ -71,6 +71,37 @@ class ArcticNishobaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cumulative upkeep can mix green and white payments")
+    void cumulativeUpkeepCanMixGreenAndWhiteMana() {
+        Permanent nishoba = harness.addToBattlefieldAndReturn(player1, new ArcticNishoba());
+        nishoba.setCounterCount(CounterType.AGE, 1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(nishoba.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nishoba);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Death without age counters gains no life")
+    void deathWithoutAgeCountersGainsNoLife() {
+        Permanent nishoba = harness.addToBattlefieldAndReturn(player1, new ArcticNishoba());
+        nishoba.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new Sunscour(), "{5}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arctic Nishoba");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Death trigger gains twice the age counters")
     void deathTriggerGainsTwiceTheAgeCounters() {
         Permanent nishoba = harness.addToBattlefieldAndReturn(player1, new ArcticNishoba());

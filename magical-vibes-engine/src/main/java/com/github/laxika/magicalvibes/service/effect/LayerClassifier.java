@@ -342,7 +342,8 @@ public final class LayerClassifier {
                 new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L6_ABILITIES, Layer.L7B_SET_PT),
                         (effect, fromOwnStaticSlot) -> {
                             AnimatePermanentsEffect animate = (AnimatePermanentsEffect) effect;
-                            if (animate.scope() != GrantScope.ALL_PERMANENTS) {
+                            if (animate.scope() != GrantScope.ALL_PERMANENTS
+                                    && animate.scope() != GrantScope.OWN_PERMANENTS) {
                                 return new LayerClassification(Set.of(Layer.L4_TYPE), false, false);
                             }
                             EnumSet<Layer> layers = EnumSet.of(Layer.L4_TYPE, Layer.L7B_SET_PT);

@@ -91,6 +91,39 @@ class AntagonismTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Damage to the end-step player does not satisfy the opponent-damage condition")
+    void damageToEndStepPlayerDoesNotPreventDamage() {
+        harness.addToBattlefield(player1, new Antagonism());
+        harness.addToBattlefield(player1, new ShivanGorge());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Multiple Antagonisms each damage the end-step player")
+    void multipleAntagonismsEachDealDamage() {
+        harness.addToBattlefield(player1, new Antagonism());
+        harness.addToBattlefield(player2, new Antagonism());
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
  */
 @CardRegistration(set = "AVR", collectorNumber = "208")
 @CardRegistration(set = "SLD", collectorNumber = "1221")
+@CardRegistration(set = "C18", collectorNumber = "170")
 public class BrunaLightOfAlabaster extends Card {
 
     public BrunaLightOfAlabaster() {

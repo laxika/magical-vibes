@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 
-@CardUsed({GravePact.class, DarkBanishing.class, GrizzlyBears.class, GiantSpider.class, WrathOfGod.class, Mountain.class, PlanarCleansing.class})
+@CardUsed({GravePact.class, DarkBanishing.class, CruelEdict.class, GrizzlyBears.class, GiantSpider.class,
+        WrathOfGod.class, Mountain.class, PlanarCleansing.class})
 class GravePactTest extends BaseCardTest {
 
     /**

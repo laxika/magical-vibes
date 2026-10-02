@@ -25,6 +25,7 @@ import java.util.Set;
 @CardRegistration(set = "SOC", collectorNumber = "299")
 @CardRegistration(set = "M3C", collectorNumber = "257")
 @CardRegistration(set = "BRC", collectorNumber = "122")
+@CardRegistration(set = "C18", collectorNumber = "39")
 public class BrudicladTelchorEngineer extends Card {
 
     public BrudicladTelchorEngineer() {

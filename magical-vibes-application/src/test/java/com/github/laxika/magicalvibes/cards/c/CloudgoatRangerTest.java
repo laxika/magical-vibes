@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
+import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CloudgoatRanger.class, BurrentonForgeTender.class, AxegrinderGiant.class})
 class CloudgoatRangerTest extends BaseCardTest {
 
     // ===== ETB: creates three Kithkin Soldier tokens =====
@@ -45,6 +47,16 @@ class CloudgoatRangerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.KITHKIN, CardSubtype.SOLDIER);
     }
 
+    @Test
+    @DisplayName("Kithkin Soldier tokens are white creatures")
+    void kithkinSoldierTokensAreWhiteCreatures() {
+        castAndResolveRanger();
+
+        Permanent token = findKithkinSoldierToken(player1);
+        assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+    }
+
     // ===== Activated ability =====
 
     @Nested
@@ -54,7 +66,7 @@ class CloudgoatRangerTest extends BaseCardTest {
         @Test
         @DisplayName("Activating ability puts it on the stack")
         void activatingPutsOnStack() {
-            Permanent ranger = addRangerReady(player1);
+            addRangerReady(player1);
             addKithkin(player1, 3);
 
             harness.activateAbility(player1, 0, null, null);
@@ -169,10 +181,18 @@ class CloudgoatRangerTest extends BaseCardTest {
         void nonKithkinCannotBeUsed() {
             addRangerReady(player1);
             addKithkin(player1, 2);
+            addCreatureReady(player1, new AxegrinderGiant());
 
-            Permanent bears = new Permanent(new GrizzlyBears());
-            bears.setSummoningSick(false);
-            gd.playerBattlefields.get(player1.getId()).add(bears);
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Kithkin controlled by an opponent cannot be tapped to pay the cost")
+        void opponentKithkinCannotBeUsed() {
+            addRangerReady(player1);
+            addKithkin(player1, 2);
+            addKithkin(player2, 1);
 
             assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                     .isInstanceOf(IllegalStateException.class);
@@ -193,36 +213,19 @@ class CloudgoatRangerTest extends BaseCardTest {
     // ===== Helpers =====
 
     private void castAndResolveRanger() {
-        harness.setHand(player1, List.of(new CloudgoatRanger()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CloudgoatRanger(), "{3}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private Permanent addRangerReady(Player player) {
-        Permanent ranger = new Permanent(new CloudgoatRanger());
-        ranger.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ranger);
-        return ranger;
+        return addCreatureReady(player, new CloudgoatRanger());
     }
 
     private void addKithkin(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent kithkin = new Permanent(createKithkinCard("Test Kithkin " + i));
-            kithkin.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(kithkin);
+            addCreatureReady(player, new BurrentonForgeTender());
         }
-    }
-
-    private Card createKithkinCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.KITHKIN));
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
     }
 
     private int countKithkinSoldierTokens(Player player) {

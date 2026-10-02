@@ -29,7 +29,7 @@ class JetCollectorTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         advanceToPostcombatMain();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Mox Jet");
     }
@@ -46,7 +46,7 @@ class JetCollectorTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         advanceToPostcombatMain();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         int handSizeAfterFirstTrigger = gd.playerHands.get(player1.getId()).size();
 
         advanceToPostcombatMain();

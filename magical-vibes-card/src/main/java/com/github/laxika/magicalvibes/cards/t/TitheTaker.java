@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "27")
+@CardRegistration(set = "WOC", collectorNumber = "80")
 public class TitheTaker extends Card {
 
     public TitheTaker() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "225")
+@CardRegistration(set = "WOC", collectorNumber = "140")
 public class JukaiNaturalist extends Card {
 
     public JukaiNaturalist() {

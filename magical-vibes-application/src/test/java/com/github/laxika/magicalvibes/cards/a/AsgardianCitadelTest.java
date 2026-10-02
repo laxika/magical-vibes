@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(AsgardianCitadel.class)
 class AsgardianCitadelTest extends BaseCardTest {
@@ -55,9 +56,43 @@ class AsgardianCitadelTest extends BaseCardTest {
     }
 
     private Permanent addReadyCitadel() {
-        Permanent citadel = new Permanent(new AsgardianCitadel());
+        Permanent citadel = harness.addToBattlefieldAndReturn(player1, new AsgardianCitadel());
         citadel.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(citadel);
         return citadel;
+    }
+
+    @Test
+    @DisplayName("A tapped Citadel cannot activate its mana ability")
+    void tappedCitadelCannotProduceMana() {
+        Permanent citadel = addReadyCitadel();
+        citadel.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Entry life gain uses the stack and survives the land leaving")
+    void entryTriggerSurvivesSourceLeaving() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AsgardianCitadel()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        Permanent citadel = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(citadel);
+        gd.playerGraveyards.get(player1.getId()).add(citadel.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

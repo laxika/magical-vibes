@@ -2,16 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -45,8 +42,7 @@ class AleatoryTest extends BaseCardTest {
     void coinFlipDecidesBoost() {
         Permanent target = setUpAndCast();
 
-        boolean won = gd.gameLog.stream().map(GameLogEntry::plainText)
-                .anyMatch(log -> log.contains("wins the coin flip"));
+        boolean won = gameLogContains("wins the coin flip");
 
         if (won) {
             assertThat(target.getEffectivePower()).isEqualTo(2);
@@ -82,13 +78,56 @@ class AleatoryTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both the coin flip and the delayed draw")
+    void illegalTargetPreventsAllEffects() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        harness.setHand(player1, List.of(new Aleatory()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("coin flip")).isFalse();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        harness.assertInGraveyard(player1, "Aleatory");
+    }
+
+    @Test
+    @DisplayName("Can target its controller's nonattacking creature at end of combat without drawing immediately")
+    void targetsOwnCreatureAtEndOfCombat() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player1, new FemerefScouts());
+        harness.setHand(player1, List.of(new Aleatory()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        int boost = gameLogContains("wins the coin flip") ? 1 : 0;
+        assertThat(target.getEffectivePower()).isEqualTo(1 + boost);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4 + boost);
     }
 
     @Test

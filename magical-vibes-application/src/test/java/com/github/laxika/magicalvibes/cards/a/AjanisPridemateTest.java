@@ -2,28 +2,26 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({AjanisPridemate.class, AngelOfMercy.class, SoulWarden.class, GrizzlyBears.class})
 class AjanisPridemateTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when controller gains life from ETB effect")
     void getsCounterOnLifeGain() {
-        harness.addToBattlefield(player1, new AjanisPridemate());
-
-        Permanent pridemate = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
         assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Cast Angel of Mercy (ETB: gain 3 life) to trigger life gain
@@ -43,9 +41,7 @@ class AjanisPridemateTest extends BaseCardTest {
     @Test
     @DisplayName("Does not get counter when opponent gains life")
     void noCounterWhenOpponentGainsLife() {
-        harness.addToBattlefield(player1, new AjanisPridemate());
-
-        Permanent pridemate = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
 
         // Opponent gains life
         harness.forceActivePlayer(player2);
@@ -65,10 +61,8 @@ class AjanisPridemateTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple life gain events each trigger independently")
     void multipleLifeGainEventsEachTrigger() {
-        harness.addToBattlefield(player1, new AjanisPridemate());
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
         harness.addToBattlefield(player1, new SoulWarden());
-
-        Permanent pridemate = findPermanent(player1, "Ajani's Pridemate");
 
         // Cast a creature — Soul Warden triggers (gain 1 life), which triggers Pridemate
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -78,6 +72,53 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (Soul Warden triggers)
         harness.passBothPriorities(); // resolve Soul Warden's GainLifeEffect
         harness.passBothPriorities(); // resolve Pridemate's +1/+1 counter
+
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Separate life gains from one creature entering each give one counter")
+    void separateLifeGainsFromOneEntry() {
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sees life gained from Soul Warden when Pridemate itself enters")
+    void seesLifeGainFromItsOwnEntry() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setHand(player1, List.of(new AjanisPridemate()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent pridemate = findPermanent(player1, "Ajani's Pridemate");
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
 
         assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

@@ -24,7 +24,9 @@ public class BoostByAttackCountEffectHandler implements StaticEffectHandlerBean 
         if (!support.matchesCreatureScope(context, boost.scope(), boost.filter())) {
             return;
         }
-        int attacks = context.target().getAttacksThisTurn();
+        int attacks = boost.countThisGame()
+                ? context.target().getAttacksThisGame()
+                : context.target().getAttacksThisTurn();
         accumulator.addPower(attacks * boost.powerPerAttack());
         accumulator.addToughness(attacks * boost.toughnessPerAttack());
     }

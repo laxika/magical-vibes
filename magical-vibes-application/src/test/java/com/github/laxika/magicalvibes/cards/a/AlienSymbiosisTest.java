@@ -83,4 +83,113 @@ class AlienSymbiosisTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void addsSymbioteWithoutReplacingExistingTypesOrAffectingOtherCreatures() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AlienSymbiosis()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, enchanted))
+                .contains(CardSubtype.BEAR, CardSubtype.SYMBIOTE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).doesNotContain(CardSubtype.SYMBIOTE);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void graveyardCastingStillRequiresTheManaCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AlienSymbiosis()));
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null,
+                bears.getId(), List.of(), null, null, List.of(), 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Alien Symbiosis");
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void graveyardCastingCanDiscardANonlandCardAndKeepsUnselectedCards() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AlienSymbiosis()));
+        harness.setHand(player1, List.of(new Mountain(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gs.playFlashbackSpell(gd, player1, 0, null, bears.getId(), List.of(), null, null, List.of(), 1);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Alien Symbiosis");
+    }
+
+    @Test
+    void graveyardPermissionDoesNotAllowCastingOutsideAMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AlienSymbiosis()));
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null,
+                bears.getId(), List.of(), null, null, List.of(), 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot cast sorcery-speed spell from graveyard now");
+
+        harness.assertInGraveyard(player1, "Alien Symbiosis");
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    void graveyardCastWithAnIllegalTargetReturnsToGraveyardAndCanBeCastAgain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AlienSymbiosis()));
+        harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        gs.playFlashbackSpell(gd, player1, 0, null, first.getId(), List.of(), null, null, List.of(), 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Alien Symbiosis");
+        harness.assertNotOnBattlefield(player1, "Alien Symbiosis");
+        int auraIndex = java.util.stream.IntStream.range(0, gd.playerGraveyards.get(player1.getId()).size())
+                .filter(i -> gd.playerGraveyards.get(player1.getId()).get(i) instanceof AlienSymbiosis)
+                .findFirst().orElseThrow();
+        gs.playFlashbackSpell(gd, player1, auraIndex, null, second.getId(), List.of(), null, null, List.of(), 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alien Symbiosis");
+        harness.assertNotInGraveyard(player1, "Alien Symbiosis");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+    }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1421")
 @CardRegistration(set = "2X2", collectorNumber = "169")
+@CardRegistration(set = "C18", collectorNumber = "37")
 public class AminatouTheFateshifter extends Card {
 
     public AminatouTheFateshifter() {

@@ -30,12 +30,14 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "SOC", collectorNumber = "393")
 @CardRegistration(set = "M3C", collectorNumber = "363")
 @CardRegistration(set = "MKC", collectorNumber = "279")
+@CardRegistration(set = "ONC", collectorNumber = "161")
 @CardRegistration(set = "AFC", collectorNumber = "254")
 @CardRegistration(set = "LCC", collectorNumber = "346")
 @CardRegistration(set = "C20", collectorNumber = "298")
 @CardRegistration(set = "BLC", collectorNumber = "322")
 @CardRegistration(set = "MIC", collectorNumber = "178")
 @CardRegistration(set = "BRC", collectorNumber = "192")
+@CardRegistration(set = "WOC", collectorNumber = "165")
 public class PathOfAncestry extends Card {
 
     public PathOfAncestry() {

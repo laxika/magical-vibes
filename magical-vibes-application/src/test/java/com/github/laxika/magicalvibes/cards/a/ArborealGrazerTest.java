@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,8 +26,7 @@ class ArborealGrazerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        Permanent permanent = findPermanent(forest);
-        assertThat(permanent).isNotNull();
+        Permanent permanent = findPermanent(player1, "Forest");
         assertThat(permanent.isTapped()).isTrue();
     }
 
@@ -41,7 +39,61 @@ class ArborealGrazerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Forest");
-        assertThat(findPermanent(forest)).isNull();
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Accepting with no land in hand finishes without putting a nonland onto the battlefield")
+    void noLandInHandDoesNothing() {
+        harness.setHand(player1, List.of(new ArborealGrazer(), new ArborealGrazer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Arboreal Grazer")).isEqualTo(1);
+        harness.assertInHand(player1, "Arboreal Grazer");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB puts only one land onto the battlefield")
+    void putsOnlyOneLandFromHand() {
+        harness.setHand(player1, List.of(new ArborealGrazer(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB can put a land onto the battlefield after the normal land play")
+    void putsLandAfterNormalLandPlay() {
+        harness.setHand(player1, List.of(new Forest(), new ArborealGrazer(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Forest")).filteredOn(Permanent::isTapped).hasSize(1);
+        harness.assertNotInHand(player1, "Forest");
     }
 
     private void castArborealGrazer(Forest forest) {
@@ -52,10 +104,4 @@ class ArborealGrazerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent findPermanent(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElse(null);
-    }
 }

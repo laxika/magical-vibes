@@ -2742,7 +2742,8 @@ public class ChoiceHandlerService {
         if (!selectionComplete) {
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     ctx.effect(), ctx.sourcePermanentId(), ctx.modesResetEachTurn(), ctx.consumeModes(),
-                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId(), ctx.triggeringPermanentId());
+                    chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId(), ctx.triggeringPermanentId(),
+                    ctx.rememberLastChosenMode());
             return;
         }
         if (ctx.consumeModes() || ctx.modesResetEachTurn()) {
@@ -2753,6 +2754,12 @@ public class ChoiceHandlerService {
                 } else {
                     chosenModes.forEach(mode -> source.getChosenModeLabelsThisTurn().add(mode.label()));
                 }
+            }
+        }
+        if (ctx.rememberLastChosenMode()) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            if (source != null && chosenModes.size() == 1) {
+                source.setChosenMode(chosenModes.getFirst().label());
             }
         }
         gameLogService.append(gameData, GameLog.textCardText(
@@ -5086,9 +5093,11 @@ public class ChoiceHandlerService {
             }
             log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
                     player.getUsername(), subtype, source.getCard().getName());
-            battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), source);
-            battlefieldEntryService.processCreatureETBEffects(
-                    gameData, player.getId(), source.getCard(), null, true);
+            if (gameData.pendingEffectResolutionEntry == null) {
+                battlefieldEntryService.applyDeferredEnterWithCounters(gameData, player.getId(), source);
+                battlefieldEntryService.processCreatureETBEffects(
+                        gameData, player.getId(), source.getCard(), null, true);
+            }
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

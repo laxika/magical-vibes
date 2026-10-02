@@ -1034,6 +1034,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
+        gameData.playersWhoAttackedWithTokenThisTurn.clear();
         gameData.playersWhoAttackedWithCommanderThisTurn.clear();
         gameData.playersWhoPutCountersOnCreaturesThisTurn.clear();
         gameData.permanentsWithCountersPutByPlayerThisTurn.clear();
@@ -1116,10 +1117,14 @@ public class TurnProgressionService {
         if (gameData.playersDealtCombatDamageSinceTheirLastTurn.remove(nextActive)) {
             gameData.playersDealtCombatDamageLastTurn.add(nextActive);
         }
+        gameData.permanentDamageSourceNamesToPlayersLastTurn.clear();
+        gameData.permanentDamageSourceNamesToPlayersThisTurn.forEach((playerId, sourceNames) ->
+                gameData.permanentDamageSourceNamesToPlayersLastTurn.put(playerId, new HashSet<>(sourceNames)));
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageDealtToPlayersThisTurn.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
         gameData.noncombatDamageToPlayersThisTurn.clear();
+        gameData.permanentDamageSourceNamesToPlayersThisTurn.clear();
         gameData.creatureDamageToPlayersThisTurn.clear();
         gameData.damageDealtThisTurnBySource.clear();
         gameData.sourcePermanentsThatDealtDamageToCreaturesThisTurn.clear();

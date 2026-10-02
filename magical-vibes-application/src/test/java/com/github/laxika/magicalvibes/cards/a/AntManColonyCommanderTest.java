@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -64,18 +65,64 @@ class AntManColonyCommanderTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
     }
 
+    @Test
+    void opponentsCounterOnAntManDoesNotCreateAnInsectOrUseHisTrigger() {
+        Permanent antMan = addCreatureReady(player1, new AntManColonyCommander());
+        harness.setHand(player2, List.of(new BurstOfStrength()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, antMan.getId());
+        resolveAllTriggers();
+
+        assertThat(antMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isZero();
+
+        putCounterOn(antMan);
+
+        assertThat(antMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    void counterOnSelfAndThenAnotherCreatureSharesTheOncePerTurnLimit() {
+        Permanent antMan = addCreatureReady(player1, new AntManColonyCommander());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+
+        putCounterOn(antMan);
+        putCounterOn(other);
+
+        assertThat(antMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    void yourCounterOnOpponentsCreatureCreatesAnInsect() {
+        addCreatureReady(player1, new AntManColonyCommander());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+
+        putCounterOn(other);
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
     private void resolveAttackTrigger(Permanent target, boolean pay) {
         declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, pay);
+        if (pay) {
+            harness.handlePermanentChosen(player1, target.getId());
+            assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        }
         resolveAllTriggers();
     }
 
     private void putCounterOn(Permanent target) {
         harness.setHand(player1, List.of(new BurstOfStrength()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
         resolveAllTriggers();
     }
 }

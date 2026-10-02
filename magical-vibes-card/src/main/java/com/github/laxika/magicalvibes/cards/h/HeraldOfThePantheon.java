@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "180")
+@CardRegistration(set = "C18", collectorNumber = "151")
 public class HeraldOfThePantheon extends Card {
 
     public HeraldOfThePantheon() {

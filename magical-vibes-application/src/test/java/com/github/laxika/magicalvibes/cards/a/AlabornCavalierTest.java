@@ -80,6 +80,51 @@ class AlabornCavalierTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
+    @Test
+    @DisplayName("Attack trigger can target the already tapped Cavalier itself")
+    void attackTriggerCanTargetItself() {
+        Permanent cavalier = addCreatureReady(player1, new AlabornCavalier());
+
+        attackChooseTargetAndAccept(cavalier);
+
+        assertThat(cavalier.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after the Cavalier leaves the battlefield")
+    void attackTriggerResolvesWithoutSource() {
+        Permanent cavalier = addCreatureReady(player1, new AlabornCavalier());
+        Permanent trooper = addCreatureReady(player2, new AlabornTrooper());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, trooper.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(cavalier);
+        gd.playerGraveyards.get(player1.getId()).add(cavalier.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(trooper.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not offer the may choice when its target leaves")
+    void attackTriggerDoesNotResolveWithMissingTarget() {
+        addCreatureReady(player1, new AlabornCavalier());
+        Permanent trooper = addCreatureReady(player2, new AlabornTrooper());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, trooper.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(trooper);
+        gd.playerGraveyards.get(player2.getId()).add(trooper.getCard());
+        harness.passBothPriorities();
+
+        assertThat(trooper.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void attackChooseTargetAndAccept(Permanent target) {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, target.getId());

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "C13", collectorNumber = "171")
+@CardRegistration(set = "C18", collectorNumber = "163")
 public class SpawningGrounds extends Card {
 
     public SpawningGrounds() {

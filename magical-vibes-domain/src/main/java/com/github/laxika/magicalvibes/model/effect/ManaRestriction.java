@@ -94,6 +94,19 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /** Mana spendable only to cast monocolored spells of the produced color. */
+    record MonocoloredSpells() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addMonocoloredSpellOnlyMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "monocolored spells of this color only";
+        }
+    }
+
     record CreatureSpells() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {

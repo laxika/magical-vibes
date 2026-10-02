@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RTR", collectorNumber = "189")
+@CardRegistration(set = "C18", collectorNumber = "188")
 public class RighteousAuthority extends Card {
 
     public RighteousAuthority() {

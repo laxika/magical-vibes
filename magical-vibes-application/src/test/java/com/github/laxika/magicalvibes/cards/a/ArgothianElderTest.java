@@ -92,4 +92,57 @@ class ArgothianElderTest extends BaseCardTest {
                 player1, 0, 0, List.of(land.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent elder = harness.addToBattlefieldAndReturn(player1, new ArgothianElder());
+        elder.setSummoningSick(true);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(elder.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untaps the remaining land when one target leaves the battlefield")
+    void untapsRemainingLegalTarget() {
+        addCreatureReady(player1, new ArgothianElder());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        first.tap();
+        second.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isFalse();
+        assertThat(first.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Argothian Elder leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent elder = addCreatureReady(player1, new ArgothianElder());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        first.tap();
+        second.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(elder);
+        gd.playerGraveyards.get(player1.getId()).add(elder.getCard());
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

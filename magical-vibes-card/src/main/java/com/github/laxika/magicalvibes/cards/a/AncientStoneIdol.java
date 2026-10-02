@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "347")
 @CardRegistration(set = "MKC", collectorNumber = "222")
+@CardRegistration(set = "C18", collectorNumber = "53")
 public class AncientStoneIdol extends Card {
 
     public AncientStoneIdol() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Inspiration;
+import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AleshaWhoSmilesAtDeath.class, GrizzlyBears.class, HillGiant.class, Inspiration.class})
+@CardUsed({AleshaWhoSmilesAtDeath.class, GrizzlyBears.class, HillGiant.class, Inspiration.class, UginTheSpiritDragon.class})
 class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
 
     @Test
@@ -80,4 +81,76 @@ class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    void mixedHybridManaReturnsTheCreature() {
+        addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
+        Card returnedCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void twoBlackManaReturnsTheCreature() {
+        addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
+        Card returnedCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentGraveyardCardsAreNotOfferedAsTargets() {
+        addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
+        Card ownCard = new GrizzlyBears();
+        Card opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+    }
+
+    @Test
+    void returnedCreatureCanAttackAPlaneswalkerInsteadOfAleshasDefender() {
+        addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
+        Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        Card returnedCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(ugin.getId());
+        assertThat(choice.validPlayerIds()).contains(player2.getId());
+        harness.handlePermanentChosen(player1, ugin.getId());
+        assertThat(findPermanent(player1, "Grizzly Bears").getAttackTarget()).isEqualTo(ugin.getId());
+    }
+
 }

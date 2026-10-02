@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FireSprites;
-import com.github.laxika.magicalvibes.cards.h.HeadlessHorseman;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TundraWolves.class, FireSprites.class, HeadlessHorseman.class})
+@CardUsed({TundraWolves.class, RagingGoblin.class, GrizzlyBears.class})
 class TundraWolvesTest extends BaseCardTest {
 
     @Test
     @DisplayName("First-strike damage kills a 1/1 before it can deal regular combat damage")
     void firstStrikeDamageResolvesBeforeRegularCombatDamage() {
         Permanent attacker = addCreatureReady(player1, new TundraWolves());
-        Permanent blocker = addCreatureReady(player2, new FireSprites());
+        Permanent blocker = addCreatureReady(player2, new RagingGoblin());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -35,10 +35,29 @@ class TundraWolvesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("First-strike blocker deals damage before the attacker can deal regular combat damage")
+    void firstStrikeBlockerDealsDamageBeforeRegularCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new RagingGoblin());
+        Permanent blocker = addCreatureReady(player2, new TundraWolves());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).doesNotContain(attacker.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId).contains(blocker.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(blocker.getCard());
+    }
+
+    @Test
     @DisplayName("First strike does not prevent regular combat damage")
     void firstStrikeCreatureStillTakesRegularCombatDamage() {
         Permanent attacker = addCreatureReady(player1, new TundraWolves());
-        Permanent blocker = addCreatureReady(player2, new HeadlessHorseman());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

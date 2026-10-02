@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NantukoDisciple;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Afflict.class, NantukoDisciple.class, DwarvenGrunt.class})
+@CardUsed({Afflict.class, NantukoDisciple.class, DwarvenGrunt.class, Forest.class})
 class AfflictTest extends BaseCardTest {
 
     private void setupDiscipleAndAfflict() {
@@ -53,7 +53,7 @@ class AfflictTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent target = findPermanent(player1, "Nantuko Disciple");
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
         assertThat(target.getEffectivePower()).isEqualTo(1);
@@ -81,7 +81,7 @@ class AfflictTest extends BaseCardTest {
         // After resolving, player should have drawn a card
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gameLogContains("draws a card")).isTrue();
     }
 
     @Test
@@ -97,7 +97,7 @@ class AfflictTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
+        Permanent target = findPermanent(player1, "Nantuko Disciple");
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(target.getEffectivePower()).isEqualTo(2);
@@ -134,7 +134,39 @@ class AfflictTest extends BaseCardTest {
 
         // Spell should fizzle — no crash, stack should be empty
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Forest");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fizzling Afflict does not draw a card")
+    void fizzlingDoesNotDrawACard() {
+        harness.addToBattlefield(player1, new NantukoDisciple());
+        harness.setLibrary(player1, List.of(new NantukoDisciple()));
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Nantuko Disciple");
+        harness.castInstant(player1, 0, targetId);
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -147,7 +179,7 @@ class AfflictTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Nantuko Disciple");
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = findPermanent(player2, "Nantuko Disciple");
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
     }
@@ -189,6 +221,51 @@ class AfflictTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Afflict");
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature draws only for Afflict's controller")
+    void targetingOpponentDrawsOnlyForCaster() {
+        harness.addToBattlefield(player2, new NantukoDisciple());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Nantuko Disciple"));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Nantuko Disciple"))).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Nantuko Disciple"))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Afflicts stack their debuffs and each draws even when the second is lethal")
+    void twoAfflictsStackAndEachDraws() {
+        harness.addToBattlefield(player2, new NantukoDisciple());
+        Forest firstDraw = new Forest();
+        Forest secondDraw = new Forest();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new Afflict(), new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        UUID targetId = harness.getPermanentId(player2, "Nantuko Disciple");
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertOnBattlefield(player2, "Nantuko Disciple");
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Nantuko Disciple"))).isEqualTo(1);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Nantuko Disciple");
+        harness.assertInGraveyard(player2, "Nantuko Disciple");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
 

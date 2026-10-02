@@ -25,8 +25,7 @@ class AgentOfAtlasTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(3);
@@ -53,14 +52,64 @@ class AgentOfAtlasTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the spell that triggered it")
+    void prowessResolvesBeforeTriggeringSpell() {
+        Permanent agent = addAgent();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, agent.getId());
+
+        assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(agent);
+        assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell grants another prowess boost")
+    void repeatedCastsStackBoosts() {
+        Permanent agent = addAgent();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentSpellDoesNotPump() {
+        Permanent agent = addAgent();
+        harness.forceActivePlayer(player2);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, agent)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, agent)).isEqualTo(2);

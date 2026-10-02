@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArniSlaysTheTroll.class, GrizzlyBears.class, HillGiant.class})
@@ -24,11 +22,7 @@ class ArniSlaysTheTrollTest extends BaseCardTest {
     void chapterIFightsTheChosenCreatures() {
         harness.addToBattlefield(player1, new HillGiant());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ArniSlaysTheTroll()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ArniSlaysTheTroll(), "{R}{G}");
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player1, "Hill Giant");
@@ -54,11 +48,7 @@ class ArniSlaysTheTrollTest extends BaseCardTest {
     void chapterIFightCanBeDeclined() {
         harness.addToBattlefield(player1, new HillGiant());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ArniSlaysTheTroll()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ArniSlaysTheTroll(), "{R}{G}");
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player1, "Hill Giant");
@@ -108,5 +98,70 @@ class ArniSlaysTheTrollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    void chapterIICanAddManaWithoutChoosingACreature() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ArniSlaysTheTroll());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(player1.getId(), bears.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void chapterIIAddsManaWhenNoCreaturesAreControlled() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ArniSlaysTheTroll());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void chapterIIIGainsNoLifeWithoutControlledCreaturesAndSacrificesSaga() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ArniSlaysTheTroll());
+        harness.addToBattlefield(player2, new HillGiant());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Arni Slays the Troll");
+        harness.assertInGraveyard(player1, "Arni Slays the Troll");
+    }
+
+    @Test
+    void chapterIIIUsesCurrentPowerIncludingCounters() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new ArniSlaysTheTroll());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.addToBattlefield(player2, new HillGiant());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
     }
 }

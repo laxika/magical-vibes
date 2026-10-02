@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "C19", collectorNumber = "26")
+@CardRegistration(set = "ONC", collectorNumber = "99")
 public class HateMirage extends Card {
 
     public HateMirage() {

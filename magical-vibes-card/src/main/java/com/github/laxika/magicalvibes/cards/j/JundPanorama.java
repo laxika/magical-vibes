@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "225")
 @CardRegistration(set = "C13", collectorNumber = "298")
+@CardRegistration(set = "C18", collectorNumber = "258")
 public class JundPanorama extends Card {
 
     public JundPanorama() {

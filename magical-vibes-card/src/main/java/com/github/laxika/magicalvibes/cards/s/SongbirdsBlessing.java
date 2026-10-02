@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOC", collectorNumber = "174")
+@CardRegistration(set = "WOC", collectorNumber = "7")
+@CardRegistration(set = "WOC", collectorNumber = "43")
 public class SongbirdsBlessing extends Card {
 
     public SongbirdsBlessing() {

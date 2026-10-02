@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
-import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionSkulker;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionDiviner;
+import com.github.laxika.magicalvibes.cards.g.GnarlidColony;
+import com.github.laxika.magicalvibes.cards.k.KorCelebrant;
 import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,12 +15,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchpriestOfIona.class, BoggartBrute.class, FaerieMiscreant.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class, StoneworkPackbeast.class})
+@CardUsed({ArchpriestOfIona.class, ElvishWarrior.class, ExpeditionSkulker.class,
+        ExpeditionDiviner.class, GnarlidColony.class, KorCelebrant.class, StoneworkPackbeast.class})
 class ArchpriestOfIonaTest extends BaseCardTest {
 
     @Test
@@ -33,8 +28,8 @@ class ArchpriestOfIonaTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(2);
 
-        harness.addToBattlefield(player1, new BoggartBrute());
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new ExpeditionDiviner());
 
         assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(4);
     }
@@ -44,7 +39,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     void fullPartyBoostsTarget() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
         addFullParty();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
@@ -60,10 +55,10 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     @DisplayName("Does not trigger without a full party")
     void doesNotBoostWithoutFullParty() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
-        harness.addToBattlefield(player1, new SoulWarden());
-        harness.addToBattlefield(player1, new FaerieMiscreant());
-        harness.addToBattlefield(player1, new BoggartBrute());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new KorCelebrant());
+        harness.addToBattlefield(player1, new ExpeditionSkulker());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
         harness.passBothPriorities();
@@ -74,13 +69,12 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A creature with two party types fills only one role")
+    @DisplayName("A creature with multiple party types fills only one role")
     void oneCreatureCannotFillTwoPartyRoles() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
-        harness.addToBattlefield(player1,
-                partyCreature("Cleric Rogue", CardSubtype.CLERIC, CardSubtype.ROGUE));
-        harness.addToBattlefield(player1, new BoggartBrute());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
         harness.passBothPriorities();
@@ -95,7 +89,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     void boostWearsOffAtCleanup() {
         harness.addToBattlefield(player1, new ArchpriestOfIona());
         addFullParty();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
@@ -110,28 +104,78 @@ class ArchpriestOfIonaTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    void losingPartyMemberBeforeResolutionPreventsBothEffects() {
+        Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
+        harness.addToBattlefield(player1, new ExpeditionSkulker());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new ExpeditionDiviner());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, warrior));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void canTargetItselfWithFullParty() {
+        Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
+        addFullParty();
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, archpriest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, archpriest)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, archpriest, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void fullPartyDoesNotTriggerOnOpponentsTurn() {
+        Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
+        addFullParty();
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, archpriest, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void opposingPartyMembersDoNotIncreasePowerOrEnableTrigger() {
+        Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
+        harness.addToBattlefield(player2, new ExpeditionSkulker());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ExpeditionDiviner());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(1);
+    }
+
     private void addFullParty() {
-        harness.addToBattlefield(player1, new SoulWarden());
-        harness.addToBattlefield(player1, new FaerieMiscreant());
-        harness.addToBattlefield(player1, new BoggartBrute());
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new KorCelebrant());
+        harness.addToBattlefield(player1, new ExpeditionSkulker());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new ExpeditionDiviner());
     }
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
-    private Card partyCreature(String name, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}");
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
 }

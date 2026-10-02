@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.h.HornedCheetah;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AlabasterLeechTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({AlabasterLeech.class, ArdentSoldier.class, HolyDay.class, HornedCheetah.class})
     @DisplayName("White spells you cast cost {W} more")
     class OwnWhiteSpellsTaxed {
 
@@ -75,6 +80,7 @@ class AlabasterLeechTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({AlabasterLeech.class, ArdentSoldier.class, MetathranZombie.class})
     @DisplayName("Only the controller's white spells are taxed")
     class OpponentAndNonWhiteNotTaxed {
 
@@ -103,5 +109,52 @@ class AlabasterLeechTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
         }
+    }
+
+    @Test
+    void leechDoesNotTaxItsOwnCastingBeforeEnteringBattlefield() {
+        harness.castFromHand(player1, new AlabasterLeech(), "{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void multipleLeechesEachAddWhiteManaToTheCost() {
+        harness.addToBattlefield(player1, new AlabasterLeech());
+        harness.addToBattlefield(player1, new AlabasterLeech());
+
+        harness.castFromHand(player1, new HolyDay(), "{W}{W}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void leechInGraveyardDoesNotIncreaseCosts() {
+        gd.playerGraveyards.get(player1.getId()).add(new AlabasterLeech());
+
+        harness.castFromHand(player1, new HolyDay(), "{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({AlabasterLeech.class, HolyDay.class, Humble.class})
+    void losingAllAbilitiesStopsTheWhiteSpellTax() {
+        var leech = harness.addToBattlefieldAndReturn(player1, new AlabasterLeech());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, leech.getId());
+
+        assertThat(gqs.hasLostAllAbilities(gd, leech)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.castFromHand(player1, new HolyDay(), "{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.f.FireLitThicket;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KnollspineInvocation.class, SafeholdSentry.class, FireLitThicket.class})
 class KnollspineInvocationTest extends BaseCardTest {
 
     // ===== Discard-cost choice (mana value must equal X) =====
@@ -24,8 +26,8 @@ class KnollspineInvocationTest extends BaseCardTest {
     @DisplayName("Activating with X=2 only offers cards with mana value 2 for the discard cost")
     void discardChoiceRestrictedToManaValueX() {
         harness.addToBattlefield(player1, new KnollspineInvocation());
-        // GrizzlyBears has mana value 2, Ornithopter has mana value 0
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Ornithopter()));
+        // Safehold Sentry has mana value 2, Fire-Lit Thicket has mana value 0
+        harness.setHand(player1, List.of(new SafeholdSentry(), new FireLitThicket()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, player2.getId());
@@ -40,7 +42,7 @@ class KnollspineInvocationTest extends BaseCardTest {
     @DisplayName("Cannot activate for X=2 with no mana-value-2 card in hand")
     void cannotActivateWithoutManaValueXCard() {
         harness.addToBattlefield(player1, new KnollspineInvocation());
-        harness.setHand(player1, List.of(new Ornithopter())); // mana value 0
+        harness.setHand(player1, List.of(new FireLitThicket())); // mana value 0
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
@@ -54,7 +56,7 @@ class KnollspineInvocationTest extends BaseCardTest {
     @DisplayName("Deals X damage to target player, discarding the chosen card")
     void dealsXDamageToPlayer() {
         harness.addToBattlefield(player1, new KnollspineInvocation());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SafeholdSentry()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player2, 20);
 
@@ -67,7 +69,7 @@ class KnollspineInvocationTest extends BaseCardTest {
         assertThat(entry.getXValue()).isEqualTo(2);
         // The mana-value-2 card was discarded to pay the cost
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Safehold Sentry");
 
         harness.passBothPriorities();
 
@@ -80,18 +82,18 @@ class KnollspineInvocationTest extends BaseCardTest {
     @DisplayName("Deals X damage to target creature, destroying it")
     void dealsXDamageToCreature() {
         harness.addToBattlefield(player1, new KnollspineInvocation());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new SafeholdSentry());
+        harness.setHand(player1, List.of(new SafeholdSentry()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Safehold Sentry");
         harness.activateAbility(player1, 0, 2, targetId);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) destroyed by 2 damage
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Safehold Sentry (2/2) destroyed by 2 damage
+        harness.assertNotOnBattlefield(player2, "Safehold Sentry");
+        harness.assertInGraveyard(player2, "Safehold Sentry");
     }
 
     // ===== X=0 edge case =====
@@ -100,7 +102,7 @@ class KnollspineInvocationTest extends BaseCardTest {
     @DisplayName("X=0 discards a mana-value-0 card and deals no damage")
     void xZeroDealsNoDamage() {
         harness.addToBattlefield(player1, new KnollspineInvocation());
-        harness.setHand(player1, List.of(new Ornithopter())); // mana value 0
+        harness.setHand(player1, List.of(new FireLitThicket())); // mana value 0
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, 0, player2.getId());
@@ -108,6 +110,6 @@ class KnollspineInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Fire-Lit Thicket");
     }
 }

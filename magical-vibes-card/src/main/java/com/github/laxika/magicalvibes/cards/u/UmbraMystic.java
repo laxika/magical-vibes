@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TotemArmorEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
 
 @CardRegistration(set = "ROE", collectorNumber = "52")
+@CardRegistration(set = "WOC", collectorNumber = "82")
 public class UmbraMystic extends Card {
 
     public UmbraMystic() {

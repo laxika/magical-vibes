@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlphaStatus.class, AvenFarseer.class, AvenLiberator.class, GoblinBrigand.class,
-        TempleOfTheFalseGod.class})
+        TempleOfTheFalseGod.class, WoodlandChangeling.class})
 class AlphaStatusTest extends BaseCardTest {
 
     @Test
@@ -102,5 +102,53 @@ class AlphaStatusTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Alpha Status resolves on an opponent's creature and only boosts its host")
+    void resolvesOnOpponentsCreature() {
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new AvenFarseer());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AvenLiberator());
+        harness.setHand(player1, List.of(new AlphaStatus()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alpha Status");
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two Alpha Status bonuses stack without counting either Aura")
+    void multipleAurasStack() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new AvenFarseer());
+        harness.addToBattlefield(player2, new AvenLiberator());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AlphaStatus());
+        first.setAttachedTo(host.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AlphaStatus());
+        second.setAttachedTo(host.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(5);
+    }
+
+    @Test
+    @CardUsed(WoodlandChangeling.class)
+    @DisplayName("An enchanted changeling counts different creature types once per creature")
+    void enchantedChangelingCountsDifferentCreatureTypes() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new WoodlandChangeling());
+        harness.addToBattlefield(player1, new AvenFarseer());
+        harness.addToBattlefield(player2, new GoblinBrigand());
+        harness.addToBattlefield(player2, new WoodlandChangeling());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AlphaStatus());
+        aura.setAttachedTo(host.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(8);
     }
 }

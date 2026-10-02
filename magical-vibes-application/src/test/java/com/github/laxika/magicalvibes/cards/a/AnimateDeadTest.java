@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CrownOfTheAges;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnimateDead.class, Disenchant.class, GrafdiggersCage.class, GrizzlyBears.class, WhiteKnight.class})
+@CardUsed({AnimateDead.class, CrownOfTheAges.class, Disenchant.class, GrafdiggersCage.class,
+        GrizzlyBears.class, WhiteKnight.class})
 class AnimateDeadTest extends BaseCardTest {
 
     @Test
@@ -173,8 +175,7 @@ class AnimateDeadTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -239,5 +240,82 @@ class AnimateDeadTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target card must be a creature card");
+    }
+
+    @Test
+    @DisplayName("Protection removes the Aura before a separate sacrifice trigger resolves")
+    void protectedCreatureSurvivesUntilSacrificeTriggerResolves() {
+        harness.setGraveyard(player1, List.of(new WhiteKnight()));
+        UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new AnimateDead()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Animate Dead");
+        harness.assertOnBattlefield(player1, "White Knight");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "White Knight");
+        harness.assertInGraveyard(player1, "White Knight");
+    }
+
+    @Test
+    @DisplayName("Crown of the Ages cannot move Animate Dead to a different creature")
+    void cannotMoveToCreatureItDidNotReanimate() {
+        Permanent crown = harness.addToBattlefieldAndReturn(player1, new CrownOfTheAges());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new AnimateDead()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, targetId);
+        resolveAllTriggers();
+
+        Permanent aura = findPermanent(player1, "Animate Dead");
+        Permanent reanimatedCreature = findPermanent(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown),
+                null, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(aura.getAttachedTo()).isEqualTo(reanimatedCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, reanimatedCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura leaves the creature alive until the sacrifice trigger resolves")
+    void auraRemovalUsesSeparateSacrificeTrigger() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new AnimateDead(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, targetId);
+        resolveAllTriggers();
+
+        Permanent aura = findPermanent(player1, "Animate Dead");
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Animate Dead");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }

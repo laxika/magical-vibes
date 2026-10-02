@@ -81,6 +81,21 @@ class HeartOfLightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prevent damage involving other creatures")
+    void onlyPreventsDamageToAndByEnchantedCreature() {
+        Permanent enchantedCreature = addCreatureReady(player1, new GnarledMass());
+        Permanent otherCreature = addCreatureReady(player1, new GnarledMass());
+        castHeartOfLight(enchantedCreature);
+        addCreatureReady(player2, new Frostling());
+
+        harness.activateAbility(player2, 0, null, otherCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchantedCreature.getMarkedDamage()).isZero();
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Prevents noncombat damage dealt by the enchanted creature")
     void preventsNoncombatDamageByEnchantedCreature() {
         Permanent enchantedCreature = addCreatureReady(player1, new IshiIshiAkkiCrackshot());

@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "55")
 @CardRegistration(set = "C13", collectorNumber = "56")
+@CardRegistration(set = "C18", collectorNumber = "101")
 @CardRegistration(set = "MOC", collectorNumber = "235")
 @CardRegistration(set = "BRC", collectorNumber = "94")
 public class ShardingSphinx extends Card {

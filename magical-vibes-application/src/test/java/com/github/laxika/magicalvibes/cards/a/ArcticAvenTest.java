@@ -7,11 +7,15 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArcticAven.class, Island.class, Plains.class})
 class ArcticAvenTest extends BaseCardTest {
 
     @Test
@@ -102,5 +106,56 @@ class ArcticAvenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(aven.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life from combat damage without controlling a Plains")
+    void lifelinkGainsLifeWithoutPlains() {
+        addCreatureReady(player1, new ArcticAven());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Repeated lifelink activations do not multiply life gained from boosted damage")
+    void repeatedLifelinkDoesNotMultiplyLifeGain() {
+        addCreatureReady(player1, new ArcticAven());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Lifelink can be activated while summoning sick and affects only its source")
+    void lifelinkCanBeActivatedWhileSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArcticAven());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ArcticAven());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
+        assertThat(source.isTapped()).isFalse();
     }
 }

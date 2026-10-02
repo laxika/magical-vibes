@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AdeptWatershaper.class, GrizzlyBears.class, Assassinate.class, WrathOfGod.class})
 class AdeptWatershaperTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Adept Watershaper puts it on the stack")
@@ -33,7 +33,6 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Adept Watershaper");
     }
 
     @Test
@@ -61,8 +60,6 @@ class AdeptWatershaperTest extends BaseCardTest {
         Permanent perm = findPermanent(player1, "Adept Watershaper");
         assertThat(perm.isSummoningSick()).isTrue();
     }
-
-    // ===== Static effect: grants indestructible to own tapped creatures =====
 
     @Test
     @DisplayName("Tapped creature you control gains indestructible")
@@ -127,8 +124,6 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Bonus gone when source leaves =====
-
     @Test
     @DisplayName("Indestructible is removed when Adept Watershaper leaves the battlefield")
     void indestructibleRemovedWhenSourceLeaves() {
@@ -148,8 +143,6 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Static bonus survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static indestructible survives end-of-turn modifier reset")
     void staticIndestructibleSurvivesEndOfTurnReset() {
@@ -167,8 +160,6 @@ class AdeptWatershaperTest extends BaseCardTest {
         // Static keyword should still be computed
         assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
-
-    // ===== Multiple Watershapers =====
 
     @Test
     @DisplayName("Two Watershapers grant indestructible to each other when tapped")
@@ -190,16 +181,13 @@ class AdeptWatershaperTest extends BaseCardTest {
         }
     }
 
-    // ===== Indestructible prevents "destroy" effects =====
-
     @Test
     @DisplayName("Indestructible tapped creature survives targeted destroy effect")
     void indestructibleSurvivesTargetedDestroy() {
         harness.addToBattlefield(player1, new AdeptWatershaper());
 
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        Permanent tappedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         tappedBears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         // Verify indestructible
         assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -211,8 +199,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, tappedBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, tappedBears.getId());
 
         // Creature should survive — still on battlefield
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -227,9 +214,8 @@ class AdeptWatershaperTest extends BaseCardTest {
     void indestructibleSurvivesWrathOfGod() {
         harness.addToBattlefield(player1, new AdeptWatershaper());
 
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        Permanent tappedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         tappedBears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         // Opponent has a creature too
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -244,8 +230,7 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         // The tapped bears should survive (indestructible)
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -261,9 +246,8 @@ class AdeptWatershaperTest extends BaseCardTest {
     @DisplayName("Tapped creature without Watershaper is NOT protected from destroy effects")
     void tappedCreatureWithoutWatershaperNotProtected() {
         // No Watershaper on battlefield — tapped creature has no indestructible
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        Permanent tappedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         tappedBears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
 
@@ -274,43 +258,32 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, tappedBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, tappedBears.getId());
 
         // Creature should be destroyed
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
-    // ===== Indestructible prevents lethal combat damage death =====
-
     @Test
     @DisplayName("Tapped attacker with indestructible survives lethal combat damage")
     void indestructibleAttackerSurvivesCombatDamage() {
         harness.addToBattlefield(player1, new AdeptWatershaper());
 
-        // Small creature that will take lethal damage
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
-        Permanent attacker = new Permanent(smallCreature);
+        // The 2/2 will take lethal damage from a 3/4.
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.tap(); // Attackers are tapped → indestructible from Watershaper
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // Verify indestructible
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        // Big blocker that would normally kill the 1/1
-        GrizzlyBears bigBlocker = new GrizzlyBears();
-        bigBlocker.setPower(5);
-        bigBlocker.setToughness(5);
-        Permanent blocker = new Permanent(bigBlocker);
+        // The opposing Watershaper deals lethal damage to the Bears.
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new AdeptWatershaper());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1); // Index 1 (Watershaper is 0, attacker is 1)
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -323,8 +296,8 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
 
-        // Blocker should survive too (5/5, took only 1 damage)
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // The 3/4 blocker survives the two damage dealt by the Bears.
+        harness.assertOnBattlefield(player2, "Adept Watershaper");
     }
 
     @Test
@@ -332,30 +305,19 @@ class AdeptWatershaperTest extends BaseCardTest {
     void indestructibleBlockerSurvivesCombatDamage() {
         harness.addToBattlefield(player2, new AdeptWatershaper());
 
-        // Small blocker that will take lethal damage
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
-        Permanent blocker = new Permanent(smallCreature);
+        // The 2/2 blocker will take lethal damage from a 3/4.
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        blocker.tap(); // Tapped → indestructible from Watershaper
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        // Verify indestructible
-        assertThat(gqs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
-
-        // Set up blocking state
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        blocker.tap(); // Represents tapping the blocker after it was legally declared.
 
-        // Big attacker
-        GrizzlyBears bigAttacker = new GrizzlyBears();
-        bigAttacker.setPower(5);
-        bigAttacker.setToughness(5);
-        Permanent attacker = new Permanent(bigAttacker);
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        // The opposing 3/4 deals lethal damage to the Bears.
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new AdeptWatershaper());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -369,17 +331,13 @@ class AdeptWatershaperTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
-    // ===== Attacking creatures get tapped and thus become indestructible =====
-
     @Test
     @DisplayName("Attacking creatures are tapped and thus gain indestructible from Watershaper")
     void attackingCreatureGainsIndestructibleFromTapping() {
         harness.addToBattlefield(player1, new AdeptWatershaper());
 
-        GrizzlyBears creature = new GrizzlyBears();
-        Permanent attacker = new Permanent(creature);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // Before attacking — untapped, not indestructible
         assertThat(attacker.isTapped()).isFalse();
@@ -398,15 +356,12 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Bonus applied on resolve =====
-
     @Test
     @DisplayName("Indestructible applies when Adept Watershaper resolves onto battlefield")
     void indestructibleAppliesOnResolve() {
         // Existing tapped creature
-        Permanent tappedBears = new Permanent(new GrizzlyBears());
+        Permanent tappedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         tappedBears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(tappedBears);
 
         // Before Watershaper — no indestructible
         assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -421,5 +376,52 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Untapping a protected creature with lethal damage causes it to die")
+    void lethalDamageKillsAfterUntapping() {
+        harness.addToBattlefield(player1, new AdeptWatershaper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        bears.untap();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Lethal damage kills a protected creature after Watershaper dies")
+    void lethalDamageKillsAfterSourceDies() {
+        Permanent watershaper = harness.addToBattlefieldAndReturn(player1, new AdeptWatershaper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        bears.setMarkedDamage(2);
+        watershaper.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Adept Watershaper");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Indestructible does not save a creature with zero toughness")
+    void zeroToughnessStillDies() {
+        harness.addToBattlefield(player1, new AdeptWatershaper());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        bears.setToughnessModifier(-2);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
 }
 

@@ -79,4 +79,59 @@ class AesiTyrantOfGyreStraitTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("Landfall also draws for a land put onto the battlefield during an opponent's turn")
+    void drawsForLandEnteringDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new AesiTyrantOfGyreStrait());
+        harness.setHand(player1, List.of());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A landfall trigger still draws after Aesi leaves the battlefield")
+    void landfallResolvesWithoutItsSource() {
+        var aesi = harness.addToBattlefieldAndReturn(player1, new AesiTyrantOfGyreStrait());
+        harness.setHand(player1, List.of(new Forest()));
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.playLand(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(aesi);
+        gd.playerGraveyards.get(player1.getId()).add(aesi.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Losing Aesi removes the additional land permission immediately")
+    void cannotPlayAdditionalLandAfterAesiLeaves() {
+        var aesi = harness.addToBattlefieldAndReturn(player1, new AesiTyrantOfGyreStrait());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aesi);
+        gd.playerGraveyards.get(player1.getId()).add(aesi.getCard());
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }

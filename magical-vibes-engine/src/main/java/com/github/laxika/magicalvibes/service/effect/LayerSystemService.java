@@ -795,6 +795,7 @@ public class LayerSystemService {
         h = mix(h, flags);
         h = mix(h, p.getAttackTarget() == null ? 0 : p.getAttackTarget().hashCode());
         h = mix(h, p.getAttacksThisTurn());
+        h = mix(h, p.getAttacksThisGame());
         for (UUID blockingTargetId : p.getBlockingTargetIds()) {
             h = mix(h, blockingTargetId.hashCode());
         }
@@ -2126,7 +2127,8 @@ public class LayerSystemService {
                 }
             }
             case AnimatePermanentsEffect animate -> {
-                if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                if (animate.scope() == GrantScope.ALL_PERMANENTS
+                        || animate.scope() == GrantScope.OWN_PERMANENTS) {
                     for (PermanentSlot target : scopeTargets(gameData, instance, animate.scope(),
                             animate.filter(), slots, slotsById, board)) {
                         CharacteristicState state = states.get(target.permanent().getId());
@@ -3026,7 +3028,8 @@ public class LayerSystemService {
                                     }
                                 });
                 case AnimatePermanentsEffect animate -> {
-                    if (animate.scope() == GrantScope.ALL_PERMANENTS) {
+                    if (animate.scope() == GrantScope.ALL_PERMANENTS
+                            || animate.scope() == GrantScope.OWN_PERMANENTS) {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
                                     if (harvested.isBasePTOverridden()) {

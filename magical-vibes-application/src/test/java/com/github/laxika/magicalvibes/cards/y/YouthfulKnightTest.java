@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.cards.e.EndangeredArmodon;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({YouthfulKnight.class, HonorGuard.class, EndangeredArmodon.class})
+@CardUsed({YouthfulKnight.class, HonorGuard.class, CrawWurm.class})
 class YouthfulKnightTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,10 +24,7 @@ class YouthfulKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new YouthfulKnight(), "{1}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -51,10 +47,7 @@ class YouthfulKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Youthful Knight onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new YouthfulKnight(), "{1}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -65,10 +58,7 @@ class YouthfulKnightTest extends BaseCardTest {
     @Test
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new YouthfulKnight()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new YouthfulKnight(), "{1}{W}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Youthful Knight");
@@ -97,10 +87,10 @@ class YouthfulKnightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Youthful Knight dies to a 4/5 blocker despite first strike")
-    void diesTo4_5BlockerDespiteFirstStrike() {
-        // Youthful Knight (2/1 first strike) attacks, blocked by Endangered Armodon (4/5).
-        Permanent blocker = addCreatureReady(player2, new EndangeredArmodon());
+    @DisplayName("Youthful Knight dies to a 6/4 blocker despite first strike")
+    void diesTo6_4BlockerDespiteFirstStrike() {
+        // Youthful Knight (2/1 first strike) attacks, blocked by Craw Wurm (6/4).
+        Permanent blocker = addCreatureReady(player2, new CrawWurm());
 
         Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
@@ -112,7 +102,23 @@ class YouthfulKnightTest extends BaseCardTest {
         // First strike deals 2, so the blocker survives; regular damage then kills Youthful Knight.
         harness.assertNotOnBattlefield(player1, "Youthful Knight");
         harness.assertInGraveyard(player1, "Youthful Knight");
-        harness.assertOnBattlefield(player2, "Endangered Armodon");
+        harness.assertOnBattlefield(player2, "Craw Wurm");
+    }
+
+    @Test
+    @DisplayName("First strike also applies when Youthful Knight blocks")
+    void firstStrikeAppliesWhenBlocking() {
+        Permanent blocker = addCreatureReady(player1, new YouthfulKnight());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player2, new HonorGuard());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Youthful Knight");
+        harness.assertInGraveyard(player2, "Honor Guard");
     }
 }
 

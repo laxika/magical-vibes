@@ -11,10 +11,23 @@ import java.util.Set;
 public record PerpetuallyGrantKeywordsToTargetCreatureEffect(
         Set<Keyword> keywords,
         EffectSlot triggeredAbilitySlot,
-        CardEffect triggeredAbility) implements KeywordGrantingEffect {
+        CardEffect triggeredAbility,
+        PermanentPredicate filter) implements KeywordGrantingEffect {
 
     public PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword> keywords) {
-        this(keywords, null, null);
+        this(keywords, null, null, new PermanentControlledBySourceControllerPredicate());
+    }
+
+    public PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword> keywords,
+                                                          PermanentPredicate filter) {
+        this(keywords, null, null, filter);
+    }
+
+    public PerpetuallyGrantKeywordsToTargetCreatureEffect(Set<Keyword> keywords,
+                                                          EffectSlot triggeredAbilitySlot,
+                                                          CardEffect triggeredAbility) {
+        this(keywords, triggeredAbilitySlot, triggeredAbility,
+                new PermanentControlledBySourceControllerPredicate());
     }
 
     public PerpetuallyGrantKeywordsToTargetCreatureEffect {
@@ -25,16 +38,14 @@ public record PerpetuallyGrantKeywordsToTargetCreatureEffect(
         if ((triggeredAbilitySlot == null) != (triggeredAbility == null)) {
             throw new IllegalArgumentException("Triggered ability slot and effect must be provided together");
         }
+        if (filter == null) {
+            throw new IllegalArgumentException("A permanent filter is required");
+        }
     }
 
     @Override
     public GrantScope scope() {
         return GrantScope.TARGET;
-    }
-
-    @Override
-    public PermanentPredicate filter() {
-        return new PermanentControlledBySourceControllerPredicate();
     }
 
     @Override

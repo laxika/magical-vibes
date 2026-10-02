@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KorDuelist;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MistveilPlains;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AridMesa.class, Mountain.class, Plains.class, Forest.class, Island.class, KorDuelist.class})
 class AridMesaTest extends BaseCardTest {
 
     @Test
@@ -58,7 +60,7 @@ class AridMesaTest extends BaseCardTest {
         harness.passBothPriorities();
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         String chosenName = search.params().cards().getFirst().getName();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals(chosenName) && !permanent.isTapped());
@@ -71,12 +73,101 @@ class AridMesaTest extends BaseCardTest {
         activateSearch();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Mountain")
                         || permanent.getCard().getName().equals("Plains"));
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Arid Mesa cannot activate its search ability")
+    void tappedMesaCannotActivate() {
+        harness.addToBattlefield(player1, new AridMesa());
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Arid Mesa");
+        harness.assertNotInGraveyard(player1, "Arid Mesa");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chosen Plains enters under the activating player's control and leaves the library")
+    void chosenPlainsEntersUnderControllersControl() {
+        activateSearch();
+        harness.setLibrary(player2, List.of(new Mountain()));
+        var opponentsLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+        var plains = gd.playerDecks.get(player1.getId()).get(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(plains.getId()) && !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4).doesNotContain(plains);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentsLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library resolves without putting a land onto the battlefield")
+    void emptyLibraryResolves() {
+        harness.addToBattlefield(player1, new AridMesa());
+        harness.setLibrary(player1, List.of());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore - 1);
+        harness.assertInGraveyard(player1, "Arid Mesa");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching a library without Mountain or Plains cards leaves its cards in the library")
+    void noMatchingLandResolves() {
+        harness.addToBattlefield(player1, new AridMesa());
+        var forest = new Forest();
+        var island = new Island();
+        var creature = new KorDuelist();
+        harness.setLibrary(player1, List.of(forest, island, creature));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, island, creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({MistveilPlains.class})
+    @DisplayName("Arid Mesa can find a nonbasic Plains and respects its enters-tapped ability")
+    void findsNonbasicPlainsWithItsOwnEntryCondition() {
+        harness.addToBattlefield(player1, new AridMesa());
+        var land = new MistveilPlains();
+        harness.setLibrary(player1, List.of(land));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(land.getId()) && permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateSearch() {
@@ -86,8 +177,6 @@ class AridMesaTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Mountain(), new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Mountain(), new Plains(), new Forest(), new Island(), new KorDuelist()));
     }
 }

@@ -26,6 +26,8 @@ import java.util.Set;
 @CardRegistration(set = "DMC", collectorNumber = "100")
 @CardRegistration(set = "BLC", collectorNumber = "106")
 @CardRegistration(set = "NEC", collectorNumber = "84")
+@CardRegistration(set = "ONC", collectorNumber = "70")
+@CardRegistration(set = "WOC", collectorNumber = "68")
 public class GenerousGift extends Card {
 
     public GenerousGift() {

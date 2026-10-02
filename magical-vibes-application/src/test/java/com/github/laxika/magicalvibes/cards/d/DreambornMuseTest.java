@@ -30,6 +30,39 @@ class DreambornMuseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Dreamborn Muse creates its own upkeep trigger")
+    void eachDreambornMuseCreatesItsOwnUpkeepTrigger() {
+        harness.addToBattlefield(player1, new DreambornMuse());
+        harness.addToBattlefield(player1, new DreambornMuse());
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        int deckSizeAfter = gd.playerDecks.get(player1.getId()).size();
+        assertThat(deckSizeBefore - deckSizeAfter).isEqualTo(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger resolves after Dreamborn Muse leaves the battlefield")
+    void upkeepTriggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new DreambornMuse());
+        harness.setHand(player1, List.of(new DreambornMuse(), new DreambornMuse()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        int deckSizeAfter = gd.playerDecks.get(player1.getId()).size();
+        assertThat(deckSizeBefore - deckSizeAfter).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Triggers during opponent's upkeep and mills opponent by their hand size")
     void triggersDuringOpponentsUpkeep() {
         harness.addToBattlefield(player1, new DreambornMuse());

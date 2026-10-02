@@ -69,7 +69,8 @@ public class RevealMatchingCardsFromTargetHandAndKeepEffectHandler
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedMatchingHandCardChoice(
                 entry.getControllerId(), targetPlayerId, matchingCards,
-                revealEffect.chosenCardThenEffect(), "Choose one of the revealed cards.", true));
+                revealEffect.chosenCardThenEffect(), "Choose one of the revealed cards.",
+                revealEffect.keepInHand()));
     }
 
     private static GameLog.Builder appendCards(GameLog.Builder builder, List<Card> cards) {

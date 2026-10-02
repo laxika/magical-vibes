@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 @CardRegistration(set = "AFC", collectorNumber = "170")
 @CardRegistration(set = "LCC", collectorNumber = "254")
 @CardRegistration(set = "NEC", collectorNumber = "127")
+@CardRegistration(set = "WOC", collectorNumber = "130")
 public class RishkarsExpertise extends Card {
 
     public RishkarsExpertise() {

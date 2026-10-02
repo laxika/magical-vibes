@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,8 +46,7 @@ class AnaxAndCymedeKynaiosAndTiroTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .contains("Forest");
+        harness.assertInHand(player2, "Forest");
     }
 
     @Test
@@ -68,7 +66,82 @@ class AnaxAndCymedeKynaiosAndTiroTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player2, List.of(opponentLand.getId()));
 
         harness.assertOnBattlefield(player2, "Forest");
-        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
-                .doesNotContain("Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void drawnLandCanBePutOntoBattlefieldAndLandlessOpponentDraws() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1,
+                new AnaxAndCymedeKynaiosAndTiro());
+        Forest drawnLand = new Forest();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnLand));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(drawnLand.getId()));
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void controllerWithoutLandDrawsOnlyOnceWhileLandlessOpponentDraws() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1,
+                new AnaxAndCymedeKynaiosAndTiro());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    void targetingAnotherPermanentDoesNotTriggerHeroic() {
+        harness.addToBattlefield(player1, new AnaxAndCymedeKynaiosAndTiro());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, other.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentsSpellTargetingSourceDoesNotTriggerHeroic() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1,
+                new AnaxAndCymedeKynaiosAndTiro());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
     }
 }

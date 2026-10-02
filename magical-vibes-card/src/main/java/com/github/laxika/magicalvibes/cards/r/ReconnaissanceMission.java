@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "MSC", collectorNumber = "153")
 @CardRegistration(set = "MAR", collectorNumber = "59")
 @CardRegistration(set = "40K", collectorNumber = "193")
+@CardRegistration(set = "WOC", collectorNumber = "105")
 public class ReconnaissanceMission extends Card {
 
     public ReconnaissanceMission() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "114")
 @CardRegistration(set = "BRC", collectorNumber = "149")
+@CardRegistration(set = "C18", collectorNumber = "211")
 public class Mirrorworks extends Card {
 
     public Mirrorworks() {

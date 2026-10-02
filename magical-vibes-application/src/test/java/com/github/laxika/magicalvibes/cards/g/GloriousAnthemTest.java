@@ -9,10 +9,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.cards.c.CanyonWildcat;
 import com.github.laxika.magicalvibes.cards.c.CoralEel;
 
-@CardUsed({CrawWurm.class, GloriousAnthem.class, GrizzlyBears.class, CanyonWildcat.class, CoralEel.class})
+@CardUsed({CrawWurm.class, GloriousAnthem.class, GrizzlyBears.class, CoralEel.class})
 class GloriousAnthemTest extends BaseCardTest {
 
     // ===== Casting and resolving =====

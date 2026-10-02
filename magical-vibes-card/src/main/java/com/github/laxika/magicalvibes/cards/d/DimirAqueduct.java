@@ -28,6 +28,8 @@ import java.util.List;
 @CardRegistration(set = "MIC", collectorNumber = "172")
 @CardRegistration(set = "C19", collectorNumber = "239")
 @CardRegistration(set = "BRC", collectorNumber = "182")
+@CardRegistration(set = "WOC", collectorNumber = "158")
+@CardRegistration(set = "C18", collectorNumber = "242")
 public class DimirAqueduct extends Card {
 
     public DimirAqueduct() {

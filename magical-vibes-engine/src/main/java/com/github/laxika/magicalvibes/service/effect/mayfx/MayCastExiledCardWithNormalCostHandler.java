@@ -3,10 +3,14 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileReducedCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +24,8 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
     private final ExileReducedCastSupport exileReducedCastSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,8 +48,16 @@ public class MayCastExiledCardWithNormalCostHandler implements MayEffectHandlerB
             if (effect.anyManaType()) {
                 gameData.exilePlayAnyManaType.add(ability.targetCardId());
             }
+            Permanent source = ability.sourcePermanentId() == null
+                    ? ability.sourcePermanentSnapshot()
+                    : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            int genericCostReduction = effect.genericCostReduction() == null
+                    ? 0
+                    : Math.max(0, amountEvaluationService.evaluate(gameData,
+                            effect.genericCostReduction(),
+                            new AmountContext(player.getId(), source, null, 0, 0)));
             exileReducedCastSupport.castFromExileWithCostReduction(
-                    gameData, player, ability.targetCardId(), 0,
+                    gameData, player, ability.targetCardId(), genericCostReduction,
                     effect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
             return;
         }

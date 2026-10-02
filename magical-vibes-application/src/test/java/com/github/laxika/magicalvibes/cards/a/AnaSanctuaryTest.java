@@ -198,6 +198,36 @@ class AnaSanctuaryTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("The triggered ability resolves after Ana Sanctuary leaves the battlefield")
+    void resolvesAfterSanctuaryLeavesBattlefield() {
+        Permanent sanctuary = harness.addToBattlefieldAndReturn(player1, new AnaSanctuary());
+        harness.addToBattlefield(player1, new Cromat());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GladeGnarr());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sanctuary);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(5);
+        assertThat(target.getToughnessModifier()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The boost amount stays fixed when qualifying permanents leave after resolution")
+    void boostDoesNotChangeAfterResolution() {
+        harness.addToBattlefield(player1, new AnaSanctuary());
+        Permanent support = harness.addToBattlefieldAndReturn(player1, new Cromat());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GladeGnarr());
+
+        resolveTarget(target);
+        gd.playerBattlefields.get(player1.getId()).remove(support);
+
+        assertThat(target.getPowerModifier()).isEqualTo(5);
+        assertThat(target.getToughnessModifier()).isEqualTo(5);
+    }
+
     private Permanent setUpWithTarget(com.github.laxika.magicalvibes.model.Card supportPermanent) {
         harness.addToBattlefield(player1, new AnaSanctuary());
         harness.addToBattlefield(player1, supportPermanent);

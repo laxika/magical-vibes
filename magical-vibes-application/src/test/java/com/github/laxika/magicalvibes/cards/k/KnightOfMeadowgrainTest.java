@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KnightOfMeadowgrain.class, GoldmeadowStalwart.class})
 class KnightOfMeadowgrainTest extends BaseCardTest {
 
     // ===== Lifelink =====
@@ -21,16 +23,8 @@ class KnightOfMeadowgrainTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent knight = new Permanent(new KnightOfMeadowgrain());
-        knight.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(knight);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        addCreatureReady(player1, new KnightOfMeadowgrain());
+        declareAttackers(List.of(0));
 
         // Knight deals 2 combat damage: player2 loses 2, player1 gains 2 from lifelink
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -44,16 +38,12 @@ class KnightOfMeadowgrainTest extends BaseCardTest {
     void firstStrikeKillsBlockerAndKnightSurvives() {
         harness.setLife(player1, 20);
 
-        Permanent knight = new Permanent(new KnightOfMeadowgrain());
-        knight.setSummoningSick(false);
+        Permanent knight = addCreatureReady(player1, new KnightOfMeadowgrain());
         knight.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(knight);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GoldmeadowStalwart());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -61,8 +51,8 @@ class KnightOfMeadowgrainTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Knight's 2 first strike damage kills the 2/2 Grizzly Bears before it can deal damage.
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // Knight's 2 first strike damage kills the 2/2 Goldmeadow Stalwart before it can deal damage.
+        harness.assertNotOnBattlefield(player2, "Goldmeadow Stalwart");
         // Knight survives unharmed.
         harness.assertOnBattlefield(player1, "Knight of Meadowgrain");
         // Lifelink gains 2 life from the combat damage dealt to the blocker.

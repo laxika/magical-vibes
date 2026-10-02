@@ -64,10 +64,51 @@ class AbsorbingManAndTitaniaTest extends BaseCardTest {
         attacker.setAttacking(true);
         harness.setLife(player1, 20);
 
-        prepareDeclareBlockers(player2);
-        gs.declareBlockers(gd, player1, List.of());
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Doubles creature damage to another creature")
+    void doublesDamageToCreature() {
+        harness.addToBattlefield(player1, new AbsorbingManAndTitania());
+        addCreatureReady(player1, new GoblinSharpshooter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glory Seeker");
+        harness.assertInGraveyard(player2, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Doubles the card's own combat damage")
+    void doublesOwnCombatDamage() {
+        addCreatureReady(player1, new AbsorbingManAndTitania());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Doubles creature damage after its source leaves the battlefield")
+    void doublesDamageFromRemovedCreatureSource() {
+        harness.addToBattlefield(player1, new AbsorbingManAndTitania());
+        Permanent source = addCreatureReady(player1, new GoblinSharpshooter());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Goblin Sharpshooter");
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 }

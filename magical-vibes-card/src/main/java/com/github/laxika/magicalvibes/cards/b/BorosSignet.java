@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "TDC", collectorNumber = "314")
 @CardRegistration(set = "C20", collectorNumber = "239")
 @CardRegistration(set = "BLC", collectorNumber = "128")
+@CardRegistration(set = "ONC", collectorNumber = "126")
 public class BorosSignet extends Card {
 
     public BorosSignet() {

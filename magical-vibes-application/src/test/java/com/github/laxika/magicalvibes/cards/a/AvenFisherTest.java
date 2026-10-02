@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AvenFisher.class, Evacuation.class, GrizzlyBears.class, WrathOfGod.class})
@@ -42,16 +43,28 @@ class AvenFisherTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a creature without flying or reach from blocking Aven Fisher")
     void flyingPreventsGroundCreatureFromBlocking() {
-        Permanent fisher = addCreatureReady(player1, new AvenFisher());
-        fisher.setAttacking(true);
+        addCreatureReady(player1, new AvenFisher());
         addCreatureReady(player2, new GrizzlyBears());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    @DisplayName("A creature with flying can block Aven Fisher")
+    void flyingCreatureCanBlockAvenFisher() {
+        addCreatureReady(player1, new AvenFisher());
+        addCreatureReady(player2, new AvenFisher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
     }
 
     // ===== Death trigger: combat (blocker dies) =====

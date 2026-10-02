@@ -79,7 +79,10 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                     ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             int amount = amountEvaluationService.evaluate(gameData, e.dynamicManaCost(),
                     AmountContext.forStackEntry(entry, source).withControllerId(payer));
-            manaCost = "{" + amount + "}";
+            String dynamicGenericCost = "{" + amount + "}";
+            manaCost = e.manaCost() == null
+                    ? dynamicGenericCost
+                    : e.manaCost().replace("{X}", dynamicGenericCost);
         }
 
         gameData.resolvingMayEffectFromStack = true;

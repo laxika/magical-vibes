@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "FRF", collectorNumber = "23")
 @CardRegistration(set = "PIO", collectorNumber = "324")
 @CardRegistration(set = "SOC", collectorNumber = "165")
+@CardRegistration(set = "WOC", collectorNumber = "73")
+@CardRegistration(set = "C18", collectorNumber = "72")
 public class SagesReverie extends Card {
 
     public SagesReverie() {

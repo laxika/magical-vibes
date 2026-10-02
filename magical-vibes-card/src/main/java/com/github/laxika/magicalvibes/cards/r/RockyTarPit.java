@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "MIR", collectorNumber = "329")
 @CardRegistration(set = "VMA", collectorNumber = "309")
 @CardRegistration(set = "DDP", collectorNumber = "69")
+@CardRegistration(set = "C18", collectorNumber = "274")
 public class RockyTarPit extends Card {
 
     public RockyTarPit() {

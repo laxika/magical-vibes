@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
+import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,25 +22,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({AjaniGoldmane.class, AnointerPriest.class, WoodlandChangeling.class, SarkhanTheMasterless.class})
 class AjaniGoldmaneTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        AjaniGoldmane card = new AjaniGoldmane();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
 
     // ===== Casting =====
 
@@ -51,7 +40,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.PLANESWALKER_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Ajani Goldmane");
+        assertThat(entry.getCard()).isInstanceOf(AjaniGoldmane.class);
     }
 
     @Test
@@ -65,8 +54,8 @@ class AjaniGoldmaneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Ajani Goldmane"));
-        Permanent ajani = bf.stream().filter(p -> p.getCard().getName().equals("Ajani Goldmane")).findFirst().orElseThrow();
+        assertThat(bf).anyMatch(p -> p.getCard() instanceof AjaniGoldmane);
+        Permanent ajani = findPermanent(player1, "Ajani Goldmane");
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(ajani.isSummoningSick()).isFalse();
     }
@@ -78,12 +67,11 @@ class AjaniGoldmaneTest extends BaseCardTest {
     void plusOneGainsLifeAndIncreasesLoyalty() {
         Permanent ajani = addReadyAjani(player1);
 
-        int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore + 2);
@@ -95,20 +83,18 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("-1 ability puts +1/+1 counter on each creature and grants vigilance")
     void minusOnePutsCountersAndGrantsVigilance() {
         Permanent ajani = addReadyAjani(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent firstCreature = addCreatureReady(player1, new WoodlandChangeling());
+        Permanent secondCreature = addCreatureReady(player1, new WoodlandChangeling());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 4 - 1
 
-        List<Permanent> bears = findPermanents(player1, "Grizzly Bears");
-
         // Each creature should have a +1/+1 counter
-        for (Permanent bear : bears) {
-            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-            assertThat(bear.getGrantedKeywords()).contains(Keyword.VIGILANCE);
+        for (Permanent creature : List.of(firstCreature, secondCreature)) {
+            assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
         }
     }
 
@@ -116,34 +102,101 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("-1 ability does not affect opponent's creatures")
     void minusOneDoesNotAffectOpponentCreatures() {
         addReadyAjani(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new WoodlandChangeling());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent opponentBear = findPermanent(player2, "Grizzly Bears");
-
-        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(opponentBear.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
     @DisplayName("-1 counters are permanent, vigilance is until end of turn")
     void minusOneCountersArePermanentVigilanceIsTemporary() {
-        Permanent ajani = addReadyAjani(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addReadyAjani(player1);
+        Permanent creature = addCreatureReady(player1, new WoodlandChangeling());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
-
         // +1/+1 counter is permanent
-        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
         // Effective P/T: base 2/2 + 1 counter = 3/3
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("-1 ability does not affect creatures entering after it resolves")
+    void minusOneDoesNotAffectCreaturesEnteringLater() {
+        addReadyAjani(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        Permanent creatureEnteringLater = addCreatureReady(player1, new WoodlandChangeling());
+
+        assertThat(creatureEnteringLater.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, creatureEnteringLater, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("-1 affects creatures present at resolution rather than activation")
+    void minusOneAffectsCreaturesEnteringBeforeResolution() {
+        addReadyAjani(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new WoodlandChangeling());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("-1 grants vigilance to Ajani himself when he is a creature")
+    void minusOneIncludesAnimatedAjani() {
+        Permanent ajani = addReadyAjani(player1);
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheMasterless());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, ajani)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ajani.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(sarkhan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, sarkhan, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ajani, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Avatar's life-based power and toughness still receive +1/+1 counters")
+    void avatarCountersApplyAfterLifeBasedPowerToughness() {
+        Permanent ajani = addReadyAjani(player1);
+        ajani.setCounterCount(CounterType.LOYALTY, 7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent avatar = findAvatarToken();
+
+        avatar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 30);
+        assertThat(avatar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(13);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(13);
     }
 
     // ===== -6 ability: Create Avatar token =====
@@ -157,14 +210,12 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Find the Avatar token
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        Permanent avatar = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Avatar") && p.getCard().isToken())
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Avatar token not found"));
+        Permanent avatar = findAvatarToken();
+
+        assertThat(gqs.isCreature(gd, avatar)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, avatar)).containsExactly(CardColor.WHITE);
+        assertThat(avatar.getCard().getSubtypes()).containsExactly(CardSubtype.AVATAR);
 
         // P/T should equal controller's life total (20 default)
         int lifeTotal = gd.playerLifeTotals.get(player1.getId());
@@ -181,18 +232,13 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
-        Permanent avatar = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Avatar") && p.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent avatar = findAvatarToken();
 
         // Default life is 20
         assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(20);
 
         // Change life total to 10
-        gd.playerLifeTotals.put(player1.getId(), 10);
+        harness.setLife(player1, 10);
         assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(10);
         assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(10);
     }
@@ -202,14 +248,12 @@ class AjaniGoldmaneTest extends BaseCardTest {
     void avatarTokenFiresEnterTriggers() {
         Permanent ajani = addReadyAjani(player1);
         ajani.setCounterCount(CounterType.LOYALTY, 6);
-        harness.addToBattlefield(player1, new AnointerPriest());
+        addCreatureReady(player1, new AnointerPriest());
 
-        GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 2, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Anointer Priest: "whenever a creature token you control enters, you gain 1 life".
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -270,15 +314,16 @@ class AjaniGoldmaneTest extends BaseCardTest {
     void diesWhenLoyaltyReachesZeroAbilityStillResolves() {
         Permanent ajani = addReadyAjani(player1);
         ajani.setCounterCount(CounterType.LOYALTY, 1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WoodlandChangeling());
 
         // -1 ability: 1 - 1 = 0, Ajani dies to state-based actions
         harness.activateAbility(player1, 0, 1, null, null);
 
-        GameData gd = harness.getGameData();
-        // Ajani should be in graveyard
-        harness.assertNotOnBattlefield(player1, "Ajani Goldmane");
-        harness.assertInGraveyard(player1, "Ajani Goldmane");
+        // Ajani should be in the graveyard, but its ability remains on the stack.
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof AjaniGoldmane);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AjaniGoldmane);
 
         // Ability is still on the stack
         assertThat(gd.stack).hasSize(1);
@@ -286,24 +331,24 @@ class AjaniGoldmaneTest extends BaseCardTest {
         // Resolve - effects should still apply
         harness.passBothPriorities();
 
-        gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
 
-        // Bear should still have gotten the +1/+1 counter
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
-        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        // The creature should still have gotten the +1/+1 counter.
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helpers =====
 
     private Permanent addReadyAjani(Player player) {
-        AjaniGoldmane card = new AjaniGoldmane();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AjaniGoldmane());
         perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
+    }
+
+    private Permanent findAvatarToken() {
+        return findPermanent(player1, "Avatar");
     }
 }

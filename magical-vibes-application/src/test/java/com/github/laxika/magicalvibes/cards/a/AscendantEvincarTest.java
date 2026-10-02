@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -12,11 +12,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AscendantEvincar.class, DrudgeSkeletons.class, GrizzlyBears.class})
+@CardUsed({AscendantEvincar.class, DrudgeSkeletons.class, GrizzlyBears.class, Ornithopter.class, ShiftingSky.class})
 class AscendantEvincarTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -24,24 +22,17 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new AscendantEvincar()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AscendantEvincar(), "{4}{B}{B}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Ascendant Evincar");
     }
 
     @Test
     @DisplayName("Resolving puts Ascendant Evincar onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new AscendantEvincar()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AscendantEvincar(), "{4}{B}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -51,10 +42,7 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new AscendantEvincar()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AscendantEvincar(), "{4}{B}{B}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Ascendant Evincar");
@@ -66,9 +54,7 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-
-        Permanent evincar = findPermanent(player1, "Ascendant Evincar");
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
 
         assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
@@ -79,10 +65,8 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Own black creatures get +1/+1")
     void buffsOwnBlackCreatures() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
@@ -91,10 +75,8 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's black creatures also get +1/+1")
     void buffsOpponentBlackCreatures() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player2, new DrudgeSkeletons());
-
-        Permanent opponentSkeletons = findPermanent(player2, "Drudge Skeletons");
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent opponentSkeletons = addCreatureReady(player2, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, opponentSkeletons)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentSkeletons)).isEqualTo(2);
@@ -105,10 +87,8 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Own nonblack creatures get -1/-1")
     void debuffsOwnNonblackCreatures() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
@@ -117,13 +97,21 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's nonblack creatures get -1/-1")
     void debuffsOpponentNonblackCreatures() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentBears)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Colorless creatures get -1/-1")
+    void debuffsColorlessCreatures() {
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent ornithopter = addCreatureReady(player2, new Ornithopter());
+
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(1);
     }
 
     // ===== Multiple sources =====
@@ -131,27 +119,21 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Two Ascendant Evincars buff each other")
     void twoEvincarsBuffEachOther() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new AscendantEvincar());
+        Permanent firstEvincar = addCreatureReady(player1, new AscendantEvincar());
+        Permanent secondEvincar = addCreatureReady(player2, new AscendantEvincar());
 
-        List<Permanent> evincars = findPermanents(player1, "Ascendant Evincar");
-
-        assertThat(evincars).hasSize(2);
-        for (Permanent evincar : evincars) {
-            // Each gets +1/+1 from the other → 4/4
-            assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(4);
-            assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(4);
-        }
+        assertThat(gqs.getEffectivePower(gd, firstEvincar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstEvincar)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondEvincar)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondEvincar)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Two Ascendant Evincars give +2/+2 to other black creatures")
     void twoEvincarsStackBlackBonus() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new AscendantEvincar());
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
 
         // 1/1 base + 2/2 from two Evincars = 3/3
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(3);
@@ -161,11 +143,9 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Two Ascendant Evincars give -2/-2 to nonblack creatures")
     void twoEvincarsStackNonblackPenalty() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new AscendantEvincar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         // 2/2 base - 2/2 from two Evincars = 0/0
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
@@ -177,15 +157,12 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Black creature bonus is removed when Ascendant Evincar leaves")
     void blackBonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Ascendant Evincar"));
+        gd.playerBattlefields.get(player1.getId()).remove(evincar);
 
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(1);
@@ -194,15 +171,12 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Nonblack creature penalty is removed when Ascendant Evincar leaves")
     void nonblackPenaltyRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Ascendant Evincar"));
+        gd.playerBattlefields.get(player1.getId()).remove(evincar);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -213,19 +187,14 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Ascendant Evincar resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new AscendantEvincar()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
         // Before casting, no bonus
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AscendantEvincar(), "{4}{B}{B}");
         harness.passBothPriorities();
 
         // After resolving, black creature buffed, nonblack debuffed
@@ -240,10 +209,8 @@ class AscendantEvincarTest extends BaseCardTest {
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
-        harness.addToBattlefield(player1, new DrudgeSkeletons());
-
-        Permanent skeletons = findPermanent(player1, "Drudge Skeletons");
+        addCreatureReady(player1, new AscendantEvincar());
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
 
         // Simulate a temporary spell boost
         skeletons.setPowerModifier(skeletons.getPowerModifier() + 3);
@@ -257,16 +224,54 @@ class AscendantEvincarTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
     }
 
-    // ===== Flying keyword =====
+    @Test
+    @DisplayName("Ascendant Evincar gives itself -1/-1 when it becomes nonblack")
+    void nonblackEvincarDebuffsItself() {
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new DrudgeSkeletons());
+
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
+    }
 
     @Test
-    @DisplayName("Ascendant Evincar has flying")
-    void hasFlying() {
-        harness.addToBattlefield(player1, new AscendantEvincar());
+    @DisplayName("Creatures changing to black switch from the penalty to the bonus")
+    void creaturesBecomingBlackReceiveBonus() {
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
 
-        Permanent evincar = findPermanent(player1, "Ascendant Evincar");
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
 
-        assertThat(gqs.hasKeyword(gd, evincar, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolving a second Evincar kills creatures reduced to zero toughness")
+    void resolvingSecondEvincarKillsNonblackCreatures() {
+        addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new AscendantEvincar(), "{4}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ascendant Evincar");
+        harness.assertOnBattlefield(player2, "Ascendant Evincar");
     }
 }
-

@@ -155,7 +155,7 @@ class DistressTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
         // Log should indicate no valid choices
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid choices"));
+        assertThat(gameLogContains("no valid choices")).isTrue();
     }
 
     @Test
@@ -168,7 +168,7 @@ class DistressTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
+        assertThat(gameLogContains("empty")).isTrue();
     }
 
     @Test
@@ -294,7 +294,7 @@ class DistressTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals their hand"));
+        assertThat(gameLogContains("reveals their hand")).isTrue();
     }
 
     @Test

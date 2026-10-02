@@ -78,8 +78,16 @@ public class PlayerInputService {
     public void beginPerpetualCreatureCardChoice(GameData gameData, UUID playerId,
                                                   List<Integer> validIndices, String prompt,
                                                   int powerBoost, Set<Keyword> keywords) {
+        beginPerpetualCreatureCardChoice(gameData, playerId, validIndices, prompt,
+                powerBoost, keywords, false);
+    }
+
+    public void beginPerpetualCreatureCardChoice(GameData gameData, UUID playerId,
+                                                  List<Integer> validIndices, String prompt,
+                                                  int powerBoost, Set<Keyword> keywords,
+                                                  boolean grantBlitz) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualCreatureCardChoice(
-                playerId, new ArrayList<>(validIndices), prompt, powerBoost, keywords));
+                playerId, new ArrayList<>(validIndices), prompt, powerBoost, keywords, grantBlitz));
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, boolean enterTapped) {
@@ -1130,10 +1138,22 @@ public class PlayerInputService {
             boolean modesResetEachTurn, boolean consumeModes,
             List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
             UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId,
+                triggeringPermanentId, false);
+    }
+
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
+            UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId,
+            boolean rememberLastChosenMode) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
-                        consumeModes, chosenModes, triggeringCardId, attackedTargetId, triggeringPermanentId);
+                        consumeModes, chosenModes, triggeringCardId, attackedTargetId, triggeringPermanentId,
+                        rememberLastChosenMode);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)

@@ -18,14 +18,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AngelicProtectorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Targeting trigger resolves before the spell deals damage")
+    void triggerResolvesBeforeTargetingSpell() {
+        Permanent protector = harness.addToBattlefieldAndReturn(player1, new AngelicProtector());
+        harness.setHand(player2, List.of(new SearingTouch()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, protector.getId());
+
+        assertThat(protector.getToughnessModifier()).isZero();
+        assertThat(protector.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(protector.getToughnessModifier()).isEqualTo(3);
+        assertThat(protector.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(protector.getMarkedDamage()).isEqualTo(1);
+        assertThat(protector.getToughnessModifier()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protector);
+    }
+
+    @Test
+    @DisplayName("Targeting one Protector does not boost another Protector")
+    void onlyTargetedProtectorGetsBoost() {
+        Permanent targeted = harness.addToBattlefieldAndReturn(player1, new AngelicProtector());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AngelicProtector());
+        harness.setHand(player1, List.of(new SearingTouch()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, targeted.getId());
+        harness.passBothPriorities();
+
+        assertThat(targeted.getToughnessModifier()).isEqualTo(3);
+        assertThat(targeted.getMarkedDamage()).isEqualTo(1);
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.getMarkedDamage()).isZero();
+    }
+
+    @Test
     @DisplayName("Gets +0/+3 until end of turn when it becomes the target of a spell")
     void gainsBoostWhenTargetedBySpell() {
         Permanent protector = harness.addToBattlefieldAndReturn(player1, new AngelicProtector());
         harness.setHand(player2, List.of(new SearingTouch()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, protector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, protector.getId());
 
         assertThat(protector.getToughnessModifier()).isEqualTo(3);
         assertThat(protector.getEffectivePower()).isEqualTo(2);
@@ -41,10 +81,8 @@ class AngelicProtectorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SearingTouch(), new SearingTouch()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, protector.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player2, 0, protector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, protector.getId());
+        harness.castAndResolveInstant(player2, 0, protector.getId());
 
         assertThat(protector.getToughnessModifier()).isEqualTo(6);
         assertThat(protector.getEffectivePower()).isEqualTo(2);

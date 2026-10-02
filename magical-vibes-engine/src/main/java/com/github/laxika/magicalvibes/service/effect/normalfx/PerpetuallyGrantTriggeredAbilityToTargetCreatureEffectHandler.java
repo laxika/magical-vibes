@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -34,11 +35,13 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureEffectHandler
 
         for (UUID targetId : targetIds) {
             Permanent target = findPermanent(gameData, targetId);
-            if (target == null || target.getOriginalCard() == null) {
+            var targetCard = target != null && target.getOriginalCard() != null
+                    ? target.getOriginalCard() : findCardInExile(gameData, targetId);
+            if (targetCard == null) {
                 continue;
             }
 
-            UUID cardId = target.getOriginalCard().getId();
+            UUID cardId = targetCard.getId();
             gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
                 Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
                 if (existing != null) {
@@ -53,7 +56,7 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureEffectHandler
                 return Map.copyOf(updated);
             });
 
-            if (!target.getPersistentTriggeredEffects(grant.triggeredAbilitySlot())
+            if (target != null && !target.getPersistentTriggeredEffects(grant.triggeredAbilitySlot())
                     .contains(grant.triggeredAbility())) {
                 target.addPersistentTriggeredEffect(grant.triggeredAbilitySlot(),
                         grant.triggeredAbility());
@@ -70,5 +73,10 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureEffectHandler
             }
         }
         return null;
+    }
+
+    private com.github.laxika.magicalvibes.model.Card findCardInExile(GameData gameData, UUID cardId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        return exiled == null ? null : exiled.card();
     }
 }

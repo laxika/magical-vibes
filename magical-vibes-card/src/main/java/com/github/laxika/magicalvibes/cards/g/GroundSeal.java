@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedE
 @CardRegistration(set = "M13", collectorNumber = "176")
 @CardRegistration(set = "ODY", collectorNumber = "242")
 @CardRegistration(set = "WOT", collectorNumber = "54")
+@CardRegistration(set = "C18", collectorNumber = "149")
 public class GroundSeal extends Card {
 
     public GroundSeal() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.j.JhovallRider;
 import com.github.laxika.magicalvibes.cards.s.SqueeGoblinNabob;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArmsDealer.class, HuntedWumpus.class, JhovallRider.class, SqueeGoblinNabob.class})
+@CardUsed({ArmsDealer.class, BoggartShenanigans.class, HuntedWumpus.class, JhovallRider.class, SqueeGoblinNabob.class})
 class ArmsDealerTest extends BaseCardTest {
 
     @Test
@@ -127,5 +128,39 @@ class ArmsDealerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Arms Dealer");
         harness.assertNotOnBattlefield(player1, "Jhovall Rider");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a noncreature Goblin permanent")
+    void canSacrificeNoncreatureGoblin() {
+        harness.addToBattlefield(player1, new ArmsDealer());
+        var shenanigans = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        var rider = harness.addToBattlefieldAndReturn(player2, new JhovallRider());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, rider.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, shenanigans.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Arms Dealer");
+        harness.assertInGraveyard(player1, "Boggart Shenanigans");
+        harness.assertInGraveyard(player2, "Jhovall Rider");
+    }
+
+    @Test
+    @DisplayName("Can target itself and sacrifice itself, leaving no legal target on resolution")
+    void canTargetAndSacrificeItself() {
+        var dealer = harness.addToBattlefieldAndReturn(player1, new ArmsDealer());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, dealer.getId());
+        harness.assertInGraveyard(player1, "Arms Dealer");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Arms Dealer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

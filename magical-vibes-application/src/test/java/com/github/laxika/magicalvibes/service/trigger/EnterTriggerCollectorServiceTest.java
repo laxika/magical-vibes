@@ -341,7 +341,8 @@ class EnterTriggerCollectorServiceTest {
         gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
         Card entering = enteringCreature(2, 2);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
 
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
@@ -354,6 +355,7 @@ class EnterTriggerCollectorServiceTest {
         assertThat(pending.effect()).isSameAs(choice.choice());
         assertThat(pending.sourcePermanentId()).isEqualTo(sourcePermanent.getId());
         assertThat(pending.triggeringCardId()).isEqualTo(entering.getId());
+        assertThat(pending.triggeringPermanentId()).isEqualTo(enteringPermanent.getId());
         assertThat(pending.modesResetEachTurn()).isFalse();
     }
 

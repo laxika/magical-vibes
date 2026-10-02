@@ -26,6 +26,10 @@ public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, 
         this(color, additive, GrantScope.TARGET, false);
     }
 
+    public GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, GrantScope scope) {
+        this(color, additive, scope, false);
+    }
+
     public GrantColorUntilEndOfTurnEffect(CardColor color, GrantScope scope) {
         this(color, false, scope, false);
     }
@@ -39,6 +43,7 @@ public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, 
         return switch (scope) {
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             case OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF -> TargetSpec.NONE;
+            case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.benign(TargetPredicates.permanent());
         };
     }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.u.Unhinge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -90,6 +91,88 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().getId().equals(archfiend.getId()));
     }
 
+    @Test
+    @DisplayName("Insufficient permanents causes full life loss without sacrificing any")
+    void insufficientPermanentsCausesLifeLoss() {
+        setupDamageScenario(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage from a source controlled by Archfiend's controller does not trigger")
+    void ownSourceDoesNotTrigger() {
+        Permanent archfiend = harness.addToBattlefieldAndReturn(player1, new ArchfiendOfSpite());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, archfiend.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Archfiend of Spite");
+    }
+
+    @Test
+    @DisplayName("Combat damage triggers even when the damage source dies in the same combat")
+    void deadCombatSourceStillCausesLifeLoss() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent archfiend = harness.addToBattlefieldAndReturn(player2, new ArchfiendOfSpite());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        archfiend.setBlocking(true);
+        archfiend.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Archfiend of Spite");
+    }
+
+    @Test
+    @DisplayName("Lethal damage still triggers after Archfiend leaves the battlefield")
+    void lethalDamageStillTriggers() {
+        Permanent archfiend = harness.addToBattlefieldAndReturn(player2, new ArchfiendOfSpite());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player1, 0, archfiend.getId());
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Archfiend of Spite");
+        harness.assertInGraveyard(player2, "Archfiend of Spite");
+    }
+
+    @Test
+    @DisplayName("Declining madness puts the discarded card into the graveyard")
+    void decliningMadnessPutsCardInGraveyard() {
+        ArchfiendOfSpite archfiend = discardViaUnhinge();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(archfiend.getId()));
+        harness.assertInGraveyard(player1, "Archfiend of Spite");
+        harness.assertNotOnBattlefield(player1, "Archfiend of Spite");
+    }
+
     private void setupDamageScenario(int permanentCount) {
         harness.addToBattlefield(player2, new ArchfiendOfSpite());
         for (int i = 0; i < permanentCount; i++) {
@@ -99,8 +182,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID archfiendId = harness.getPermanentId(player2, "Archfiend of Spite");
-        harness.castInstant(player1, 0, archfiendId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, archfiendId);
     }
 
     private void resolveDamageTrigger() {

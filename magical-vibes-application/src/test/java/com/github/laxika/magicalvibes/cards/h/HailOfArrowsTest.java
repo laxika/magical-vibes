@@ -37,6 +37,19 @@ class HailOfArrowsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an attacking creature you control")
+    void canTargetOwnAttackingCreature() {
+        Permanent attacker = addCreatureReady(player1, new HandOfHonor());
+        attacker.setAttacking(true);
+        prepareHail(1);
+
+        harness.castInstantForX(player1, 0, 1, Map.of(attacker.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("X=0 can be cast without targets")
     void zeroDamageRequiresNoTargets() {
         prepareHail(0);
@@ -96,6 +109,19 @@ class HailOfArrowsTest extends BaseCardTest {
 
         assertThat(legalAttacker.getMarkedDamage()).isEqualTo(1);
         assertThat(illegalAttacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each selected attacker must receive at least one damage")
+    void eachSelectedAttackerMustReceiveDamage() {
+        Permanent first = addAttacker(new HandOfHonor());
+        Permanent second = addAttacker(new InnerChamberGuard());
+        prepareHail(2);
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 2,
+                        Map.of(first.getId(), 0, second.getId(), 2))
+        ).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

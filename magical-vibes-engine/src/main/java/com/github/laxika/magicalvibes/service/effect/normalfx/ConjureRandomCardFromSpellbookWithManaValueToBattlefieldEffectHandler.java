@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffectHandl
 
     private final CardCatalog cardCatalog;
     private final AmountEvaluationService amountEvaluationService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,8 +39,14 @@ public class ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect) effect;
+        var source = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         int manaValue = amountEvaluationService.evaluate(
-                gameData, conjure.manaValue(), AmountContext.forStackEntry(entry, null));
+                gameData, conjure.manaValue(), AmountContext.forStackEntry(entry, source));
         List<String> matchingNames = new ArrayList<>();
         for (String cardName : conjure.cardNames()) {
             Card card = findCard(cardName);

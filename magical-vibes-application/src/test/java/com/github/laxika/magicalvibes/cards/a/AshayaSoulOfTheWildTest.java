@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KazanduNectarpot;
+import com.github.laxika.magicalvibes.cards.t.TajuruBlightblade;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,7 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshayaSoulOfTheWild.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AshayaSoulOfTheWild.class, Forest.class, GrizzlyBears.class,
+        KazanduNectarpot.class, TajuruBlightblade.class})
 class AshayaSoulOfTheWildTest extends BaseCardTest {
 
     @Test
@@ -58,6 +61,98 @@ class AshayaSoulOfTheWildTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(token), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    void ashayaCanTapForGreenManaItself() {
+        Permanent ashaya = addCreatureReady(player1, new AshayaSoulOfTheWild());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ashaya.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void becomingALandDoesNotBypassSummoningSickness() {
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        harness.addToBattlefield(player1, new TajuruBlightblade());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void forestTypeAndManaAbilityDisappearWhenAshayaLeaves() {
+        Permanent ashaya = addCreatureReady(player1, new AshayaSoulOfTheWild());
+        Permanent creature = addCreatureReady(player1, new TajuruBlightblade());
+        assertThat(gqs.isLand(gd, creature)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, ashaya));
+
+        assertThat(gqs.isLand(gd, creature)).isFalse();
+        assertThat(gqs.effectiveBasicLandTypes(gd, creature)).doesNotContain(CardSubtype.FOREST);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    void nontokenCreatureEntersAsALandAndTriggersLandfall() {
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        harness.addToBattlefield(player1, new KazanduNectarpot());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new TajuruBlightblade());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void ashayaEnteringTriggersLandfallButExistingCreaturesBecomingLandsDoNot() {
+        harness.addToBattlefield(player1, new KazanduNectarpot());
+        harness.addToBattlefield(player1, new TajuruBlightblade());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new AshayaSoulOfTheWild());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void powerAndToughnessInHandCountOnlyLandsOnTheBattlefield() {
+        AshayaSoulOfTheWild ashaya = new AshayaSoulOfTheWild();
+        harness.setHand(player1, java.util.List.of(ashaya));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new TajuruBlightblade());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, ashaya)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, ashaya)).isEqualTo(1);
+    }
+
+    @Test
+    void powerAndToughnessInGraveyardTrackOwnersLands() {
+        AshayaSoulOfTheWild ashaya = new AshayaSoulOfTheWild();
+        gd.playerGraveyards.get(player1.getId()).add(ashaya);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, ashaya)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, ashaya)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, ashaya)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, ashaya)).isEqualTo(2);
     }
 
     private Card tokenCreature() {

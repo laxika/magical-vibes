@@ -45,6 +45,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSharesCreatureTypeWithCommanderPredicate) {
             return "creature card sharing a creature type with your commander";
         }
+        if (predicate instanceof CardSharesCreatureTypeWithLibraryCreaturePredicate) {
+            return "creature card sharing a creature type with a creature card in your library";
+        }
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
@@ -128,6 +131,9 @@ public final class CardPredicateUtils {
         }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
+        }
+        if (predicate instanceof CardManaValueEqualsSourceIntensityPredicate) {
+            return "card with mana value equal to this card's intensity";
         }
         if (predicate instanceof CardManaValueGreaterThanControllerHandSizePredicate) {
             return "card with mana value greater than the number of cards in your hand";

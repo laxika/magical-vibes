@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FaerieTauntings;
+import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,17 +14,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScionOfOona.class, SpellstutterSprite.class, GoldmeadowStalwart.class, FaerieTauntings.class})
 class ScionOfOonaTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Faeries you control =====
 
     @Test
     @DisplayName("Other Faerie creatures you control get +1/+1 and shroud")
     void buffsOtherFaeriesYouControl() {
         harness.addToBattlefield(player1, new ScionOfOona());
-        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player1, new SpellstutterSprite());
 
-        Permanent sprite = findPermanent(player1, "Cloud Sprite");
+        Permanent sprite = findPermanent(player1, "Spellstutter Sprite");
 
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(2);
@@ -46,22 +46,22 @@ class ScionOfOonaTest extends BaseCardTest {
     @DisplayName("Does not buff non-Faerie creatures")
     void doesNotBuffNonFaeries() {
         harness.addToBattlefield(player1, new ScionOfOona());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GoldmeadowStalwart());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent stalwart = findPermanent(player1, "Goldmeadow Stalwart");
 
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, stalwart, Keyword.SHROUD)).isFalse();
     }
 
     @Test
     @DisplayName("Does not buff opponent's Faerie creatures")
     void doesNotBuffOpponentFaeries() {
         harness.addToBattlefield(player1, new ScionOfOona());
-        harness.addToBattlefield(player2, new CloudSprite());
+        harness.addToBattlefield(player2, new SpellstutterSprite());
 
-        Permanent opponentSprite = findPermanent(player2, "Cloud Sprite");
+        Permanent opponentSprite = findPermanent(player2, "Spellstutter Sprite");
 
         assertThat(gqs.getEffectivePower(gd, opponentSprite)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentSprite)).isEqualTo(1);
@@ -91,9 +91,9 @@ class ScionOfOonaTest extends BaseCardTest {
     void twoScionsStackBonuses() {
         harness.addToBattlefield(player1, new ScionOfOona());
         harness.addToBattlefield(player1, new ScionOfOona());
-        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player1, new SpellstutterSprite());
 
-        Permanent sprite = findPermanent(player1, "Cloud Sprite");
+        Permanent sprite = findPermanent(player1, "Spellstutter Sprite");
 
         // 1/1 base + 1/1 from each Scion = 3/3
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(3);
@@ -106,16 +106,15 @@ class ScionOfOonaTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus is removed when Scion of Oona leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new ScionOfOona());
-        harness.addToBattlefield(player1, new CloudSprite());
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ScionOfOona());
+        harness.addToBattlefield(player1, new SpellstutterSprite());
 
-        Permanent sprite = findPermanent(player1, "Cloud Sprite");
+        Permanent sprite = findPermanent(player1, "Spellstutter Sprite");
 
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sprite, Keyword.SHROUD)).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Scion of Oona"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, scion));
 
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(1);
@@ -125,9 +124,9 @@ class ScionOfOonaTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Scion of Oona resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player1, new SpellstutterSprite());
 
-        Permanent sprite = findPermanent(player1, "Cloud Sprite");
+        Permanent sprite = findPermanent(player1, "Spellstutter Sprite");
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, sprite, Keyword.SHROUD)).isFalse();
 
@@ -140,5 +139,16 @@ class ScionOfOonaTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, sprite, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Other Faerie permanents have shroud")
+    void grantsShroudToOtherFaeriePermanents() {
+        harness.addToBattlefield(player1, new ScionOfOona());
+        harness.addToBattlefield(player1, new FaerieTauntings());
+
+        Permanent faerieTauntings = findPermanent(player1, "Faerie Tauntings");
+
+        assertThat(gqs.hasKeyword(gd, faerieTauntings, Keyword.SHROUD)).isTrue();
     }
 }

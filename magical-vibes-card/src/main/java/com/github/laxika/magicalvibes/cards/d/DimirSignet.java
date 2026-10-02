@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "226")
 @CardRegistration(set = "LCC", collectorNumber = "302")
 @CardRegistration(set = "BRC", collectorNumber = "138")
+@CardRegistration(set = "WOC", collectorNumber = "146")
+@CardRegistration(set = "C18", collectorNumber = "203")
 public class DimirSignet extends Card {
 
     public DimirSignet() {

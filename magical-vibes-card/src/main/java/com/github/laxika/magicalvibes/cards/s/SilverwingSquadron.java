@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "207")
+@CardRegistration(set = "ONC", collectorNumber = "88")
 public class SilverwingSquadron extends Card {
 
     public SilverwingSquadron() {

@@ -30,6 +30,8 @@ import java.util.List;
 @CardRegistration(set = "AFC", collectorNumber = "222")
 @CardRegistration(set = "LCC", collectorNumber = "317")
 @CardRegistration(set = "BRC", collectorNumber = "171")
+@CardRegistration(set = "WOC", collectorNumber = "151")
+@CardRegistration(set = "HOC", collectorNumber = "211")
 public class WayfarersBauble extends Card {
 
     public WayfarersBauble() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 @CardRegistration(set = "MM2", collectorNumber = "91")
 @CardRegistration(set = "ECC", collectorNumber = "84")
 @CardRegistration(set = "NCC", collectorNumber = "257")
+@CardRegistration(set = "WOC", collectorNumber = "115")
 public class PuppeteerClique extends Card {
 
     public PuppeteerClique() {

@@ -63,12 +63,14 @@ class ScryTriggerCollectorServiceTest {
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
                 EffectSlot.ON_CONTROLLER_SCRIES,
                 effect,
-                new TriggerContext.Scry(playerId));
+                new TriggerContext.Scry(playerId, 2, 3));
 
         assertThat(triggered).isTrue();
         assertThat(gameData.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getSourcePermanentId()).isEqualTo(permanent.getId());
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(2);
+            assertThat(entry.getCardsLookedAtWhileScrying()).isEqualTo(3);
         });
         verify(gameLogService).append(eq(gameData), any());
     }

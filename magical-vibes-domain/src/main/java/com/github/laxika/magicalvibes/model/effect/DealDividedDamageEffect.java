@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
 
@@ -114,6 +115,12 @@ public record DealDividedDamageEffect(
     public static DealDividedDamageEffect chosenAmongAnyTargets(DynamicAmount totalDamage) {
         return new DealDividedDamageEffect(
                 totalDamage, null, DivisionMode.CHOSEN, null, 0, true, false, false);
+    }
+
+    /** Dynamic total divided as chosen among any number of targets at resolution. */
+    public static DealDividedDamageEffect chosenAmongAnyTargetsAtResolution(DynamicAmount totalDamage) {
+        return new DealDividedDamageEffect(
+                totalDamage, null, DivisionMode.CHOSEN, new PermanentTruePredicate(), 0, true, false, true);
     }
 
     /** Fixed total divided as you choose among up to {@code maxTargets} target creatures. */

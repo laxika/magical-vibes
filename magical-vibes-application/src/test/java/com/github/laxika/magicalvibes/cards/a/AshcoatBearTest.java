@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,11 +7,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AshcoatBear.class)
+@CardUsed({AshcoatBear.class})
 class AshcoatBearTest extends BaseCardTest {
 
     @Test
@@ -21,11 +18,7 @@ class AshcoatBearTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new AshcoatBear()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.getGameService().passPriority(harness.getGameData(), player2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -37,10 +30,7 @@ class AshcoatBearTest extends BaseCardTest {
     void canCastDuringCombat() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new AshcoatBear()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(AshcoatBear.class);
@@ -49,14 +39,38 @@ class AshcoatBearTest extends BaseCardTest {
     @Test
     @DisplayName("Resolves onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new AshcoatBear()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof AshcoatBear);
+    }
+
+    @Test
+    @DisplayName("Can respond to an opponent's spell and resolves before it")
+    void canRespondToOpponentsSpell() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        AshcoatBear opponentsBear = new AshcoatBear();
+        AshcoatBear respondingBear = new AshcoatBear();
+        harness.castFromHand(player2, opponentsBear, "{1}{G}");
+        harness.castFromHand(player1, respondingBear, "{1}{G}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(respondingBear);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(opponentsBear);
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
     }
 }

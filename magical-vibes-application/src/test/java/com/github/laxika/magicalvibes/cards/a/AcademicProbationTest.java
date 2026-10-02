@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LetterOfAcceptance;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AcademicProbation.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
+        Shock.class, LetterOfAcceptance.class})
 class AcademicProbationTest extends BaseCardTest {
 
     @Test
@@ -93,10 +97,7 @@ class AcademicProbationTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker)))))
@@ -115,6 +116,87 @@ class AcademicProbationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Name mode allows a nonland card name absent from the game")
+    void nameModeAllowsNameAbsentFromGame() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new AcademicProbation()));
+        addManaForSpell();
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.handleListChoice(player1, "Shock"))
+                .doesNotThrowAnyException();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The caster may cast the chosen name and the opponent may cast it next turn")
+    void nameModeDoesNotRestrictCasterAndExpiresNextTurn() {
+        harness.setHand(player1, List.of(new AcademicProbation(), new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        addManaForSpell();
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Shock");
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Permanent mode locks a noncreature artifact, including its mana ability")
+    void permanentModeLocksNoncreatureArtifactAbilities() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LetterOfAcceptance());
+        harness.setHand(player1, List.of(new AcademicProbation()));
+        addManaForSpell();
+        harness.castModalSorcery(player1, 0, 1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, artifact), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, artifact), 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(artifact.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Letter of Acceptance");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, artifact), 1, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Letter of Acceptance");
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof Shock);
+    }
+
     private void addManaForSpell() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -126,10 +208,6 @@ class AcademicProbationTest extends BaseCardTest {
 
     private void declareAttack(Permanent creature) {
         creature.setSummoningSick(false);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(indexOf(player2, creature)));
+        declareAttackers(player2, List.of(indexOf(player2, creature)));
     }
 }

@@ -278,8 +278,12 @@ public record SpellCastTriggerEffect(
 
     /** Trigger that only fires when mana produced by a Treasure was spent to cast the spell. */
     public static SpellCastTriggerEffect usingTreasureMana(List<CardEffect> resolvedEffects) {
+        return usingTreasureMana(resolvedEffects, null);
+    }
+
+    public static SpellCastTriggerEffect usingTreasureMana(List<CardEffect> resolvedEffects, Condition intervening) {
         return new SpellCastTriggerEffect(null, resolvedEffects, null, null, null,
-                false, false, null, 0, 0, false, false, 0, true);
+                false, false, intervening, 0, 0, false, false, 0, true);
     }
 
     /** Trigger for a spell with at least two effective card types. */

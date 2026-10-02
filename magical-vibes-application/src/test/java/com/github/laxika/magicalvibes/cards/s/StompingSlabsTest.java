@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,11 +16,12 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+@CardUsed({StompingSlabs.class, ElvishWarrior.class})
 class StompingSlabsTest extends BaseCardTest {
 
     private List<Card> filler(int count) {
         List<Card> cards = new ArrayList<>();
-        IntStream.range(0, count).forEach(i -> cards.add(new GrizzlyBears()));
+        IntStream.range(0, count).forEach(i -> cards.add(new ElvishWarrior()));
         return cards;
     }
 
@@ -47,6 +49,22 @@ class StompingSlabsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A revealed copy deals damage only after the revealed cards are bottomed")
+    void copyRevealedDamageWaitsForBottoming() {
+        harness.setLibrary(player1, libraryWithCopy());
+
+        castAt(player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(IntStream.range(0, reorder.size()).boxed().toList()));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
     @DisplayName("No damage is dealt when no copy of Stomping Slabs is revealed")
     void noCopyRevealedDealsNoDamage() {
         harness.setLibrary(player1, filler(7));
@@ -59,17 +77,47 @@ class StompingSlabsTest extends BaseCardTest {
     @Test
     @DisplayName("A revealed copy deals 7 damage to a target creature, destroying it")
     void copyRevealedDamagesCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new ElvishWarrior());
         harness.setLibrary(player1, libraryWithCopy());
 
-        castAt(harness.getPermanentId(player2, "Grizzly Bears"));
+        castAt(harness.getPermanentId(player2, "Elvish Warrior"));
 
         // Finish bottoming the revealed cards so the lethal-damage state-based check runs.
         List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(IntStream.range(0, reorder.size()).boxed().toList()));
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("A short library reveals all available cards")
+    void shortLibraryRevealsAllAvailableCards() {
+        List<Card> library = List.of(new ElvishWarrior(), new StompingSlabs());
+        harness.setLibrary(player1, library);
+
+        castAt(player2.getId());
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactlyElementsOf(library);
+
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(1), library.get(0));
+    }
+
+    @Test
+    @DisplayName("An empty library reveals no cards and deals no damage")
+    void emptyLibraryDealsNoDamage() {
+        harness.setLibrary(player1, List.of());
+
+        castAt(player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -89,5 +137,25 @@ class StompingSlabsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("Revealed cards can be put on the bottom in a chosen order")
+    void revealedCardsCanBeReordered() {
+        harness.setLibrary(player1, libraryWithCopy());
+
+        castAt(player2.getId());
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        List<Card> revealedCards = List.copyOf(reorder.cards());
+        List<Integer> order = IntStream.range(0, reorder.cards().size())
+                .map(i -> reorder.cards().size() - 1 - i)
+                .boxed()
+                .toList();
+        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(order));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyElementsOf(order.stream().map(revealedCards::get).toList());
     }
 }

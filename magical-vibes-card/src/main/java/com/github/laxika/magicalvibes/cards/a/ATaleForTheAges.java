@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 public class ATaleForTheAges extends Card {
 
     public ATaleForTheAges() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEnchantedPredicate()));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,9 +35,7 @@ class ArmoryMiceTest extends BaseCardTest {
     @DisplayName("Does not count lands toward celebration")
     void doesNotCountLands() {
         Permanent mice = castArmoryMice();
-        gd.permanentsEnteredBattlefieldThisTurn
-                .computeIfAbsent(player1.getId(), ignored -> new ArrayList<>())
-                .add(new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
 
         assertThat(gqs.getEffectiveToughness(gd, mice)).isEqualTo(1);
     }
@@ -56,6 +53,39 @@ class ArmoryMiceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveToughness(gd, mice)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's nonland entries do not enable celebration")
+    void doesNotCountOpponentEntries() {
+        Permanent mice = castArmoryMice();
+
+        harness.enterBattlefieldAndReturn(player2, new ArmoryMice());
+        harness.enterBattlefieldAndReturn(player2, new ArmoryMice());
+
+        assertThat(gqs.getEffectiveToughness(gd, mice)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts entries before Armory Mice arrives and includes its own entry")
+    void countsEarlierEntriesAndItsOwnEntry() {
+        harness.enterBattlefieldAndReturn(player1, new ArmoryMice());
+
+        Permanent mice = castArmoryMice();
+
+        assertThat(gqs.getEffectivePower(gd, mice)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mice)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("More than two entries do not increase the celebration bonus")
+    void bonusDoesNotScaleWithAdditionalEntries() {
+        Permanent mice = castArmoryMice();
+        harness.enterBattlefieldAndReturn(player1, new ArmoryMice());
+        harness.enterBattlefieldAndReturn(player1, new ArmoryMice());
+
+        assertThat(gqs.getEffectivePower(gd, mice)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mice)).isEqualTo(3);
     }
 
     private Permanent castArmoryMice() {

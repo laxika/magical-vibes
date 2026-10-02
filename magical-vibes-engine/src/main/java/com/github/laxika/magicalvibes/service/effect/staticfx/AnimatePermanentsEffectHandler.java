@@ -28,7 +28,8 @@ public class AnimatePermanentsEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var animate = (AnimatePermanentsEffect) effect;
-        if (animate.scope() != GrantScope.ALL_PERMANENTS
+        if ((animate.scope() != GrantScope.ALL_PERMANENTS
+                && (animate.scope() != GrantScope.OWN_PERMANENTS || !context.targetOnSameBattlefield()))
                 || !support.matchesStaticFilter(context, context.target(), animate.filter())) {
             return;
         }

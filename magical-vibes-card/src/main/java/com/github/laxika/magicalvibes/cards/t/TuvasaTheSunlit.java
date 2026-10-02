@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1328")
+@CardRegistration(set = "C18", collectorNumber = "47")
 public class TuvasaTheSunlit extends Card {
 
     public TuvasaTheSunlit() {

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "284")
 @CardRegistration(set = "C21", collectorNumber = "171")
 @CardRegistration(set = "BRC", collectorNumber = "117")
+@CardRegistration(set = "C18", collectorNumber = "124")
 public class HellkiteIgniter extends Card {
 
     public HellkiteIgniter() {

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "GN3", collectorNumber = "9")
 @CardRegistration(set = "FCA", collectorNumber = "22")
 @CardRegistration(set = "CMM", collectorNumber = "20")
+@CardRegistration(set = "WOC", collectorNumber = "64")
 public class DanithaCapashenParagon extends Card {
 
     public DanithaCapashenParagon() {

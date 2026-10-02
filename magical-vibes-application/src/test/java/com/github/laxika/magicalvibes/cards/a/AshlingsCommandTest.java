@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AshlingsCommand.class, AirElemental.class, GrizzlyBears.class, Forest.class, Island.class})
 class AshlingsCommandTest extends BaseCardTest {
 
     @Test
@@ -69,5 +71,61 @@ class AshlingsCommandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{0, 3},
                 List.of(opponentElemental.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void copyModeRejectsNonElementalControlledByCaster() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AshlingsCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{0, 3},
+                List.of(bears.getId(), player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void illegalCopyTargetDoesNotPreventTreasuresForLegalPlayerTarget() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new AshlingsCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{0, 3},
+                List.of(elemental.getId(), player2.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(elemental);
+        gd.playerGraveyards.get(player1.getId()).add(elemental.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .hasSize(2)
+                .allMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Treasure"));
+    }
+
+    @Test
+    void damageAndTreasuresUseTheirOwnPlayerTargets() {
+        Permanent friendlyElemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent enemyElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AshlingsCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{2, 3},
+                List.of(player2.getId(), player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(friendlyElemental.getMarkedDamage()).isZero();
+        assertThat(enemyElemental.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allMatch(permanent -> permanent.getCard().getName().equals("Treasure"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(enemyElemental);
     }
 }

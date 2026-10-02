@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CribSwap;
+import com.github.laxika.magicalvibes.cards.d.Dawnfluke;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,12 +18,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThoughtweftTrio.class, GoldmeadowStalwart.class, Dawnfluke.class, CribSwap.class})
 class ThoughtweftTrioTest extends BaseCardTest {
 
     private void castThoughtweftTrio() {
-        harness.setHand(player1, List.of(new ThoughtweftTrio()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThoughtweftTrio(), "{2}{W}{W}");
         harness.passBothPriorities(); // resolve creature spell -> ETB on stack
     }
 
@@ -42,7 +42,7 @@ class ThoughtweftTrioTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when only a non-Kithkin creature is present")
     void autoSacrificesWithOnlyNonKithkin() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Dawnfluke());
         castThoughtweftTrio();
         harness.passBothPriorities();
 
@@ -91,8 +91,8 @@ class ThoughtweftTrioTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new CribSwap()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
         UUID trioId = harness.getPermanentId(player1, "Thoughtweft Trio");
         harness.castInstant(player1, 0, trioId);
@@ -105,26 +105,37 @@ class ThoughtweftTrioTest extends BaseCardTest {
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 
+    @Test
+    @DisplayName("Does nothing if Thoughtweft Trio leaves before its champion ability resolves")
+    void championAbilityDoesNothingIfTrioLeavesBeforeResolution() {
+        castThoughtweftTrio();
+
+        UUID trioId = harness.getPermanentId(player1, "Thoughtweft Trio");
+        harness.setHand(player1, List.of(new CribSwap()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0, trioId);
+        harness.passBothPriorities(); // resolve Crib Swap
+        harness.passBothPriorities(); // resolve the now-source-less champion ability
+
+        harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Thoughtweft Trio"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     // ===== Can block any number of creatures =====
 
     @Test
     @DisplayName("Thoughtweft Trio can block three attackers at once")
     void canBlockThreeAttackers() {
-        Permanent trioPerm = new Permanent(new ThoughtweftTrio());
-        trioPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(trioPerm);
+        Permanent trioPerm = addCreatureReady(player2, new ThoughtweftTrio());
 
         for (int i = 0; i < 3; i++) {
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
-            atkPerm.setSummoningSick(false);
+            Permanent atkPerm = addCreatureReady(player1, new GoldmeadowStalwart());
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),

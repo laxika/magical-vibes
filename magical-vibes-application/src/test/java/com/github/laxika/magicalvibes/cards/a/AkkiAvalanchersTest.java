@@ -100,4 +100,63 @@ class AkkiAvalanchersTest extends BaseCardTest {
                 .extracting(Permanent::getId)
                 .containsExactly(opponentForest.getId());
     }
+
+    @Test
+    @DisplayName("Land is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent akki = harness.addToBattlefieldAndReturn(player1, new AkkiAvalanchers());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(akki.getEffectivePower()).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+
+        harness.passBothPriorities();
+        assertThat(akki.getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each copy can activate once in the same turn")
+    void copiesHaveIndependentActivationLimits() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AkkiAvalanchers());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AkkiAvalanchers());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Activation limit resets on the opponent's turn")
+    void canActivateAgainOnOpponentsTurn() {
+        Permanent akki = harness.addToBattlefieldAndReturn(player1, new AkkiAvalanchers());
+        harness.addToBattlefield(player1, new Forest());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(akki.getEffectivePower()).isEqualTo(1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(akki.getEffectivePower()).isEqualTo(3);
+        assertThat(akki.getEffectiveToughness()).isEqualTo(1);
+    }
 }

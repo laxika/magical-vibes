@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -62,6 +64,61 @@ class AncientCopperDragonTest extends BaseCardTest {
         addCreatureReady(player1, new AncientCopperDragon());
         declareAttackers(List.of(0));
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a creature does not create Treasures")
+    void blockedDragonDoesNotCreateTreasures() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(12));
+        addCreatureReady(player1, new AncientCopperDragon());
+        addCreatureReady(player2, new AncientCopperDragon());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Ancient Copper Dragon");
+        harness.assertInGraveyard(player2, "Ancient Copper Dragon");
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("The defending player receives no Treasures from the attacker's trigger")
+    void treasuresBelongToTriggerController() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(9));
+        addCreatureReady(player2, new AncientCopperDragon());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(9);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(findPermanents(player2, "Treasure")).allSatisfy(treasure ->
+                assertThat(treasure.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("The combat-damage trigger resolves after its source leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(10));
+        var dragon = addCreatureReady(player1, new AncientCopperDragon());
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareAttackers(List.of(0)));
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(dragon);
+        gd.playerGraveyards.get(player1.getId()).add(dragon.getCard());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(10);
+        assertThat(countPermanents(player2, "Treasure")).isZero();
     }
 
     private static final class FixedD20RollService extends D20RollService {

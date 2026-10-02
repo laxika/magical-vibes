@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,15 +17,20 @@ class JeditsDragoonsTest extends BaseCardTest {
     void entersAndControllerGainsLife() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 17);
-        harness.setHand(player1, List.of(new JeditsDragoons()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new JeditsDragoons(), "{5}{W}");
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Vigilance keeps it untapped when it attacks")
+    void vigilanceKeepsItUntappedWhenAttacking() {
+        var dragoons = addCreatureReady(player1, new JeditsDragoons());
+
+        declareAttackers(List.of(0));
+
+        assertThat(dragoons.isTapped()).isFalse();
     }
 }

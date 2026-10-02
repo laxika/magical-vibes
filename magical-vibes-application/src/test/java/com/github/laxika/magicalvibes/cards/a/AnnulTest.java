@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BlinkmothUrn;
 import com.github.laxika.magicalvibes.cards.n.NuisanceEngine;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.SeethingSong;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,8 +17,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Annul.class, AuriokBladewarden.class, BlinkmothUrn.class, NuisanceEngine.class,
-        RuleOfLaw.class, SeethingSong.class})
+        Ornithopter.class, RuleOfLaw.class, SeethingSong.class})
 class AnnulTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counters an artifact creature spell")
+    void countersArtifactCreatureSpell() {
+        Ornithopter ornithopter = new Ornithopter();
+        harness.castFromHand(player1, ornithopter, "{0}");
+
+        harness.setHand(player2, List.of(new Annul()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ornithopter.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player2, "Annul");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own artifact spell")
+    void countersOwnArtifactSpell() {
+        NuisanceEngine nuisanceEngine = new NuisanceEngine();
+        harness.castFromHand(player1, nuisanceEngine, "{3}");
+
+        harness.setHand(player1, List.of(new Annul()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, nuisanceEngine.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Nuisance Engine");
+        harness.assertNotOnBattlefield(player1, "Nuisance Engine");
+        harness.assertInGraveyard(player1, "Annul");
+    }
 
     @Test
     @DisplayName("Counters an artifact spell")

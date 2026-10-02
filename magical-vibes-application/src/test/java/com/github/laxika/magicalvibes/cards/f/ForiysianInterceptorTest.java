@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,8 +15,34 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForiysianInterceptor.class, GrizzlyBears.class})
+@CardUsed({ForiysianInterceptor.class, AshcoatBear.class})
 class ForiysianInterceptorTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Foriysian Interceptor cannot attack because it has defender")
+    void cannotAttackBecauseOfDefender() {
+        addCreatureReady(player1, new ForiysianInterceptor());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Foriysian Interceptor can be cast during an opponent's turn because it has flash")
+    void canBeCastDuringOpponentsTurnBecauseOfFlash() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new ForiysianInterceptor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passPriority(player2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Foriysian Interceptor");
+    }
 
     @Test
     @DisplayName("Foriysian Interceptor can block two attackers")
@@ -25,7 +50,7 @@ class ForiysianInterceptorTest extends BaseCardTest {
         Permanent interceptor = addInterceptor();
         int interceptorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(interceptor);
         addAttackers(2);
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(interceptorIndex, 0),
@@ -41,7 +66,7 @@ class ForiysianInterceptorTest extends BaseCardTest {
         Permanent interceptor = addInterceptor();
         int interceptorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(interceptor);
         addAttackers(3);
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(interceptorIndex, 0),
@@ -56,10 +81,10 @@ class ForiysianInterceptorTest extends BaseCardTest {
     @DisplayName("Foriysian Interceptor does not grant additional blocks to other creatures")
     void doesNotGrantAdditionalBlocksToOtherCreatures() {
         addInterceptor();
-        Permanent bears = addReadyCreature(player2);
+        Permanent bears = addCreatureReady(player2, new AshcoatBear());
         int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
         addAttackers(2);
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(bearsIndex, 0),
@@ -70,31 +95,13 @@ class ForiysianInterceptorTest extends BaseCardTest {
     }
 
     private Permanent addInterceptor() {
-        return addReadyCreature(player2, new ForiysianInterceptor());
-    }
-
-    private Permanent addReadyCreature(Player player) {
-        return addReadyCreature(player, new GrizzlyBears());
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player2, new ForiysianInterceptor());
     }
 
     private void addAttackers(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent attacker = addReadyCreature(player1);
+            Permanent attacker = addCreatureReady(player1, new AshcoatBear());
             attacker.setAttacking(true);
         }
-    }
-
-    private void beginBlockerDeclaration() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }

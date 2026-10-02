@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "VMA", collectorNumber = "62")
 @CardRegistration(set = "DMR", collectorNumber = "43")
 @CardRegistration(set = "MOC", collectorNumber = "219")
+@CardRegistration(set = "WOC", collectorNumber = "86")
 public class CloudOfFaeries extends Card {
 
     public CloudOfFaeries() {

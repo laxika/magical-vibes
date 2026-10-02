@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({AncientAnimus.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, MirriCatWarrior.class})
 class AncientAnimusTest extends BaseCardTest {
 
     @Test
@@ -32,8 +34,7 @@ class AncientAnimusTest extends BaseCardTest {
 
         UUID mirriId = harness.getPermanentId(player1, "Mirri, Cat Warrior");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(mirriId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(mirriId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -55,8 +56,7 @@ class AncientAnimusTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(bearId, elvesId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bearId, elvesId));
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -79,10 +79,9 @@ class AncientAnimusTest extends BaseCardTest {
 
         UUID mirriId = harness.getPermanentId(player1, "Mirri, Cat Warrior");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castInstant(player1, 0, List.of(mirriId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(mirriId, giantId));
 
-        // Both should trade: Mirri 3/4 with counter, takes 3 damage -> survives at 1
+        // Mirri 3/4 with counter takes 3 damage and survives.
         // Hill Giant 3/3, takes 3 damage -> dies
         harness.assertOnBattlefield(player1, "Mirri, Cat Warrior");
         harness.assertNotOnBattlefield(player2, "Hill Giant");
@@ -100,8 +99,7 @@ class AncientAnimusTest extends BaseCardTest {
 
         UUID myBearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID theirBearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, List.of(myBearId, theirBearId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(myBearId, theirBearId));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -142,6 +140,41 @@ class AncientAnimusTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(id1, id2)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void legendaryCreatureStillGetsCounterWhenOpponentTargetLeaves() {
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriCatWarrior());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new AncientAnimus()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(mirri.getId(), elves.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(elves);
+        harness.passBothPriorities();
+
+        assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(mirri.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Mirri, Cat Warrior");
+        harness.assertInGraveyard(player1, "Ancient Animus");
+    }
+
+    @Test
+    void neitherCreatureFightsWhenOpponentTargetChangesController() {
+        Permanent mirri = harness.addToBattlefieldAndReturn(player1, new MirriCatWarrior());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new AncientAnimus()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(mirri.getId(), elves.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(elves);
+        gd.playerBattlefields.get(player1.getId()).add(elves);
+        harness.passBothPriorities();
+
+        assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(mirri.getMarkedDamage()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
     }
 
     @Test

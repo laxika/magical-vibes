@@ -23,6 +23,8 @@ import java.util.Set;
 @CardRegistration(set = "TDC", collectorNumber = "346")
 @CardRegistration(set = "MKC", collectorNumber = "253")
 @CardRegistration(set = "BLC", collectorNumber = "298")
+@CardRegistration(set = "ONC", collectorNumber = "149")
+@CardRegistration(set = "WOC", collectorNumber = "154")
 public class CastleArdenvale extends Card {
 
     public CastleArdenvale() {

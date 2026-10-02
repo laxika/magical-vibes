@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCastTargetInstantOrSorceryFromGraveyardEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "227")
+@CardRegistration(set = "WOC", collectorNumber = "139")
 public class HaloForager extends Card {
 
     public HaloForager() {

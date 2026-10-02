@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 
 @CardRegistration(set = "JUD", collectorNumber = "43")
 @CardRegistration(set = "HOP", collectorNumber = "10")
+@CardRegistration(set = "WOC", collectorNumber = "98")
 public class KeepWatch extends Card {
 
     public KeepWatch() {

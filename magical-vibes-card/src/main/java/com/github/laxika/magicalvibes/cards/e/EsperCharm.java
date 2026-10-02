@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "167")
 @CardRegistration(set = "MB1", collectorNumber = "179")
+@CardRegistration(set = "C18", collectorNumber = "179")
 public class EsperCharm extends Card {
 
     public EsperCharm() {

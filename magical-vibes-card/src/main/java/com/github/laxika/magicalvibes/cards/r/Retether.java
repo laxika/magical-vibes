@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "13")
+@CardRegistration(set = "WOC", collectorNumber = "72")
 public class Retether extends Card {
 
     public Retether() {

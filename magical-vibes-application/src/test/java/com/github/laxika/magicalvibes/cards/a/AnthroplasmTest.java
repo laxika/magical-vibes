@@ -84,9 +84,58 @@ class AnthroplasmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Choosing zero removes all counters and Anthroplasm dies after resolution")
+    void zeroCountersCausesDeathAfterResolution() {
+        Permanent anthroplasm = addReadyAnthroplasm(2);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, 0, null, null);
+
+        assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Anthroplasm");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Anthroplasm");
+        harness.assertInGraveyard(player1, "Anthroplasm");
+    }
+
+    @Test
+    @DisplayName("Counters are removed on resolution rather than as an activation cost")
+    void countersRemainUntilResolution() {
+        Permanent anthroplasm = addReadyAnthroplasm(5);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, 3, null, null);
+
+        assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Anthroplasm");
+        harness.assertNotInGraveyard(player1, "Anthroplasm");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent anthroplasm = addReadyAnthroplasm(2);
+        anthroplasm.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(anthroplasm.isTapped()).isFalse();
+        assertThat(anthroplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent addReadyAnthroplasm(int counters) {
-        Permanent anthroplasm = harness.addToBattlefieldAndReturn(player1, new Anthroplasm());
-        anthroplasm.setSummoningSick(false);
+        Permanent anthroplasm = addCreatureReady(player1, new Anthroplasm());
         anthroplasm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
         return anthroplasm;
     }

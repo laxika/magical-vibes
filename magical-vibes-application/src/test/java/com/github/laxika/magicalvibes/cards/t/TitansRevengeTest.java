@@ -1,33 +1,39 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
+import com.github.laxika.magicalvibes.cards.m.Mutavault;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TitansRevenge.class, MothdustChangeling.class, Mutavault.class})
 class TitansRevengeTest extends BaseCardTest {
 
-    private void castAtPlayer2(int x) {
+    private void castAtTarget(int x, UUID targetId) {
         harness.setHand(player1, List.of(new TitansRevenge()));
         harness.addMana(player1, ManaColor.RED, 2 + x);
-        harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, x, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, x, targetId);
+    }
+
+    private void castAtPlayer2(int x) {
+        harness.setLife(player2, 20);
+        castAtTarget(x, player2.getId());
     }
 
     @Test
     @DisplayName("Deals X damage to any target")
     void dealsXDamageToTarget() {
         // Equal mana values on top → clash is a loss, isolating the damage effect.
-        gd.playerDecks.get(player1.getId()).addFirst(new Forest());
-        gd.playerDecks.get(player2.getId()).addFirst(new Forest());
+        harness.setLibrary(player1, List.of(new Mutavault()));
+        harness.setLibrary(player2, List.of(new Mutavault()));
 
         castAtPlayer2(4);
 
@@ -35,11 +41,36 @@ class TitansRevengeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals X damage to a creature target")
+    void dealsXDamageToCreatureTarget() {
+        MothdustChangeling target = new MothdustChangeling();
+        harness.addToBattlefield(player2, target);
+        harness.setLibrary(player1, List.of(new Mutavault()));
+        harness.setLibrary(player2, List.of(new Mutavault()));
+
+        castAtTarget(1, harness.getPermanentId(player2, "Mothdust Changeling"));
+
+        harness.assertNotOnBattlefield(player2, "Mothdust Changeling");
+    }
+
+    @Test
+    @DisplayName("X can be zero while a won clash returns Titan's Revenge")
+    void zeroDamageStillReturnsSpellAfterWinningClash() {
+        harness.setLibrary(player1, List.of(new MothdustChangeling()));
+        harness.setLibrary(player2, List.of(new Mutavault()));
+
+        castAtPlayer2(0);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInHand(player1, "Titan's Revenge");
+    }
+
+    @Test
     @DisplayName("Winning the clash returns Titan's Revenge to its owner's hand")
     void wonClashReturnsSpellToHand() {
-        // Higher mana value on top for player1 (Grizzly Bears MV 2 > Forest MV 0) → player1 wins.
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).addFirst(new Forest());
+        // Higher mana value on top for player1 (Mothdust Changeling MV 1 > Mutavault MV 0) → player1 wins.
+        harness.setLibrary(player1, List.of(new MothdustChangeling()));
+        harness.setLibrary(player2, List.of(new Mutavault()));
 
         castAtPlayer2(3);
 
@@ -50,9 +81,9 @@ class TitansRevengeTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the clash sends Titan's Revenge to the graveyard")
     void lostClashSendsSpellToGraveyard() {
-        // Lower mana value on top for player1 (Forest MV 0 < Grizzly Bears MV 2) → player1 loses.
-        gd.playerDecks.get(player1.getId()).addFirst(new Forest());
-        gd.playerDecks.get(player2.getId()).addFirst(new GrizzlyBears());
+        // Lower mana value on top for player1 (Mutavault MV 0 < Mothdust Changeling MV 1) → player1 loses.
+        harness.setLibrary(player1, List.of(new Mutavault()));
+        harness.setLibrary(player2, List.of(new MothdustChangeling()));
 
         castAtPlayer2(3);
 

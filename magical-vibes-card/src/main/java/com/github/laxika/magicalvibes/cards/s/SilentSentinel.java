@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "BNG", collectorNumber = "26")
 @CardRegistration(set = "C15", collectorNumber = "81")
+@CardRegistration(set = "C18", collectorNumber = "75")
 public class SilentSentinel extends Card {
 
     public SilentSentinel() {

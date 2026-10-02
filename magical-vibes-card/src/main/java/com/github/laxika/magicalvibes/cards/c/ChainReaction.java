@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "NCC", collectorNumber = "265")
 @CardRegistration(set = "AFC", collectorNumber = "116")
 @CardRegistration(set = "NEC", collectorNumber = "103")
+@CardRegistration(set = "ONC", collectorNumber = "97")
+@CardRegistration(set = "C18", collectorNumber = "121")
 public class ChainReaction extends Card {
 
     public ChainReaction() {

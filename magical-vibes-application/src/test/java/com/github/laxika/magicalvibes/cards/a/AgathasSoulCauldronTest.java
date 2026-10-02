@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -23,12 +23,17 @@ class AgathasSoulCauldronTest extends BaseCardTest {
 
     @Test
     void exilesCreatureAndPutsCounterOnTargetCreature() {
-        Permanent cauldron = addReady(player1, new AgathasSoulCauldron());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Card skeletons = new DrudgeSkeletons();
         harness.setGraveyard(player1, new ArrayList<>(List.of(skeletons)));
 
-        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(skeletons.getId(), bears.getId()));
+        harness.activateAbility(player1, 0, null, skeletons.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(cauldron.getId())).containsExactly(skeletons);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -37,21 +42,22 @@ class AgathasSoulCauldronTest extends BaseCardTest {
 
     @Test
     void doesNotPutCounterWhenExiledCardIsNotCreature() {
-        addReady(player1, new AgathasSoulCauldron());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Card rod = new RodOfRuin();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
 
-        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(rod.getId(), bears.getId()));
+        harness.activateAbility(player1, 0, null, rod.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getCardsExiledByPermanent(cauldron.getId())).containsExactly(rod);
     }
 
     @Test
     void counteredCreatureGainsActivatedAbilitiesOfExiledCreatureAndCanUseAnyManaColor() {
-        Permanent cauldron = addReady(player1, new AgathasSoulCauldron());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Card skeletons = new DrudgeSkeletons();
         gd.addToExile(player1.getId(), skeletons, cauldron.getId());
@@ -66,8 +72,8 @@ class AgathasSoulCauldronTest extends BaseCardTest {
 
     @Test
     void creatureWithoutCounterDoesNotGainExiledCreatureAbilities() {
-        Permanent cauldron = addReady(player1, new AgathasSoulCauldron());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         gd.addToExile(player1.getId(), new DrudgeSkeletons(), cauldron.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
@@ -75,9 +81,56 @@ class AgathasSoulCauldronTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void canExileOpponentsCreatureWithoutControllingAnyCreatures() {
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Card skeletons = new DrudgeSkeletons();
+        harness.setGraveyard(player2, new ArrayList<>(List.of(skeletons)));
+
+        harness.activateAbility(player1, 0, null, skeletons.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(cauldron.getId())).containsExactly(skeletons);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void nativeCreatureAbilityCanUseAnyColorWithoutCounters() {
+        addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent skeletons = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(skeletons.getRegenerationShield()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsCounteredCreatureDoesNotGainAbilities() {
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.addToExile(player1.getId(), new DrudgeSkeletons(), cauldron.getId());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void removingLastCounterRemovesGrantedAbility() {
+        Permanent cauldron = addCreatureReady(player1, new AgathasSoulCauldron());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.addToExile(player1.getId(), new DrudgeSkeletons(), cauldron.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

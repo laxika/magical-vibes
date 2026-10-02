@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,14 +17,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherChanneler.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({AetherChanneler.class, Forest.class, AcademyWall.class, Island.class})
 class AetherChannelerTest extends BaseCardTest {
 
     @Test
     @DisplayName("The token mode creates a 1/1 white Bird with flying")
     void createsBirdToken() {
         cast(0);
-        resolveCreatureAndEtb();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()
@@ -33,6 +33,7 @@ class AetherChannelerTest extends BaseCardTest {
                 .satisfies(bird -> {
                     assertThat(bird.getCard().getPower()).isEqualTo(1);
                     assertThat(bird.getCard().getToughness()).isEqualTo(1);
+                    assertThat(bird.getCard().getColor()).isEqualTo(CardColor.WHITE);
                     assertThat(gqs.hasKeyword(gd, bird, Keyword.FLYING)).isTrue();
                 });
     }
@@ -42,7 +43,7 @@ class AetherChannelerTest extends BaseCardTest {
     void drawsCard() {
         harness.setLibrary(player1, List.of(new Forest()));
         cast(2);
-        resolveCreatureAndEtb();
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card instanceof Forest);
@@ -51,12 +52,12 @@ class AetherChannelerTest extends BaseCardTest {
     @Test
     @DisplayName("The bounce mode returns another nonland permanent to its owner's hand")
     void returnsAnotherNonlandPermanent() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        cast(1, bears.getId());
-        resolveCreatureAndEtb();
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new AcademyWall());
+        cast(1, wall.getId());
+        harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Academy Wall");
+        harness.assertInHand(player2, "Academy Wall");
     }
 
     @Test
@@ -66,17 +67,76 @@ class AetherChannelerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(1, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handleListChoice(player1, "Create a 1/1 white Bird creature token with flying");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bird");
+    }
+
+    @Test
+    @DisplayName("The bounce mode cannot target Aether Channeler itself")
+    void cannotBounceItself() {
+        harness.setHand(player1, List.of(new AetherChanneler()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1,
+                "Return another target nonland permanent to its owner's hand"))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleListChoice(player1, "Create a 1/1 white Bird creature token with flying");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bird");
+    }
+
+    @Test
+    @DisplayName("Another Aether Channeler is a legal bounce target")
+    void canBounceAnotherChanneler() {
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AetherChanneler());
+        cast(1, other.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Aether Channeler");
+        harness.assertInHand(player2, "Aether Channeler");
+        harness.assertOnBattlefield(player1, "Aether Channeler");
+    }
+
+    @Test
+    @DisplayName("The bounce mode can return a permanent controlled by its controller")
+    void canBounceOwnPermanent() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new AcademyWall());
+        cast(1, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Academy Wall");
+        harness.assertInHand(player1, "Academy Wall");
     }
 
     private void cast(int mode, UUID... targetIds) {
         harness.setHand(player1, List.of(new AetherChanneler()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0, mode,
-                targetIds.length == 0 ? null : targetIds[0]);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, switch (mode) {
+            case 0 -> "Create a 1/1 white Bird creature token with flying";
+            case 1 -> "Return another target nonland permanent to its owner's hand";
+            case 2 -> "Draw a card";
+            default -> throw new IllegalArgumentException("Unknown mode");
+        });
+        if (targetIds.length > 0) {
+            harness.handlePermanentChosen(player1, targetIds[0]);
+        }
     }
 
-    private void resolveCreatureAndEtb() {
+    @Test
+    @DisplayName("Entering without being cast still lets the controller choose the draw mode")
+    void choosesDrawWhenNotCast() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.enterBattlefieldAndReturn(player1, new AetherChanneler());
+        harness.handleListChoice(player1, "Draw a card");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

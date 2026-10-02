@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({WoundReflection.class, FlameJavelin.class})
 class WoundReflectionTest extends BaseCardTest {
 
     @Test
@@ -20,17 +22,16 @@ class WoundReflectionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WoundReflection());
         harness.setLife(player2, 20);
 
-        // Shock deals 2 damage to the opponent — damage causes loss of life.
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        // Flame Javelin deals 4 damage to the opponent; damage causes loss of life.
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
 
         resolveEndStep(player1);
 
-        // Wound Reflection: opponent loses another 2 (the life they lost this turn).
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        // Wound Reflection: opponent loses another 4, the life they lost this turn.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
     @Test
@@ -45,23 +46,40 @@ class WoundReflectionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts direct life loss rather than net life change")
+    void countsDirectLifeLossAfterLifeGain() {
+        harness.addToBattlefield(player1, new WoundReflection());
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 3, "test");
+            harness.getLifeSupport().applyGainLife(gd, player2.getId(), 2);
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+
+        resolveEndStep(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
     @DisplayName("Controller is unaffected even if the controller lost life this turn")
     void controllerNotAffected() {
         harness.addToBattlefield(player1, new WoundReflection());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        // The controller takes 2 damage this turn.
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        // The controller takes 4 damage this turn.
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
 
         resolveEndStep(player1);
 
-        // Only opponents lose life — the controller stays at 18, opponent untouched.
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        // Only opponents lose life; the controller stays at 16, opponent untouched.
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -73,15 +91,14 @@ class WoundReflectionTest extends BaseCardTest {
 
         // On the opponent's own turn they lose life, then Wound Reflection still fires at end step.
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player2.getId());
-        harness.passBothPriorities();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.setHand(player2, List.of(new FlameJavelin()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
 
         resolveEndStep(player2);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
 
     /** Advances into the given player's end step and resolves the Wound Reflection trigger. */

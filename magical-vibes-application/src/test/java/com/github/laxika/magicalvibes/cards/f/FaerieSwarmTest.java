@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BallynockCohort;
+import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
+import com.github.laxika.magicalvibes.cards.p.PucasMischief;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FaerieSwarm.class, BallynockCohort.class, Cursecatcher.class, PucasMischief.class})
 class FaerieSwarmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Counts itself as a blue permanent when alone: 1/1")
     void countsItselfWhenAlone() {
-        Permanent swarm = addSwarm(player1);
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
@@ -24,11 +26,11 @@ class FaerieSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("P/T equals the number of blue permanents you control")
     void ptEqualsBluePermanents() {
-        Permanent swarm = addSwarm(player1);
-        harness.addToBattlefield(player1, new FugitiveWizard());
-        harness.addToBattlefield(player1, new AirElemental());
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
+        harness.addToBattlefield(player1, new Cursecatcher());
+        harness.addToBattlefield(player1, new PucasMischief());
 
-        // itself + 2 blue creatures = 3
+        // itself + 1 blue creature + 1 blue enchantment = 3
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(3);
     }
@@ -36,8 +38,8 @@ class FaerieSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("Non-blue permanents are not counted")
     void nonBlueNotCounted() {
-        Permanent swarm = addSwarm(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
+        harness.addToBattlefield(player1, new BallynockCohort());
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
@@ -46,8 +48,8 @@ class FaerieSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("Only counts your blue permanents, not the opponent's")
     void countsOnlyControllersPermanents() {
-        Permanent swarm = addSwarm(player1);
-        harness.addToBattlefield(player2, new AirElemental());
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
+        harness.addToBattlefield(player2, new Cursecatcher());
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
@@ -56,20 +58,12 @@ class FaerieSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("P/T updates when blue permanents change")
     void ptUpdatesWhenBluePermanentsChange() {
-        Permanent swarm = addSwarm(player1);
-        harness.addToBattlefield(player1, new AirElemental());
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
+        Permanent bluePermanent = harness.addToBattlefieldAndReturn(player1, new Cursecatcher());
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(2);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Air Elemental"));
+        gd.playerBattlefields.get(player1.getId()).remove(bluePermanent);
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
-    }
-
-    private Permanent addSwarm(Player player) {
-        Permanent permanent = new Permanent(new FaerieSwarm());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 }

@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "TDC", collectorNumber = "120")
 @CardRegistration(set = "MIC", collectorNumber = "87")
 @CardRegistration(set = "C19", collectorNumber = "65")
+@CardRegistration(set = "ONC", collectorNumber = "75")
 public class HourOfReckoning extends Card {
 
     public HourOfReckoning() {

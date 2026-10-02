@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
+import com.github.laxika.magicalvibes.cards.r.RusticClachan;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +15,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScarbladeElite.class, IndomitableAncients.class})
 class ScarbladeEliteTest extends BaseCardTest {
 
     private Permanent setup() {
-        Permanent elite = harness.addToBattlefieldAndReturn(player1, new ScarbladeElite());
-        elite.setSummoningSick(false);
-        return elite;
+        return addCreatureReady(player1, new ScarbladeElite());
     }
 
     private int idxOf(Permanent p) {
@@ -30,10 +31,9 @@ class ScarbladeEliteTest extends BaseCardTest {
     void promptsForAssassinExile() {
         Permanent elite = setup();
         harness.setGraveyard(player1, List.of(new ScarbladeElite()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
 
-        harness.activateAbility(player1, idxOf(elite), 0, null, bearsId);
+        harness.activateAbility(player1, idxOf(elite), 0, null, targetId);
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
@@ -43,12 +43,11 @@ class ScarbladeEliteTest extends BaseCardTest {
     @DisplayName("Only Assassin cards are valid to exile as the cost")
     void onlyAssassinCardsAreValid() {
         Permanent elite = setup();
-        // Graveyard: index 0 non-Assassin (Grizzly Bears), index 1 Assassin (Scarblade Elite)
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new ScarbladeElite()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        // Graveyard: index 0 non-Assassin (Indomitable Ancients), index 1 Assassin (Scarblade Elite)
+        harness.setGraveyard(player1, List.of(new IndomitableAncients(), new ScarbladeElite()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
 
-        harness.activateAbility(player1, idxOf(elite), 0, null, bearsId);
+        harness.activateAbility(player1, idxOf(elite), 0, null, targetId);
 
         PendingInteraction.GraveyardExileCostChoice choice =
                 (PendingInteraction.GraveyardExileCostChoice) gd.interaction.activeInteraction();
@@ -60,11 +59,12 @@ class ScarbladeEliteTest extends BaseCardTest {
     void exilesAssassinAndDestroysTarget() {
         Permanent elite = setup();
         harness.setGraveyard(player1, List.of(new ScarbladeElite()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
 
-        harness.activateAbility(player1, idxOf(elite), 0, null, bearsId);
+        harness.activateAbility(player1, idxOf(elite), 0, null, targetId);
         harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(elite.isTapped()).isTrue();
 
         // Assassin card exiled from graveyard
         harness.assertNotInGraveyard(player1, "Scarblade Elite");
@@ -73,20 +73,19 @@ class ScarbladeEliteTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Grizzly Bears destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Indomitable Ancients destroyed
+        harness.assertNotOnBattlefield(player2, "Indomitable Ancients");
+        harness.assertInGraveyard(player2, "Indomitable Ancients");
     }
 
     @Test
     @DisplayName("Cannot activate without an Assassin card in graveyard")
     void cannotActivateWithoutAssassinInGraveyard() {
         Permanent elite = setup();
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new IndomitableAncients()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -97,6 +96,18 @@ class ScarbladeEliteTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new ScarbladeElite()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(RusticClachan.class)
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent elite = setup();
+        harness.setGraveyard(player1, List.of(new ScarbladeElite()));
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RusticClachan());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

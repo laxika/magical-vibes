@@ -58,13 +58,15 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent host = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        AttachAurasToSourceEffect auraEffect = (AttachAurasToSourceEffect) effect;
+        UUID hostId = auraEffect.hostPermanentId() == null
+                ? entry.getSourcePermanentId() : auraEffect.hostPermanentId();
+        Permanent host = gameQueryService.findPermanentById(gameData, hostId);
         if (host == null) {
             return;
         }
 
         UUID controllerId = entry.getControllerId();
-        AttachAurasToSourceEffect auraEffect = (AttachAurasToSourceEffect) effect;
         List<UUID> choosableIds = choosableAttachmentCardIds(gameData, host, controllerId,
                 auraEffect.includeBattlefield(), auraEffect.includeLibrary(), auraEffect.includeEquipment());
         if (choosableIds.isEmpty()) {

@@ -1789,6 +1789,7 @@ public class GraveyardChoiceHandlerService {
         boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
         boolean pendingKicked = gameData.graveyardTargetOperation.kicked;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
+        UUID pendingAttackedTargetId = gameData.graveyardTargetOperation.attackedTargetId;
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         UUID pendingTriggeringPermanentId = gameData.graveyardTargetOperation.triggeringPermanentId;
@@ -1839,6 +1840,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.castWithAdventure = false;
         gameData.graveyardTargetOperation.kicked = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
+        gameData.graveyardTargetOperation.attackedTargetId = null;
         boolean pendingSourceAlternateCostAtTrigger =
                 gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger;
         gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
@@ -1959,6 +1961,9 @@ public class GraveyardChoiceHandlerService {
             }
             if (pendingTriggeringPermanentPowerAtTrigger != null) {
                 triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
+            }
+            if (pendingAttackedTargetId != null) {
+                triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);

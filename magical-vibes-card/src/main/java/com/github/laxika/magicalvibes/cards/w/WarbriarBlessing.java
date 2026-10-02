@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "204")
+@CardRegistration(set = "WOC", collectorNumber = "137")
 public class WarbriarBlessing extends Card {
 
     public WarbriarBlessing() {

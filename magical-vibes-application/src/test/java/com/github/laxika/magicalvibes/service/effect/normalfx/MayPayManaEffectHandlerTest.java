@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
@@ -20,7 +21,7 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
             @DisplayName("Sets resolvingMayEffectFromStack flag and adds pending may with mana cost")
-            void setsFlagAndAddsPendingMayWithMana() {
+    void setsFlagAndAddsPendingMayWithMana() {
                 Card card = createCard("Rhystic Study");
                 DrawCardEffect wrapped = new DrawCardEffect(1);
                 MayPayManaEffect mayPayEffect = new MayPayManaEffect("{1}", wrapped, "Pay {1}?");
@@ -35,6 +36,21 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 // Default: the ability's controller is the one prompted to pay.
                 assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
             }
+
+    @Test
+    @DisplayName("Substitutes dynamic generic mana while retaining fixed mana symbols")
+    void substitutesDynamicGenericManaWithFixedSymbols() {
+        Card card = createCard("Tomakul Phoenix");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = MayPayManaEffect.dynamic("{X}{R}", new Fixed(2), wrapped,
+                "Pay {X}{R}?");
+        StackEntry entry = createEntry(card, player1Id, List.of(mayPayEffect));
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{2}{R}");
+    }
 
     @Test
     @DisplayName("ANY_OTHER_PLAYER skips the player whose spell caused the trigger")

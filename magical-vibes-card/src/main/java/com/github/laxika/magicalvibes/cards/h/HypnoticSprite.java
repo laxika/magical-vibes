@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "49")
 @CardRegistration(set = "FIC", collectorNumber = "264")
+@CardRegistration(set = "WOC", collectorNumber = "96")
 public class HypnoticSprite extends Card {
 
     public HypnoticSprite() {

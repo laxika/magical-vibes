@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PerpetuallyBoostTargetCreatureEffectHandler perpetuallyBoostTargetCreatureEffectHandler;
 
@@ -36,13 +39,17 @@ public class ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler implements N
         var boost = (ChooseOpponentCreatureAndPerpetuallyBoostEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<UUID> creatureIds = new ArrayList<>();
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (gameQueryService.isCreature(gameData, permanent)) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && (boost.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(
+                        permanent, boost.filter(), filterContext))) {
                     creatureIds.add(permanent.getId());
                 }
             }

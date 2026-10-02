@@ -97,6 +97,21 @@ class LoxodonMysticTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an already tapped creature")
+    void canTargetAlreadyTappedCreature() {
+        addCreatureReady(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
         addCreatureReady(player1, new LoxodonMystic());
@@ -119,6 +134,18 @@ class LoxodonMysticTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while Loxodon Mystic has summoning sickness")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefieldAndReturn(player1, new LoxodonMystic());
+        Permanent target = addCreatureReady(player2, new MyrMoonvessel());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 
     @Test

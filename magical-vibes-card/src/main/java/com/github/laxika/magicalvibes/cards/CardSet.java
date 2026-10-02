@@ -74,10 +74,12 @@ public enum CardSet {
     SET_YDMU("YDMU"),
     SET_BRO("BRO"),
     SET_BRC("BRC"),
+    SET_YBRO("YBRO"),
     SET_BRR("BRR"),
     SET_MOM("MOM"),
     SET_MAT("MAT"),
     SET_ONE("ONE"),
+    SET_ONC("ONC"),
     SET_YONE("YONE"),
     SET_M15("M15"),
     SET_W16("W16"),
@@ -139,6 +141,7 @@ public enum CardSet {
     SET_DIS("DIS"),
     SET_MKM("MKM"),
     SET_MKC("MKC"),
+    SET_YMKM("YMKM"),
     SET_INR("INR"),
     SET_IKO("IKO"),
     SET_ICE("ICE"),
@@ -324,6 +327,7 @@ public enum CardSet {
     SET_C14("C14"),
     SET_CMD("CMD"),
     SET_C15("C15"),
+    SET_C18("C18"),
     SET_C19("C19"),
     SET_C20("C20"),
     SET_C21("C21"),
@@ -355,6 +359,7 @@ public enum CardSet {
     SET_PZA("PZA"),
     SET_YDFT("YDFT"),
     SET_YSOS("YSOS"),
+    SET_YSNC("YSNC"),
     SET_YTDM("YTDM");
 
     @Getter

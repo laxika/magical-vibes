@@ -39,6 +39,7 @@ class InsatiableFrugivoreTest extends BaseCardTest {
         castFrugivore();
 
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -54,9 +55,7 @@ class InsatiableFrugivoreTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.activateAbility(player1, frugivoreIndex, 0, null, null);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
-        harness.handleXValueChosen(player1, 1);
+        harness.activateAbility(player1, frugivoreIndex, 0, 1, null);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();

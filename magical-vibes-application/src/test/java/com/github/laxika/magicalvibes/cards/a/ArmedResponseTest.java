@@ -77,6 +77,41 @@ class ArmedResponseTest extends BaseCardTest {
                 .hasMessageContaining("attacking creature");
     }
 
+    @Test
+    @DisplayName("Can damage an attacking creature controlled by the caster")
+    void canTargetOwnAttackingCreature() {
+        Permanent attacker = addAttacker(player1, player2, new AuriokSalvagers());
+        harness.addToBattlefield(player1, new HornedHelm());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player1, List.of(new ArmedResponse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Equipment entering before resolution can make the damage lethal")
+    void equipmentEnteringBeforeResolutionIncreasesDamage() {
+        Permanent attacker = addAttacker(player1, player2, new AuriokSalvagers());
+        harness.addToBattlefield(player2, new HornedHelm());
+        harness.addToBattlefield(player2, new HornedHelm());
+        harness.addToBattlefield(player2, new HornedHelm());
+        prepareCast();
+
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.addToBattlefield(player2, new HornedHelm());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        harness.assertInGraveyard(player1, "Auriok Salvagers");
+        harness.assertInGraveyard(player2, "Armed Response");
+    }
+
     private void prepareCast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

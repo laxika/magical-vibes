@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "174")
+@CardRegistration(set = "C18", collectorNumber = "137")
 public class CreepingRenaissance extends Card {
 
     public CreepingRenaissance() {

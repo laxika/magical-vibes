@@ -1,22 +1,22 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.d.Deathgazer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
+import com.github.laxika.magicalvibes.cards.w.WoundReflection;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AshenmoorCohort.class, BoggartRamGang.class, WoundReflection.class})
 class AshenmoorCohortTest extends BaseCardTest {
 
     @Test
     @DisplayName("Base 4/3 when no other black creature is controlled")
     void noBoostWhenAlone() {
-        harness.addToBattlefield(player1, new AshenmoorCohort());
-
-        Permanent cohort = findPermanent(player1, "Ashenmoor Cohort");
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
     }
@@ -24,10 +24,19 @@ class AshenmoorCohortTest extends BaseCardTest {
     @Test
     @DisplayName("No boost with a non-black creature")
     void noBoostWithNonBlackCreature() {
-        harness.addToBattlefield(player1, new AshenmoorCohort());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        harness.addToBattlefield(player1, new BoggartRamGang());
 
-        Permanent cohort = findPermanent(player1, "Ashenmoor Cohort");
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("No boost with a black noncreature permanent")
+    void noBoostWithBlackNoncreaturePermanent() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        harness.addToBattlefield(player1, new WoundReflection());
+
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
     }
@@ -35,10 +44,9 @@ class AshenmoorCohortTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 when controller controls another black creature")
     void boostWithAnotherBlackCreature() {
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
         harness.addToBattlefield(player1, new AshenmoorCohort());
-        harness.addToBattlefield(player1, new Deathgazer());
 
-        Permanent cohort = findPermanent(player1, "Ashenmoor Cohort");
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(4);
     }
@@ -46,10 +54,9 @@ class AshenmoorCohortTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's black creature does not grant the boost")
     void opponentBlackCreatureDoesNotCount() {
-        harness.addToBattlefield(player1, new AshenmoorCohort());
-        harness.addToBattlefield(player2, new Deathgazer());
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        harness.addToBattlefield(player2, new AshenmoorCohort());
 
-        Permanent cohort = findPermanent(player1, "Ashenmoor Cohort");
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);
     }
@@ -57,14 +64,12 @@ class AshenmoorCohortTest extends BaseCardTest {
     @Test
     @DisplayName("Loses boost when the other black creature leaves the battlefield")
     void losesBoostWhenBlackCreatureLeaves() {
-        harness.addToBattlefield(player1, new AshenmoorCohort());
-        harness.addToBattlefield(player1, new Deathgazer());
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
+        Permanent otherCohort = harness.addToBattlefieldAndReturn(player1, new AshenmoorCohort());
 
-        Permanent cohort = findPermanent(player1, "Ashenmoor Cohort");
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(5);
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Deathgazer"));
+        gd.playerBattlefields.get(player1.getId()).remove(otherCohort);
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(3);

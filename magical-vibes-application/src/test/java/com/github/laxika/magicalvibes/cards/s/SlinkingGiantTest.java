@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CrabappleCohort;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,52 +14,60 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SlinkingGiant.class, CrabappleCohort.class})
 class SlinkingGiantTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Blocking gives -3/-0 until end of turn")
-    void blockingGivesMinusThreePower() {
-        Permanent giant = addReadyGiant(player2);
-        addReadyAttacker(player1, new GrizzlyBears());
+    @DisplayName("When Slinking Giant becomes blocked, it gets -3/-0 until end of turn")
+    void becomesBlockedGetsMinusThreePower() {
+        Permanent giant = addCreatureReady(player1, new SlinkingGiant());
+        addCreatureReady(player2, new CrabappleCohort());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(giant.getId());
-
         harness.passBothPriorities();
 
         assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isEqualTo(0);
-        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);   // 4 base - 3
+        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
     }
 
     @Test
-    @DisplayName("Becoming blocked gives -3/-0 until end of turn")
-    void becomingBlockedGivesMinusThreePower() {
-        Permanent giant = addReadyGiant(player1);
-        giant.setAttacking(true);
-        addReadyBlocker(player2, new GrizzlyBears());
+    @DisplayName("When Slinking Giant blocks, it gets -3/-0 until end of turn")
+    void blocksGetsMinusThreePower() {
+        addCreatureReady(player1, new CrabappleCohort());
+        Permanent giant = addCreatureReady(player2, new SlinkingGiant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(giant.getPowerModifier()).isEqualTo(-3);
-        assertThat(giant.getToughnessModifier()).isEqualTo(0);
+        assertThat(giant.getToughnessModifier()).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("-3/-0 modifier resets at end of turn")
-    void modifierResetsAtEndOfTurn() {
-        Permanent giant = addReadyGiant(player2);
-        addReadyAttacker(player1, new GrizzlyBears());
+    @DisplayName("If Slinking Giant is unblocked, its combat trigger does not apply")
+    void unblockedDoesNotGetMinusThreePower() {
+        Permanent giant = addCreatureReady(player1, new SlinkingGiant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Slinking Giant's combat penalty wears off at end of turn")
+    void combatPenaltyWearsOffAtEndOfTurn() {
+        Permanent giant = addCreatureReady(player1, new SlinkingGiant());
+        addCreatureReady(player2, new CrabappleCohort());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -70,29 +77,23 @@ class SlinkingGiantTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(giant.getPowerModifier()).isEqualTo(0);
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
         assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
     }
 
-    private Permanent addReadyGiant(Player player) {
-        Permanent perm = new Permanent(new SlinkingGiant());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    @DisplayName("Slinking Giant deals combat damage to a blocker as -1/-1 counters")
+    void witherDealsMinusOneMinusOneCounters() {
+        addCreatureReady(player1, new SlinkingGiant());
+        Permanent blocker = addCreatureReady(player2, new CrabappleCohort());
 
-    private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveCombat();
 
-    private Permanent addReadyBlocker(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 }

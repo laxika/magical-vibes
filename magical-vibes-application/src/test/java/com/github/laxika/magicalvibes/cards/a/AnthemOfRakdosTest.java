@@ -72,6 +72,81 @@ class AnthemOfRakdosTest extends BaseCardTest {
     }
 
     @Test
+    void eachAttackerGetsItsOwnBoostAndDamageTrigger() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        Permanent first = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent second = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent nonattacker = addCreatureReady(player1, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new Demonfire()));
+        harness.setLife(player1, 20);
+
+        declareAttackers(List.of(1, 2));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void controllerSpellDamageIsNotDoubledWithACardRemainingInHand() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        harness.setHand(player1, List.of(new Demonfire(), new AssaultZeppelid()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void hellbentDoesNotDoubleOpponentsSpellDamage() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Demonfire()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player2, 0, 2, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void hellbentChecksHandWhenAttackTriggerDealsDamage() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
+        harness.setHand(player1, List.of(new Demonfire()));
+        harness.setLife(player1, 20);
+
+        declareAttackers(List.of(1));
+        harness.setHand(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void gainingACardBeforeAttackTriggerResolvesDisablesHellbent() {
+        harness.addToBattlefield(player1, new AnthemOfRakdos());
+        Permanent creature = addCreatureReady(player1, new AssaultZeppelid());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+
+        declareAttackers(List.of(1));
+        harness.setHand(player1, List.of(new Demonfire()));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
     void attackBoostWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new AnthemOfRakdos());
         Permanent creature = addCreatureReady(player1, new AssaultZeppelid());

@@ -107,11 +107,90 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(rat);
     }
 
+    @Test
+    @DisplayName("Rats milled by the ability can be returned immediately")
+    void returnsNewlyMilledRats() {
+        addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
+        Card firstRat = new BogRats();
+        Card secondRat = new BogRats();
+        Card thirdRat = new BogRats();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(firstRat, secondRat, thirdRat, land));
+
+        advanceToEndStep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(firstRat));
+        harness.handleGraveyardCardChosen(player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(secondRat));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstRat, secondRat).doesNotContain(thirdRat);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(thirdRat, land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepting the mill still permits returning zero Rats")
+    void mayReturnZeroRats() {
+        addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
+        Card firstRat = new BogRats();
+        Card secondRat = new BogRats();
+        harness.setGraveyard(player1, List.of(firstRat, secondRat));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToEndStep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(firstRat, secondRat);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstRat, secondRat).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller may stop after returning one Rat")
+    void mayReturnOnlyOneRat() {
+        addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
+        Card firstRat = new BogRats();
+        Card secondRat = new BogRats();
+        harness.setGraveyard(player1, List.of(firstRat, secondRat));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToEndStep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstRat).doesNotContain(secondRat);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondRat).doesNotContain(firstRat);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Rat count is locked when the combat ability resolves")
+    void boostDoesNotChangeWhenAnotherRatEnters() {
+        addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
+        Permanent rat = addCreatureReady(player1, new BogRats());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        Permanent laterRat = addCreatureReady(player1, new BogRats());
+
+        assertThat(rat.getPowerModifier()).isEqualTo(2);
+        assertThat(rat.getToughnessModifier()).isEqualTo(2);
+        assertThat(laterRat.getPowerModifier()).isZero();
+        assertThat(laterRat.getToughnessModifier()).isZero();
+    }
+
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

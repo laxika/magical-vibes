@@ -32,7 +32,12 @@ public class PerpetuallyBoostSourceEffectHandler implements NormalEffectHandlerB
                 ? findBattlefieldSource(gameData, sourceCard)
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
-            applyToGraveyardSource(gameData, sourceCard, boost);
+            if (gameData.findExiledCard(sourceCard.getId()) != null) {
+                PerpetualCardPowerToughnessSupport.remember(
+                        gameData, sourceCard, boost.powerBoost(), boost.toughnessBoost());
+            } else {
+                applyToGraveyardSource(gameData, sourceCard, boost);
+            }
         } else {
             Card copy = boostedCopy(source.getCard(), boost);
             source.exchangeCard(copy);

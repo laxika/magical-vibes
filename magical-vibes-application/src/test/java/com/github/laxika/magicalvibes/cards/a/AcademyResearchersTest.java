@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BrilliantHalo;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.l.LingeringMirage;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AcademyResearchers.class, ArgothianSwine.class, BrilliantHalo.class,
-        LingeringMirage.class, Pacifism.class})
+        LingeringMirage.class, Pacifism.class, Boomerang.class, RayOfCommand.class})
 class AcademyResearchersTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -29,10 +31,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Academy Researchers puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -44,10 +43,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Academy Researchers puts it on the battlefield with may prompt, then ETB on stack")
     void resolvingPutsItOnBattlefieldWithEtb() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
 
         GameData gd = harness.getGameData();
@@ -72,8 +68,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void etbPromptsAuraChoice() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -88,8 +83,7 @@ class AcademyResearchersTest extends BaseCardTest {
         setupAndCast();
         // Hand: [ArgothianSwine, BrilliantHalo, Pacifism, ArgothianSwine]
         harness.setHand(player1, List.of(new ArgothianSwine(), new BrilliantHalo(), new Pacifism(), new ArgothianSwine()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -103,8 +97,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void choosingAuraAttachesToSelf() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         // Choose Brilliant Halo
@@ -128,8 +121,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void auraStaticEffectApplies() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
         harness.handleCardChosen(player1, 0);
 
@@ -147,8 +139,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void decliningMayLeavesHandUnchanged() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         int handSizeBefore = harness.getGameData().playerHands.get(player1.getId()).size();
         int battlefieldSizeBefore = harness.getGameData().playerBattlefields.get(player1.getId()).size();
 
@@ -165,8 +156,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void acceptingMayRequiresAuraSelection() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell - may on stack
-        harness.passBothPriorities(); // resolve MayEffect - may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept - Aura choice is required
 
         harness.handleCardChosen(player1, -1);
@@ -184,8 +174,7 @@ class AcademyResearchersTest extends BaseCardTest {
         setupAndCast();
         // Hand has only non-Aura cards
         harness.setHand(player1, List.of(new ArgothianSwine()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -198,8 +187,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void onlyLegallyEnchantableAurasAreOffered() {
         setupAndCast();
         harness.setHand(player1, List.of(new LingeringMirage(), new Pacifism()));
-        harness.passBothPriorities(); // resolve creature spell - may on stack
-        harness.passBothPriorities(); // resolve MayEffect - may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept - inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -212,8 +200,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void etbDoesNothingWithEmptyHand() {
         setupAndCast();
         harness.setHand(player1, List.of());
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -228,18 +215,20 @@ class AcademyResearchersTest extends BaseCardTest {
     void etbFizzlesIfCreatureLeftBattlefield() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-
-        // Remove Academy Researchers from the battlefield before accepting may
-        harness.getGameData().playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Academy Researchers"));
+        harness.passBothPriorities();
+        Permanent researchers = findPermanent(player1, "Academy Researchers");
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, researchers.getId());
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect fizzles (source gone)
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("fizzles"));
+        harness.assertInHand(player1, "Brilliant Halo");
+        harness.assertNotOnBattlefield(player1, "Brilliant Halo");
     }
 
     // ===== Multiple Auras =====
@@ -249,8 +238,7 @@ class AcademyResearchersTest extends BaseCardTest {
     void canChooseAmongMultipleAuras() {
         setupAndCast();
         harness.setHand(player1, List.of(new BrilliantHalo(), new Pacifism()));
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
@@ -273,10 +261,54 @@ class AcademyResearchersTest extends BaseCardTest {
 
     // ===== Helper =====
 
+    @Test
+    @DisplayName("The trigger controller can attach an Aura after an opponent gains control of the creature")
+    void auraAttachesAfterSourceChangesController() {
+        setupAndCast();
+        harness.setHand(player1, List.of(new BrilliantHalo()));
+        harness.passBothPriorities();
+        Permanent researchers = findPermanent(player1, "Academy Researchers");
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, researchers.getId());
+        harness.assertOnBattlefield(player2, "Academy Researchers");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Brilliant Halo").getAttachedTo()).isEqualTo(researchers.getId());
+        harness.assertNotInHand(player1, "Brilliant Halo");
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot attach an Aura to the same card after it leaves and reenters")
+    void oldTriggerDoesNotAttachToNewPermanent() {
+        setupAndCast();
+        harness.setHand(player1, List.of(new BrilliantHalo()));
+        harness.passBothPriorities();
+        Permanent original = findPermanent(player1, "Academy Researchers");
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, original.getId());
+        harness.assertInHand(player1, "Academy Researchers");
+
+        gd.playerHands.get(player1.getId()).remove(original.getCard());
+        Permanent returned = harness.enterBattlefieldAndReturn(player1, original.getCard());
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Brilliant Halo");
+        harness.assertNotOnBattlefield(player1, "Brilliant Halo");
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
     }
 }
 

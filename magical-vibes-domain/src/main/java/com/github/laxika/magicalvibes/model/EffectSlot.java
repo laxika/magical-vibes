@@ -69,6 +69,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CARD_EXILED,
     /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
     COMMAND_ZONE_STATIC,
+    /** Triggers when the source controller's commander is put into the command zone. */
+    ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
     ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
@@ -79,6 +81,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SUSPENDED_EACH_UPKEEP_TRIGGERED,
     /** Triggers at the beginning of its owner's upkeep while this card is exiled with scream counters. */
     EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED,
+    /** Triggers at the beginning of its owner's upkeep while this card is exiled. */
+    EXILED_UPKEEP_TRIGGERED,
     /** Triggers whenever a time counter is removed from this card while it is suspended in exile. */
     ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
     OPPONENT_UPKEEP_TRIGGERED,
@@ -722,6 +726,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  zone is {@code Zone.BATTLEFIELD}. Fires as a triggered ability (the card enters the graveyard
      *  first). Used by Spreading Algae ("return it to its owner's hand"). */
     ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers when this card is put into a graveyard from its owner's hand. Checked in
+     *  {@code GraveyardService.addCardToGraveyard} only when the source zone is {@code Zone.HAND}.
+     *  Fires as a triggered ability after the card enters the graveyard. */
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_HAND,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
@@ -962,6 +970,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_DIES,
+    /** Triggers whenever a creature an opponent controls dies, while this card is in its owner's
+     *  graveyard. Checked in {@code TriggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers}. */
+    GRAVEYARD_ON_OPPONENT_CREATURE_DIES,
     /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
     GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
     /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is
@@ -1392,6 +1403,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
      *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
     ON_ALLY_CREATURE_BECOMES_BLOCKED,
+    /** Triggers once when one or more creatures controlled by this permanent's controller become
+     *  blocked during a single declare-blockers step. Fires on every permanent with this slot on
+     *  that player's battlefield. No combatant is baked into the entry, so effects such as token
+     *  creation resolve once for the whole blocking event. Checked in {@code CombatBlockService}. */
+    ON_ALLY_CREATURES_BECOME_BLOCKED,
     /** Global watcher: triggers once for every attacker/blocker pair created in the declare-blockers
      *  step, on every permanent with this slot across all battlefields, regardless of who controls
      *  the creatures involved. Effects implementing {@code BlockPairConditionalEffect} are filtered

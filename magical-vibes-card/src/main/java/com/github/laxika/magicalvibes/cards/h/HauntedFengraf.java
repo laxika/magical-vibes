@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2160")
 @CardRegistration(set = "SIS", collectorNumber = "76")
 @CardRegistration(set = "C14", collectorNumber = "300")
+@CardRegistration(set = "C18", collectorNumber = "254")
 public class HauntedFengraf extends Card {
 
     public HauntedFengraf() {

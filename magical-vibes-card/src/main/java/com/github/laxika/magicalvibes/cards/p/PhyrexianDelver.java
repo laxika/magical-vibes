@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "INV", collectorNumber = "115")
 @CardRegistration(set = "C13", collectorNumber = "86")
 @CardRegistration(set = "MOC", collectorNumber = "263")
+@CardRegistration(set = "C18", collectorNumber = "115")
 public class PhyrexianDelver extends Card {
 
     public PhyrexianDelver() {

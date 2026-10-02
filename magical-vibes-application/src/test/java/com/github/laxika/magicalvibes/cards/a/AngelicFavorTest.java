@@ -29,8 +29,7 @@ class AngelicFavorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         Permanent angel = findPermanent(player1, "Angel");
         assertThat(angel.getCard().getPower()).isEqualTo(4);
@@ -48,12 +47,11 @@ class AngelicFavorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         assertThat(findPermanents(player1, "Angel")).hasSize(1);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Angel");
@@ -87,8 +85,7 @@ class AngelicFavorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -132,6 +129,87 @@ class AngelicFavorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AngelicFavor()));
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Exile waits for the delayed end-step trigger to resolve")
+    void exileUsesTheStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.setHand(player1, List.of(new AngelicFavor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Angel");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Angel");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can pay the alternate cost during an opponent's combat")
+    void summoningSickCreatureCanPayAlternateCost() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addToBattlefield(player1, new Plains());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Mossdog());
+        creature.setSummoningSick(true);
+        harness.setHand(player1, List.of(new AngelicFavor()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(creature.getId()));
+        assertThat(creature.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Angel");
+        harness.assertNotOnBattlefield(player2, "Angel");
+    }
+
+    @Test
+    @DisplayName("An opponent's Plains does not enable the alternate cost")
+    void opponentsPlainsDoesNotEnableAlternateCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addToBattlefield(player2, new Plains());
+        Permanent creature = addCreatureReady(player1, new Mossdog());
+        harness.setHand(player1, List.of(new AngelicFavor()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's creature to pay the alternate cost")
+    void cannotTapOpponentsCreature() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addToBattlefield(player1, new Plains());
+        addCreatureReady(player1, new Mossdog());
+        Permanent opponentCreature = addCreatureReady(player2, new Mossdog());
+        harness.setHand(player1, List.of(new AngelicFavor()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot cast for mana after combat")
+    void cannotCastForManaAfterCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AngelicFavor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

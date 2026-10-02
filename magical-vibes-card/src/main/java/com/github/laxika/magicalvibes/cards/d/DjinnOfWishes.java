@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "M10", collectorNumber = "50")
 @CardRegistration(set = "M12", collectorNumber = "51")
 @CardRegistration(set = "M19", collectorNumber = "52")
+@CardRegistration(set = "C18", collectorNumber = "87")
 public class DjinnOfWishes extends Card {
 
     public DjinnOfWishes() {

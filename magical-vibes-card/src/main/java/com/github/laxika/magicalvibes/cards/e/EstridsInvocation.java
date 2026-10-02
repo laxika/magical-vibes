@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1325")
+@CardRegistration(set = "C18", collectorNumber = "8")
 public class EstridsInvocation extends Card {
 
     public EstridsInvocation() {

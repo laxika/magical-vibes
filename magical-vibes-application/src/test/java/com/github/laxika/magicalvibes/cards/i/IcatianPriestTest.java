@@ -82,6 +82,22 @@ class IcatianPriestTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does nothing if target leaves the battlefield before resolution")
+    void doesNothingIfTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new IcatianPriest());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
     @DisplayName("Can activate ability multiple times on same target")
     void canActivateMultipleTimes() {
         addCreatureReady(player1, new IcatianPriest());

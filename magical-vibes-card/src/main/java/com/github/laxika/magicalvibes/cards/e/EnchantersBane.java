@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMayS
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DSC", collectorNumber = "164")
+@CardRegistration(set = "C18", collectorNumber = "21")
 public class EnchantersBane extends Card {
 
     public EnchantersBane() {

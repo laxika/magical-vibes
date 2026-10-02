@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "219")
 @CardRegistration(set = "PIO", collectorNumber = "252")
+@CardRegistration(set = "C18", collectorNumber = "195")
 public class ZendikarIncarnate extends Card {
 
     public ZendikarIncarnate() {

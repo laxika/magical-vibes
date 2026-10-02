@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "EA2", collectorNumber = "7")
 @CardRegistration(set = "TSR", collectorNumber = "293")
 @CardRegistration(set = "Q06", collectorNumber = "2")
+@CardRegistration(set = "WOC", collectorNumber = "67")
 public class EtherealArmor extends Card {
 
     public EtherealArmor() {

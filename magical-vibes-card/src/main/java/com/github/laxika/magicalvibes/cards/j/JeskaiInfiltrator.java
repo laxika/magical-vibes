@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "36")
+@CardRegistration(set = "C18", collectorNumber = "93")
 public class JeskaiInfiltrator extends Card {
 
     public JeskaiInfiltrator() {

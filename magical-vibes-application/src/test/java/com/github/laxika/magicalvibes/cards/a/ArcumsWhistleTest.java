@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GlacialWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,7 +27,7 @@ class ArcumsWhistleTest extends BaseCardTest {
         return whistle;
     }
 
-    /** Sets up player2 as the active player in their pre-combat main, with a Balduvian Bears out. */
+    /** Sets up player2 as the active player at beginning of combat, with a Balduvian Bears out. */
     private Permanent setUpTargetForPlayer2() {
         Permanent bears = addCreatureReady(player2, new BalduvianBears());
         harness.forceActivePlayer(player2);
@@ -36,11 +36,14 @@ class ArcumsWhistleTest extends BaseCardTest {
     }
 
     private void runEndStep() {
-        harness.forceStep(TurnStep.END_STEP);
-        gd.interaction.clearAwaitingInput();
-        harness.inMutationScope(
-                () -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleEndStepTriggers(gd));
+        beginEndStep();
         resolveAllTriggers();
+    }
+
+    private void beginEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
+        harness.passUntil(player2, TurnStep.END_STEP);
     }
 
     @Test
@@ -197,5 +200,38 @@ class ArcumsWhistleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("The delayed destruction retains the Whistle ability's controller and source")
+    void delayedDestructionBelongsToWhistleController() {
+        addReadyWhistle();
+        Permanent bears = setUpTargetForPlayer2();
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        beginEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(ArcumsWhistle.class);
+    }
+
+    @Test
+    @DisplayName("A face-down creature can pay zero to avoid the penalty")
+    void faceDownCreaturePaysZero() {
+        addReadyWhistle();
+        Permanent bears = setUpTargetForPlayer2();
+        bears.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(bears.isMustAttackThisTurn()).isFalse();
+        runEndStep();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
     }
 }

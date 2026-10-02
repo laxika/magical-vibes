@@ -79,4 +79,40 @@ class ArmoredGalleonTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped Island still allows Armored Galleon to attack")
+    void canAttackWhenDefendersIslandIsTapped() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new Island());
+        findPermanent(player2, "Island").setTapped(true);
+        addCreatureReady(player1, new ArmoredGalleon());
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Islands in the defending player's hand and graveyard do not allow attacking")
+    void cannotAttackWithIslandsOutsideBattlefield() {
+        harness.setHand(player2, List.of(new Island()));
+        harness.setGraveyard(player2, List.of(new Island()));
+        addCreatureReady(player1, new ArmoredGalleon());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Armored Galleon uses the defending player's Islands when player two attacks")
+    void canAttackFromSecondPlayerWhenFirstPlayerControlsIsland() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player2, new ArmoredGalleon());
+
+        declareAttackers(player2, List.of(0));
+
+        harness.assertLife(player1, 15);
+    }
 }

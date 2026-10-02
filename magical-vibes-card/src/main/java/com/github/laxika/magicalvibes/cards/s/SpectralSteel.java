@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "30")
+@CardRegistration(set = "WOC", collectorNumber = "75")
 public class SpectralSteel extends Card {
 
     public SpectralSteel() {

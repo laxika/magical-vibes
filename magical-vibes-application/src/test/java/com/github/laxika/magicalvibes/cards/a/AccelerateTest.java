@@ -75,6 +75,25 @@ class AccelerateTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
 
+    @Test
+    void newlyEnteredCreatureCanAttackAfterAccelerateResolves() {
+        harness.forceActivePlayer(player1);
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new BaskingRootwalla());
+        assertThat(target.isSummoningSick()).isTrue();
+        harness.setHand(player1, List.of(new Accelerate()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        assertThat(target.isAttacking()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

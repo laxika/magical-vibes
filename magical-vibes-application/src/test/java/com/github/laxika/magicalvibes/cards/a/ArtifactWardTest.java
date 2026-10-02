@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.Caltrops;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -31,7 +32,7 @@ class ArtifactWardTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new SoldeviGolem());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
@@ -44,7 +45,7 @@ class ArtifactWardTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
         declareBlock(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -86,8 +87,8 @@ class ArtifactWardTest extends BaseCardTest {
     void preventsArtifactCombatDamage() {
         Permanent creature = addWardedCreature(player2);
         Permanent attacker = addCreatureReady(player1, new SoldeviGolem());
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(creature),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -103,8 +104,8 @@ class ArtifactWardTest extends BaseCardTest {
     void allowsNonartifactCombatDamage() {
         Permanent creature = addWardedCreature(player2);
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(creature),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -113,11 +114,75 @@ class ArtifactWardTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
+    @Test
+    @CardUsed({Caltrops.class})
+    @DisplayName("Prevents nontargeted noncombat damage from an artifact")
+    void preventsNontargetedArtifactDamage() {
+        Permanent attacker = addWardedCreature(player1);
+        harness.addToBattlefield(player2, new Caltrops());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1,
+                        List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Artifact ability resolves when the Ward is attached to another creature")
+    void artifactAbilityCanTargetAnotherCreature() {
+        addWardedCreature(player2);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact ability loses its target when Artifact Ward is attached before resolution")
+    void pendingArtifactAbilityLosesTarget() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null, creature.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ArtifactWard());
+        aura.setAttachedTo(creature.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Artifact targeting restriction ends when the Aura leaves")
+    void artifactTargetingRestrictionEndsWithAura() {
+        Permanent creature = addWardedCreature(player2);
+        gd.playerBattlefields.get(player2.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof ArtifactWard);
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
     private Permanent addWardedCreature(Player owner) {
         Permanent creature = addCreatureReady(owner, new GrizzlyBears());
-        Permanent aura = new Permanent(new ArtifactWard());
+        Permanent aura = harness.addToBattlefieldAndReturn(owner, new ArtifactWard());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(owner.getId()).add(aura);
         return creature;
     }
 
@@ -127,10 +192,4 @@ class ArtifactWardTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
-    }
 }

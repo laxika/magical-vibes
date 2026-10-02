@@ -56,4 +56,73 @@ class ArmorThrullTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Tap and sacrifice costs are paid before the counter ability resolves")
+    void paysCostsBeforeResolution() {
+        Permanent source = addCreatureReady(player1, new ArmorThrull());
+        Permanent target = addCreatureReady(player2, new ArmorThrull());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Armor Thrull");
+        harness.assertInGraveyard(player1, "Armor Thrull");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Armor Thrull can target itself but is sacrificed before resolution")
+    void canTargetItself() {
+        Permanent source = addCreatureReady(player1, new ArmorThrull());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        harness.assertNotOnBattlefield(player1, "Armor Thrull");
+        harness.assertInGraveyard(player1, "Armor Thrull");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_TWO)).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Armor Thrull cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent source = addCreatureReady(player1, new ArmorThrull());
+        source.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new ArmorThrull());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertOnBattlefield(player1, "Armor Thrull");
+        harness.assertNotInGraveyard(player1, "Armor Thrull");
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Armor Thrull cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent source = addCreatureReady(player1, new ArmorThrull());
+        source.setTapped(true);
+        Permanent target = addCreatureReady(player2, new ArmorThrull());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertOnBattlefield(player1, "Armor Thrull");
+        harness.assertNotInGraveyard(player1, "Armor Thrull");
+        assertThat(gd.stack).isEmpty();
+    }
 }

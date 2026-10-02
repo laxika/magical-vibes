@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DSC", collectorNumber = "107")
+@CardRegistration(set = "WOC", collectorNumber = "79")
 public class TimelyWard extends Card {
 
     public TimelyWard() {

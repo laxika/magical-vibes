@@ -88,6 +88,52 @@ class AboshanCephalidEmperorTest extends BaseCardTest {
         assertThat(aboshan.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("An opposing Octopus cannot pay the first ability's cost")
+    void opposingOctopusCannotPayCost() {
+        Permanent aboshan = addCreatureReady(player1, new AboshanCephalidEmperor());
+        Permanent opposingAboshan = addCreatureReady(player2, new AboshanCephalidEmperor());
+        aboshan.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, aboshan), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(opposingAboshan.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The first ability can target an already tapped permanent you control")
+    void firstAbilityCanTargetTappedOwnPermanent() {
+        Permanent aboshan = harness.addToBattlefieldAndReturn(player1, new AboshanCephalidEmperor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.tap();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, aboshan), null, target.getId());
+        assertThat(aboshan.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The three-blue ability works while Aboshan is tapped and summoning sick")
+    void threeBlueAbilityWorksWhileTappedAndSummoningSick() {
+        Permanent aboshan = harness.addToBattlefieldAndReturn(player1, new AboshanCephalidEmperor());
+        aboshan.tap();
+        Permanent target = addCreatureReady(player2, new Werebear());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, aboshan), 1, null, null);
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }

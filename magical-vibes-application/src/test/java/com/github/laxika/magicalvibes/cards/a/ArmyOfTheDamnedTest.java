@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +12,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArmyOfTheDamned.class})
 class ArmyOfTheDamnedTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Army of the Damned creates thirteen tapped 2/2 Zombie tokens")
@@ -21,8 +21,7 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArmyOfTheDamned()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> zombies = findPermanents(player1, "Zombie");
 
@@ -41,8 +40,7 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArmyOfTheDamned()));
         harness.addMana(player1, ManaColor.BLACK, 8);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Army of the Damned");
     }
@@ -53,8 +51,7 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new ArmyOfTheDamned()));
         harness.addMana(player1, ManaColor.BLACK, 10);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         List<Permanent> zombies = findPermanents(player1, "Zombie");
 
@@ -71,10 +68,27 @@ class ArmyOfTheDamnedTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new ArmyOfTheDamned()));
         harness.addMana(player1, ManaColor.BLACK, 10);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         GameData gd = harness.getGameData();
+        harness.assertNotInGraveyard(player1, "Army of the Damned");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Army of the Damned"));
+    }
+
+    @Test
+    @DisplayName("Normal casting followed by flashback creates twenty-six tapped Zombies")
+    void canFlashbackAfterNormalCasting() {
+        harness.setHand(player1, List.of(new ArmyOfTheDamned()));
+        harness.addMana(player1, ManaColor.BLACK, 18);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertInGraveyard(player1, "Army of the Damned");
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(26)
+                .allSatisfy(zombie -> assertThat(zombie.isTapped()).isTrue());
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
         harness.assertNotInGraveyard(player1, "Army of the Damned");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Army of the Damned"));

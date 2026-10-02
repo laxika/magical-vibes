@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GeyadroneDihada;
+import com.github.laxika.magicalvibes.cards.o.OrnithopterOfParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchonOfCruelty.class, GrizzlyBears.class})
+@CardUsed({ArchonOfCruelty.class, GrizzlyBears.class, GeyadroneDihada.class, OrnithopterOfParadise.class})
 class ArchonOfCrueltyTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class ArchonOfCrueltyTest extends BaseCardTest {
         addArchonMana();
 
         harness.castCreature(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -70,8 +71,7 @@ class ArchonOfCrueltyTest extends BaseCardTest {
         addArchonMana();
 
         harness.castCreature(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -90,6 +90,54 @@ class ArchonOfCrueltyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("The opponent can choose a planeswalker instead of a creature to sacrifice")
+    void opponentChoosesPlaneswalker() {
+        harness.setHand(player1, List.of(new ArchonOfCruelty()));
+        harness.setHand(player2, List.of(new OrnithopterOfParadise()));
+        harness.setLibrary(player1, List.of(new OrnithopterOfParadise()));
+        harness.addToBattlefield(player2, new OrnithopterOfParadise());
+        harness.addToBattlefield(player2, new GeyadroneDihada());
+        addArchonMana();
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.handleMultiplePermanentsChosen(player2, List.of(findPermanent(player2, "Geyadrone Dihada").getId()));
+
+        harness.assertInGraveyard(player2, "Geyadrone Dihada");
+        harness.assertOnBattlefield(player2, "Ornithopter of Paradise");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life loss, draw, and life gain still happen with no opposing hand or sacrifice candidates")
+    void continuesWithEmptyOpponentHandAndBattlefield() {
+        harness.setHand(player1, List.of(new ArchonOfCruelty()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new OrnithopterOfParadise()));
+        addArchonMana();
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addArchonMana() {

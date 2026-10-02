@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEf
 
 @CardRegistration(set = "M11", collectorNumber = "51")
 @CardRegistration(set = "CMD", collectorNumber = "42")
+@CardRegistration(set = "C18", collectorNumber = "84")
 public class ConundrumSphinx extends Card {
 
     public ConundrumSphinx() {

@@ -27,10 +27,7 @@ class TrueBelieverTest extends BaseCardTest {
     @Test
     @DisplayName("Casting True Believer puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TrueBeliever(), "{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -55,10 +52,7 @@ class TrueBelieverTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts True Believer onto the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TrueBeliever(), "{W}{W}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -69,10 +63,7 @@ class TrueBelieverTest extends BaseCardTest {
     @Test
     @DisplayName("True Believer enters battlefield with summoning sickness")
     void entersBattlefieldWithSummoningSickness() {
-        harness.setHand(player1, List.of(new TrueBeliever()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TrueBeliever(), "{W}{W}");
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "True Believer");

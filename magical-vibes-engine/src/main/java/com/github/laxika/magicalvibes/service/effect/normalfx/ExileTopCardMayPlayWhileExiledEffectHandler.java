@@ -32,6 +32,8 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileTopCardMayPlayWhileExiledEffect exileEffect =
+                (ExileTopCardMayPlayWhileExiledEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
@@ -42,13 +44,29 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
         }
 
         Card topCard = deck.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
+        if (exileEffect.faceDown()) {
+            exileService.exileCardFaceDown(gameData, controllerId, topCard, null, controllerId);
+        } else {
+            exileService.exileCard(gameData, controllerId, topCard);
+        }
         exileSupport.grantPlayWhileExiled(gameData, topCard.getId(), controllerId);
+        if (exileEffect.permissionCondition() != null) {
+            gameData.exilePlayPermissionConditions.put(topCard.getId(), exileEffect.permissionCondition());
+        }
+        if (exileEffect.anyManaType()) {
+            gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+        }
 
-        gameLogService.append(gameData, GameLog.builder()
-                .text(controllerName + " exiles ").card(topCard)
-                .text(" from the top of their library and may play it for as long as it remains exiled.")
-                .build());
+        if (exileEffect.faceDown()) {
+            gameLogService.append(gameData, GameLog.text(controllerName
+                    + " looks at and exiles a card face down from the top of their library and may play it"
+                    + " for as long as it remains exiled."));
+        } else {
+            gameLogService.append(gameData, GameLog.builder()
+                    .text(controllerName + " exiles ").card(topCard)
+                    .text(" from the top of their library and may play it for as long as it remains exiled.")
+                    .build());
+        }
         log.info("Game {} - {} exiles {} from library top and may play it while it remains exiled",
                 gameData.id, controllerName, topCard.getName());
     }

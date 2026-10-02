@@ -1749,6 +1749,12 @@ public class ValidTargetService {
 
         List<UUID> validIds = new ArrayList<>();
         for (UUID playerId : searchPlayerIds) {
+            if (filter.minimumPoisonCounters() != null
+                    && !playerId.equals(controllerId)
+                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0)
+                    < filter.minimumPoisonCounters()) {
+                continue;
+            }
             if (isOnePerControllerConstraint(constraint)
                     && !excludeIds.isEmpty()) {
                 Set<UUID> selectedControllers = excludeIds.stream()

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -354,6 +357,12 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         UUID targetPlayerId = entry.getTargetId();
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         String playerName = gameData.playerIdToName.get(targetPlayerId);
+        UUID sourcePermanentId = e.trackWithSource()
+                && entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null
+                ? entry.getSourcePermanentId() : null;
+        List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = e.trackWithSource()
+                ? persistentExileCastPermissions(entry) : List.of();
 
         List<Card> toExile = new ArrayList<>();
         if (graveyard != null) {
@@ -380,7 +389,13 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         graveyard.removeAll(toExile);
         graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
         for (Card card : toExile) {
-            exileService.exileCard(gameData, targetPlayerId, card);
+            if (sourcePermanentId == null) {
+                exileService.exileCard(gameData, targetPlayerId, card);
+            } else {
+                exileService.exileCard(gameData, targetPlayerId, card, sourcePermanentId);
+            }
+            grantPersistentExileCastPermission(gameData, card, targetPlayerId,
+                    entry.getControllerId(), persistentPermissions);
         }
 
         GameLog.Builder builder = GameLog.builder().text(playerName + " exiles ");
@@ -388,6 +403,43 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         builder.text(" from their graveyard.");
         gameLogService.append(gameData, builder.build());
         log.info("Game {} - {} cards exiled from {}'s graveyard", gameData.id, toExile.size(), playerName);
+    }
+
+    private List<AllowCastFromCardsExiledWithSourceEffect> persistentExileCastPermissions(
+            StackEntry entry) {
+        Card sourceCard = entry.getTargetingCard();
+        if (sourceCard == null) {
+            return List.of();
+        }
+        return sourceCard.getEffects(EffectSlot.STATIC).stream()
+                .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
+                .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
+                .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)
+                .toList();
+    }
+
+    private void grantPersistentExileCastPermission(
+            GameData gameData, Card card, UUID exilerId, UUID sourceControllerId,
+            List<AllowCastFromCardsExiledWithSourceEffect> permissions) {
+        for (AllowCastFromCardsExiledWithSourceEffect permission : permissions) {
+            if (permission.ownOnly() && !sourceControllerId.equals(card.getOwnerId())) {
+                continue;
+            }
+            if (permission.filter() != null
+                    && !predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null)) {
+                continue;
+            }
+            UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
+                    ? exilerId : sourceControllerId;
+            gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+            if (permission.anyManaType()) {
+                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+            }
+            if (permission.withoutPayingManaCost()) {
+                gameData.exilePlayWithoutPayingManaCost.add(card.getId());
+            }
+            break;
+        }
     }
 
     private void resolveAllGraveyards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect effect) {

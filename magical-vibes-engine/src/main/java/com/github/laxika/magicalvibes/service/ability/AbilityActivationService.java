@@ -3559,10 +3559,14 @@ public class AbilityActivationService {
         PendingInteraction.ExileInstantOrSorcerySpellCostChoice activeChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.ExileInstantOrSorcerySpellCostChoice.class);
         if (activeChoice == null || !activeChoice.equals(choice)) {
-            throw new IllegalStateException("Not awaiting instant or sorcery spell cost choice");
+            throw new IllegalStateException(choice.anySpell()
+                    ? "Not awaiting spell cost choice"
+                    : "Not awaiting instant or sorcery spell cost choice");
         }
         if (!choice.validCardIds().contains(cardId)) {
-            throw new IllegalStateException("Invalid instant or sorcery spell choice");
+            throw new IllegalStateException(choice.anySpell()
+                    ? "Invalid spell choice"
+                    : "Invalid instant or sorcery spell choice");
         }
         Permanent source = gameQueryService.findPermanentById(gameData, choice.sourcePermanentId());
         if (source == null) {
@@ -3577,8 +3581,8 @@ public class AbilityActivationService {
                 -1,
                 choice.abilityIndex(),
                 choice.xValue(),
-                null,
-                null,
+                choice.targetId(),
+                choice.targetZone(),
                 null,
                 null,
                 null,
@@ -3884,6 +3888,7 @@ public class AbilityActivationService {
         }
         effectiveManaCost = applyActivatedAbilityManaCostReductions(
                 gameData, playerId, permanent, ability, targetId, effectiveXValue, effectiveManaCost);
+        effectiveManaCost = applySourceChosenColorRestriction(permanent, ability, effectiveManaCost);
         if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
             effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
         }
@@ -4401,14 +4406,18 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileInstantOrSorcerySpellCost != null) {
-            List<UUID> validSpellIds = collectExileInstantOrSorcerySpellIds(gameData, playerId);
+            List<UUID> validSpellIds = collectExileInstantOrSorcerySpellIds(
+                    gameData, playerId, exileInstantOrSorcerySpellCost.anySpell());
             if (exileInstantOrSorcerySpellCardId == null) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileInstantOrSorcerySpellCostChoice(
-                        playerId, permanent.getId(), effectiveIndex, effectiveXValue, validSpellIds));
+                        playerId, permanent.getId(), effectiveIndex, effectiveXValue, validSpellIds,
+                        exileInstantOrSorcerySpellCost.anySpell(), targetId, targetZone));
                 return;
             }
             if (!validSpellIds.contains(exileInstantOrSorcerySpellCardId)) {
-                throw new IllegalStateException("Selected instant or sorcery spell is no longer on the stack");
+                throw new IllegalStateException(exileInstantOrSorcerySpellCost.anySpell()
+                        ? "Selected spell is no longer on the stack"
+                        : "Selected instant or sorcery spell is no longer on the stack");
             }
         }
 
@@ -4659,8 +4668,11 @@ public class AbilityActivationService {
             }
         }
 
+        Card exiledSpellCardSnapshot = null;
         if (exileInstantOrSorcerySpellCost != null) {
-            payExileInstantOrSorcerySpellCost(gameData, player, exileInstantOrSorcerySpellCardId);
+            exiledSpellCardSnapshot = payExileInstantOrSorcerySpellCost(
+                    gameData, player, exileInstantOrSorcerySpellCardId,
+                    exileInstantOrSorcerySpellCost.anySpell());
         }
 
         ExileNCardsFromSingleGraveyardCost exileNFromSingleGraveyardCostToPay = abilityEffects.stream()
@@ -5219,6 +5231,7 @@ public class AbilityActivationService {
                 paidExiledCardSnapshot != null ? paidExiledCardSnapshot
                         : exiledTopCardSnapshot != null ? exiledTopCardSnapshot
                         : exiledGraveyardCardSnapshot != null ? exiledGraveyardCardSnapshot
+                        : exiledSpellCardSnapshot != null ? exiledSpellCardSnapshot
                         : trackedExiledCardSnapshot(activationEffects, permanent),
                 activatedAbilityExiledCardIds);
     }
@@ -6019,6 +6032,14 @@ public class AbilityActivationService {
         return cost;
     }
 
+    private ManaCost applySourceChosenColorRestriction(Permanent permanent, ActivatedAbility ability,
+                                                       ManaCost cost) {
+        if (cost == null || !ability.isSourceChosenColorManaOnly() || permanent.getChosenColor() == null) {
+            return cost;
+        }
+        return cost.withGenericCostsAsColor(ManaColor.valueOf(permanent.getChosenColor().name()));
+    }
+
     /**
      * Resolves the source permanent for an activation. {@code permanentIndex} is an index into the
      * activating player's own battlefield for the common case (a player activating an ability of a
@@ -6498,6 +6519,7 @@ public class AbilityActivationService {
                 ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
         effectiveManaCost = applyActivatedAbilityManaCostReductions(
                 gameData, playerId, permanent, ability, null, xValue, effectiveManaCost);
+        effectiveManaCost = applySourceChosenColorRestriction(permanent, ability, effectiveManaCost);
         CastingCostService.ImposedSacrificeRequirement imposedTax = ability.isPowerUpAbility()
                 ? castingCostService.getImposedSacrificeRequirement(gameData, effectiveManaCost, false, true)
                 : castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);
@@ -6712,9 +6734,16 @@ public class AbilityActivationService {
             throw new IllegalStateException("No card in graveyard to exile");
         }
 
-        if (abilityEffects.stream().anyMatch(ExileInstantOrSorcerySpellCost.class::isInstance)
-                && collectExileInstantOrSorcerySpellIds(gameData, playerId).isEmpty()) {
-            throw new IllegalStateException("No instant or sorcery spell you control to exile from the stack");
+        ExileInstantOrSorcerySpellCost spellExileCost = abilityEffects.stream()
+                .filter(ExileInstantOrSorcerySpellCost.class::isInstance)
+                .map(ExileInstantOrSorcerySpellCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (spellExileCost != null
+                && collectExileInstantOrSorcerySpellIds(gameData, playerId, spellExileCost.anySpell()).isEmpty()) {
+            throw new IllegalStateException(spellExileCost.anySpell()
+                    ? "No spell you control to exile from the stack"
+                    : "No instant or sorcery spell you control to exile from the stack");
         }
 
         PutCardExiledWithSourceIntoGraveyardCost putExiledCardIntoGraveyardCost = abilityEffects.stream()
@@ -7651,6 +7680,12 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if an opponent controls more lands than you");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_AT_LEAST_TWO_MORE_LANDS) {
+                if (!gameQueryService.anyOpponentControlsAtLeastTwoMoreLands(gameData, playerId)) {
+                    throw new IllegalStateException(
+                            "Activate only if an opponent controls at least two more lands than you");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING) {
                 if (!permanent.isAttacking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking");
@@ -7824,13 +7859,7 @@ public class AbilityActivationService {
         }
 
         // Predicate-count restriction (e.g. Leechridden Swamp's "Activate only if you control two or more black permanents")
-        if (ability.getRequiredControlledPermanentPredicate() != null) {
-            int count = gameQueryService.countControlledPermanentsMatching(gameData, playerId, ability.getRequiredControlledPermanentPredicate());
-            if (count < ability.getRequiredControlledPermanentCount()) {
-                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledPermanentCount()
-                        + " or more " + ability.getRequiredControlledPermanentDescription());
-            }
-        }
+        validateRequiredControlledPermanents(gameData, playerId, ability);
 
         // Graveyard-card-count restriction (e.g. Gate to the Afterlife's "Activate only if there are
         // six or more creature cards in your graveyard"). Counts non-token cards in the controller's graveyard.
@@ -7913,9 +7942,21 @@ public class AbilityActivationService {
         }
     }
 
+    private void validateRequiredControlledPermanents(GameData gameData, UUID playerId, ActivatedAbility ability) {
+        if (ability.getRequiredControlledPermanentPredicate() != null) {
+            int count = gameQueryService.countControlledPermanentsMatching(
+                    gameData, playerId, ability.getRequiredControlledPermanentPredicate());
+            if (count < ability.getRequiredControlledPermanentCount()) {
+                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledPermanentCount()
+                        + " or more " + ability.getRequiredControlledPermanentDescription());
+            }
+        }
+    }
+
     private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability,
                                                      Card card) {
         validateHandSizeRestrictions(gameData, playerId, ability);
+        validateRequiredControlledPermanents(gameData, playerId, ability);
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_TURN
                 && !playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("This ability can only be activated during your turn");
@@ -8753,22 +8794,31 @@ public class AbilityActivationService {
         return validIndices;
     }
 
-    private List<UUID> collectExileInstantOrSorcerySpellIds(GameData gameData, UUID playerId) {
+    private List<UUID> collectExileInstantOrSorcerySpellIds(GameData gameData, UUID playerId,
+                                                            boolean anySpell) {
         return gameData.stack.stream()
-                .filter(entry -> (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                .filter(entry -> (anySpell || entry.getEntryType() == StackEntryType.INSTANT_SPELL
                         || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
+                        && (!anySpell || entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                         && playerId.equals(entry.getControllerId()))
                 .map(entry -> entry.getCard().getId())
                 .toList();
     }
 
-    private void payExileInstantOrSorcerySpellCost(GameData gameData, Player player, UUID cardId) {
+    private Card payExileInstantOrSorcerySpellCost(GameData gameData, Player player, UUID cardId,
+                                                   boolean anySpell) {
         StackEntry entry = gameQueryService.findStackEntryByCardId(gameData, cardId);
-        if (entry == null
-                || (entry.getEntryType() != StackEntryType.INSTANT_SPELL
-                && entry.getEntryType() != StackEntryType.SORCERY_SPELL)
-                || !player.getId().equals(entry.getControllerId())) {
-            throw new IllegalStateException("Must exile an instant or sorcery spell you control from the stack");
+        boolean validSpell = entry != null
+                && (anySpell || entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
+                && (!anySpell || (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY))
+                && player.getId().equals(entry.getControllerId());
+        if (!validSpell) {
+            throw new IllegalStateException(anySpell
+                    ? "Must exile a spell you control from the stack"
+                    : "Must exile an instant or sorcery spell you control from the stack");
         }
 
         gameData.stack.remove(entry);
@@ -8777,6 +8827,7 @@ public class AbilityActivationService {
         }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", entry.getCard(), " from the stack as an activation cost."));
+        return entry.getPhysicalCard();
     }
 
     private Card payPutCardExiledWithSourceIntoGraveyardCost(GameData gameData, Player player,

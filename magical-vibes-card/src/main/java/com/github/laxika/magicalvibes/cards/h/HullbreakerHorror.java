@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "872")
 @CardRegistration(set = "SLD", collectorNumber = "2321")
 @CardRegistration(set = "SLD", collectorNumber = "2336")
+@CardRegistration(set = "WOC", collectorNumber = "95")
 public class HullbreakerHorror extends Card {
 
     public HullbreakerHorror() {

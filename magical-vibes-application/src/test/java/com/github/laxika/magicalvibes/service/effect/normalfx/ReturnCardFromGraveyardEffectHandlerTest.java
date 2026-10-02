@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -41,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +110,48 @@ class ReturnCardFromGraveyardEffectHandlerTest {
         verify(interactionHandlerRegistry).begin(eq(gd), argThat(interaction ->
                 interaction instanceof PendingInteraction.GraveyardChoice choice
                         && choice.cardPool().equals(List.of(eligible))));
+    }
+
+    @Test
+    @DisplayName("All-graveyard battlefield-origin returns use the spell controller's battlefield")
+    void allGraveyardsBattlefieldOriginReturnsUnderControllerControl() {
+        Card player1Card = createCard("Player 1 creature");
+        player1Card.setOwnerId(player1Id);
+        Card player2Card = createCard("Player 2 creature");
+        player2Card.setOwnerId(player2Id);
+        Card oldPlayer2Card = createCard("Old player 2 creature");
+        oldPlayer2Card.setOwnerId(player2Id);
+        gd.playerGraveyards.get(player1Id).add(player1Card);
+        gd.playerGraveyards.get(player2Id).addAll(List.of(player2Card, oldPlayer2Card));
+        gd.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(player1Id, ignored -> new java.util.HashSet<>())
+                .add(player1Card.getId());
+        gd.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(player2Id, ignored -> new java.util.HashSet<>())
+                .add(player2Card.getId());
+
+        CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
+        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                .filter(filter)
+                .returnAll(true)
+                .fromBattlefieldThisTurn(true)
+                .build();
+        Card source = createCard("Return spell");
+        StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, source,
+                player1Id, "Return spell", new ArrayList<>(List.of(effect)));
+        when(predicateEvaluationService.matchesCardPredicate(
+                any(Card.class), eq(filter), eq(source.getId()), eq(gd), any(UUID.class),
+                isNull(), isNull(), anyInt())).thenReturn(true);
+        when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+
+        support.resolveReturnAll(gd, entry, effect, player1Id, source.getId());
+
+        verify(battlefieldEntryService, times(2)).putPermanentOntoBattlefield(
+                eq(gd), eq(player1Id), any(Permanent.class), eq(Set.of()));
+        assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2Id)).containsExactly(oldPlayer2Card);
     }
 
     @Mock

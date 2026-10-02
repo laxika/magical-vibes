@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "76")
+@CardRegistration(set = "WOC", collectorNumber = "103")
 public class Quickling extends Card {
 
     public Quickling() {

@@ -26,4 +26,16 @@ class AlabornMusketeerTest extends BaseCardTest {
 
         assertThat(musketeer.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Reach can block ground creatures and does not grant attacking evasion")
+    void reachCanBlockGroundCreatureWithReach() {
+        addCreatureReady(player1, new AlabornMusketeer());
+        Permanent musketeer = addCreatureReady(player2, new AlabornMusketeer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(musketeer.isBlocking()).isTrue();
+    }
 }

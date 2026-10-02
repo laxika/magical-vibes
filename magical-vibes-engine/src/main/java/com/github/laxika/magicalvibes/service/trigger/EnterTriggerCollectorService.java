@@ -654,14 +654,18 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterModalAtTriggerTime(TriggerMatchContext match,
                                                                ChooseOneAtTriggerTimeEffect effect,
                                                                TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     match.permanent().getCard(), match.controllerId(), effect.choice(),
-                    match.permanent().getId(), pe.enteringCard().getId()));
+                    match.permanent().getId(), false, false, pe.enteringCard().getId(), null,
+                    enteringPermanentId));
         }
         logTriggered(match);
         return true;

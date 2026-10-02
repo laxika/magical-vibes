@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -47,5 +49,48 @@ class ArlinnsWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {-1, -3, -4})
+    @DisplayName("Blocking restriction uses reduced current power, including zero and negative power")
+    void cannotBeBlockedAfterPowerIsReduced(int powerModifier) {
+        Permanent blocker = addCreatureReady(player2, new ArlinnsWolf());
+        blocker.setPowerModifier(powerModifier);
+        Permanent wolf = addCreatureReady(player1, new ArlinnsWolf());
+        wolf.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature with printed power 2 can block after its power increases to 3")
+    void canBeBlockedAfterPowerIsIncreased() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(1);
+        Permanent wolf = addCreatureReady(player1, new ArlinnsWolf());
+        wolf.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Wolf's evasion does not restrict what it can block")
+    void canBlockAnAttackingCreatureWithPowerTwo() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wolf = addCreatureReady(player2, new ArlinnsWolf());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(wolf.isBlocking()).isTrue();
     }
 }
