@@ -24,6 +24,36 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AbbeyGargoylesTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creature without flying or reach cannot block Abbey Gargoyles")
+    void groundCreatureCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new AbbeyGargoyles());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Abbey Gargoyles takes combat damage from a non-red creature")
+    void takesDamageFromNonRed() {
+        Permanent attacker = addCreatureReady(player1, new ZephyrFalcon());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AbbeyGargoyles());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Abbey Gargoyles");
+        harness.assertInGraveyard(player1, "Zephyr Falcon");
+    }
+
+    @Test
     @DisplayName("Red creature cannot block Abbey Gargoyles")
     void redCreatureCannotBlock() {
         Permanent attacker = addCreatureReady(player1, new AbbeyGargoyles());

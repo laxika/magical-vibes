@@ -1,17 +1,23 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RiteOfConsumption.class, BriarberryCohort.class, GarrukWildspeaker.class,
+        SafeholdSentry.class})
 class RiteOfConsumptionTest extends BaseCardTest {
 
     private void addMana() {
@@ -24,8 +30,7 @@ class RiteOfConsumptionTest extends BaseCardTest {
     void dealsDamageAndGainsLife() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry()); // 2/2
 
         harness.setHand(player1, List.of(new RiteOfConsumption()));
         addMana();
@@ -35,7 +40,7 @@ class RiteOfConsumptionTest extends BaseCardTest {
 
         harness.assertLife(player2, 18); // 2 damage
         harness.assertLife(player1, 22); // gained 2 life
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Safehold Sentry");
     }
 
     @Test
@@ -43,9 +48,8 @@ class RiteOfConsumptionTest extends BaseCardTest {
     void scalesWithCounters() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry()); // 2/2
         sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // becomes 5/5
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
 
         harness.setHand(player1, List.of(new RiteOfConsumption()));
         addMana();
@@ -61,8 +65,7 @@ class RiteOfConsumptionTest extends BaseCardTest {
     @DisplayName("Can target yourself (target player)")
     void canTargetSelf() {
         harness.setLife(player1, 20);
-        Permanent sacrifice = new Permanent(new RagingGoblin()); // 1/1
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort()); // 1/1
 
         harness.setHand(player1, List.of(new RiteOfConsumption()));
         addMana();
@@ -71,6 +74,42 @@ class RiteOfConsumptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // 1 damage to self, then gain 1 life: net back to 20
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Deals damage to a target planeswalker and gains that much life")
+    void dealsDamageToPlaneswalkerAndGainsLife() {
+        harness.setLife(player1, 20);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry()); // 2/2
+
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, planeswalker.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Gains life equal to damage actually dealt when damage is prevented")
+    void gainsLifeEqualToDamageActuallyDealt() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry()); // 2/2
+        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
         harness.assertLife(player1, 20);
     }
 

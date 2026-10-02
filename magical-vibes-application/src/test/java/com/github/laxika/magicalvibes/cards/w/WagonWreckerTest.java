@@ -27,11 +27,12 @@ class WagonWreckerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        int lifeBeforeCasting = gd.getLife(player2.getId());
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBeforeCasting - 2);
     }
 }

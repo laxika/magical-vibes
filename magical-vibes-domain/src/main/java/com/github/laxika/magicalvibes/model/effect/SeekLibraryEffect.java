@@ -16,7 +16,7 @@ import java.util.Objects;
 public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                                 LibrarySearchDestination destination, ManaValueBound manaValueBound,
                                 boolean faceDown, boolean grantPlayUntilNextTurn, CardSubtype grantSubtype)
-        implements CardEffect {
+        implements TriggeringSpellManaValueEffect {
 
     public SeekLibraryEffect {
         Objects.requireNonNull(count, "count");

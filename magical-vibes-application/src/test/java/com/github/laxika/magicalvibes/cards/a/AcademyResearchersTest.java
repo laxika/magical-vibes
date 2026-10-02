@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.b.BrilliantHalo;
 import com.github.laxika.magicalvibes.cards.l.LingeringMirage;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -29,10 +28,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Academy Researchers puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -44,10 +40,7 @@ class AcademyResearchersTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Academy Researchers puts it on the battlefield with may prompt, then ETB on stack")
     void resolvingPutsItOnBattlefieldWithEtb() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
         harness.passBothPriorities(); // resolve creature spell → may on stack
 
         GameData gd = harness.getGameData();
@@ -274,9 +267,7 @@ class AcademyResearchersTest extends BaseCardTest {
     // ===== Helper =====
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new AcademyResearchers()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcademyResearchers(), "{1}{U}{U}");
     }
 }
 

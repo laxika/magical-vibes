@@ -32,14 +32,15 @@ class LuminesceTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Luminesce puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Luminesce()));
+        Luminesce luminesce = new Luminesce();
+        harness.setHand(player1, List.of(luminesce));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Luminesce");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(luminesce);
     }
 
     @Test
@@ -68,12 +69,13 @@ class LuminesceTest extends BaseCardTest {
     @Test
     @DisplayName("Luminesce goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.setHand(player1, List.of(new Luminesce()));
+        Luminesce luminesce = new Luminesce();
+        harness.setHand(player1, List.of(luminesce));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castAndResolveInstant(player1, 0);
 
-        harness.assertInGraveyard(player1, "Luminesce");
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).contains(luminesce);
     }
 
     // ===== Combat damage prevention - black source =====

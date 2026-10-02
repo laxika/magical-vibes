@@ -71,6 +71,21 @@ class StarlightInvokerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the controller gains life")
+    void onlyControllerGainsLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new StarlightInvoker());
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Can activate multiple times to gain more life")
     void canActivateMultipleTimes() {
         harness.setLife(player1, 20);

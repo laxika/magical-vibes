@@ -35,18 +35,22 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SeekCardsToHandEffect seek = (SeekCardsToHandEffect) effect;
+        seek(gameData, entry, (SeekCardsToHandEffect) effect);
+    }
+
+    /** Resolves a Seek and returns the exact cards moved into the controller's hand. */
+    public List<Card> seek(GameData gameData, StackEntry entry, SeekCardsToHandEffect seek) {
         UUID controllerId = entry.getControllerId();
         int count = Math.max(0, amountEvaluationService.evaluate(
                 gameData, seek.amount(), AmountContext.forStackEntry(entry, null)));
         if (count == 0) {
-            return;
+            return List.of();
         }
 
         List<Card> library = gameData.playerDecks.get(controllerId);
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (library == null || hand == null || library.isEmpty()) {
-            return;
+            return List.of();
         }
 
         ManaValueBound manaValueBound = seek.manaValueBound();
@@ -63,7 +67,8 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
         Collections.shuffle(matchingCards);
 
         int soughtCount = Math.min(count, matchingCards.size());
-        for (Card card : matchingCards.subList(0, soughtCount)) {
+        List<Card> soughtCards = new ArrayList<>(matchingCards.subList(0, soughtCount));
+        for (Card card : soughtCards) {
             library.remove(card);
             hand.add(card);
         }
@@ -73,6 +78,7 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
                     gameData.playerIdToName.get(controllerId) + " seeks " + soughtCount + " card"
                             + (soughtCount == 1 ? "" : "s") + "."));
         }
+        return soughtCards;
     }
 
     private boolean matchesManaValue(Card card, Integer boundValue, ManaValueBound bound) {

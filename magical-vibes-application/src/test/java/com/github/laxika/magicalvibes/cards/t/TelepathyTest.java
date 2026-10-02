@@ -177,6 +177,21 @@ class TelepathyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Telepathy does not reveal the opponent's hand while it has lost its abilities")
+    void abilityLossDisablesHandReveal() {
+        var telepathy = harness.addToBattlefieldAndReturn(player1, new Telepathy());
+        telepathy.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setHand(player2, List.of(new AirElemental()));
+        harness.clearMessages();
+
+        harness.passPriority(player1);
+
+        List<String> messages = harness.getConn1().getMessagesContaining("\"opponentHand\"");
+        assertThat(messages).anyMatch(message -> message.contains("\"opponentHand\":[]"));
+        assertThat(messages).noneMatch(message -> message.contains("Air Elemental"));
+    }
+
+    @Test
     @DisplayName("Telepathy reveals opponent's hand after being cast and resolved")
     void revealsHandAfterCasting() {
         harness.setHand(player2, List.of(new AirElemental()));

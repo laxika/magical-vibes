@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PardicDragon.class, Shock.class})
+@CardUsed({PardicDragon.class, ThinkTwice.class})
 class PardicDragonTest extends BaseCardTest {
 
     @Test
@@ -53,7 +53,10 @@ class PardicDragonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -68,23 +71,40 @@ class PardicDragonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
     }
 
     @Test
+    @DisplayName("Pardic Dragon's trigger does nothing if it stops being suspended before resolution")
+    void timeCounterTriggerDoesNothingAfterSuspensionEnds() {
+        PardicDragon dragon = suspendCard();
+        castOpponentSpell();
+
+        gd.exiledCardTimeCounters.remove(dragon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(dragon.getId());
+
+        harness.passBothPriorities();
+    }
+
+    @Test
     @DisplayName("Pardic Dragon does not trigger when its owner casts a spell")
     void ownerSpellDoesNotTrigger() {
         PardicDragon dragon = suspendCard();
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castFromHand(player1, new ThinkTwice(), "{1}{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.exiledCardTimeCounters).containsEntry(dragon.getId(), 2);
@@ -99,11 +119,9 @@ class PardicDragonTest extends BaseCardTest {
     }
 
     private void castOpponentSpell() {
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castFromHand(player2, new ThinkTwice(), "{1}{U}");
     }
 }

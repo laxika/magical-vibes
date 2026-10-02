@@ -172,6 +172,23 @@ class FogElementalTest extends BaseCardTest {
                 .noneMatch(card -> card == fogPerm.getCard());
     }
 
+    @Test
+    @DisplayName("Fog Elemental is not sacrificed if removed after trigger resolves")
+    void notSacrificedIfRemovedAfterTriggerResolves() {
+        Permanent fogPerm = addCreatureReady(player1, new FogElemental());
+        declareAttackers(List.of(0));
+        harness.passUntil(player1, TurnStep.DECLARE_BLOCKERS);
+
+        harness.inMutationScope(() -> assertThat(
+                harness.getPermanentRemovalService().removePermanentToHand(gd, fogPerm)).isTrue());
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(fogPerm.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card == fogPerm.getCard());
+    }
+
     // ===== Normal creatures don't trigger on attack =====
 
     @Test
@@ -205,8 +222,7 @@ class FogElementalTest extends BaseCardTest {
         Permanent fogPerm = addCreatureReady(player1, new FogElemental());
         Permanent blocker = addCreatureReady(player2, new Avizoa());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(fogPerm);

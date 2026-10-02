@@ -35,6 +35,11 @@ public class IntensifyNamedCardsEffectHandler implements NormalEffectHandlerBean
         UUID controllerId = entry.getControllerId();
         Set<UUID> visitedCardIds = new HashSet<>();
 
+        // The resolving spell is no longer guaranteed to be present in the stack collection.
+        // Visit it explicitly so a spell that intensifies all owned named cards includes itself.
+        visitCard(entry.getCard(), entry.getControllerId(), controllerId, intensify,
+                gameData, visitedCardIds);
+
         gameData.playerBattlefields.forEach((controller, battlefield) -> {
             for (Permanent permanent : battlefield) {
                 Card card = permanent.getCard();

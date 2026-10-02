@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.b.BoneShards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbidingGrace.class, EliteVanguard.class, GrizzlyBears.class})
+@CardUsed({AbidingGrace.class, EliteVanguard.class, GrizzlyBears.class, BoneShards.class, Ornithopter.class})
 class AbidingGraceTest extends BaseCardTest {
 
     private static final String GAIN_LIFE = "You gain 1 life";
@@ -59,13 +62,51 @@ class AbidingGraceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         advanceToEndStep(player1);
+        assertThatThrownBy(() -> harness.handleListChoice(player1, RETURN_CREATURE))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Only your mana-value-one creature cards are offered as targets")
+    void filtersGraveyardTargets() {
+        EliteVanguard creature = new EliteVanguard();
+        harness.addToBattlefield(player1, new AbidingGrace());
+        harness.setGraveyard(player1, List.of(creature, new Ornithopter(), new BoneShards(), new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new EliteVanguard()));
+
+        advanceToEndStep(player1);
         harness.handleListChoice(player1, RETURN_CREATURE);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.cards()).containsExactly(creature);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Grizzly Bears");
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Elite Vanguard");
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not returned and does not grant life")
+    void targetLeavesGraveyardBeforeResolution() {
+        EliteVanguard creature = new EliteVanguard();
+        harness.addToBattlefield(player1, new AbidingGrace());
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToEndStep(player1);
+        harness.handleListChoice(player1, RETURN_CREATURE);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertLife(player1, 20);
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
     }
 
     @Test

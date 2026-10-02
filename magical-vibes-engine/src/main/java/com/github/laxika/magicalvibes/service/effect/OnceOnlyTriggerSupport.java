@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect;
 
 /** Tracks triggered abilities that are limited to once for a permanent object. */
@@ -20,6 +21,11 @@ public final class OnceOnlyTriggerSupport {
     }
 
     public static CardEffect unwrapIfAvailable(GameData gameData, Permanent source, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            CardEffect wrapped = unwrapIfAvailable(gameData, source, conditional.wrapped());
+            return wrapped == null ? null : new ConditionalEffect(
+                    conditional.condition(), wrapped, conditional.interveningIf());
+        }
         if (!(effect instanceof OnceOnlyTriggerEffect once)) {
             return effect;
         }
@@ -30,6 +36,9 @@ public final class OnceOnlyTriggerSupport {
     }
 
     public static void markIfNeeded(GameData gameData, Permanent source, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional) {
+            markIfNeeded(gameData, source, conditional.wrapped());
+        }
         if (effect instanceof OnceOnlyTriggerEffect) {
             mark(gameData, source);
         }

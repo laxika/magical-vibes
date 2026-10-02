@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +12,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DuskImp.class, WoodlandDruid.class})
+@CardUsed({DuskImp.class, DrossCrocodile.class})
 class DuskImpTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking Dusk Imp")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new DuskImp());
-        addCreatureReady(player2, new WoodlandDruid());
+        addCreatureReady(player2, new DrossCrocodile());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HavenwoodWurm.class, GrizzlyBears.class})
+@CardUsed({HavenwoodWurm.class, AshcoatBear.class})
 class HavenwoodWurmTest extends BaseCardTest {
 
     @Test
@@ -24,11 +24,17 @@ class HavenwoodWurmTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new HavenwoodWurm()));
-        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castFromHand(player1, new HavenwoodWurm(), "{6}{G}");
 
-        gs.passPriority(gd, player2);
-        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can be cast during combat thanks to flash")
+    void canBeCastDuringCombat() {
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new HavenwoodWurm(), "{6}{G}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -38,12 +44,14 @@ class HavenwoodWurmTest extends BaseCardTest {
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         Permanent attacker = addCreatureReady(player1, new HavenwoodWurm());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,

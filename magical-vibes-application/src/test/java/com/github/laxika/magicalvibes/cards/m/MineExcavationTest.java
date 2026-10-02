@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.c.CurseOfChains;
+import com.github.laxika.magicalvibes.cards.k.KithkinShielddare;
+import com.github.laxika.magicalvibes.cards.l.LureboundScarecrow;
+import com.github.laxika.magicalvibes.cards.m.MistmeadowSkulk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,12 +21,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MineExcavation.class, LureboundScarecrow.class, CurseOfChains.class,
+        KithkinShielddare.class, MistmeadowSkulk.class})
 class MineExcavationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a target artifact card from graveyard to hand")
     void returnsTargetArtifactToHand() {
-        Card artifact = new Ornithopter();
+        Card artifact = new LureboundScarecrow();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -42,7 +44,7 @@ class MineExcavationTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a target enchantment card from graveyard to hand")
     void returnsTargetEnchantmentToHand() {
-        Card enchantment = new Pacifism();
+        Card enchantment = new CurseOfChains();
         harness.setGraveyard(player1, List.of(enchantment));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -57,7 +59,7 @@ class MineExcavationTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an opponent's graveyard; the card returns to its owner's hand")
     void returnsFromOpponentGraveyardToOwnersHand() {
-        Card artifact = new Ornithopter();
+        Card artifact = new LureboundScarecrow();
         harness.setGraveyard(player2, List.of(artifact));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -74,7 +76,7 @@ class MineExcavationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature card that is neither artifact nor enchantment")
     void cannotTargetPlainCreature() {
-        Card creature = new GrizzlyBears();
+        Card creature = new KithkinShielddare();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -86,19 +88,19 @@ class MineExcavationTest extends BaseCardTest {
     @Test
     @DisplayName("Conspire taps two color-sharing creatures and queues a copy of the spell")
     void conspireTapsCreaturesAndQueuesCopy() {
-        Card artifact = new Ornithopter();
+        Card artifact = new LureboundScarecrow();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
-        Permanent vanguard = addCreatureReady(player1, new EliteVanguard());
+        Permanent skulk = addCreatureReady(player1, new MistmeadowSkulk());
+        Permanent shielddare = addCreatureReady(player1, new KithkinShielddare());
 
-        harness.castWithConspire(player1, 0, artifact.getId(), List.of(hawk.getId(), vanguard.getId()));
+        harness.castWithConspire(player1, 0, artifact.getId(), List.of(skulk.getId(), shielddare.getId()));
 
         GameData gd = harness.getGameData();
-        assertThat(hawk.isTapped()).isTrue();
-        assertThat(vanguard.isTapped()).isTrue();
+        assertThat(skulk.isTapped()).isTrue();
+        assertThat(shielddare.isTapped()).isTrue();
 
         // The spell plus one conspire copy trigger are on the stack.
         assertThat(gd.stack).hasSize(2);
@@ -110,16 +112,43 @@ class MineExcavationTest extends BaseCardTest {
     @Test
     @DisplayName("Conspire is rejected when a chosen creature does not share a color with the spell")
     void conspireRejectsColorlessCreature() {
-        Card artifact = new Ornithopter();
+        Card artifact = new LureboundScarecrow();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new MineExcavation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
-        Permanent thopter = addCreatureReady(player1, new Ornithopter()); // colorless
+        Permanent skulk = addCreatureReady(player1, new MistmeadowSkulk());
+        Permanent scarecrow = addCreatureReady(player1, new LureboundScarecrow()); // colorless
 
         assertThatThrownBy(() -> harness.castWithConspire(player1, 0, artifact.getId(),
-                List.of(hawk.getId(), thopter.getId())))
+                List.of(skulk.getId(), scarecrow.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Conspire can retarget its copy and both spell instances resolve")
+    void conspireCopyCanChooseNewGraveyardTarget() {
+        Card originalTarget = new LureboundScarecrow();
+        Card copyTarget = new LureboundScarecrow();
+        harness.setGraveyard(player1, List.of(originalTarget, copyTarget));
+        harness.setHand(player1, List.of(new MineExcavation()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        Permanent skulk = addCreatureReady(player1, new MistmeadowSkulk());
+        Permanent shielddare = addCreatureReady(player1, new KithkinShielddare());
+
+        harness.castWithConspire(player1, 0, originalTarget.getId(),
+                List.of(skulk.getId(), shielddare.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(originalTarget.getId(), copyTarget.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(originalTarget.getId())
+                        || card.getId().equals(copyTarget.getId()));
     }
 }

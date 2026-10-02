@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GiantBadger;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpiketailHatchling.class, GiantBadger.class, Unsummon.class})
+@CardUsed({SpiketailHatchling.class, HillGiant.class, Unsummon.class})
 class SpiketailHatchlingTest extends BaseCardTest {
 
     @Test
@@ -128,7 +128,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new GiantBadger());
+        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new HillGiant());
 
         Unsummon targetSpell = new Unsummon();
         harness.setHand(player1, List.of(targetSpell));
@@ -161,7 +161,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player1, hatchling);
 
-        var permanent = harness.addToBattlefieldAndReturn(player2, new GiantBadger());
+        var permanent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -239,7 +239,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
         SpiketailHatchling hatchling = new SpiketailHatchling();
         harness.addToBattlefield(player2, hatchling);
 
-        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new GiantBadger());
+        var targetPermanent = harness.addToBattlefieldAndReturn(player1, new HillGiant());
 
         Unsummon targetSpell = new Unsummon();
         harness.setHand(player1, List.of(targetSpell));
@@ -259,7 +259,7 @@ class SpiketailHatchlingTest extends BaseCardTest {
     @DisplayName("Flying prevents a creature without flying or reach from blocking")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
         addCreatureReady(player1, new SpiketailHatchling());
-        addCreatureReady(player2, new GiantBadger());
+        addCreatureReady(player2, new HillGiant());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

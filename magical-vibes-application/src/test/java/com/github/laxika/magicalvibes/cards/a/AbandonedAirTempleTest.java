@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurtleDuck;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AbandonedAirTemple.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AbandonedAirTemple.class, Forest.class, TurtleDuck.class})
 class AbandonedAirTempleTest extends BaseCardTest {
 
     @Test
@@ -24,7 +24,7 @@ class AbandonedAirTempleTest extends BaseCardTest {
     void entersTappedWithoutBasicLand() {
         playTemple(player1);
 
-        assertThat(findTemple(player1).isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Abandoned Air Temple").isTapped()).isTrue();
     }
 
     @Test
@@ -34,7 +34,7 @@ class AbandonedAirTempleTest extends BaseCardTest {
 
         playTemple(player1);
 
-        assertThat(findTemple(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Abandoned Air Temple").isTapped()).isFalse();
     }
 
     @Test
@@ -62,8 +62,8 @@ class AbandonedAirTempleTest extends BaseCardTest {
     @DisplayName("The activated ability puts a +1/+1 counter on each creature you control")
     void putsCountersOnControlledCreatures() {
         Permanent temple = addReadyTemple(player1);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TurtleDuck());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -90,10 +90,53 @@ class AbandonedAirTempleTest extends BaseCardTest {
         return temple;
     }
 
-    private Permanent findTemple(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof AbandonedAirTemple)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("An opponent's basic land does not let the temple enter untapped")
+    void opponentsBasicLandDoesNotSatisfyCheck() {
+        harness.addToBattlefield(player2, new Forest());
+
+        playTemple(player1);
+
+        assertThat(findPermanent(player1, "Abandoned Air Temple").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counters are put on every controlled creature present at resolution")
+    void countersUseCreaturesPresentAtResolution() {
+        Permanent temple = addReadyTemple(player1);
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(laterCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(temple.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter ability can resolve when you control no creatures")
+    void counterAbilityWithNoCreatures() {
+        Permanent temple = addReadyTemple(player1);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TurtleDuck());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(temple.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

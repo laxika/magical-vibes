@@ -1101,7 +1101,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
                     List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
-                    pending.triggeringPermanentId());
+                    pending.triggeringPermanentId(), pending.rememberLastChosenMode());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());

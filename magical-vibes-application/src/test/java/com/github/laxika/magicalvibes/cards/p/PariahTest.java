@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GlistenerElf;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TyphoidRats;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -68,9 +68,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears()); // 2/2
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
@@ -91,9 +90,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears()); // 2/2
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
@@ -115,9 +113,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a 2/2 creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears()); // 2/2
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
@@ -138,9 +135,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a 2/2 creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears()); // 2/2
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
@@ -162,9 +158,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a 2/2 creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2) — enough to kill the 2/2
         addCreatureReady(player1, new GrizzlyBears());
@@ -184,9 +179,8 @@ class PariahTest extends BaseCardTest {
         // Player2 has a 2/2 creature with Pariah attached
         Permanent wallPerm = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pariahPerm);
 
         // Player1 has an unblocked attacker (2/2) — enough to kill the 2/2
         addCreatureReady(player1, new GrizzlyBears());
@@ -211,9 +205,8 @@ class PariahTest extends BaseCardTest {
         // Player1 has a creature with Pariah attached (will redirect Hurricane damage)
         Permanent wallPerm = addCreatureReady(player1, new GrizzlyBears()); // 2/2
 
-        Permanent pariahPerm = new Permanent(new Pariah());
+        Permanent pariahPerm = harness.addToBattlefieldAndReturn(player1, new Pariah());
         pariahPerm.setAttachedTo(wallPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(pariahPerm);
 
         // Cast Hurricane for X=1
         harness.setHand(player1, List.of(new Hurricane()));
@@ -346,13 +339,13 @@ class PariahTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({GlistenerElf.class})
+    @CardUsed({PlagueStinger.class})
     @DisplayName("Pariah redirects infect damage to the enchanted creature")
     void infectDamageIsRedirectedToEnchantedCreature() {
         Permanent enchantedCreature = addCreatureReady(player2, new GrizzlyBears());
         Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
         pariah.setAttachedTo(enchantedCreature.getId());
-        addCreatureReady(player1, new GlistenerElf());
+        addCreatureReady(player1, new PlagueStinger());
 
         declareAttackers(List.of(0));
         prepareDeclareBlockers();
@@ -362,6 +355,24 @@ class PariahTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
         assertThat(enchantedCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(enchantedCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({PaladinEnVec.class, Shock.class})
+    @DisplayName("Protection from the damage source prevents redirected damage")
+    void protectionOnEnchantedCreaturePreventsRedirectedDamage() {
+        Permanent protectedCreature = addCreatureReady(player2, new PaladinEnVec());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        pariah.setAttachedTo(protectedCreature.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(protectedCreature);
     }
 
     @Test

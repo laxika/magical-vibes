@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MarchOfTheMachines.class, AngelsFeather.class, GloriousAnthem.class,
-        GrizzlyBears.class, IcyManipulator.class, LeoninScimitar.class, Ornithopter.class})
+        FountainOfYouth.class, GrizzlyBears.class, IcyManipulator.class, LeoninScimitar.class,
+        Ornithopter.class})
 class MarchOfTheMachinesTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -62,8 +64,26 @@ class MarchOfTheMachinesTest extends BaseCardTest {
         Permanent feather = findPermanent(player1, "Angel's Feather");
 
         assertThat(gqs.isCreature(gd, feather)).isTrue();
+        assertThat(gqs.isArtifact(gd, feather)).isTrue();
         assertThat(gqs.getEffectivePower(gd, feather)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, feather)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A zero-mana noncreature artifact becomes 0/0 and dies to state-based actions")
+    void zeroManaArtifactDiesToStateBasedActions() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        assertThat(gqs.isCreature(gd, fountain)).isTrue();
+        assertThat(gqs.isArtifact(gd, fountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, fountain)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, fountain)).isZero();
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
     }
 
     @Test

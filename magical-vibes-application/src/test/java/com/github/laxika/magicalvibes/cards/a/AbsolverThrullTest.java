@@ -21,6 +21,50 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AbsolverThrullTest extends BaseCardTest {
 
     @Test
+    void entersWithoutAnyEnchantmentToTarget() {
+        setupPlayer1Active();
+        harness.setHand(player1, List.of(new AbsolverThrull()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Absolver Thrull");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void enterTriggerCanDestroyControllersEnchantment() {
+        harness.addToBattlefield(player1, new HissingMiasma());
+
+        castAbsolver(harness.getPermanentId(player1, "Hissing Miasma"));
+
+        harness.assertNotOnBattlefield(player1, "Hissing Miasma");
+        harness.assertInGraveyard(player1, "Hissing Miasma");
+        harness.assertOnBattlefield(player1, "Absolver Thrull");
+    }
+
+    @Test
+    void hauntDoesNotExileSourceIfTargetDiesBeforeResolution() {
+        harness.addToBattlefield(player1, new AbsolverThrull());
+        harness.addToBattlefield(player2, new MourningThrull());
+        UUID creatureId = harness.getPermanentId(player2, "Mourning Thrull");
+        destroyWithMortify(harness.getPermanentId(player1, "Absolver Thrull"));
+        harness.handlePermanentChosen(player1, creatureId);
+
+        destroyWithMortify(creatureId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Absolver Thrull");
+        harness.assertInGraveyard(player2, "Mourning Thrull");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .doesNotContain("Absolver Thrull");
+    }
+
+    @Test
     void entersAndDestroysTargetEnchantment() {
         harness.addToBattlefield(player2, new HissingMiasma());
         UUID enchantmentId = harness.getPermanentId(player2, "Hissing Miasma");
@@ -96,8 +140,7 @@ class AbsolverThrullTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void destroyWithMortify(UUID targetId) {

@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,23 +8,21 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mindstab.class, Forest.class, GrizzlyBears.class, Peek.class})
+@CardUsed({Mindstab.class, AshcoatBear.class})
 class MindstabTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target player discards three cards")
     void targetPlayerDiscardsThreeCards() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
+        harness.setHand(player2, List.of(new AshcoatBear(), new AshcoatBear(), new AshcoatBear()));
         harness.setHand(player1, List.of(new Mindstab()));
         harness.addMana(player1, ManaColor.BLACK, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
@@ -37,6 +33,62 @@ class MindstabTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Suspend counters are removed only during Mindstab's owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        Mindstab card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
+    @DisplayName("The last suspend counter offers a free cast that makes the target player discard three cards")
+    void lastCounterOffersFreeCastAndDiscardsThreeCards() {
+        Mindstab card = suspendCard();
+        harness.setHand(player2, List.of(new AshcoatBear(), new AshcoatBear(), new AshcoatBear()));
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Mindstab");
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Mindstab in exile")
+    void decliningSuspendCastLeavesCardInExile() {
+        Mindstab card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotInGraveyard(player1, "Mindstab");
     }
 
     @Test
@@ -51,5 +103,13 @@ class MindstabTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    private Mindstab suspendCard() {
+        Mindstab card = new Mindstab();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateHandAbility(player1, 0, null);
+        return card;
     }
 }

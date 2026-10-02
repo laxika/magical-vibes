@@ -172,7 +172,7 @@ function Invoke-CardContext {
     $card = $null
     $classNameSupplied = -not [string]::IsNullOrWhiteSpace($ClassName)
 
-    Write-Section "Scryfall"
+    Write-Section "Card Info"
     if ($SkipScryfall) {
         Write-Host "Skipped by -SkipScryfall."
     } else {
@@ -181,6 +181,7 @@ function Invoke-CardContext {
             if (-not $classNameSupplied) {
                 $ClassName = ConvertTo-ClassName -CardName $card.name
             }
+            Write-Host "Source: $($card.source) $($card.source_date)"
             Write-ScryfallSummary -Card $card
         } catch {
             Write-Host "Lookup failed: $($_.Exception.Message)"

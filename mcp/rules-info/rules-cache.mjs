@@ -1,6 +1,6 @@
 import { mkdir, open, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { DEFAULT_MCP_CACHE_DIR } from '../cache-directory.mjs';
 
 const RULES_PAGE_URL = 'https://magic.wizards.com/en/rules';
 const CACHE_SCHEMA_VERSION = 1;
@@ -9,8 +9,6 @@ const LOCK_WAIT_MS = 30_000;
 const LOCK_POLL_MS = 100;
 const USER_AGENT = 'magical-vibes-rules-info-mcp/1.0';
 
-const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_CACHE_DIR = path.join(MODULE_DIR, 'cache');
 const CACHE_FILE = 'comprehensive-rules.json';
 
 // "120.1a Damage can't be dealt ..." / "120.1. Objects can deal damage ..." / "120. Damage"
@@ -119,7 +117,7 @@ function snippet(text, index, radius = 140) {
 
 export class ComprehensiveRulesCache {
   constructor({
-    cacheDir = process.env.RULES_INFO_CACHE_DIR || DEFAULT_CACHE_DIR,
+    cacheDir = process.env.RULES_INFO_CACHE_DIR || DEFAULT_MCP_CACHE_DIR,
     fetchImpl = globalThis.fetch,
     now = () => Date.now(),
     ttlMs = CACHE_TTL_MS,

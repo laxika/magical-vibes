@@ -43,6 +43,7 @@ class BloodrootApothecaryTest extends BaseCardTest {
 
         int treasureIndex = gd.playerBattlefields.get(player2.getId()).indexOf(treasure);
         harness.activateAbility(player2, treasureIndex, null, null);
+        harness.handleListChoice(player2, ManaColor.GREEN.name());
         resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
@@ -56,6 +57,7 @@ class BloodrootApothecaryTest extends BaseCardTest {
 
         int tokenIndex = gd.playerBattlefields.get(player2.getId()).indexOf(creatureToken);
         harness.activateAbility(player2, tokenIndex, null, null);
+        harness.handleListChoice(player2, ManaColor.GREEN.name());
         resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();

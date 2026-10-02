@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.DeepAnalysis;
+import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -159,6 +160,37 @@ class PlagiarizeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 2);
+    }
+
+    @Test
+    @CardUsed(ThoughtReflection.class)
+    @DisplayName("Plagiarize's replacement draw can be modified by the controller's draw replacements")
+    void replacementDrawUsesControllersDrawReplacements() {
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setHand(player1, List.of(new Plagiarize()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.setLibrary(player1, List.of(
+                new DeepAnalysis(), new DeepAnalysis(), new DeepAnalysis(), new DeepAnalysis()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new DeepAnalysis()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int player1DeckBefore = gd.playerDecks.get(player1.getId()).size();
+        int player2DeckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.castAndResolveSorcery(player2, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(player1DeckBefore - 4);
     }
 
     // ===== End of turn cleanup =====

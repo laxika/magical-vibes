@@ -28,6 +28,18 @@ class SoulWardenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gains 1 life when another creature enters without being cast")
+    void gainsLifeWhenAnotherCreatureEntersWithoutBeingCast() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new RagingGoblin());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
     @DisplayName("Its controller gains life when an opponent's creature enters")
     void itsControllerGainsLifeWhenOpponentsCreatureEnters() {
         harness.addToBattlefield(player1, new SoulWarden());

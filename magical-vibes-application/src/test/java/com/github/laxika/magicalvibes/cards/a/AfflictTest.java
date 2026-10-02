@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NantukoDisciple;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Afflict.class, NantukoDisciple.class, DwarvenGrunt.class})
+@CardUsed({Afflict.class, NantukoDisciple.class, DwarvenGrunt.class, Forest.class})
 class AfflictTest extends BaseCardTest {
 
     private void setupDiscipleAndAfflict() {
@@ -135,6 +136,38 @@ class AfflictTest extends BaseCardTest {
         // Spell should fizzle — no crash, stack should be empty
         assertThat(harness.getGameData().stack).isEmpty();
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Forest");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fizzling Afflict does not draw a card")
+    void fizzlingDoesNotDrawACard() {
+        harness.addToBattlefield(player1, new NantukoDisciple());
+        harness.setLibrary(player1, List.of(new NantukoDisciple()));
+        harness.setHand(player1, List.of(new Afflict()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Nantuko Disciple");
+        harness.castInstant(player1, 0, targetId);
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test

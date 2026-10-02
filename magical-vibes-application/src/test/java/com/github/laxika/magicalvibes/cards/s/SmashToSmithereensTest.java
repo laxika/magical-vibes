@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
+import com.github.laxika.magicalvibes.cards.e.EnergyField;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SmashToSmithereens.class, RodOfRuin.class, DarksteelPlate.class, GrizzlyBears.class,
+        Tatterkite.class, EnergyField.class})
 class SmashToSmithereensTest extends BaseCardTest {
 
     @Test
@@ -31,10 +33,43 @@ class SmashToSmithereensTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Rod of Ruin");
         harness.assertInGraveyard(player2, "Rod of Ruin");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        harness.assertLife(player2, lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Destroys an artifact creature and deals 3 damage to its controller")
+    void destroysArtifactCreature() {
+        harness.addToBattlefield(player2, new Tatterkite());
+        harness.setHand(player1, List.of(new SmashToSmithereens()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        int lifeBefore = harness.getGameData().playerLifeTotals.get(player2.getId());
+        UUID targetId = harness.getPermanentId(player2, "Tatterkite");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Tatterkite");
+        harness.assertInGraveyard(player2, "Tatterkite");
+        harness.assertLife(player2, lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Damage rider remains controlled by the spell caster")
+    void damageRiderUsesSpellControllerForDamageModifiers() {
+        harness.addToBattlefield(player2, new EnergyField());
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.setHand(player1, List.of(new SmashToSmithereens()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Rod of Ruin");
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        // Energy Field prevents damage from the player 1 spell because player 1 is its controller.
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
     }
 
     @Test
@@ -49,10 +84,9 @@ class SmashToSmithereensTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Darksteel Plate is indestructible, still on battlefield
         harness.assertOnBattlefield(player2, "Darksteel Plate");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        harness.assertLife(player2, lifeBefore - 3);
     }
 
     @Test
@@ -81,8 +115,7 @@ class SmashToSmithereensTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertLife(player2, lifeBefore);
     }
 }

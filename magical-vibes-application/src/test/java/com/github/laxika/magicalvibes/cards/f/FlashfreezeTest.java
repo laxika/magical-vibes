@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.f.FrostRaptor;
 import com.github.laxika.magicalvibes.cards.r.Resize;
 import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Flashfreeze.class, BorealDruid.class, FrostRaptor.class, Resize.class, RiteOfFlame.class})
+@CardUsed({Flashfreeze.class, BorealDruid.class, FrostRaptor.class, Resize.class, RiteOfFlame.class, RagingGoblin.class})
 class FlashfreezeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -138,6 +139,24 @@ class FlashfreezeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Resolving counters a red creature spell")
+    void countersRedCreatureSpell() {
+        RagingGoblin goblin = new RagingGoblin();
+        harness.setHand(player1, List.of(goblin));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.setHand(player2, List.of(new Flashfreeze()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, goblin.getId());
+
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+    }
+
     // ===== Fizzle =====
 
     @Test
@@ -154,7 +173,7 @@ class FlashfreezeTest extends BaseCardTest {
 
         // Remove target from stack before Flashfreeze resolves
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Boreal Druid"));
+        gd.stack.removeIf(se -> se.getCard().getId().equals(druid.getId()));
 
         harness.passBothPriorities();
 

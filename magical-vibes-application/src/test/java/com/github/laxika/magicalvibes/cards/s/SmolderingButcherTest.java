@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BallynockTrapper;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SmolderingButcher.class, BallynockTrapper.class})
 class SmolderingButcherTest extends BaseCardTest {
 
     @Test
@@ -17,7 +19,7 @@ class SmolderingButcherTest extends BaseCardTest {
         Permanent butcher = addCreatureReady(player1, new SmolderingButcher()); // 4/2, wither
         butcher.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears()); // 2/2
+        Permanent blocker = addCreatureReady(player2, new BallynockTrapper()); // 2/2
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed(BasaltGargoyle.class)
@@ -33,6 +31,21 @@ class BasaltGargoyleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gargoyle.getToughnessModifiers()).isZero();
+    }
+
+    @Test
+    @DisplayName("The red ability can be activated repeatedly and its boosts stack")
+    void redAbilityBoostsStack() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new BasaltGargoyle());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getPowerModifiers()).isZero();
+        assertThat(gargoyle.getToughnessModifiers()).isEqualTo(2);
     }
 
     @Test
@@ -69,10 +82,7 @@ class BasaltGargoyleTest extends BaseCardTest {
     }
 
     private void castAndResolveGargoyle() {
-        harness.setHand(player1, List.of(new BasaltGargoyle()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new BasaltGargoyle(), "{2}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

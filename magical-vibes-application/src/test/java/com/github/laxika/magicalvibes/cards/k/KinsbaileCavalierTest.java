@@ -1,21 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KinsbaileCavalier.class, KinsbaileBorderguard.class, BenalishKnight.class})
 class KinsbaileCavalierTest extends BaseCardTest {
-
-    private Permanent find(Player owner, String name) {
-        return findPermanent(owner, name);
-    }
 
     @Test
     @DisplayName("Own Knight gains double strike")
@@ -23,7 +19,7 @@ class KinsbaileCavalierTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KinsbaileCavalier());
         harness.addToBattlefield(player1, new BenalishKnight());
 
-        assertThat(gqs.hasKeyword(gd, find(player1, "Benalish Knight"), Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Benalish Knight"), Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -31,16 +27,16 @@ class KinsbaileCavalierTest extends BaseCardTest {
     void grantsDoubleStrikeToItself() {
         harness.addToBattlefield(player1, new KinsbaileCavalier());
 
-        assertThat(gqs.hasKeyword(gd, find(player1, "Kinsbaile Cavalier"), Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kinsbaile Cavalier"), Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
     @DisplayName("Does not grant double strike to own non-Knight creature")
     void doesNotGrantToNonKnight() {
         harness.addToBattlefield(player1, new KinsbaileCavalier());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new KinsbaileBorderguard());
 
-        assertThat(gqs.hasKeyword(gd, find(player1, "Grizzly Bears"), Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Kinsbaile Borderguard"), Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -49,7 +45,7 @@ class KinsbaileCavalierTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KinsbaileCavalier());
         harness.addToBattlefield(player2, new BenalishKnight());
 
-        assertThat(gqs.hasKeyword(gd, find(player2, "Benalish Knight"), Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player2, "Benalish Knight"), Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -58,7 +54,7 @@ class KinsbaileCavalierTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KinsbaileCavalier());
         harness.addToBattlefield(player1, new BenalishKnight());
 
-        Permanent knight = find(player1, "Benalish Knight");
+        Permanent knight = findPermanent(player1, "Benalish Knight");
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DOUBLE_STRIKE)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())

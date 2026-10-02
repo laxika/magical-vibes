@@ -33,7 +33,7 @@ class ScurryOfSquirrelsTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
             resolveAllTriggers();
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         });
 
         List<Permanent> copies = findPermanents(player1, "Scurry of Squirrels").stream()

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MorselTheft.class, ElvishWarrior.class})
 class MorselTheftTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
@@ -25,11 +27,10 @@ class MorselTheftTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.setHand(player1, List.of(new MorselTheft()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2); // normal {2}{B}{B}
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
@@ -44,7 +45,7 @@ class MorselTheftTest extends BaseCardTest {
         setupProwl();
 
         harness.setHand(player1, List.of(new MorselTheft()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1); // prowl {1}{B}
         harness.castWithProwl(player1, 0, player2.getId());
@@ -53,8 +54,23 @@ class MorselTheftTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 3);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
         // Prowl cost paid — draw a card.
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Elvish Warrior");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself still applies the drain to the same player")
+    void canTargetController() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+
+        harness.setHand(player1, List.of(new MorselTheft()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 
     @Test
@@ -71,11 +87,28 @@ class MorselTheftTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Prowl cost is unavailable after combat damage from a non-Rogue")
+    void prowlUnavailableAfterNonRogueDamage() {
+        setupProwl(CardSubtype.GOBLIN);
+
+        harness.setHand(player1, List.of(new MorselTheft()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void setupProwl() {
+        setupProwl(CardSubtype.ROGUE);
+    }
+
+    private void setupProwl(CardSubtype subtype) {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gd.combatDamageToPlayerControllerSubtypesThisTurn
                 .computeIfAbsent(player1.getId(), k -> ConcurrentHashMap.newKeySet())
-                .add(CardSubtype.ROGUE);
+                .add(subtype);
     }
 }

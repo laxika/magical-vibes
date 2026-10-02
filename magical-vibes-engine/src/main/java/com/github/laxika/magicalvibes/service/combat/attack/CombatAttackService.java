@@ -127,6 +127,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
@@ -1221,7 +1222,8 @@ public class CombatAttackService {
                         // to one creature the defending player controls" (Decimator Beetle). The normal
                         // pipeline collects only one target, so route to the bespoke two-step flow.
                         boolean isTriggerTimeModal = otherEffects.size() == 1
-                                && otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect;
+                                && (otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect
+                                || otherEffects.getFirst() instanceof ChooseModeNotChosenDuringLastCombatEffect);
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
                                 .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
@@ -1238,9 +1240,24 @@ public class CombatAttackService {
                                         ? attackedTargetId
                                         : gameQueryService.findPermanentController(gameData, attackedTargetId);
                         if (isTriggerTimeModal) {
-                            ChooseOneAtTriggerTimeEffect modal = (ChooseOneAtTriggerTimeEffect) otherEffects.getFirst();
+                            CardEffect modalEffect = otherEffects.getFirst();
+                            ChooseOneEffect modal;
+                            boolean rememberLastChosenMode = false;
+                            if (modalEffect instanceof ChooseModeNotChosenDuringLastCombatEffect lastCombatModal) {
+                                List<ChooseOneEffect.ChooseOneOption> availableOptions = lastCombatModal.options().stream()
+                                        .filter(option -> !option.label().equals(attacker.getChosenMode()))
+                                        .toList();
+                                if (availableOptions.isEmpty()) {
+                                    continue;
+                                }
+                                modal = new ChooseOneEffect(availableOptions);
+                                rememberLastChosenMode = true;
+                            } else {
+                                modal = ((ChooseOneAtTriggerTimeEffect) modalEffect).choice();
+                            }
                             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                    attacker.getCard(), playerId, modal.choice(), attacker.getId()));
+                                    attacker.getCard(), playerId, modal, attacker.getId(), false, false,
+                                    null, null, null, rememberLastChosenMode));
                         } else if (isCounterMove) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackCounterMoveFirstTarget(

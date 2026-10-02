@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrimalForcemage.class, GrizzlyBears.class, FugitiveWizard.class})
+@CardUsed({PrimalForcemage.class, AshcoatBear.class, PentarchWard.class})
 class PrimalForcemageTest extends BaseCardTest {
 
     @Test
@@ -22,13 +22,10 @@ class PrimalForcemageTest extends BaseCardTest {
     void boostsEnteringCreature() {
         harness.addToBattlefield(player1, new PrimalForcemage());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        resolveAllTriggers();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Ashcoat Bear");
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(bears.getToughnessModifier()).isEqualTo(3);
     }
@@ -38,13 +35,10 @@ class PrimalForcemageTest extends BaseCardTest {
     void boostWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new PrimalForcemage());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        resolveAllTriggers();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Ashcoat Bear");
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(bears.getToughnessModifier()).isEqualTo(3);
 
@@ -64,30 +58,66 @@ class PrimalForcemageTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new FugitiveWizard()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AshcoatBear(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent wizard = findPermanent(player2, "Fugitive Wizard");
-        assertThat(wizard.getPowerModifier()).isEqualTo(0);
-        assertThat(wizard.getToughnessModifier()).isEqualTo(0);
+        Permanent bear = findPermanent(player2, "Ashcoat Bear");
+        assertThat(bear.getPowerModifier()).isEqualTo(0);
+        assertThat(bear.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Does not trigger for itself entering")
     void noTriggerForItself() {
-        harness.setHand(player1, List.of(new PrimalForcemage()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PrimalForcemage(), "{2}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         Permanent forcemage = findPermanent(player1, "Primal Forcemage");
         assertThat(forcemage.getPowerModifier()).isEqualTo(0);
         assertThat(forcemage.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Does not boost a creature already on the battlefield")
+    void doesNotBoostCreatureAlreadyOnBattlefield() {
+        harness.addToBattlefield(player1, new PrimalForcemage());
+        Permanent existingBear = addCreatureReady(player1, new AshcoatBear());
+
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        resolveAllTriggers();
+
+        assertThat(existingBear.getPowerModifier()).isEqualTo(0);
+        assertThat(existingBear.getToughnessModifier()).isEqualTo(0);
+
+        Permanent enteringBear = findPermanents(player1, "Ashcoat Bear").get(1);
+        assertThat(enteringBear.getPowerModifier()).isEqualTo(3);
+        assertThat(enteringBear.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boosts the entering creature even if it gains protection from green")
+    void boostsEnteringCreatureWithProtectionFromGreen() {
+        harness.addToBattlefield(player1, new PrimalForcemage());
+
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent enteringBear = findPermanent(player1, "Ashcoat Bear");
+        harness.setHand(player1, List.of(new PentarchWard()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, enteringBear.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, enteringBear, CardColor.GREEN)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(enteringBear.getPowerModifier()).isEqualTo(3);
+        assertThat(enteringBear.getToughnessModifier()).isEqualTo(3);
     }
 
 }

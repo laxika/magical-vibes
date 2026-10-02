@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,25 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Necroskitter.class, GrizzlyBears.class, Shock.class})
 class NecroskitterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Wither deals combat damage as -1/-1 counters")
+    void witherDealsMinusOneMinusOneCounters() {
+        Permanent attacker = addCreatureReady(player1, new Necroskitter());
+        attacker.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(0);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
 
     @Test
     @DisplayName("Accepting returns the dying opponent creature to the battlefield under your control")
@@ -29,8 +48,7 @@ class NecroskitterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID dyingId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, dyingId);
-        harness.passBothPriorities(); // Shock resolves → Grizzly Bears dies with a -1/-1 counter
+        harness.castAndResolveInstant(player1, 0, dyingId); // Shock resolves → Grizzly Bears dies with a -1/-1 counter
         harness.passBothPriorities(); // Necroskitter's MayEffect resolves from the stack → may prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -53,8 +71,7 @@ class NecroskitterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID dyingId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, dyingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, dyingId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -74,8 +91,7 @@ class NecroskitterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID dyingId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, dyingId);
-        harness.passBothPriorities(); // Grizzly Bears dies without a -1/-1 counter
+        harness.castAndResolveInstant(player1, 0, dyingId); // Grizzly Bears dies without a -1/-1 counter
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -94,8 +110,7 @@ class NecroskitterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID dyingId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, dyingId);
-        harness.passBothPriorities(); // player1's own creature dies — Necroskitter must not trigger
+        harness.castAndResolveInstant(player2, 0, dyingId); // player1's own creature dies — Necroskitter must not trigger
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");

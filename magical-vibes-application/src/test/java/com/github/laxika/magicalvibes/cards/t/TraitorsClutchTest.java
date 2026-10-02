@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,19 +17,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TraitorsClutch.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({TraitorsClutch.class, AshcoatBear.class, PrismaticLens.class})
 class TraitorsClutchTest extends BaseCardTest {
 
     @Test
     @DisplayName("Target creature gets +1/+0, becomes black, and gains shadow")
     void appliesTemporaryEffects() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new TraitorsClutch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
@@ -40,13 +39,12 @@ class TraitorsClutchTest extends BaseCardTest {
     @Test
     @DisplayName("Temporary effects wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
         harness.setHand(player1, List.of(new TraitorsClutch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -60,13 +58,12 @@ class TraitorsClutchTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback applies the effect and exiles the spell")
     void flashbackAppliesEffectAndExilesSpell() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
         harness.setGraveyard(player1, List.of(new TraitorsClutch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.SHADOW)).isTrue();
@@ -78,7 +75,7 @@ class TraitorsClutchTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PrismaticLens());
         harness.setHand(player1, List.of(new TraitorsClutch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

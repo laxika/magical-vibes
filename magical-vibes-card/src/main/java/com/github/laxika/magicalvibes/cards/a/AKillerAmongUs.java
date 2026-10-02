@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealSourceChosenSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSourceChosenSubtypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -36,24 +37,21 @@ public class AKillerAmongUs extends Card {
             new PermanentIsAttackingPredicate()));
 
     public AKillerAmongUs() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new CreateTokenEffect("Human", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.HUMAN), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        List.of(CardSubtype.HUMAN), Set.of(), Set.of()),
                 new CreateTokenEffect("Merfolk", 1, 1, CardColor.BLUE,
-                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of()),
                 new CreateTokenEffect("Goblin", 1, 1, CardColor.RED,
-                        List.of(CardSubtype.GOBLIN), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseSubtypeForSourceEffect(CHOOSABLE_TYPES));
+                        List.of(CardSubtype.GOBLIN), Set.of(), Set.of()),
+                new ChooseSubtypeForSourceEffect(CHOOSABLE_TYPES)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new RevealSourceChosenSubtypeEffect(),
+                        new RevealSourceChosenSubtypeCost(),
                         PutCounterOnTargetPermanentEffect.withResolutionCondition(
                                 CounterType.PLUS_ONE_PLUS_ONE, 3,
                                 new PermanentHasSourceChosenSubtypePredicate()),

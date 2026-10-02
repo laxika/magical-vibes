@@ -41,14 +41,14 @@ class ImpetuousLootmongerTest extends BaseCardTest {
         assertThat(discardChoice.playerId()).isEqualTo(player1.getId());
         harness.handleCardChosen(player1, discardChoice.validIndices().getFirst());
 
-        PendingInteraction.HeistCardChoice heistChoice =
-                gd.interaction.activeInteraction(PendingInteraction.HeistCardChoice.class);
+        PendingInteraction.LibrarySearch heistChoice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(heistChoice).isNotNull();
-        assertThat(heistChoice.cards()).hasSize(3)
+        assertThat(heistChoice.params().cards()).hasSize(3)
                 .allMatch(card -> !card.hasType(CardType.LAND));
 
-        Card chosen = heistChoice.cards().getFirst();
-        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        Card chosen = heistChoice.params().cards().getFirst();
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
         assertThat(gd.findExiledCard(chosen.getId())).isNotNull();
@@ -62,7 +62,7 @@ class ImpetuousLootmongerTest extends BaseCardTest {
     void castingUnownedSpellCreatesTappedTreasure() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new ImpetuousLootmonger());
+        harness.addToBattlefield(player2, new ImpetuousLootmonger());
         harness.setLibrary(player2, List.of(new Island(), new Island()));
 
         Divination spell = new Divination();

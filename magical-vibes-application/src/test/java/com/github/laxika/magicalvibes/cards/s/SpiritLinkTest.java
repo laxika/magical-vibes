@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpiritLink.class, AnabaShaman.class, CircleOfProtectionGreen.class,
-        GrizzlyBears.class, Fog.class})
+        GrizzlyBears.class, HolyDay.class})
 class SpiritLinkTest extends BaseCardTest {
 
     // ===== Unblocked attacker deals damage to player =====
@@ -178,8 +178,8 @@ class SpiritLinkTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        harness.setHand(player2, List.of(new Fog()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player2, 0);
 
         prepareDeclareBlockers(player1);

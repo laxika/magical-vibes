@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HuntedWumpus;
 import com.github.laxika.magicalvibes.cards.m.Mobilization;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AngelicChorus.class, GiantGrowth.class, GiantSpider.class, GrizzlyBears.class,
-        HuntedWumpus.class, Mobilization.class})
+        HuntedWumpus.class, Mobilization.class, Shock.class})
 class AngelicChorusTest extends BaseCardTest {
 
     @Test
@@ -130,7 +131,7 @@ class AngelicChorusTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
-        Permanent enteringCreature = gd.playerBattlefields.get(player1.getId()).getLast();
+        Permanent enteringCreature = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, enteringCreature.getId());
@@ -140,5 +141,25 @@ class AngelicChorusTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertLife(player1, 25);
+    }
+
+    @Test
+    @DisplayName("Angelic Chorus uses last known toughness if the creature leaves before resolution")
+    void usesLastKnownToughnessWhenCreatureLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new AngelicChorus());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent enteringCreature = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, enteringCreature.getId());
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
     }
 }

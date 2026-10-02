@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TaureanMauler.class, PricklyBoggart.class, Bitterblossom.class})
 class TaureanMaulerTest extends BaseCardTest {
 
     @Test
@@ -23,13 +23,10 @@ class TaureanMaulerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         Permanent mauler = getMauler();
         assertThat(mauler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PricklyBoggart(), "{B}");
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
 
@@ -49,12 +46,9 @@ class TaureanMaulerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-
         Permanent mauler = getMauler();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PricklyBoggart(), "{B}");
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
 
@@ -64,15 +58,33 @@ class TaureanMaulerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Controller casting a spell does not trigger Taurean Mauler")
-    void controllerSpellDoesNotTrigger() {
+    @DisplayName("Opponent casting a noncreature spell also triggers the may ability")
+    void opponentNoncreatureSpellTriggers() {
         harness.addToBattlefield(player1, new TaureanMauler());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         Permanent mauler = getMauler();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player2, new Bitterblossom(), "{1}{B}");
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(mauler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Controller casting a spell does not trigger Taurean Mauler")
+    void controllerSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TaureanMauler());
+
+        Permanent mauler = getMauler();
+
+        harness.castFromHand(player1, new PricklyBoggart(), "{B}");
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(mauler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

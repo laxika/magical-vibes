@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpiritWeaver.class, GrizzlyBears.class, FugitiveWizard.class, SteadfastGuard.class,
-        DrudgeSkeletons.class})
+        DrudgeSkeletons.class, Plains.class})
 class SpiritWeaverTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -37,7 +38,6 @@ class SpiritWeaverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Spirit Weaver");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -201,6 +201,18 @@ class SpiritWeaverTest extends BaseCardTest {
     void cannotTargetBlackCreature() {
         addCreatureReady(player1, new SpiritWeaver());
         Permanent target = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

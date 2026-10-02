@@ -59,10 +59,7 @@ class AbsolvingLammasuTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new AbsolvingLammasu()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AbsolvingLammasu(), "{4}{W}");
         resolveAllTriggers();
 
         assertThat(findPermanent(player2, "Grizzly Bears").isSuspected()).isFalse();
@@ -83,13 +80,70 @@ class AbsolvingLammasuTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
     }
 
+    @Test
+    @DisplayName("Choosing no target still gains life when an opponent has a creature")
+    void canDeclineAnAvailableTarget() {
+        harness.addToBattlefield(player1, new AbsolvingLammasu());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killLammasu(harness.getPermanentId(player1, "Absolving Lammasu"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(opponentCreature.getId())
+                .doesNotContain(ownCreature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
+        assertThat(opponentCreature.isSuspected()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing the chosen target prevents the entire death ability from resolving")
+    void removedTargetPreventsLifeGain() {
+        harness.addToBattlefield(player1, new AbsolvingLammasu());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killLammasu(harness.getPermanentId(player1, "Absolving Lammasu"));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Entering clears every suspected creature on both sides")
+    void enteringClearsBothPlayersCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        ownCreature.setSuspected(true);
+        opponentCreature.setSuspected(true);
+
+        harness.castFromHand(player1, new AbsolvingLammasu(), "{4}{W}");
+        resolveAllTriggers();
+
+        assertThat(ownCreature.isSuspected()).isFalse();
+        assertThat(opponentCreature.isSuspected()).isFalse();
+        assertThat(otherCreature.isSuspected()).isFalse();
+        assertThat(bls.canBlock(gd, ownCreature)).isTrue();
+        assertThat(bls.canBlock(gd, opponentCreature)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, com.github.laxika.magicalvibes.model.Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, com.github.laxika.magicalvibes.model.Keyword.MENACE)).isFalse();
+    }
+
     private void killLammasu(UUID lammasuId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Terror()));
         harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castInstant(player2, 0, lammasuId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lammasuId);
     }
 }

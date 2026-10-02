@@ -1760,6 +1760,11 @@ public class DamageSupport {
                         entry.getSourcePermanentId(), playerId, effectiveDamage);
                 entry.recordPlayerDealtDamage(playerId);
                 gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
+                String sourcePermanentName = sourcePermanent != null
+                        ? sourcePermanent.getCard().getName()
+                        : entry.getSourcePermanentSnapshot() == null
+                        ? null : entry.getSourcePermanentSnapshot().getCard().getName();
+                gameData.recordPermanentDamageSourceNameToPlayer(sourcePermanentName, playerId);
                 if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                     gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
                 }

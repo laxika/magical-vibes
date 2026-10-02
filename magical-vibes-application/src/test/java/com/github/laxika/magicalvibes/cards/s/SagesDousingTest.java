@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.i.InkDissolver;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,19 +17,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SagesDousing.class, InkDissolver.class, ElvishWarrior.class})
 class SagesDousingTest extends BaseCardTest {
 
     private void stockLibrary(Player player, int count) {
         List<Card> deck = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            deck.add(new Shock());
+            deck.add(new ElvishWarrior());
         }
         harness.setLibrary(player, deck);
     }
 
-    private GrizzlyBears castBearsCounteredBy(SagesDousing dousing) {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
+    private void castWarriorCounteredBy(SagesDousing dousing) {
+        ElvishWarrior warrior = new ElvishWarrior();
+        harness.setHand(player1, List.of(warrior));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(dousing));
@@ -37,8 +39,7 @@ class SagesDousingTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        return bears;
+        harness.castInstant(player2, 0, warrior.getId());
     }
 
     // ===== Counter branch =====
@@ -47,12 +48,12 @@ class SagesDousingTest extends BaseCardTest {
     @DisplayName("Counters the target spell when its controller cannot pay {3}")
     void countersWhenControllerCannotPay() {
         SagesDousing dousing = new SagesDousing();
-        castBearsCounteredBy(dousing);
+        castWarriorCounteredBy(dousing);
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
         assertThat(gd.stack).isEmpty();
     }
 
@@ -60,8 +61,8 @@ class SagesDousingTest extends BaseCardTest {
     @DisplayName("Spell is not countered when its controller pays {3}")
     void notCounteredWhenControllerPays() {
         SagesDousing dousing = new SagesDousing();
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
+        ElvishWarrior warrior = new ElvishWarrior();
+        harness.setHand(player1, List.of(warrior));
         harness.addMana(player1, ManaColor.GREEN, 5); // 2 to cast, 3 to pay
 
         harness.setHand(player2, List.of(dousing));
@@ -70,14 +71,41 @@ class SagesDousingTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        harness.castInstant(player2, 0, warrior.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Draws a card after the target controller pays when you control a Wizard")
+    void drawsAfterTargetControllerPaysWhenControllingWizard() {
+        harness.addToBattlefield(player2, new InkDissolver());
+        stockLibrary(player2, 1);
+
+        SagesDousing dousing = new SagesDousing();
+        ElvishWarrior warrior = new ElvishWarrior();
+        harness.setHand(player1, List.of(warrior));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.setHand(player2, List.of(dousing));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     // ===== Conditional draw =====
@@ -85,11 +113,11 @@ class SagesDousingTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card if you control a Wizard")
     void drawsWhenControllingWizard() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new InkDissolver());
         stockLibrary(player2, 3);
 
         SagesDousing dousing = new SagesDousing();
-        castBearsCounteredBy(dousing);
+        castWarriorCounteredBy(dousing);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -103,7 +131,7 @@ class SagesDousingTest extends BaseCardTest {
         stockLibrary(player2, 3);
 
         SagesDousing dousing = new SagesDousing();
-        castBearsCounteredBy(dousing);
+        castWarriorCounteredBy(dousing);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();

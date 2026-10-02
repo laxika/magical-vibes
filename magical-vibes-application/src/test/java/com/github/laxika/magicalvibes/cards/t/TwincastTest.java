@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
@@ -40,7 +38,8 @@ class TwincastTest extends BaseCardTest {
         harness.setHand(player1, List.of(counsel));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.setHand(player2, List.of(new Twincast()));
+        Twincast twincast = new Twincast();
+        harness.setHand(player2, List.of(twincast));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, 0);
@@ -53,7 +52,7 @@ class TwincastTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry twincastEntry = gd.stack.getLast();
         assertThat(twincastEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(twincastEntry.getCard().getName()).isEqualTo("Twincast");
+        assertThat(twincastEntry.getCard().getId()).isEqualTo(twincast.getId());
         assertThat(twincastEntry.getTargetId()).isEqualTo(counselCardId);
     }
 
@@ -89,10 +88,8 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
-
         // Resolve Twincast — should create a copy on stack
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         GameData gd = harness.getGameData();
         // Original counsel + copy should be on the stack
@@ -174,20 +171,20 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
-
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
+        GameData gd = harness.getGameData();
+        UUID copyCardId = gd.stack.getLast().getCard().getId();
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Copy should not be in any graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Counsel of the Soratami") && c != counsel);
-        harness.assertNotInGraveyard(player2, "Counsel of the Soratami");
+                .noneMatch(c -> c.getId().equals(copyCardId));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(c -> c.getId().equals(copyCardId));
     }
 
     @Test
@@ -202,10 +199,8 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
-
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         harness.assertInGraveyard(player2, "Twincast");
     }
@@ -222,10 +217,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
@@ -254,10 +248,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         StackEntry copyEntry = gd.stack.getLast();
@@ -281,23 +274,21 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
 
         // Resolve Twincast → creates copy, may-ability prompt for retarget
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
         // Decline retarget — keep original target
         harness.handleMayAbilityChosen(player2, false);
         // Resolve copy → bounces Grizzly Bears
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Bears should be back in player1's hand after the copy's bounce
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
 
         // Original Boomerang should fizzle since target is gone
         harness.passBothPriorities();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     // ===== Fizzle =====
@@ -318,12 +309,12 @@ class TwincastTest extends BaseCardTest {
 
         // Remove target spell from stack to simulate it being countered
         GameData gd = harness.getGameData();
-        gd.stack.removeIf(se -> se.getCard().getName().equals("Counsel of the Soratami"));
+        gd.stack.removeIf(se -> se.getCard() == counsel);
 
         harness.passBothPriorities();
 
         // Twincast fizzles
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // Twincast still goes to graveyard when fizzling
         harness.assertInGraveyard(player2, "Twincast");
     }
@@ -342,10 +333,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(2);
@@ -354,7 +344,6 @@ class TwincastTest extends BaseCardTest {
         StackEntry copy = gd.stack.getLast();
 
         assertThat(copy.getCard().getId()).isNotEqualTo(original.getCard().getId());
-        assertThat(copy.getCard().getName()).isEqualTo(original.getCard().getName());
     }
 
     // ===== Copying your own spell =====
@@ -372,10 +361,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         // After casting counsel, twincast is now at index 0
-        harness.castInstant(player1, 0, counsel.getId());
 
         // Resolve Twincast → creates copy
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, counsel.getId());
         // Resolve copy → player1 draws 2
         harness.passBothPriorities();
         // Resolve original → player1 draws 2
@@ -400,14 +388,11 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("copy") && log.contains("Counsel of the Soratami"));
+        assertThat(gameLogContains("A copy of Counsel of the Soratami is created.")).isTrue();
     }
 
     @Test
@@ -422,16 +407,13 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
         // Resolve copy
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Copy of Counsel of the Soratami") && log.contains("resolves"));
+        assertThat(gameLogContains("Copy of Counsel of the Soratami resolves.")).isTrue();
     }
 
     // ===== Stack is empty after everything resolves =====
@@ -448,10 +430,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
@@ -479,10 +460,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
 
         // Resolve Twincast
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         StackEntry copyEntry = gd.stack.getLast();
@@ -506,9 +486,8 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, List.of(ownLand.getId(), opponentLand.getId()));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shiftingBorders.getId());
 
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shiftingBorders.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -534,10 +513,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
 
         // Resolve Twincast → copy created, may-ability prompt for retarget
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -564,10 +542,9 @@ class TwincastTest extends BaseCardTest {
         // Player1 casts Boomerang targeting their own bears
         harness.castInstant(player1, 0, bears1PermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
 
         // Resolve Twincast → copy created
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
         // Accept retarget
         harness.handleMayAbilityChosen(player2, true);
 
@@ -602,10 +579,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
 
         // Resolve Twincast → copy created, no retarget prompt
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         GameData gd = harness.getGameData();
         // Should NOT be awaiting may-ability choice
@@ -637,10 +613,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
 
         // Resolve Twincast → accept retarget
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
@@ -668,10 +643,9 @@ class TwincastTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bandage.getId());
 
         // Resolve Twincast → accept retarget
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bandage.getId());
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();

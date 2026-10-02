@@ -94,10 +94,52 @@ class AboshansDesireTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Shroud begins immediately when the graveyard reaches seven cards")
+    void shroudBeginsAtThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent creature = addCreatureReady(player1, new WoodlandDruid());
+        attachAura(player1, creature);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting at threshold attaches the Aura before granting shroud")
+    void castingAtThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent creature = addCreatureReady(player2, new WoodlandDruid());
+        harness.setHand(player1, List.of(new AboshansDesire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Aboshan's Desire").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shroud prevents the Aura controller from targeting the enchanted creature")
+    void shroudPreventsAnotherAura() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent creature = addCreatureReady(player1, new WoodlandDruid());
+        attachAura(player1, creature);
+        harness.setHand(player1, List.of(new AboshansDesire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new AboshansDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new AboshansDesire());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
     private List<Card> graveyardWithSevenCards() {

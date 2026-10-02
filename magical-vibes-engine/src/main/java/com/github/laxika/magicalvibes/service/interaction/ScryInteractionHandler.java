@@ -143,7 +143,8 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
                 deck.add(scryCards.get(idx));
             }
             if (scrycastCard == null && interaction.causesScryTriggers()) {
-                triggerCollectionService.checkScryTriggers(gameData, player.getId(), bottomCardOrder.size());
+                triggerCollectionService.checkScryTriggers(
+                        gameData, player.getId(), bottomCardOrder.size(), count);
             }
         }
 

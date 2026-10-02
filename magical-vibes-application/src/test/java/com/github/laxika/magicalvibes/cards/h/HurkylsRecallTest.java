@@ -136,8 +136,7 @@ class HurkylsRecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HurkylsRecall()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(targetOwnedArtifact);
         assertThat(gd.playerHands.get(player2.getId())).contains(targetOwnedArtifact.getCard());
