@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "259")
+@CardRegistration(set = "WOC", collectorNumber = "8")
+@CardRegistration(set = "WOC", collectorNumber = "44")
 public class UnfinishedBusiness extends Card {
 
     public UnfinishedBusiness() {

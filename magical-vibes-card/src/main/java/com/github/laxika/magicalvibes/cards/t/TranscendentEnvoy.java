@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "40")
 @CardRegistration(set = "SOC", collectorNumber = "183")
+@CardRegistration(set = "WOC", collectorNumber = "81")
 public class TranscendentEnvoy extends Card {
 
     public TranscendentEnvoy() {

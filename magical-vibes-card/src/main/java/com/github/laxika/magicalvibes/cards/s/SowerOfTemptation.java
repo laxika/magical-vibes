@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "88")
 @CardRegistration(set = "SLD", collectorNumber = "120")
+@CardRegistration(set = "WOC", collectorNumber = "111")
 public class SowerOfTemptation extends Card {
 
     public SowerOfTemptation() {

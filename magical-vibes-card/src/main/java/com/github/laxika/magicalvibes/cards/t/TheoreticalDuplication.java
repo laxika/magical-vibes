@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 @CardRegistration(set = "C21", collectorNumber = "34")
+@CardRegistration(set = "WOC", collectorNumber = "112")
 public class TheoreticalDuplication extends Card {
 
     public TheoreticalDuplication() {

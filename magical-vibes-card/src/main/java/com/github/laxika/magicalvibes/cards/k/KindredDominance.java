@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesOfChosenTy
 @CardRegistration(set = "CMM", collectorNumber = "169")
 @CardRegistration(set = "CMM", collectorNumber = "515")
 @CardRegistration(set = "CMM", collectorNumber = "640")
+@CardRegistration(set = "WOC", collectorNumber = "113")
 public class KindredDominance extends Card {
 
     public KindredDominance() {

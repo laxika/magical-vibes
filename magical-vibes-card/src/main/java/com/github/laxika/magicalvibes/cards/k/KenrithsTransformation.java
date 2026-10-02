@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "164")
 @CardRegistration(set = "AFC", collectorNumber = "162")
+@CardRegistration(set = "WOC", collectorNumber = "128")
 public class KenrithsTransformation extends Card {
 
     public KenrithsTransformation() {

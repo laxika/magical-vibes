@@ -225,6 +225,20 @@ public class EffectResolutionService {
                 }
             }
 
+            // A resolution-time may can contain a conditional replacement (for example, a
+            // monarch-dependent choice whose accepted branch is selected only after the may
+            // prompt). Resolve that wrapper after the player has answered it.
+            if (effectToResolve instanceof ConditionalReplacementEffect replacement) {
+                effectToResolve = conditionEvaluationService.isMet(gameData, replacement.condition(),
+                        conditionContext)
+                        ? replacement.upgradedEffect()
+                        : replacement.baseEffect();
+                if (effectToResolve != null) {
+                    entry.replaceEffectToResolve(i, effectToResolve);
+                    effects = entry.getEffectsToResolve();
+                }
+            }
+
             // CR 603.5 — resolution-time "you may pay" re-entry after player responded
             if (effectToResolve instanceof MayPayManaEffect mayPay && gameData.resolvedMayAccepted != null) {
                 boolean accepted = gameData.resolvedMayAccepted;

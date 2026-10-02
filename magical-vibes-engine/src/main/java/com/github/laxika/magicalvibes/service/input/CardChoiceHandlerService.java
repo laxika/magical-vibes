@@ -68,6 +68,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -109,6 +111,7 @@ import java.util.UUID;
 public class CardChoiceHandlerService {
 
     private final DrawService drawService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -1259,6 +1262,8 @@ public class CardChoiceHandlerService {
             }
             TargetSpec targetSpec = thenEffect.targetSpec();
             boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
+            int thenEffectXValue = followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null
+                    ? discardedCard.getManaValue() : 0;
             GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));
             if (!hasPreboundTarget && graveyardTarget != null) {
                 List<Card> matchingCards = new ArrayList<>();
@@ -1294,8 +1299,16 @@ public class CardChoiceHandlerService {
                         case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
                         case ALL_GRAVEYARDS -> "a graveyard";
                     };
+                    int maxTargets = graveyardTarget.maxTargets();
+                    if (graveyardTarget.dynamicMaxTargets() != null) {
+                        maxTargets = Math.max(0, amountEvaluationService.evaluate(gameData,
+                                graveyardTarget.dynamicMaxTargets(),
+                                new AmountContext(playerId, followUp.thenEffectSourcePermanentSnapshot(), null,
+                                        thenEffectXValue, followUp.thenEffectEventValue())));
+                    }
+                    maxTargets = Math.min(maxTargets, matchingCards.size());
                     playerInputService.beginMultiGraveyardChoice(gameData, playerId, matchingCards,
-                            graveyardTarget.maxTargets(), graveyardTarget.minTargets(),
+                            maxTargets, graveyardTarget.minTargets(),
                             sourceCard.getName() + " — Choose target card from " + zoneLabel + " "
                                     + graveyardTarget.destination() + ".");
                     return;
@@ -1305,8 +1318,6 @@ public class CardChoiceHandlerService {
                     || targetSpec.admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
-                int thenEffectXValue = followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null
-                        ? discardedCard.getManaValue() : 0;
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceCardId(sourceCard.getId())

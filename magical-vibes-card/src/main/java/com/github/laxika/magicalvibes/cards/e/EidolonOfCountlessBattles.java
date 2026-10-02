@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "7")
 @CardRegistration(set = "SOC", collectorNumber = "144")
+@CardRegistration(set = "WOC", collectorNumber = "66")
 public class EidolonOfCountlessBattles extends Card {
 
     public EidolonOfCountlessBattles() {

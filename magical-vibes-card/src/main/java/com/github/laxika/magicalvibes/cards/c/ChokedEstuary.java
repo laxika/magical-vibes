@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "AFC", collectorNumber = "228")
 @CardRegistration(set = "LCC", collectorNumber = "322")
 @CardRegistration(set = "MIC", collectorNumber = "169")
+@CardRegistration(set = "WOC", collectorNumber = "155")
 public class ChokedEstuary extends Card {
 
     public ChokedEstuary() {

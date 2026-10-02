@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 @CardRegistration(set = "GRN", collectorNumber = "48")
 @CardRegistration(set = "RVR", collectorNumber = "52")
 @CardRegistration(set = "MKC", collectorNumber = "113")
+@CardRegistration(set = "WOC", collectorNumber = "100")
 public class NightveilSprite extends Card {
 
     public NightveilSprite() {

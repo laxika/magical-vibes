@@ -3888,6 +3888,7 @@ public class AbilityActivationService {
         }
         effectiveManaCost = applyActivatedAbilityManaCostReductions(
                 gameData, playerId, permanent, ability, targetId, effectiveXValue, effectiveManaCost);
+        effectiveManaCost = applySourceChosenColorRestriction(permanent, ability, effectiveManaCost);
         if (effectiveManaCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
             effectiveManaCost = effectiveManaCost.withBlackManaAsPhyrexian();
         }
@@ -6031,6 +6032,14 @@ public class AbilityActivationService {
         return cost;
     }
 
+    private ManaCost applySourceChosenColorRestriction(Permanent permanent, ActivatedAbility ability,
+                                                       ManaCost cost) {
+        if (cost == null || !ability.isSourceChosenColorManaOnly() || permanent.getChosenColor() == null) {
+            return cost;
+        }
+        return cost.withGenericCostsAsColor(ManaColor.valueOf(permanent.getChosenColor().name()));
+    }
+
     /**
      * Resolves the source permanent for an activation. {@code permanentIndex} is an index into the
      * activating player's own battlefield for the common case (a player activating an ability of a
@@ -6510,6 +6519,7 @@ public class AbilityActivationService {
                 ? null : effectiveAbilityManaCostForPayment(gameData, permanent, ability);
         effectiveManaCost = applyActivatedAbilityManaCostReductions(
                 gameData, playerId, permanent, ability, null, xValue, effectiveManaCost);
+        effectiveManaCost = applySourceChosenColorRestriction(permanent, ability, effectiveManaCost);
         CastingCostService.ImposedSacrificeRequirement imposedTax = ability.isPowerUpAbility()
                 ? castingCostService.getImposedSacrificeRequirement(gameData, effectiveManaCost, false, true)
                 : castingCostService.getImposedSacrificeRequirementForAbility(gameData, abilityCost);

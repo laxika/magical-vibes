@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 @CardRegistration(set = "LTC", collectorNumber = "187")
 @CardRegistration(set = "TDC", collectorNumber = "148")
 @CardRegistration(set = "MKC", collectorNumber = "98")
+@CardRegistration(set = "WOC", collectorNumber = "87")
 public class Consider extends Card {
 
     public Consider() {

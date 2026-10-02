@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -16,6 +17,9 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -45,11 +49,19 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
 
         BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect =
                 (BecomeCopyOfTargetCreaturePermanentlyEffect) effect;
-        EffectRegistration retainedRegistration = findRetainedRegistration(source.getCard(), copyEffect);
+        Card originalCard = source.getCard();
+        EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
         var additionalRetainedRegistrations = copyEffect.additionalRetainedEffectSlots().stream()
-                .flatMap(slot -> source.getCard().getEffectRegistrations(slot).stream()
+                .flatMap(slot -> originalCard.getEffectRegistrations(slot).stream()
                         .map(registration -> new RetainedRegistration(slot, registration)))
                 .toList();
+        List<CardEffect> retainedTargetingEffects = new ArrayList<>();
+        if (retainedRegistration != null) {
+            retainedTargetingEffects.add(retainedRegistration.effect());
+        }
+        additionalRetainedRegistrations.stream()
+                .map(retained -> retained.registration().effect())
+                .forEach(retainedTargetingEffects::add);
         String originalName = source.getCard().getName();
         permanentCopierService.applyCloneCopy(source, target, null, null);
         if (copyEffect.nameOverride() != null) {
@@ -63,6 +75,7 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
             source.getCard().addEffect(retained.slot(), retained.registration().effect(),
                     retained.registration().triggerMode());
         }
+        source.getCard().appendSpellTargetingForEffectsFrom(originalCard, retainedTargetingEffects);
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, target.getCard().getName());
     }
 
@@ -89,6 +102,10 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         }
         if (candidate instanceof ConditionalEffect conditional) {
             return containsEffect(conditional.wrapped(), target);
+        }
+        if (candidate instanceof ConditionalReplacementEffect conditional) {
+            return containsEffect(conditional.baseEffect(), target)
+                    || containsEffect(conditional.upgradedEffect(), target);
         }
         if (candidate instanceof MayEffect may) {
             return containsEffect(may.wrapped(), target)

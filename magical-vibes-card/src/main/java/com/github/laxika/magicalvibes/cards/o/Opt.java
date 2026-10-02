@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "LTC", collectorNumber = "194")
 @CardRegistration(set = "TDC", collectorNumber = "158")
 @CardRegistration(set = "OTC", collectorNumber = "104")
+@CardRegistration(set = "WOC", collectorNumber = "101")
 public class Opt extends Card {
 
     public Opt() {

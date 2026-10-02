@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "171")
+@CardRegistration(set = "WOC", collectorNumber = "131")
 public class SanctumWeaver extends Card {
 
     public SanctumWeaver() {

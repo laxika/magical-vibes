@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "253")
 @CardRegistration(set = "C19", collectorNumber = "20")
+@CardRegistration(set = "WOC", collectorNumber = "114")
 public class NightmareUnmaking extends Card {
 
     public NightmareUnmaking() {
