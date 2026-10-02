@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AuguryOwl.class, RuneclawBear.class})
 class AuguryOwlTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Augury Owl puts it on the stack")
@@ -72,8 +72,6 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(3);
     }
 
-    // ===== Scry puts cards on top =====
-
     @Test
     @DisplayName("Scry keeping all cards on top preserves them in order")
     void scryAllOnTop() {
@@ -122,8 +120,6 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(deck.get(2)).isSameAs(originalTop0);
     }
 
-    // ===== Scry puts cards on bottom =====
-
     @Test
     @DisplayName("Scry putting all cards on bottom moves them to bottom of library")
     void scryAllOnBottom() {
@@ -135,7 +131,6 @@ class AuguryOwlTest extends BaseCardTest {
         Card originalTop0 = deck.get(0);
         Card originalTop1 = deck.get(1);
         Card originalTop2 = deck.get(2);
-        int originalDeckSize = deck.size();
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature
@@ -153,8 +148,6 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(deck.get(deckSize - 2)).isSameAs(originalTop1);
         assertThat(deck.get(deckSize - 1)).isSameAs(originalTop2);
     }
-
-    // ===== Scry split (some top, some bottom) =====
 
     @Test
     @DisplayName("Scry putting one on top and two on bottom splits correctly")
@@ -184,8 +177,6 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(deck.get(deckSize - 1)).isSameAs(originalTop2);
     }
 
-    // ===== Scry clears state =====
-
     @Test
     @DisplayName("Completing scry clears awaiting state")
     void scryCompletionClearsState() {
@@ -203,8 +194,6 @@ class AuguryOwlTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
-    // ===== Library edge cases =====
-
     @Test
     @DisplayName("Library with fewer than 3 cards scries available cards")
     void libraryWithFewerThanThreeCards() {
@@ -212,12 +201,10 @@ class AuguryOwlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         GameData gd = harness.getGameData();
+        Card cardA = new RuneclawBear();
+        Card cardB = new RuneclawBear();
+        harness.setLibrary(player1, List.of(cardA, cardB));
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        Card cardA = new GrizzlyBears();
-        Card cardB = new GrizzlyBears();
-        deck.add(cardA);
-        deck.add(cardB);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature
@@ -239,9 +226,8 @@ class AuguryOwlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
-        Card singleCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).add(singleCard);
+        Card singleCard = new RuneclawBear();
+        harness.setLibrary(player1, List.of(singleCard));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature
@@ -264,7 +250,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature
@@ -272,5 +258,33 @@ class AuguryOwlTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
+    }
+
+    @Test
+    @DisplayName("Entering without casting scries the controller's library and allows bottom reordering")
+    void enteringWithoutCastingScriesControllerLibrary() {
+        Card first = new RuneclawBear();
+        Card second = new RuneclawBear();
+        Card third = new RuneclawBear();
+        Card remaining = new RuneclawBear();
+        Card opponentCard = new RuneclawBear();
+        harness.setLibrary(player1, List.of(opponentCard));
+        harness.setLibrary(player2, List.of(first, second, third, remaining));
+
+        harness.enterBattlefieldAndReturn(player2, new AuguryOwl());
+        resolveAllTriggers();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.playerId()).isEqualTo(player2.getId());
+        assertThat(scry.cards()).containsExactly(first, second, third);
+
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining, third, first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Augury Owl");
     }
 }

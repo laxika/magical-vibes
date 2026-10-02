@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Attrition.class, GoliathBeetle.class, RavenousRats.class})
@@ -18,7 +19,7 @@ class AttritionTest extends BaseCardTest {
     @DisplayName("Sacrificing a creature destroys target nonblack creature")
     void sacrificesCreatureAndDestroysNonblackCreature() {
         harness.addToBattlefield(player1, new Attrition());
-        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.addToBattlefield(player1, new GoliathBeetle());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -80,5 +81,58 @@ class AttritionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A black creature can be sacrificed to pay the activation cost")
+    void canSacrificeBlackCreature() {
+        harness.addToBattlefield(player1, new Attrition());
+        harness.addToBattlefield(player1, new RavenousRats());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Ravenous Rats");
+        harness.assertOnBattlefield(player2, "Goliath Beetle");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Goliath Beetle");
+    }
+
+    @Test
+    @DisplayName("The target can itself be sacrificed as the cost")
+    void canSacrificeTargetedCreature() {
+        harness.addToBattlefield(player1, new Attrition());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Goliath Beetle");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Goliath Beetle"))
+                .hasSize(1);
+        harness.assertOnBattlefield(player1, "Attrition");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without black mana and does not sacrifice a creature")
+    void cannotActivateWithoutBlackMana() {
+        harness.addToBattlefield(player1, new Attrition());
+        harness.addToBattlefield(player1, new RavenousRats());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Ravenous Rats");
+        harness.assertNotInGraveyard(player1, "Ravenous Rats");
+        harness.assertOnBattlefield(player2, "Goliath Beetle");
+        assertThat(gd.stack).isEmpty();
     }
 }
