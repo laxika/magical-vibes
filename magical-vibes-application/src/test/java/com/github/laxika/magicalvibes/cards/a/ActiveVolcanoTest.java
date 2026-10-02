@@ -14,13 +14,54 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ActiveVolcano.class, Island.class, BenthicExplorers.class, CrimsonKobolds.class})
 class ActiveVolcanoTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Destroy target blue permanent")
+    @CardUsed({ActiveVolcano.class, BenthicExplorers.class, CrimsonKobolds.class, Island.class})
     class DestroyBluePermanentMode {
+
+        @Test
+        void canDestroyOwnBluePermanent() {
+            Permanent explorers = harness.addToBattlefieldAndReturn(player1, new BenthicExplorers());
+            harness.setHand(player1, List.of(new ActiveVolcano()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castAndResolveInstant(player1, 0, explorers.getId());
+
+            harness.assertNotOnBattlefield(player1, "Benthic Explorers");
+            harness.assertInGraveyard(player1, "Benthic Explorers");
+        }
+
+        @Test
+        void cannotDestroyColorlessIsland() {
+            Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+            harness.setHand(player1, List.of(new ActiveVolcano()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, island.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void doesNotResolveWhenTargetHasLeftBattlefield() {
+            Permanent explorers = harness.addToBattlefieldAndReturn(player2, new BenthicExplorers());
+            harness.setHand(player1, List.of(new ActiveVolcano(), new ActiveVolcano()));
+            harness.addMana(player1, ManaColor.RED, 2);
+
+            harness.castInstant(player1, 0, 0, explorers.getId());
+            harness.castInstant(player1, 0, 0, explorers.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Benthic Explorers");
+            harness.assertInGraveyard(player2, "Benthic Explorers");
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        }
 
         @Test
         @DisplayName("Destroys a blue permanent")
@@ -29,8 +70,7 @@ class ActiveVolcanoTest extends BaseCardTest {
             harness.setHand(player1, List.of(new ActiveVolcano()));
             harness.addMana(player1, ManaColor.RED, 1);
 
-            harness.castInstant(player1, 0, 0, explorers.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, explorers.getId());
 
             harness.assertNotOnBattlefield(player2, "Benthic Explorers");
             harness.assertInGraveyard(player2, "Benthic Explorers");
@@ -50,7 +90,24 @@ class ActiveVolcanoTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Return target Island to its owner's hand")
+    @CardUsed({ActiveVolcano.class, Island.class, CrimsonKobolds.class})
     class ReturnIslandMode {
+
+        @Test
+        void returnsIslandToOwnerRatherThanController() {
+            Island card = new Island();
+            card.setOwnerId(player1.getId());
+            Permanent island = harness.addToBattlefieldAndReturn(player2, card);
+            harness.setHand(player1, List.of(new ActiveVolcano()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castInstant(player1, 0, 1, island.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Island");
+            harness.assertInHand(player1, "Island");
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        }
 
         @Test
         @DisplayName("Returns an Island to its owner's hand")
