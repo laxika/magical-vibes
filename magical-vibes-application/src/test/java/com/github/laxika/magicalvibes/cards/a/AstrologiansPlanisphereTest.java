@@ -22,11 +22,7 @@ class AstrologiansPlanisphereTest extends BaseCardTest {
     @Test
     @DisplayName("Job select creates a Hero token, attaches the Equipment, and makes it a Wizard")
     void jobSelectCreatesAndEquipsWizardHero() {
-        harness.setHand(player1, List.of(new AstrologiansPlanisphere()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AstrologiansPlanisphere(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -46,8 +42,7 @@ class AstrologiansPlanisphereTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -92,18 +87,131 @@ class AstrologiansPlanisphereTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void attachingAfterThirdDrawDoesNotTriggerOnFourthDraw() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player1);
+        draw(player1);
+        draw(player1);
+        planisphere.setAttachedTo(creature.getId());
+        draw(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void attachingAfterSecondDrawTriggersOnThirdDraw() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player1);
+        draw(player1);
+        planisphere.setAttachedTo(creature.getId());
+        draw(player1);
+        resolveTopOfStack();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void twoPlanispheresEachTriggerOnThirdDraw() {
+        Permanent first = addPlanisphereReady(player1);
+        Permanent second = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player1);
+        draw(player1);
+        draw(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        resolveTopOfStack();
+        resolveTopOfStack();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void creatureSpellDoesNotAddCounter() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        planisphere.setAttachedTo(creature.getId());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void drawTriggerStillCountersOriginalCreatureAfterEquipmentMoves() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent original = addCreatureReady(player1);
+        Permanent replacement = addCreatureReady(player1);
+        planisphere.setAttachedTo(original.getId());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        draw(player1);
+        draw(player1);
+        draw(player1);
+        planisphere.setAttachedTo(replacement.getId());
+        resolveTopOfStack();
+
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, original)).doesNotContain(CardSubtype.WIZARD);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, replacement)).contains(CardSubtype.WIZARD);
+    }
+
+    @Test
+    void equipAbilityAttachesForTwoMana() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(planisphere.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).contains(CardSubtype.BEAR, CardSubtype.WIZARD);
+    }
+
+    @Test
+    void grantedAbilityUsesCreatureControllerRatherThanEquipmentController() {
+        Permanent planisphere = addPlanisphereReady(player1);
+        Permanent creature = addCreatureReady(player2);
+        planisphere.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addPlanisphereReady(Player player) {
-        Permanent permanent = new Permanent(new AstrologiansPlanisphere());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new AstrologiansPlanisphere());
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private void draw(Player player) {
