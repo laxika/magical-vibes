@@ -55,11 +55,66 @@ class BaneOfTheLivingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentBaloth)).isEqualTo(6);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opponentBaloth)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, opponentBaloth)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Choosing zero for morph leaves creatures unchanged")
+    void zeroXDoesNotWeakenCreatures() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        Permanent bane = castFaceDown();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bane));
+        harness.handleXValueChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(bane.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Bane of the Living");
+    }
+
+    @Test
+    @DisplayName("Bane can die to its own debuff without sparing other creatures")
+    void lethalXAlsoKillsBane() {
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent baloth = harness.addToBattlefieldAndReturn(player2, new EnormousBaloth());
+        Permanent bane = castFaceDown();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bane));
+        harness.handleXValueChosen(player1, 3);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bane of the Living");
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the trigger resolves are not weakened")
+    void laterCreaturesAreNotAffected() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player2, new EnormousBaloth());
+        Permanent bane = castFaceDown();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bane));
+        harness.handleXValueChosen(player1, 2);
+        harness.passBothPriorities();
+
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
     }
 
     private Permanent castFaceDown() {
@@ -67,7 +122,6 @@ class BaneOfTheLivingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         return findPermanent(player1, "Bane of the Living");
     }
