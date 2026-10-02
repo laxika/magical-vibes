@@ -9,8 +9,36 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Acridian.class)
+@CardUsed({Acridian.class})
 class AcridianTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Entering the battlefield does not put an echo ability on the stack")
+    void enteringDoesNotTriggerEcho() {
+        harness.castFromHand(player1, new Acridian(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Acridian");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining echo sacrifices Acridian even when its cost could be paid")
+    void decliningPayableEchoSacrificesAcridianWithoutSpendingMana() {
+        castAndResolveAcridian();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Acridian");
+        harness.assertInGraveyard(player1, "Acridian");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Declining echo sacrifices Acridian at its next upkeep")
@@ -62,8 +90,7 @@ class AcridianTest extends BaseCardTest {
 
     private void castAndResolveAcridian() {
         harness.castFromHand(player1, new Acridian(), "{1}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Acridian");
     }
 }

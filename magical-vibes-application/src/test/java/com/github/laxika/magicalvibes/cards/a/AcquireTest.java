@@ -24,8 +24,7 @@ class AcquireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Acquire()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -48,8 +47,7 @@ class AcquireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Acquire()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, -1);
 
         harness.assertNotOnBattlefield(player1, "Grafted Wargear");
@@ -67,14 +65,54 @@ class AcquireTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Acquire()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Grafted Wargear");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1)
                 .anyMatch(card -> card.getName().equals("Early Frost"));
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Acquire");
+    }
+
+    @Test
+    @DisplayName("An empty opponent library still shuffles without prompting")
+    void emptyLibraryStillShuffles() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Acquire()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        harness.assertInGraveyard(player1, "Acquire");
+    }
+
+    @Test
+    @DisplayName("Takes exactly one artifact and leaves the other in the opponent's library")
+    void takesOnlyOneArtifact() {
+        GraftedWargear first = new GraftedWargear();
+        GraftedWargear second = new GraftedWargear();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new Acquire()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(first, second);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(second.getId()))
+                .hasSize(1)
+                .allMatch(permanent -> !permanent.isTapped());
+        harness.assertNotOnBattlefield(player2, "Grafted Wargear");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains(gd.playerIdToName.get(player2.getId()) + "'s library is shuffled.")).isTrue();
         harness.assertInGraveyard(player1, "Acquire");
     }
 

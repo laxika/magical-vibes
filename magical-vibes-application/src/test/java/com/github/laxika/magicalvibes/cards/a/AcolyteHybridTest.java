@@ -28,26 +28,25 @@ class AcolyteHybridTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player2, "Fountain of Youth");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + 1);
     }
 
     @Test
-    @DisplayName("Declining the attack trigger leaves the artifact alone")
-    void decliningAttackTriggerDoesNothing() {
+    @DisplayName("Choosing zero targets leaves the artifact alone")
+    void choosingZeroTargetsDoesNothing() {
         addAttacker();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new FountainOfYouth());
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Fountain of Youth");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -75,10 +74,42 @@ class AcolyteHybridTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player2, "Darksteel Plate");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Attacking with no artifacts still puts the zero-target trigger on the stack")
+    void attackingWithoutArtifactsStillTriggers() {
+        addAttacker();
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Destroying your own artifact draws for you rather than the defending player")
+    void ownArtifactDrawsForAttackingPlayer() {
+        addAttacker();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setLibrary(player1, List.of(new AcolyteHybrid()));
+        int ownHandSize = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(ownHandSize + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
     }
 
     private Permanent addAttacker() {

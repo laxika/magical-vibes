@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.u.UnfriendlyFire;
+import com.github.laxika.magicalvibes.cards.w.WalkThePlank;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AdantoVanguard.class, WalkThePlank.class, UnfriendlyFire.class})
 class AdantoVanguardTest extends BaseCardTest {
-
-    // ===== Static boost: +2/+0 while attacking =====
 
     @Test
     @DisplayName("Gets +2/+0 while attacking")
     void getsPlusTwoPlusZeroWhileAttacking() {
         Permanent vanguard = addCreatureReady(player1, new AdantoVanguard());
 
-        markAttacking(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         // 1/1 + 2/0 = 3/1 while attacking
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
@@ -39,8 +41,6 @@ class AdantoVanguardTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(1);
     }
-
-    // ===== Activated ability: pay 4 life for indestructible =====
 
     @Test
     @DisplayName("Paying 4 life grants indestructible until end of turn")
@@ -113,12 +113,65 @@ class AdantoVanguardTest extends BaseCardTest {
         assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void attackBonusEndsAfterCombatAndDoesNotBoostOtherCreatures() {
+        Permanent attacking = addCreatureReady(player1, new AdantoVanguard());
+        Permanent idle = addCreatureReady(player1, new AdantoVanguard());
 
-    private void markAttacking(Player player, List<Integer> attackerIndices) {
-        List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        for (int idx : attackerIndices) {
-            battlefield.get(idx).setAttacking(true);
-        }
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(gqs.getEffectivePower(gd, attacking)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, idle)).isEqualTo(1);
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, 17);
+        assertThat(gqs.getEffectivePower(gd, attacking)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSickAndOnlyProtectsSource() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new AdantoVanguard());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AdantoVanguard());
+        vanguard.setSummoningSick(true);
+        vanguard.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 16);
+        assertThat(vanguard.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        harness.passBothPriorities();
+
+        assertThat(vanguard.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(vanguard.isTapped()).isTrue();
+    }
+
+    @Test
+    void indestructiblePreventsDestroyEffect() {
+        Permanent vanguard = addCreatureReady(player1, new AdantoVanguard());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new WalkThePlank()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, vanguard.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof AdantoVanguard);
+    }
+
+    @Test
+    void indestructiblePreventsLethalDamageDestruction() {
+        Permanent vanguard = addCreatureReady(player1, new AdantoVanguard());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new UnfriendlyFire()));
+        harness.addMana(player2, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player2, 0, vanguard.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card instanceof AdantoVanguard);
     }
 }

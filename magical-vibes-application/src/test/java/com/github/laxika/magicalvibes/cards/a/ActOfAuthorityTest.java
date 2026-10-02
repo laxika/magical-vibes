@@ -3,15 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -77,10 +74,69 @@ class ActOfAuthorityTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Declining the upkeep ability neither exiles nor transfers control")
+    void decliningUpkeepLeavesBothPermanents() {
+        Permanent act = harness.addToBattlefieldAndReturn(player1, new ActOfAuthority());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        advanceToUpkeep(player1);
+        chooseTargetAndResolve(artifact.getId(), false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(act);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entering ability can exile Act of Authority itself")
+    void etbCanExileItself() {
+        castActOfAuthority();
+        java.util.UUID actId = harness.getPermanentId(player1, "Act of Authority");
+
+        chooseTargetAndResolve(actId, true);
+
+        harness.assertNotOnBattlefield(player1, "Act of Authority");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Act of Authority");
+    }
+
+    @Test
+    @DisplayName("The upkeep ability can exile Act of Authority itself")
+    void upkeepCanExileItself() {
+        Permanent act = harness.addToBattlefieldAndReturn(player1, new ActOfAuthority());
+
+        advanceToUpkeep(player1);
+        chooseTargetAndResolve(act.getId(), true);
+
+        harness.assertNotOnBattlefield(player1, "Act of Authority");
+        harness.assertNotOnBattlefield(player2, "Act of Authority");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Act of Authority");
+    }
+
+    @Test
+    @DisplayName("An upkeep target sacrificed in response does not transfer control")
+    void missingUpkeepTargetDoesNotTransferControl() {
+        Permanent act = harness.addToBattlefieldAndReturn(player1, new ActOfAuthority());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AuraOfSilence());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.sacrificePermanent(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Aura of Silence");
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(act);
+        harness.assertNotOnBattlefield(player2, "Act of Authority");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private void castActOfAuthority() {
-        harness.setHand(player1, List.of(new ActOfAuthority()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ActOfAuthority(), "{1}{W}{W}");
         harness.passBothPriorities();
     }
 

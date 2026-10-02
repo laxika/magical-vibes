@@ -81,6 +81,82 @@ class AcquisitionsExpertTest extends BaseCardTest {
         return gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
     }
 
+    @Test
+    @DisplayName("An empty opposing hand requires no reveal or discard choice")
+    void emptyHandDoesNothing() {
+        harness.setHand(player2, List.of());
+
+        castAndResolve();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A hand smaller than the party is revealed in full and only one card is discarded")
+    void smallHandSkipsOpponentRevealChoice() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player1, new BoggartBrute());
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player2, List.of(first, second));
+
+        castAndResolve();
+
+        assertThat(activeChoice().revealStage()).isFalse();
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(activeChoice().revealedCardIds()).containsExactly(first.getId(), second.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Duplicate rogues and opposing party members do not increase your party")
+    void duplicateAndOpposingRolesDoNotCount() {
+        harness.addToBattlefield(player1, new AcquisitionsExpert());
+        harness.addToBattlefield(player2, new SoulWarden());
+        harness.addToBattlefield(player2, new BoggartBrute());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        GrizzlyBears hidden = new GrizzlyBears();
+        GrizzlyBears revealed = new GrizzlyBears();
+        harness.setHand(player2, List.of(hidden, revealed));
+
+        castAndResolve();
+
+        assertThat(activeChoice().remainingCount()).isEqualTo(1);
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+        assertThat(activeChoice().revealedCardIds()).containsExactly(revealed.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(hidden);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    @DisplayName("Party size is evaluated on resolution after the Expert has left")
+    void noPartyAtResolutionRevealsNothing() {
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player2, List.of(card));
+        harness.setHand(player1, List.of(new AcquisitionsExpert()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Acquisitions Expert");
+        assertThat(gd.stack).isNotEmpty();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void castAndResolve() {
         harness.setHand(player1, List.of(new AcquisitionsExpert()));
         harness.addMana(player1, ManaColor.BLACK, 2);

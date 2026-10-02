@@ -115,4 +115,31 @@ class AdarkarWastesTest extends BaseCardTest {
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Preventing one pain-land damage does not prevent a later activation")
+    void preventionAppliesOnlyToNextDamage() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        Permanent wastes = harness.addToBattlefieldAndReturn(player1, new AdarkarWastes());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.assertLife(player1, 20);
+
+        wastes.untap();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.assertLife(player1, 20);
+
+        wastes.untap();
+        harness.activateAbility(player1, 1, 2, null, null);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }

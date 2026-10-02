@@ -62,4 +62,48 @@ class AccumulatedKnowledgeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
+
+    @Test
+    @DisplayName("Counts a copy that enters a graveyard after casting but before resolution")
+    void countsCopyResolvedInResponse() {
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.setHand(player2, List.of(new AccumulatedKnowledge()));
+        harness.setLibrary(player1, List.of(new SilkenfistOrder(), new SilkenfistOrder(),
+                new SilkenfistOrder()));
+        harness.setLibrary(player2, List.of(new SilkenfistOrder(), new SilkenfistOrder()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Accumulated Knowledge");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Accumulated Knowledge");
+    }
+
+    @Test
+    @DisplayName("Copies in hands, libraries, and exile do not increase the draw count")
+    void ignoresCopiesOutsideGraveyards() {
+        harness.setHand(player1, List.of(new AccumulatedKnowledge(), new AccumulatedKnowledge()));
+        harness.setHand(player2, List.of(new AccumulatedKnowledge()));
+        harness.setLibrary(player1, List.of(new AccumulatedKnowledge(), new SilkenfistOrder()));
+        harness.setLibrary(player2, List.of(new AccumulatedKnowledge(), new SilkenfistOrder()));
+        harness.setExile(player1, List.of(new AccumulatedKnowledge()));
+        harness.setExile(player2, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
 }

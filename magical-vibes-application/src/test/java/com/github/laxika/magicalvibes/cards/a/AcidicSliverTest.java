@@ -109,6 +109,82 @@ class AcidicSliverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Spined Sliver");
     }
 
+    @Test
+    @DisplayName("An opponent can sacrifice their Sliver using Acidic Sliver's ability")
+    void opponentCanActivateGrantedAbility() {
+        addCreatureReady(player1, new AcidicSliver());
+        addCreatureReady(player2, new SpinedSliver());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Spined Sliver");
+        harness.assertNotOnBattlefield(player2, "Spined Sliver");
+        harness.assertOnBattlefield(player1, "Acidic Sliver");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A tapped Sliver with summoning sickness can activate the ability")
+    void tappedSummoningSickSliverCanActivate() {
+        addCreatureReady(player1, new AcidicSliver());
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new SpinedSliver());
+        sliver.setSummoningSick(true);
+        sliver.setTapped(true);
+        harness.setLife(player2, 20);
+
+        activateGrantedAbility(1, player2.getId());
+
+        harness.assertInGraveyard(player1, "Spined Sliver");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Mana and sacrifice are paid before the damage ability resolves")
+    void paysCostsBeforeResolution() {
+        addCreatureReady(player1, new AcidicSliver());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Acidic Sliver");
+        harness.assertInGraveyard(player1, "Acidic Sliver");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A departing target prevents damage without refunding the sacrifice")
+    void targetLeavingDoesNotRefundCost() {
+        addCreatureReady(player1, new AcidicSliver());
+        Permanent target = addCreatureReady(player2, new SpinedWurm());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Acidic Sliver");
+        harness.assertNotOnBattlefield(player1, "Acidic Sliver");
+    }
+
     private void activateGrantedAbility(int permanentIndex, UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

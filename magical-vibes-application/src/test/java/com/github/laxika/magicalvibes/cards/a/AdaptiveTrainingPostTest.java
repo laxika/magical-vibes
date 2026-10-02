@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AdaptiveTrainingPost.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({AdaptiveTrainingPost.class, GrizzlyBears.class, LightningBolt.class, ConeOfFlame.class})
 class AdaptiveTrainingPostTest extends BaseCardTest {
 
     @Test
@@ -79,6 +80,70 @@ class AdaptiveTrainingPostTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chargeConditionIsCheckedAgainOnResolution() {
+        Permanent post = harness.addToBattlefieldAndReturn(player1, new AdaptiveTrainingPost());
+        post.setCounterCount(CounterType.CHARGE, 2);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        post.setCounterCount(CounterType.CHARGE, 3);
+        harness.passBothPriorities();
+
+        assertThat(post.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    void opponentsSpellDoesNotAddCounters() {
+        Permanent post = harness.addToBattlefieldAndReturn(player1, new AdaptiveTrainingPost());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(post.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void separateActivationsCreateSeparateDelayedTriggers() {
+        Permanent post = harness.addToBattlefieldAndReturn(player1, new AdaptiveTrainingPost());
+        post.setCounterCount(CounterType.CHARGE, 6);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(harness.getGameData().stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getDescription().contains("Copy Lightning Bolt")))
+                .hasSize(2);
+    }
+
+    @Test
+    void sorceryCopyWithMultipleTargetsAllowsChoosingNewTargets() {
+        Permanent post = harness.addToBattlefieldAndReturn(player1, new AdaptiveTrainingPost());
+        post.setCounterCount(CounterType.CHARGE, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ConeOfFlame()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId(), bear.getId()));
+        for (int i = 0; i < 2 && !harness.getGameData().stack.isEmpty()
+                && harness.getGameData().stack.getLast().getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && !harness.getGameData().interaction.isAwaitingInput(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(post.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(harness.getGameData().interaction.isAwaitingInput()).isTrue();
     }
 
     private void castLightningBolt() {

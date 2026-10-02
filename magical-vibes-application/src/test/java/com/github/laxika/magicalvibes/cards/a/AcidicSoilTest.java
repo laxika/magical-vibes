@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.CaveTiger;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({AcidicSoil.class, Forest.class, Mountain.class})
+@CardUsed({AcidicSoil.class, Forest.class, Mountain.class, CaveTiger.class})
 class AcidicSoilTest extends BaseCardTest {
 
     @Test
@@ -22,9 +22,8 @@ class AcidicSoilTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.addToBattlefield(player2, new Forest());
 
-        harness.setHand(player1, List.of(new AcidicSoil()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AcidicSoil(), "{2}{R}");
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 17);
@@ -35,9 +34,8 @@ class AcidicSoilTest extends BaseCardTest {
     void noLandsMeansNoDamage() {
         harness.addToBattlefield(player1, new Forest());
 
-        harness.setHand(player1, List.of(new AcidicSoil()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AcidicSoil(), "{2}{R}");
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
@@ -48,9 +46,7 @@ class AcidicSoilTest extends BaseCardTest {
     void countsLandsAtResolution() {
         harness.addToBattlefield(player1, new Forest());
 
-        harness.setHand(player1, List.of(new AcidicSoil()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new AcidicSoil(), "{2}{R}");
 
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player2, new Forest());
@@ -59,5 +55,27 @@ class AcidicSoilTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Counts tapped lands but excludes nonlands and lands outside the battlefield")
+    void countsOnlyLandsOnBattlefieldRegardlessOfTappedStatus() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefield(player1, new CaveTiger());
+        harness.addToBattlefieldAndReturn(player2, new Mountain()).setTapped(true);
+        harness.addToBattlefield(player2, new CaveTiger());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setExile(player1, List.of(new Mountain()));
+
+        harness.castFromHand(player1, new AcidicSoil(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Cave Tiger");
+        harness.assertOnBattlefield(player2, "Cave Tiger");
+        harness.assertInGraveyard(player1, "Acidic Soil");
     }
 }

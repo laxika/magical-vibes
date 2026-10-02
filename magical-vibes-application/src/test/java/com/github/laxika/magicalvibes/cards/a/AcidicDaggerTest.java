@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AcidicDagger.class, GiantMantis.class, Mountain.class, RecklessEmbermage.class,
@@ -156,6 +157,85 @@ class AcidicDaggerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Acidic Dagger");
         harness.assertInGraveyard(player1, "Acidic Dagger");
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature and sacrifice when it leaves")
+    void canTargetOpponentsCreature() {
+        Permanent panther = addCreatureReady(player2, new UrborgPanther());
+        Permanent dagger = addCreatureReady(player1, new AcidicDagger());
+
+        enterDeclareAttackers();
+        activateDagger(dagger, panther);
+        assertThat(dagger.isTapped()).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, panther));
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Urborg Panther");
+        harness.assertInGraveyard(player1, "Acidic Dagger");
+    }
+
+    @Test
+    @DisplayName("The delayed destruction still works after the Dagger leaves")
+    void destructionPersistsAfterDaggerLeaves() {
+        Permanent panther = addCreatureReady(player1, new UrborgPanther());
+        Permanent dagger = addCreatureReady(player1, new AcidicDagger());
+        addCreatureReady(player2, new GiantMantis());
+
+        panther.setAttacking(true);
+        enterDeclareAttackers();
+        activateDagger(dagger, panther);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, dagger));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Giant Mantis");
+        harness.assertInHand(player1, "Acidic Dagger");
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice expires at the end of the turn")
+    void sacrificeExpiresAfterTurn() {
+        Permanent panther = addCreatureReady(player1, new UrborgPanther());
+        Permanent dagger = addCreatureReady(player1, new AcidicDagger());
+
+        enterDeclareAttackers();
+        activateDagger(dagger, panther);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, panther));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Urborg Panther");
+        harness.assertOnBattlefield(player1, "Acidic Dagger");
+    }
+
+    @Test
+    @DisplayName("The delayed destruction expires at the end of the turn")
+    void destructionExpiresAfterTurn() {
+        Permanent panther = addCreatureReady(player1, new UrborgPanther());
+        Permanent dagger = addCreatureReady(player1, new AcidicDagger());
+        addCreatureReady(player2, new GiantMantis());
+
+        enterDeclareAttackers();
+        activateDagger(dagger, panther);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        panther.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Giant Mantis");
     }
 
     @Test
