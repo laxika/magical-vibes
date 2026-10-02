@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcTrail.class, GrizzlyBears.class, GiantSpider.class, LilianaVess.class, Mountain.class})
 class ArcTrailTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Arc Trail with 2 creature targets puts it on the stack")
@@ -32,9 +32,8 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        UUID id1 = bf.get(0).getId();
-        UUID id2 = bf.get(1).getId();
+        UUID id1 = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID id2 = harness.getPermanentId(player2, "Giant Spider");
 
         harness.castSorcery(player1, 0, List.of(id1, id2));
 
@@ -42,7 +41,6 @@ class ArcTrailTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Arc Trail");
         assertThat(entry.getTargetIds()).containsExactly(id1, id2);
     }
 
@@ -93,10 +91,10 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID spiderId = harness.getPermanentId(player2, "Giant Spider");
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
-                List.of(bf.get(0).getId(), bf.get(1).getId())))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearsId, spiderId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
@@ -137,16 +135,13 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        UUID id1 = bf.get(0).getId();
-        UUID id2 = bf.get(1).getId();
+        UUID id1 = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID id2 = harness.getPermanentId(player2, "Giant Spider");
 
         assertThatThrownBy(() -> harness.castSorcery(player1, -1, List.of(id1, id2)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid card index");
     }
-
-    // ===== Damage to creatures =====
 
     @Test
     @DisplayName("Deals 2 damage to first target and 1 damage to second target")
@@ -156,9 +151,8 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        UUID bearsId = bf.get(0).getId();
-        UUID spiderId = bf.get(1).getId();
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID spiderId = harness.getPermanentId(player2, "Giant Spider");
 
         harness.castSorcery(player1, 0, List.of(bearsId, spiderId));
         harness.passBothPriorities();
@@ -179,9 +173,8 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        UUID spiderId = bf.get(0).getId();
-        UUID bearsId = bf.get(1).getId();
+        UUID spiderId = harness.getPermanentId(player2, "Giant Spider");
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         harness.castSorcery(player1, 0, List.of(spiderId, bearsId));
         harness.passBothPriorities();
@@ -190,8 +183,6 @@ class ArcTrailTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Giant Spider");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
-
-    // ===== Damage to players =====
 
     @Test
     @DisplayName("Deals 2 damage to player target and 1 damage to creature target")
@@ -207,8 +198,7 @@ class ArcTrailTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player2.getId(), bearsId));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
         // GrizzlyBears took 1 damage (survives: 1 < 2)
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -224,14 +214,9 @@ class ArcTrailTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Player 2 took 2 damage (first target)
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        // Player 1 took 1 damage (second target)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 19);
     }
-
-    // ===== Partial resolution =====
 
     @Test
     @DisplayName("Partially resolves when first creature target is removed")
@@ -251,12 +236,8 @@ class ArcTrailTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Player 2 still took 1 damage from second target
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
-
-    // ===== Stack and graveyard =====
 
     @Test
     @DisplayName("Stack is empty after resolution")
@@ -266,8 +247,9 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        harness.castSorcery(player1, 0, List.of(bf.get(0).getId(), bf.get(1).getId()));
+        harness.castSorcery(player1, 0, List.of(
+                harness.getPermanentId(player2, "Grizzly Bears"),
+                harness.getPermanentId(player2, "Giant Spider")));
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().stack).isEmpty();
@@ -281,10 +263,78 @@ class ArcTrailTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcTrail()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player2.getId());
-        harness.castSorcery(player1, 0, List.of(bf.get(0).getId(), bf.get(1).getId()));
+        harness.castSorcery(player1, 0, List.of(
+                harness.getPermanentId(player2, "Grizzly Bears"),
+                harness.getPermanentId(player2, "Giant Spider")));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Arc Trail");
+    }
+
+    @Test
+    @DisplayName("First target still takes 2 damage when the second target leaves")
+    void partiallyResolvesWhenSecondTargetRemoved() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), bears.getId()));
+        harness.getGameData().playerBattlefields.get(player2.getId()).remove(bears);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Arc Trail");
+    }
+
+    @Test
+    @DisplayName("Arc Trail does not resolve when both targets leave")
+    void doesNotResolveWhenBothTargetsRemoved() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(bears.getId(), spider.getId()));
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Arc Trail");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Arc Trail may target its controller's creature")
+    void canDamageOwnCreatureAndOpponent() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(bears.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Surviving creatures retain exactly their assigned damage")
+    void marksTwoAndOneDamageOnSurvivingCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 }

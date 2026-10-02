@@ -19,9 +19,7 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Gets +2/+2 with seven cards in controller's graveyard")
     void boostAtThreshold() {
         harness.setGraveyard(player1, graveyardCards(7));
-        harness.addToBattlefield(player1, new AnuridBarkripper());
-
-        Permanent barkripper = findBarkripper();
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
@@ -31,9 +29,7 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Does not get the boost with fewer than seven cards in controller's graveyard")
     void noBoostBelowThreshold() {
         harness.setGraveyard(player1, graveyardCards(6));
-        harness.addToBattlefield(player1, new AnuridBarkripper());
-
-        Permanent barkripper = findBarkripper();
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
@@ -43,9 +39,7 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Opponent's graveyard does not count")
     void opponentGraveyardDoesNotCount() {
         harness.setGraveyard(player2, graveyardCards(7));
-        harness.addToBattlefield(player1, new AnuridBarkripper());
-
-        Permanent barkripper = findBarkripper();
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
@@ -55,9 +49,7 @@ class AnuridBarkripperTest extends BaseCardTest {
     @DisplayName("Loses the boost when controller's graveyard drops below seven cards")
     void losesBoostWhenGraveyardShrinks() {
         harness.setGraveyard(player1, graveyardCards(7));
-        harness.addToBattlefield(player1, new AnuridBarkripper());
-
-        Permanent barkripper = findBarkripper();
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
 
@@ -65,6 +57,37 @@ class AnuridBarkripperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gains the boost immediately when the graveyard reaches threshold")
+    void gainsBoostWhenGraveyardGrows() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+
+        assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(2);
+
+        harness.setGraveyard(player1, graveyardCards(7));
+
+        assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Threshold above seven cards boosts only Barkripper and does not scale")
+    void boostAboveThresholdAffectsOnlySelf() {
+        harness.setGraveyard(player1, graveyardCards(10));
+        Permanent barkripper = harness.addToBattlefieldAndReturn(player1, new AnuridBarkripper());
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new AvenFogbringer());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AnuridBarkripper());
+
+        assertThat(gqs.getEffectivePower(gd, barkripper)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barkripper)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, friendly)).isEqualTo(friendly.getCard().getPower());
+        assertThat(gqs.getEffectiveToughness(gd, friendly)).isEqualTo(friendly.getCard().getToughness());
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 
     private List<Card> graveyardCards(int count) {
@@ -75,7 +98,4 @@ class AnuridBarkripperTest extends BaseCardTest {
         return cards;
     }
 
-    private Permanent findBarkripper() {
-        return findPermanent(player1, "Anurid Barkripper");
-    }
 }

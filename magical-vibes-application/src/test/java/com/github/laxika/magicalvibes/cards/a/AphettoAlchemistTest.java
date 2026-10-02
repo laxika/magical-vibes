@@ -61,6 +61,7 @@ class AphettoAlchemistTest extends BaseCardTest {
     void cannotTargetAnEnchantment() {
         Permanent alchemist = addReadyAlchemist(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        target.setAttachedTo(alchemist.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -97,9 +98,7 @@ class AphettoAlchemistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent alchemist = findPermanent(player1, "Aphetto Alchemist");
         assertThat(alchemist.isFaceDown()).isTrue();
@@ -110,6 +109,86 @@ class AphettoAlchemistTest extends BaseCardTest {
 
         assertThat(alchemist.isFaceDown()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void canTargetAnUntappedCreature() {
+        Permanent alchemist = addReadyAlchemist(player1);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(alchemist.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(alchemist.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent alchemist = harness.addToBattlefieldAndReturn(player1, new AphettoAlchemist());
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        target.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(alchemist.isTapped()).isFalse();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void faceDownAlchemistHasNoUntapAbility() {
+        Permanent alchemist = castFaceDownAlchemist();
+        alchemist.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        target.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(alchemist.isTapped()).isFalse();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpRestoresUntapAbilityWithoutUsingTheStack() {
+        Permanent alchemist = castFaceDownAlchemist();
+        alchemist.setSummoningSick(false);
+        Permanent target = addCreatureReady(player2, new GlorySeeker());
+        target.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(alchemist.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(alchemist.isTapped()).isTrue();
+    }
+
+    @Test
+    void colorlessManaCannotPayTheMorphCost() {
+        Permanent alchemist = castFaceDownAlchemist();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(alchemist.isFaceDown()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    private Permanent castFaceDownAlchemist() {
+        harness.setHand(player1, List.of(new AphettoAlchemist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        return findPermanent(player1, "Aphetto Alchemist");
     }
 
     private Permanent addReadyAlchemist(Player player) {
