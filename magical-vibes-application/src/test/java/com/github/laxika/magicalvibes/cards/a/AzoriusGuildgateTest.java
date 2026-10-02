@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzoriusGuildgate.class})
 class AzoriusGuildgateTest extends BaseCardTest {
 
     @Test
@@ -24,7 +27,7 @@ class AzoriusGuildgateTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent guildgate = findPermanent(player1, "Azorius Guildgate");
         assertThat(guildgate.isTapped()).isTrue();
@@ -67,9 +70,51 @@ class AzoriusGuildgateTest extends BaseCardTest {
     }
 
     private Permanent addGuildgateReady(Player player) {
-        Permanent perm = new Permanent(new AzoriusGuildgate());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new AzoriusGuildgate());
+    }
+
+    @Test
+    @DisplayName("A tapped Guildgate cannot produce mana")
+    void tappedLandCannotProduceMana() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new AzoriusGuildgate());
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An untapped land can produce mana even when newly controlled")
+    void newlyControlledLandCanProduceMana() {
+        Permanent guildgate = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildgate());
+        guildgate.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Guildgate that entered tapped produces mana after untapping")
+    void producesManaAfterUntapping() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new AzoriusGuildgate());
+
+        harness.performUntapStep(player1);
+        assertThat(guildgate.isTapped()).isFalse();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }
