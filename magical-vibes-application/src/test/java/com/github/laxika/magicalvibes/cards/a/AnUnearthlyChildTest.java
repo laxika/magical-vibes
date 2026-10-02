@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.r.RoseTyler;
+import com.github.laxika.magicalvibes.cards.t.Tardis;
+import com.github.laxika.magicalvibes.cards.t.TheFirstDoctor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AnUnearthlyChild.class)
+@CardUsed({AnUnearthlyChild.class, Island.class, RoseTyler.class, Tardis.class, TheFirstDoctor.class})
 class AnUnearthlyChildTest extends BaseCardTest {
 
     @Test
@@ -51,6 +55,91 @@ class AnUnearthlyChildTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(vehicle, card(CardType.CREATURE)));
         resolveNextChapter();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(companion, vehicle);
+    }
+
+    @Test
+    void enteringTriggersChapterOneAndStopsAtTheFirstMatch() {
+        Island first = new Island();
+        Island second = new Island();
+        TheFirstDoctor doctor = new TheFirstDoctor();
+        RoseTyler companion = new RoseTyler();
+        Tardis vehicle = new Tardis();
+        harness.setLibrary(player1, List.of(first, second, doctor, companion, vehicle));
+        harness.setLibrary(player2, List.of(new Island()));
+
+        harness.castFromHand(player1, new AnUnearthlyChild(), "{1}{U}{U}");
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(doctor);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2))
+                .containsExactly(companion, vehicle);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void finalChapterFindsVehicleBeforeSagaIsSacrificed() {
+        Tardis vehicle = new Tardis();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(vehicle));
+        Permanent saga = addSagaWithLore(2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(vehicle);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void secondChapterFindsRealDoctorsCompanion() {
+        RoseTyler companion = new RoseTyler();
+        Island nonmatch = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(nonmatch, companion));
+        addSagaWithLore(1);
+
+        resolveNextChapter();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(companion);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatch);
+    }
+
+    @Test
+    void noMatchReturnsEntireLibraryWithoutPuttingAnythingIntoHand() {
+        Island first = new Island();
+        Island second = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        addSagaWithLore(0);
+
+        resolveNextChapter();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void emptyLibraryDoesNotDrawOrLoseTheGame() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        Permanent saga = addSagaWithLore(0);
+
+        resolveNextChapter();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
 
     private Permanent addSagaWithLore(int lore) {
