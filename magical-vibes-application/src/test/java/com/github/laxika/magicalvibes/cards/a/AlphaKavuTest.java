@@ -92,4 +92,52 @@ class AlphaKavuTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Alpha Kavu").isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AlphaKavu());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(1);
+        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and can reduce power below zero")
+    void repeatedActivationsStack() {
+        addReadyAlphaKavu();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Permanent source = findPermanent(player1, "Alpha Kavu");
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, source.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(source.getEffectivePower()).isEqualTo(-1);
+        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability requires both the generic and green mana")
+    void rejectsActivationWithoutGenericMana() {
+        addCreatureReady(player1, new AlphaKavu());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        UUID targetId = harness.getPermanentId(player1, "Alpha Kavu");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
 }
