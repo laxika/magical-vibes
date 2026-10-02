@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.Compost;
+import com.github.laxika.magicalvibes.cards.m.MaskOfLawAndGrace;
 import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
 import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,14 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AcademyRector.class, Compost.class, MetathranSoldier.class, RecklessAbandon.class})
+@CardUsed({AcademyRector.class, Compost.class, MaskOfLawAndGrace.class, MetathranSoldier.class, RecklessAbandon.class})
 class AcademyRectorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Dies, accept may: exiles Rector, search offers only enchantments, chosen one enters the battlefield")
     void diesAcceptMaySearchChoosesEnchantment() {
-        harness.addToBattlefield(player1, new AcademyRector());
-        Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
         Card rectorCard = rector.getCard();
 
         castRecklessAbandonAt(player1, rector);
@@ -58,8 +58,7 @@ class AcademyRectorTest extends BaseCardTest {
     @Test
     @DisplayName("Dies, decline may: Rector stays in graveyard, no search")
     void diesDeclineMayKeepsRectorInGraveyard() {
-        harness.addToBattlefield(player1, new AcademyRector());
-        Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
         Card rectorCard = rector.getCard();
 
         castRecklessAbandonAt(player1, rector);
@@ -82,8 +81,7 @@ class AcademyRectorTest extends BaseCardTest {
     @Test
     @DisplayName("Dies, accept may, no enchantments in library: Rector exiled, search finds nothing")
     void diesAcceptMayFailToFind() {
-        harness.addToBattlefield(player1, new AcademyRector());
-        Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
         Card rectorCard = rector.getCard();
 
         castRecklessAbandonAt(player1, rector);
@@ -105,8 +103,7 @@ class AcademyRectorTest extends BaseCardTest {
     @Test
     @DisplayName("If Rector leaves its graveyard before the trigger resolves, it cannot search")
     void doesNotSearchIfRectorLeavesGraveyardBeforeTriggerResolves() {
-        harness.addToBattlefield(player1, new AcademyRector());
-        Permanent rector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
         Card rectorCard = rector.getCard();
 
         castRecklessAbandonAt(player1, rector);
@@ -125,6 +122,81 @@ class AcademyRectorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Compost");
+    }
+
+    @Test
+    @DisplayName("Accepting exile with an empty library still exiles Rector")
+    void acceptsExileWithEmptyLibrary() {
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
+        Card rectorCard = rector.getCard();
+        castRecklessAbandonAt(player1, rector);
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rectorCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(rectorCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May fail to find an enchantment even when one is available")
+    void mayFailToFindAvailableEnchantment() {
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
+        Card rectorCard = rector.getCard();
+        castRecklessAbandonAt(player1, rector);
+        Compost enchantment = new Compost();
+        harness.setLibrary(player1, List.of(enchantment));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rectorCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(enchantment);
+        harness.assertNotOnBattlefield(player1, "Compost");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A searched Aura enters attached to the only legal creature")
+    void searchedAuraEntersAttached() {
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
+        castRecklessAbandonAt(player1, rector);
+        harness.setLibrary(player1, List.of(new MaskOfLawAndGrace()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, host.getId());
+        }
+
+        harness.assertOnBattlefield(player1, "Mask of Law and Grace");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Mask of Law and Grace")
+                        && host.getId().equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("A searched Aura stays in the library when nothing can be enchanted")
+    void searchedAuraWithoutLegalHostStaysInLibrary() {
+        Permanent rector = harness.addToBattlefieldAndReturn(player1, new AcademyRector());
+        castRecklessAbandonAt(player1, rector);
+        Card aura = new MaskOfLawAndGrace();
+        harness.setLibrary(player1, List.of(aura));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
+        harness.assertNotOnBattlefield(player1, "Mask of Law and Grace");
+        harness.assertNotInGraveyard(player1, "Mask of Law and Grace");
     }
 
     private void castRecklessAbandonAt(com.github.laxika.magicalvibes.model.Player player, Permanent rector) {
