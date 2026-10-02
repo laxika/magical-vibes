@@ -12,8 +12,64 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AmbassadorLaquatus.class)
+@CardUsed({AmbassadorLaquatus.class})
 class AmbassadorLaquatusTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, paying with colored mana")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AmbassadorLaquatus());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        harness.setLibrary(player2, List.of(
+                new AmbassadorLaquatus(), new AmbassadorLaquatus(), new AmbassadorLaquatus()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly without tapping and mills the top cards in order")
+    void canActivateRepeatedlyWithoutTapping() {
+        Permanent source = addCreatureReady(player1, new AmbassadorLaquatus());
+        List<AmbassadorLaquatus> library = List.of(
+                new AmbassadorLaquatus(), new AmbassadorLaquatus(), new AmbassadorLaquatus(),
+                new AmbassadorLaquatus(), new AmbassadorLaquatus(), new AmbassadorLaquatus(),
+                new AmbassadorLaquatus());
+        harness.setLibrary(player2, library);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(library.subList(0, 3));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(library.get(6));
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(library.subList(0, 6));
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Milling an empty library does not cause a player to lose")
+    void canMillAnEmptyLibrary() {
+        addCreatureReady(player1, new AmbassadorLaquatus());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
 
     @Test
     @DisplayName("Activated ability mills three cards from the target player")
