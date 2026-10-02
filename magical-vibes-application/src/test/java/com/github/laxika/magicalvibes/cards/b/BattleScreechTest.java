@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvenFogbringer.class, BattleScreech.class, Brawn.class, KrosanVerge.class, SuntailHawk.class})
+@CardUsed({AvenFogbringer.class, BattleScreech.class, Brawn.class, KrosanVerge.class, SphereOfResistance.class, SuntailHawk.class})
 class BattleScreechTest extends BaseCardTest {
 
     @Test
@@ -178,7 +179,7 @@ class BattleScreechTest extends BaseCardTest {
         assertThat(blueCreature.isTapped()).isFalse();
         assertThat(whiteCreature.isTapped()).isFalse();
         assertThat(anotherWhiteCreature.isTapped()).isFalse();
-        assertThat(birdTokensForJudReview()).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
         harness.assertInGraveyard(player1, "Battle Screech");
     }
 
@@ -200,14 +201,98 @@ class BattleScreechTest extends BaseCardTest {
         assertThat(tappedWhiteCreature.isTapped()).isTrue();
         assertThat(whiteCreature.isTapped()).isFalse();
         assertThat(anotherWhiteCreature.isTapped()).isFalse();
-        assertThat(birdTokensForJudReview()).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
         harness.assertInGraveyard(player1, "Battle Screech");
     }
 
-    private List<Permanent> birdTokensForJudReview() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Bird"))
-                .toList();
+    @Test
+    @DisplayName("Newly created Birds can immediately pay the flashback cost")
+    void newlyCreatedBirdsCanPayFlashbackCost() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        List<Permanent> birds = findPermanents(player1, "Bird");
+        assertThat(birds).hasSize(2);
+        harness.assertInGraveyard(player1, "Battle Screech");
+
+        harness.castFlashbackWithTapCost(player1, 0,
+                List.of(hawk.getId(), birds.get(0).getId(), birds.get(1).getId()));
+        assertThat(hawk.isTapped()).isTrue();
+        assertThat(birds).allSatisfy(bird -> assertThat(bird.isTapped()).isTrue());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+        assertThat(findPermanents(player2, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback requires exactly three creatures even when more are available")
+    void flashbackRequiresExactlyThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(List.of(first, second, third, fourth))
+                .allSatisfy(creature -> assertThat(creature.isTapped()).isFalse());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+    }
+    @Test
+    @DisplayName("A spell tax must be paid in addition to the flashback tap cost")
+    void flashbackPaysSpellTax() {
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(List.of(first, second, third))
+                .allSatisfy(creature -> assertThat(creature.isTapped()).isTrue());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Bird")).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be cast without mana to pay a spell tax")
+    void flashbackRequiresManaForSpellTax() {
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        Card spell = new BattleScreech();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFlashbackWithTapCost(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(List.of(first, second, third))
+                .allSatisfy(creature -> assertThat(creature.isTapped()).isFalse());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
     }
 }
