@@ -89,4 +89,75 @@ class AgentOfKotisTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Renew pays its exile cost before resolving and cannot be activated twice")
+    void exileCostIsPaidImmediately() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AgentOfKotis());
+        readyRenew();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        harness.assertNotInGraveyard(player1, "Agent of Kotis");
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.ownerId().equals(player1.getId())
+                        && entry.card().getName().equals("Agent of Kotis"));
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Renew cannot be activated during combat on its controller's turn")
+    void renewCannotBeActivatedDuringCombat() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AgentOfKotis());
+        readyRenew();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Agent of Kotis");
+    }
+
+    @Test
+    @DisplayName("Renew cannot be activated while another ability is on the stack")
+    void renewRequiresEmptyStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AgentOfKotis());
+        harness.setGraveyard(player1, List.of(new AgentOfKotis(), new AgentOfKotis()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Agent of Kotis");
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Renew requires blue mana and leaves the source in the graveyard if payment fails")
+    void renewRequiresBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AgentOfKotis());
+        harness.setGraveyard(player1, List.of(new AgentOfKotis()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Agent of Kotis");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
