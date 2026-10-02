@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.PrismaticCircle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,7 +22,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability exiles the target creature")
     void exilesTargetCreature() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -39,7 +38,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Can exile a land")
     void exilesTargetLand() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -53,7 +52,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Can exile an artifact")
     void exilesTargetArtifact() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LionsEyeDiamond());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -67,7 +66,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent that is neither an artifact, creature, nor land")
     void cannotTargetIneligiblePermanent() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PrismaticCircle());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -79,7 +78,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Amulet is exiled as a cost, not sacrificed")
     void amuletExiledAsCost() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.addMana(player1, ManaColor.WHITE, 5);
 
@@ -95,7 +94,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -107,7 +106,7 @@ class AmuletOfUnmakingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate during the opponent's turn (sorcery speed only)")
     void cannotActivateAtInstantSpeed() {
-        addReadyAmulet(player1);
+        addCreatureReady(player1, new AmuletOfUnmaking());
         Permanent target = addCreatureReady(player2, new FemerefScouts());
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.forceActivePlayer(player2);
@@ -119,9 +118,86 @@ class AmuletOfUnmakingTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
-    private Permanent addReadyAmulet(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new AmuletOfUnmaking());
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent amulet = addCreatureReady(player1, new AmuletOfUnmaking());
+        amulet.setTapped(true);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertOnBattlefield(player1, "Amulet of Unmaking");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during combat on its controller's turn")
+    void cannotActivateDuringCombat() {
+        addCreatureReady(player1, new AmuletOfUnmaking());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertOnBattlefield(player1, "Amulet of Unmaking");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        addCreatureReady(player1, new AmuletOfUnmaking());
+        Permanent secondAmulet = addCreatureReady(player1, new AmuletOfUnmaking());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.WHITE, 10);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondAmulet);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Femeref Scouts");
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Amulet can activate immediately")
+    void newlyEnteredAmuletCanActivate() {
+        harness.addToBattlefield(player1, new AmuletOfUnmaking());
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Amulet of Unmaking"));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Femeref Scouts"));
+    }
+
+    @Test
+    @DisplayName("Can target itself, leaving the ability without a legal target after paying costs")
+    void canTargetItself() {
+        Permanent amulet = addCreatureReady(player1, new AmuletOfUnmaking());
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.activateAbility(player1, 0, null, amulet.getId());
+
+        harness.assertNotOnBattlefield(player1, "Amulet of Unmaking");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Amulet of Unmaking"))
+                .hasSize(1);
     }
 }
