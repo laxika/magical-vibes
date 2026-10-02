@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.a.AlabornTrooper;
 import com.github.laxika.magicalvibes.cards.a.AshlingsCommand;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -901,16 +900,16 @@ class AiDecisionEngineTest {
     // ===== Creature-targeting spell validation =====
 
     @Test
-    @CardUsed({AngelicBlessing.class, AlabornTrooper.class, Plains.class})
+    @CardUsed({AngelicBlessing.class, GrizzlyBears.class, Plains.class})
     @DisplayName("AI casts Angelic Blessing targeting own creature, not a land")
     void castsAngelicBlessingTargetingCreatureNotLand() {
         giveAiPriority();
         giveAiPlains(3);
 
         // AI has a creature on the battlefield
-        Permanent trooper = new Permanent(new AlabornTrooper());
-        trooper.setSummoningSick(false);
-        gd.playerBattlefields.get(aiPlayer.getId()).add(trooper);
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
 
         harness.setHand(aiPlayer, List.of(new AngelicBlessing()));
 
@@ -919,7 +918,7 @@ class AiDecisionEngineTest {
         // AI should cast Angelic Blessing targeting the creature, not a Plains
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(AngelicBlessing.class);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(trooper.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
     }
 
     @Test
@@ -1552,6 +1551,7 @@ class AiDecisionEngineTest {
     }
 
     @Test
+    @CardUsed({CrypticCommand.class, GrizzlyBears.class})
     @DisplayName("prepareModalSpellCast retains the target for a fixed choose-two spell")
     void prepareModalSpellCastRetainsChooseTwoTarget() {
         Permanent target = new Permanent(new GrizzlyBears());

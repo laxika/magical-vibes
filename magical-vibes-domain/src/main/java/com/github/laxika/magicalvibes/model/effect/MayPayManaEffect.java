@@ -50,6 +50,16 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
     }
 
     /**
+     * A payment whose {@code {X}} generic component is evaluated when the ability resolves while
+     * retaining any fixed components in {@code manaCost}, such as {@code {X}{R}}.
+     */
+    public static MayPayManaEffect dynamic(String manaCost, DynamicAmount amount, CardEffect wrapped,
+                                           String prompt) {
+        return new MayPayManaEffect(manaCost, amount, wrapped, prompt, MayPayPayer.CONTROLLER,
+                null, 0, false, false);
+    }
+
+    /**
      * Delegates to the wrapped effect, like {@link MayEffect}: the target of "you may pay {X}. If
      * you do, [targeted effect]" is chosen when the ability goes on the stack (CR 603.3d), while
      * the payment choice happens at resolution (CR 603.5). When {@code wrapped} is null (pay-to-

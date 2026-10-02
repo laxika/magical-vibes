@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed(NotoriousThrong.class)
 class NotoriousThrongTest extends BaseCardTest {
 
     private List<Permanent> faerieRogueTokens() {
@@ -30,9 +34,7 @@ class NotoriousThrongTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         gd.damageDealtToPlayersThisTurn.put(player2.getId(), 3);
 
-        harness.setHand(player1, List.of(new NotoriousThrong()));
-        harness.addMana(player1, ManaColor.BLUE, 4); // normal {3}{U}
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
         harness.passBothPriorities();
 
         List<Permanent> tokens = faerieRogueTokens();
@@ -49,14 +51,41 @@ class NotoriousThrongTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Created tokens are black creatures")
+    void createdTokensAreBlackCreatureTokens() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 1);
+
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
+        harness.passBothPriorities();
+
+        Permanent token = faerieRogueTokens().getFirst();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Damage dealt to the caster does not count toward token creation")
+    void damageToCasterDoesNotCount() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.damageDealtToPlayersThisTurn.put(player1.getId(), 5);
+        gd.damageDealtToPlayersThisTurn.put(player2.getId(), 2);
+
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(faerieRogueTokens()).hasSize(2);
+    }
+
+    @Test
     @DisplayName("No damage to opponents creates no tokens")
     void noDamageCreatesNoTokens() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
 
-        harness.setHand(player1, List.of(new NotoriousThrong()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new NotoriousThrong(), "{3}{U}");
         harness.passBothPriorities();
 
         assertThat(faerieRogueTokens()).isEmpty();

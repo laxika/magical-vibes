@@ -1502,7 +1502,11 @@ public class BattlefieldPlacementService {
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            List<CardEffect> entryEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+            // A perpetual "this creature enters with ..." grant is stored as a static effect on
+            // the runtime card so it survives zone changes.
+            entryEffects.addAll(card.getEffects(EffectSlot.STATIC));
+            for (CardEffect effect : entryEffects) {
                 EnterWithCountersEffect enterWith;
                 if (effect instanceof AmplifyEffect amplify) {
                     enterWith = new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,

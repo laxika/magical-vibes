@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CennsHeir;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FathomTrawl.class, CennsHeir.class, Forest.class, Island.class})
 class FathomTrawlTest extends BaseCardTest {
 
     private void castFathomTrawl() {
-        harness.setHand(player1, List.of(new FathomTrawl()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new FathomTrawl(), "{3}{U}{U}");
         harness.passBothPriorities();
     }
 
@@ -29,22 +27,21 @@ class FathomTrawlTest extends BaseCardTest {
     @Test
     @DisplayName("Reveals until three nonland cards, puts them in hand, single land to bottom")
     void threeNonlandToHandSingleLandToBottom() {
-        Card shock1 = new Shock();
+        Card firstNonland = new CennsHeir();
         Card forest = new Forest();
-        Card bears = new GrizzlyBears();
-        Card shock2 = new Shock();
+        Card secondNonland = new CennsHeir();
+        Card thirdNonland = new CennsHeir();
         Card islandBottom = new Island();
 
-        // Reveal order: Shock(nl1), Forest(land), Bears(nl2), Shock(nl3) -> stop
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(shock1, forest, bears, shock2, islandBottom));
+        // Reveal order: nonland, Forest(land), nonland, nonland -> stop
+        harness.setLibrary(player1, List.of(firstNonland, forest, secondNonland, thirdNonland, islandBottom));
 
         castFathomTrawl();
 
         // Only one land revealed, so it goes directly to bottom without a reorder choice
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(shock1, bears, shock2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstNonland, secondNonland, thirdNonland);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
 
         // Library: the untouched Island remains on top, the revealed Forest is now on the bottom
@@ -58,19 +55,18 @@ class FathomTrawlTest extends BaseCardTest {
     @DisplayName("When two lands are revealed, controller reorders them onto the bottom")
     void twoLandsTriggerReorderInteraction() {
         Card forest = new Forest();
-        Card shock1 = new Shock();
+        Card firstNonland = new CennsHeir();
         Card island = new Island();
-        Card bears = new GrizzlyBears();
-        Card shock2 = new Shock();
+        Card secondNonland = new CennsHeir();
+        Card thirdNonland = new CennsHeir();
 
-        // Reveal order: Forest(land), Shock(nl1), Island(land), Bears(nl2), Shock(nl3) -> stop
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(forest, shock1, island, bears, shock2));
+        // Reveal order: Forest(land), nonland, Island(land), nonland, nonland -> stop
+        harness.setLibrary(player1, List.of(forest, firstNonland, island, secondNonland, thirdNonland));
 
         castFathomTrawl();
 
         // Nonland cards are already in hand
-        assertThat(gd.playerHands.get(player1.getId())).contains(shock1, bears, shock2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstNonland, secondNonland, thirdNonland);
 
         // Two lands must be ordered onto the bottom
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -90,18 +86,53 @@ class FathomTrawlTest extends BaseCardTest {
     @Test
     @DisplayName("Puts fewer than three nonland cards into hand when the library runs out")
     void libraryRunsOutBeforeThreeNonland() {
-        Card shock = new Shock();
+        Card nonland = new CennsHeir();
         Card forest = new Forest();
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(shock, forest));
+        harness.setLibrary(player1, List.of(nonland, forest));
 
         castFathomTrawl();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).contains(shock);
+        assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
         // Single revealed land goes to the (now otherwise empty) bottom
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Reorders all revealed lands when the library runs out before three nonland cards")
+    void libraryRunsOutWithMultipleLands() {
+        Card nonland = new CennsHeir();
+        Card forest = new Forest();
+        Card island = new Island();
+        Card secondForest = new Forest();
+
+        harness.setLibrary(player1, List.of(nonland, forest, island, secondForest));
+
+        castFathomTrawl();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        List<Card> reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        assertThat(reorder).containsExactlyInAnyOrder(forest, island, secondForest);
+
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(
+                        reorder.indexOf(secondForest), reorder.indexOf(island), reorder.indexOf(forest))));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondForest, island, forest);
+    }
+
+    @Test
+    @DisplayName("Reveals nothing when the library is empty")
+    void emptyLibraryRevealsNothing() {
+        harness.setLibrary(player1, List.of());
+
+        castFathomTrawl();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     // ===== No lands revealed =====
@@ -109,18 +140,17 @@ class FathomTrawlTest extends BaseCardTest {
     @Test
     @DisplayName("Stops as soon as three nonland cards are revealed, leaving deeper cards untouched")
     void noLandsRevealedStopsEarly() {
-        Card shock1 = new Shock();
-        Card bears = new GrizzlyBears();
-        Card shock2 = new Shock();
+        Card firstNonland = new CennsHeir();
+        Card secondNonland = new CennsHeir();
+        Card thirdNonland = new CennsHeir();
         Card islandBelow = new Island();
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(shock1, bears, shock2, islandBelow));
+        harness.setLibrary(player1, List.of(firstNonland, secondNonland, thirdNonland, islandBelow));
 
         castFathomTrawl();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).contains(shock1, bears, shock2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstNonland, secondNonland, thirdNonland);
         // Nothing was placed on the bottom; the Island stays where it was
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(islandBelow);
     }

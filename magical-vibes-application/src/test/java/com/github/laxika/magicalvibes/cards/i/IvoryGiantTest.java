@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,21 +16,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IvoryGiant.class, GrizzlyBears.class, SavannahLions.class})
+@CardUsed({IvoryGiant.class, AshcoatBear.class, BenalishCavalry.class, Forest.class})
 class IvoryGiantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters by tapping all nonwhite creatures")
     void entersByTappingAllNonwhiteCreatures() {
-        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent ownLions = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
-        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent opposingLions = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
-        harness.setHand(player1, List.of(new IvoryGiant()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        Permanent ownLions = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        Permanent opposingLions = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.castFromHand(player1, new IvoryGiant(), "{5}{W}{W}");
 
-        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -36,6 +37,8 @@ class IvoryGiantTest extends BaseCardTest {
         assertThat(opposingBears.isTapped()).isTrue();
         assertThat(ownLions.isTapped()).isFalse();
         assertThat(opposingLions.isTapped()).isFalse();
+        assertThat(ownForest.isTapped()).isFalse();
+        assertThat(opposingForest.isTapped()).isFalse();
     }
 
     @Test
@@ -51,6 +54,17 @@ class IvoryGiantTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suspend counters are removed only during Ivory Giant's owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        IvoryGiant card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
     }
 
     @Test
@@ -71,7 +85,28 @@ class IvoryGiantTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Ivory Giant")).isNotNull();
+        Permanent permanent = findPermanent(player1, "Ivory Giant");
+        assertThat(permanent).isNotNull();
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Ivory Giant in exile")
+    void decliningCastLeavesCardInExile() {
+        IvoryGiant card = suspendCard();
+
+        for (int i = 0; i < 4; i++) {
+            removeOneTimeCounter();
+        }
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .doesNotContain(card);
     }
 
     private IvoryGiant suspendCard() {

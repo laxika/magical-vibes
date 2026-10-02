@@ -247,6 +247,12 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualActivatedAbilityCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, false));
+        register(PendingInteraction.PerpetualStaticEffectCardChoice.class,
+                (gameData, interaction) -> projectHandChoice(interaction, true));
+        register(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class,
+                this::projectPerpetualTriggeredAbilityCardsChoice);
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
@@ -1511,6 +1517,18 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.HandChoice interaction, boolean declinable) {
         return InteractionPromptMessage.cardIndexPick(
                 interaction.validIndices(), interaction.prompt(), declinable);
+    }
+
+    private InteractionPromptMessage projectPerpetualTriggeredAbilityCardsChoice(
+            GameData gameData, PendingInteraction.PerpetualTriggeredAbilityCardsChoice interaction) {
+        List<Card> hand = gameData.playerHands.getOrDefault(interaction.playerId(), List.of());
+        List<CardView> cards = hand.stream()
+                .filter(card -> interaction.validCardIds().contains(card.getId()))
+                .map(cardViewFactory::create)
+                .toList();
+        return InteractionPromptMessage.multiCardPick(
+                interaction.validCardIds(), cards, 0,
+                Math.min(interaction.maxCount(), interaction.validCardIds().size()), interaction.prompt());
     }
 
     private InteractionPromptMessage projectPerpetualTargetCardChoice(

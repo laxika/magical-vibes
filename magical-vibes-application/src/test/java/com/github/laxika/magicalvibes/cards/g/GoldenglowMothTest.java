@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoldenglowMoth.class, BriarberryCohort.class})
 class GoldenglowMothTest extends BaseCardTest {
 
     // ===== Blocking triggers may-gain-life and accepting gains life =====
@@ -19,25 +20,21 @@ class GoldenglowMothTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature and choosing yes gains 4 life")
     void blockingAndChoosingYesGainsLife() {
-        addReadyMoth(player2);
-        addReadyAttacker(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GoldenglowMoth());
+        addCreatureReady(player1, new GoldenglowMoth());
         harness.setLife(player2, 20);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goldenglow Moth");
 
         // Resolve the trigger — should prompt for may ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
-
-        // Resolve the accepted triggered ability (GainLifeEffect now on the stack)
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
     }
@@ -47,34 +44,31 @@ class GoldenglowMothTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature and choosing no does not gain life")
     void blockingAndChoosingNoDoesNotGainLife() {
-        addReadyMoth(player2);
-        addReadyAttacker(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GoldenglowMoth());
+        addCreatureReady(player1, new GoldenglowMoth());
         harness.setLife(player2, 20);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger — decline the may ability
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Being blocked does not trigger Goldenglow Moth's ability")
+    void beingBlockedDoesNotTrigger() {
+        addCreatureReady(player1, new GoldenglowMoth());
+        addCreatureReady(player2, new BriarberryCohort());
+        harness.setLife(player2, 20);
 
-    private Permanent addReadyMoth(Player player) {
-        Permanent perm = new Permanent(new GoldenglowMoth());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-    private Permanent addReadyAttacker(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

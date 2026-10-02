@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.c.Castle;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Castle.class, FountainOfYouth.class, GrizzlyBears.class, SerrasEmbrace.class})
+@CardUsed({FountainOfYouth.class, GrizzlyBears.class, SerrasEmbrace.class})
 class SerrasEmbraceTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -78,8 +77,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     void enchantedCreatureGetsBoost() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        addAttachedEmbrace(bearsPerm);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(4);
@@ -104,8 +102,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     void enchantedCreatureHasFlying() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        addAttachedEmbrace(bearsPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
     }
@@ -128,8 +125,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     void enchantedCreatureHasVigilance() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        addAttachedEmbrace(bearsPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
     }
@@ -149,8 +145,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     @DisplayName("Enchanted creature with vigilance does not tap when attacking")
     void enchantedCreatureDoesNotTapWhenAttacking() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        addAttachedEmbrace(bearsPerm);
 
         declareAttackers(List.of(0));
 
@@ -164,8 +159,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     void effectsStopWhenRemoved() {
         Permanent bearsPerm = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        Permanent embracePerm = addAttachedEmbrace(bearsPerm);
 
         // Verify effects are active
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
@@ -236,7 +230,7 @@ class SerrasEmbraceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Serra's Embrace")
     void cannotTargetNonCreature() {
-        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new Castle());
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new SerrasEmbrace()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -302,8 +296,7 @@ class SerrasEmbraceTest extends BaseCardTest {
 
         Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent embracePerm = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
-        embracePerm.setAttachedTo(bearsPerm.getId());
+        addAttachedEmbrace(bearsPerm);
 
         // Other creature should not be affected
         assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);

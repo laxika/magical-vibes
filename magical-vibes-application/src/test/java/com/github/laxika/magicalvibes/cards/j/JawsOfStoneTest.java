@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BoggartArsonists;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JawsOfStone.class, Mountain.class, BoggartArsonists.class})
 class JawsOfStoneTest extends BaseCardTest {
 
     @Test
@@ -23,16 +25,16 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Mountain());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new BoggartArsonists());
         harness.setHand(player1, List.of(new JawsOfStone()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        // 3 Mountains -> X = 3: 2 to the 2/2 (lethal), 1 to the opponent.
-        harness.castInstant(player1, 0, Map.of(bears.getId(), 2, player2.getId(), 1));
+        // 3 Mountains -> X = 3: 2 to the 2/1 (lethal), 1 to the opponent.
+        harness.castSorcery(player1, 0, Map.of(boggart.getId(), 2, player2.getId(), 1));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Boggart Arsonists");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
@@ -47,7 +49,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         // 4 Mountains -> X = 4, all to the opponent.
-        harness.castInstant(player1, 0, Map.of(player2.getId(), 4));
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -66,7 +68,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         // Only player1's 2 Mountains count, so X = 2 (not 5).
-        harness.castInstant(player1, 0, Map.of(player2.getId(), 2));
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 2));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -83,8 +85,34 @@ class JawsOfStoneTest extends BaseCardTest {
 
         // 2 Mountains -> X = 2, but 3 is assigned.
         assertThatThrownBy(() ->
-                harness.castInstant(player1, 0, Map.of(player2.getId(), 3))
+                harness.castSorcery(player1, 0, Map.of(player2.getId(), 3))
         ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With no Mountains, it is cast with no targets and deals no damage")
+    void noMountainsMeansNoTargets() {
+        harness.setHand(player1, List.of(new JawsOfStone()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each selected target must receive at least one damage")
+    void rejectsZeroDamageAssignment() {
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new BoggartArsonists());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new JawsOfStone()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                Map.of(boggart.getId(), 2, player2.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -96,7 +124,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new JawsOfStone()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castInstant(player1, 0, Map.of(player2.getId(), 3));
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 3));
 
         // Sacrifice/remove all Mountains after the spell is on the stack.
         harness.getGameData().playerBattlefields.get(player1.getId())

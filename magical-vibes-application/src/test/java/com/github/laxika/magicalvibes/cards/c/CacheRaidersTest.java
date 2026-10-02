@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HelixPinnacle;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CacheRaiders.class, GrizzlyBears.class})
 class CacheRaidersTest extends BaseCardTest {
 
     @Test
@@ -63,5 +66,25 @@ class CacheRaidersTest extends BaseCardTest {
         assertThat(choice.validPermanentIds())
                 .contains(raiders.getId())
                 .doesNotContain(opponentBears.getId());
+    }
+
+    @Test
+    @CardUsed({CacheRaiders.class, HelixPinnacle.class})
+    @DisplayName("Can return a shrouded permanent because the ability does not target")
+    void canReturnShroudedPermanent() {
+        addCreatureReady(player1, new CacheRaiders());
+        Permanent pinnacle = harness.addToBattlefieldAndReturn(player1, new HelixPinnacle());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).contains(pinnacle.getId());
+
+        harness.handlePermanentChosen(player1, pinnacle.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Helix Pinnacle");
+        harness.assertInHand(player1, "Helix Pinnacle");
     }
 }

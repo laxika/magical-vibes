@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -51,6 +54,40 @@ class BandageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @CardUsed(BlackKnight.class)
+    @DisplayName("Cannot target a creature with protection from white")
+    void cannotTargetProtectionFromWhite() {
+        Permanent target = addCreatureReady(player2, new BlackKnight());
+        harness.setHand(player1, List.of(new Bandage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @CardUsed({GarrukWildspeaker.class, Shock.class})
+    @DisplayName("Prevention shield also protects a planeswalker target")
+    void preventsDamageToPlaneswalker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        target.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.setHand(player1, List.of(new Bandage(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(target.getDamagePreventionShield()).isZero();
     }
 
     @Test

@@ -1056,6 +1056,9 @@ public class MayAbilityHandlerService {
                 continue;
             }
             CardPredicate filter = graveyardFilterOf(targetEffect);
+            if (filter == null) {
+                filter = targetEffect.targetSpec().graveyardCardPredicate().orElse(null);
+            }
             return new GraveyardTarget(filter, scope);
         }
         return new GraveyardTarget(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);

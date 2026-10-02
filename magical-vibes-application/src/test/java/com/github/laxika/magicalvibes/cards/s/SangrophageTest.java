@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Sangrophage.class)
+@CardUsed({Sangrophage.class})
 class SangrophageTest extends BaseCardTest {
 
     @Test
@@ -38,6 +38,20 @@ class SangrophageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(sangrophage.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot pay 2 life at 1 life, so Sangrophage is tapped")
+    void insufficientLifeTapsSangrophage() {
+        Permanent sangrophage = addSangrophage();
+        harness.setLife(player1, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sangrophage.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
     }
 
     @Test

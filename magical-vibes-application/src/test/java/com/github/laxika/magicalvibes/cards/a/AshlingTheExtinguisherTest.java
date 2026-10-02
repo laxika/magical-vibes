@@ -1,41 +1,34 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CascadeBluffs;
+import com.github.laxika.magicalvibes.cards.n.NettleSentinel;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AshlingTheExtinguisher.class, NettleSentinel.class, CascadeBluffs.class})
 class AshlingTheExtinguisherTest extends BaseCardTest {
-
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     @Test
     @DisplayName("Combat damage to a player prompts to choose a creature that player controls")
     void promptsToChooseCreature() {
         Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new NettleSentinel());
 
         resolveCombat();
-        harness.passBothPriorities(); // resolve sacrifice trigger
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds())
                 .contains(enemyCreature.getId());
     }
 
@@ -44,14 +37,15 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     void sacrificesChosenCreature() {
         Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent enemyCreature = addCreatureReady(player2, new NettleSentinel());
 
         resolveCombat();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, enemyCreature.getId());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(enemyCreature.getId()));
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Nettle Sentinel");
+        harness.assertInGraveyard(player2, "Nettle Sentinel");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
@@ -61,14 +55,16 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     void onlyDamagedPlayersCreatures() {
         Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent enemyCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent enemyLand = addPermanent(player2, new Mountain());
+        Permanent ownCreature = addCreatureReady(player1, new NettleSentinel());
+        Permanent enemyCreature = addCreatureReady(player2, new NettleSentinel());
+        Permanent enemyLand = harness.addToBattlefieldAndReturn(player2, new CascadeBluffs());
 
         resolveCombat();
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds())
                 .contains(enemyCreature.getId())
                 .doesNotContain(ownCreature.getId())
                 .doesNotContain(enemyLand.getId());
@@ -79,10 +75,23 @@ class AshlingTheExtinguisherTest extends BaseCardTest {
     void noTriggerWithoutCreatures() {
         Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
         ashling.setAttacking(true);
-        addPermanent(player2, new Forest());
+        harness.addToBattlefield(player2, new CascadeBluffs());
 
         resolveCombat();
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Ashling does not trigger when blocked and deals combat damage only to a creature")
+    void noTriggerWhenBlocked() {
+        Permanent ashling = addCreatureReady(player1, new AshlingTheExtinguisher());
+        ashling.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new NettleSentinel());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

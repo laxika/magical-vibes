@@ -86,10 +86,12 @@ class TreasureHunterTest extends BaseCardTest {
         TreasureHunter nonArtifact = new TreasureHunter();
         harness.setGraveyard(player1, List.of(nonArtifact));
 
-        harness.enterBattlefieldAndReturn(player1, new TreasureHunter());
+        var enteringTreasureHunter = harness.enterBattlefieldAndReturn(player1, new TreasureHunter());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        harness.assertInGraveyard(player1, "Treasure Hunter");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonArtifact);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(enteringTreasureHunter.getId()));
     }
 }

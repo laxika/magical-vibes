@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.b.BasalThrull;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.g.Greenseeker;
+import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,24 +17,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EndrekSahrMasterBreeder.class, BasalThrull.class, GrizzlyBears.class, Shock.class})
+@CardUsed({EndrekSahrMasterBreeder.class, AngelsGrace.class, AshcoatBear.class,
+        Greenseeker.class, WalkingBallista.class})
 class EndrekSahrMasterBreederTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a creature creates one Thrull token per mana value")
     void creatureSpellCreatesThrullsEqualToManaValue() {
         harness.addToBattlefield(player1, new EndrekSahrMasterBreeder());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AshcoatBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> thrulls = findPermanents(player1, "Thrull");
         assertThat(thrulls).hasSize(2);
         assertThat(thrulls).allSatisfy(thrull -> {
             assertThat(thrull.getCard().isToken()).isTrue();
+            assertThat(thrull.getCard().getColors()).containsExactly(CardColor.BLACK);
+            assertThat(thrull.getCard().getSubtypes()).containsExactly(CardSubtype.THRULL);
             assertThat(gqs.getEffectivePower(gd, thrull)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, thrull)).isEqualTo(1);
         });
@@ -43,10 +47,10 @@ class EndrekSahrMasterBreederTest extends BaseCardTest {
     @DisplayName("Casting a noncreature spell does not create Thrulls")
     void noncreatureSpellDoesNotCreateThrulls() {
         harness.addToBattlefield(player1, new EndrekSahrMasterBreeder());
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new AngelsGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Thrull")).isEmpty();
@@ -54,24 +58,56 @@ class EndrekSahrMasterBreederTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrifices when its controller controls seven Thrulls")
-    void sacrificesAtSevenThrulls() {
-        for (int i = 0; i < 6; i++) {
-            harness.addToBattlefield(player1, new BasalThrull());
-        }
+    @DisplayName("An opponent's creature spell does not create Thrulls")
+    void opponentCreatureSpellDoesNotCreateThrulls() {
         harness.addToBattlefield(player1, new EndrekSahrMasterBreeder());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new AshcoatBear()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Thrull")).isEmpty();
+        harness.assertOnBattlefield(player1, "Endrek Sahr, Master Breeder");
+    }
+
+    @Test
+    @DisplayName("Uses the full mana value of an X-cost creature spell")
+    void xCreatureSpellCreatesThrullsEqualToFullManaValue() {
+        harness.addToBattlefield(player1, new EndrekSahrMasterBreeder());
+        harness.setHand(player1, List.of(new WalkingBallista()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castArtifact(player1, 0, 3);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Thrull")).hasSize(6);
+        harness.assertOnBattlefield(player1, "Walking Ballista");
+        harness.assertOnBattlefield(player1, "Endrek Sahr, Master Breeder");
+    }
+
+    @Test
+    @DisplayName("Sacrifices when its controller controls seven or more Thrulls")
+    void sacrificesAtSevenThrulls() {
+        harness.addToBattlefield(player1, new EndrekSahrMasterBreeder());
+        harness.setHand(player1, List.of(
+                new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new Greenseeker()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+        }
+
+        assertThat(findPermanents(player1, "Thrull")).hasSize(6);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.THRULL)))
-                .hasSize(8);
+        assertThat(findPermanents(player1, "Thrull")).hasSize(7);
         harness.assertOnBattlefield(player1, "Endrek Sahr, Master Breeder");
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Endrek Sahr, Master Breeder");
         harness.assertInGraveyard(player1, "Endrek Sahr, Master Breeder");

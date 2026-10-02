@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.RevealSourceChosenSubtypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -633,6 +634,11 @@ public class ActivatedAbilityExecutionService {
                 .filter(SacrificeSelfCost.class::isInstance)
                 .map(SacrificeSelfCost.class::cast)
                 .findFirst();
+        if (abilityEffects.stream().anyMatch(RevealSourceChosenSubtypeCost.class::isInstance)
+                && permanent.getChosenSubtype() != null) {
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                    " reveals the chosen creature type: " + permanent.getChosenSubtype().getDisplayName() + "."));
+        }
         Permanent sacrificedSourceSnapshot = sacrificeSelfCost
                 .filter(SacrificeSelfCost::recordSacrificedPermanentSnapshot)
                 .map(cost -> new Permanent(permanent))
@@ -1741,6 +1747,7 @@ public class ActivatedAbilityExecutionService {
                         gameData.recordDamageDealtBySourceToPlayer(
                                 permanent.getId(), playerId, effectiveDamage);
                         gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                        gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
                         triggerCollectionService.checkOpponentDealtDamageTriggers(
                                 gameData, playerId, permanent.getId(), effectiveDamage);
                         triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
@@ -1963,6 +1970,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.recordDamageDealtBySourceToPlayer(
                         permanent.getId(), playerId, effectiveDamage);
                 gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
+                gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
                 triggerCollectionService.checkOpponentDealtDamageTriggers(
                         gameData, playerId, permanent.getId(), effectiveDamage);
                 triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(

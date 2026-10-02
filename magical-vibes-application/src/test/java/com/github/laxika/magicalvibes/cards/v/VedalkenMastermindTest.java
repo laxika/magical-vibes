@@ -10,15 +10,18 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Persuasion;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VedalkenMastermind.class, GrizzlyBears.class, AngelicChorus.class, Island.class})
+@CardUsed({VedalkenMastermind.class, GrizzlyBears.class, AngelicChorus.class, Island.class, Persuasion.class})
 class VedalkenMastermindTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -241,6 +244,26 @@ class VedalkenMastermindTest extends BaseCardTest {
         assertThat(mastermind.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns a controlled permanent to its owner's hand")
+    void returnsControlledPermanentToItsOwnersHand() {
+        addCreatureReady(player1, new VedalkenMastermind());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Persuasion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }
 

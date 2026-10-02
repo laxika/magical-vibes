@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GhostWarden.class)
+@CardUsed({GhostWarden.class, Forest.class})
 class GhostWardenTest extends BaseCardTest {
 
     @Test
@@ -44,6 +45,19 @@ class GhostWardenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareAbility(source);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("The boost wears off at cleanup")
     void boostWearsOff() {
         Permanent source = addCreatureReady(player1, new GhostWarden());
@@ -61,6 +75,21 @@ class GhostWardenTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not boost a target creature that leaves before resolution")
+    void doesNotBoostTargetThatLeavesBeforeResolution() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player1, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,9 +32,9 @@ class RootcastApprenticeshipTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
-        assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(Permanent::isToken)
+        assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(2);
-        assertThat(gd.playerBattlefields.get(player2.getId())).filteredOn(Permanent::isToken)
+        assertThat(gd.playerBattlefields.get(player2.getId())).filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
     }
 

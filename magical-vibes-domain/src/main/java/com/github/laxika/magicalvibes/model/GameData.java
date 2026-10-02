@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -367,6 +368,9 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Perpetual static effects granted to physical cards while they are on the battlefield. */
     public final Map<UUID, List<CardEffect>> perpetualCardBattlefieldEffectGrants = new ConcurrentHashMap<>();
+    /** Perpetual valued spell-casting abilities granted to physical cards, keyed by card id. */
+    public final Map<UUID, List<SpellCastingAbilityGrantingEffect>> perpetualCardSpellCastingAbilityGrants =
+            new ConcurrentHashMap<>();
     /** Perpetual generic spell-cost reductions granted to physical cards, keyed by stable card id. */
     public final Map<UUID, Integer> perpetualCardCastCostReductions = new ConcurrentHashMap<>();
     /** Perpetual generic spell-cost increases granted to physical cards, keyed by stable card id. */
@@ -2280,6 +2284,14 @@ public class GameData {
      *  (Giltspire Avenger). Cleared at turn cleanup. */
     public final Map<UUID, Set<UUID>> noncombatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
+    /** Names of permanents that dealt damage to each player during this turn. */
+    public final Map<UUID, Set<String>> permanentDamageSourceNamesToPlayersThisTurn =
+            new ConcurrentHashMap<>();
+
+    /** Names of permanents that dealt damage to each player during the immediately preceding turn. */
+    public final Map<UUID, Set<String>> permanentDamageSourceNamesToPlayersLastTurn =
+            new ConcurrentHashMap<>();
+
     /** Tracks which creature permanents dealt damage to which players this turn. */
     public final Map<UUID, Set<UUID>> creatureDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
@@ -2390,6 +2402,16 @@ public class GameData {
                 .add(playerId);
     }
 
+    /** Records the name of a permanent that dealt damage to a player this turn. */
+    public void recordPermanentDamageSourceNameToPlayer(String sourceName, UUID playerId) {
+        if (sourceName == null || playerId == null) {
+            return;
+        }
+        permanentDamageSourceNamesToPlayersThisTurn
+                .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(sourceName);
+    }
+
     /** Records that a creature permanent dealt damage to a player this turn. */
     public void recordCreatureDamageSourceToPlayer(UUID sourcePermanentId, UUID playerId) {
         if (sourcePermanentId == null || playerId == null) {
@@ -2480,6 +2502,13 @@ public class GameData {
         damageDealtToPlayersBySourceThisTurn
                 .computeIfAbsent(sourcePermanentId, ignored -> new ConcurrentHashMap<>())
                 .merge(playerId, amount, Integer::sum);
+        String sourceName = playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> sourcePermanentId.equals(permanent.getId()))
+                .map(permanent -> permanent.getCard().getName())
+                .findFirst()
+                .orElse(null);
+        recordPermanentDamageSourceNameToPlayer(sourceName, playerId);
     }
 
     /** Returns the damage a source permanent has dealt to a player this turn. */
@@ -2543,6 +2572,7 @@ public class GameData {
         if (creatureName == null || playerId == null) {
             return;
         }
+        recordPermanentDamageSourceNameToPlayer(creatureName, playerId);
         combatDamageToPlayersByCreatureNameThisGame
                 .computeIfAbsent(creatureName, ignored -> ConcurrentHashMap.newKeySet())
                 .add(playerId);
@@ -6898,6 +6928,9 @@ public class GameData {
         this.perpetualCardBattlefieldEffectGrants.forEach((cardId, effects) ->
                 copy.perpetualCardBattlefieldEffectGrants.put(cardId,
                         Collections.synchronizedList(new ArrayList<>(effects))));
+        this.perpetualCardSpellCastingAbilityGrants.forEach((cardId, grants) ->
+                copy.perpetualCardSpellCastingAbilityGrants.put(cardId,
+                        Collections.synchronizedList(new ArrayList<>(grants))));
         copy.perpetualPowerToughnessModifiers.putAll(this.perpetualPowerToughnessModifiers);
         this.perpetualKeywords.forEach((cardId, keywords) ->
                 copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
@@ -7127,6 +7160,10 @@ public class GameData {
                 .addAll(this.combatDamageSourcesThatDealtToCreaturesThisTurn);
         this.noncombatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.noncombatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.permanentDamageSourceNamesToPlayersThisTurn.forEach((k, v) ->
+                copy.permanentDamageSourceNamesToPlayersThisTurn.put(k, new HashSet<>(v)));
+        this.permanentDamageSourceNamesToPlayersLastTurn.forEach((k, v) ->
+                copy.permanentDamageSourceNamesToPlayersLastTurn.put(k, new HashSet<>(v)));
         this.creatureDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.creatureDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         this.playersAttackedThisTurn.forEach((k, v) ->
@@ -7725,6 +7762,9 @@ public class GameData {
         this.perpetualCardKeywords.forEach((cardId, keywords) ->
                 copy.perpetualCardKeywords.put(cardId, keywords.isEmpty()
                         ? EnumSet.noneOf(Keyword.class) : EnumSet.copyOf(keywords)));
+        this.perpetualCardSpellCastingAbilityGrants.forEach((cardId, grants) ->
+                copy.perpetualCardSpellCastingAbilityGrants.put(cardId,
+                        Collections.synchronizedList(new ArrayList<>(grants))));
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

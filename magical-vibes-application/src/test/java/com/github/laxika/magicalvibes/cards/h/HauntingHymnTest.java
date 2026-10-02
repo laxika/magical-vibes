@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HauntingHymn.class, GrizzlyBears.class})
+@CardUsed({HauntingHymn.class, AshcoatBear.class})
 class HauntingHymnTest extends BaseCardTest {
 
     @Test
     @DisplayName("During the controller's main phase, target player discards four cards")
     void mainPhaseCastDiscardsFour() {
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear())));
         harness.setHand(player1, List.of(new HauntingHymn()));
         addBlackMana(6);
         harness.forceActivePlayer(player1);
@@ -43,7 +43,7 @@ class HauntingHymnTest extends BaseCardTest {
     @DisplayName("Outside the controller's main phase, target player discards two cards")
     void nonMainPhaseCastDiscardsTwo() {
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new AshcoatBear(), new AshcoatBear(), new AshcoatBear())));
         harness.setHand(player1, List.of(new HauntingHymn()));
         addBlackMana(6);
         harness.forceActivePlayer(player1);
@@ -60,14 +60,53 @@ class HauntingHymnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("During an opponent's main phase, target player discards two cards")
+    void opponentMainPhaseCastDiscardsTwo() {
+        harness.setHand(player2, new ArrayList<>(List.of(
+                new AshcoatBear(), new AshcoatBear(), new AshcoatBear())));
+        harness.setHand(player1, List.of(new HauntingHymn()));
+        addBlackMana(6);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        discardCards(player2, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The controller may be chosen as the target")
+    void canTargetController() {
+        harness.setHand(player1, new ArrayList<>(List.of(
+                new HauntingHymn(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear(), new AshcoatBear())));
+        addBlackMana(6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        discardCards(player1, 4);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new HauntingHymn()));
         addBlackMana(6);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
-                harness.getPermanentId(player2, "Grizzly Bears")))
+                harness.getPermanentId(player2, "Ashcoat Bear")))
                 .isInstanceOf(IllegalStateException.class);
     }
 

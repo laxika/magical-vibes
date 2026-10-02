@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
+import com.github.laxika.magicalvibes.cards.m.MudbuttonClanger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,16 +21,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThievesFortune.class, ElvishWarrior.class, IndomitableAncients.class,
+        MudbuttonClanger.class, MothdustChangeling.class})
 class ThievesFortuneTest extends BaseCardTest {
 
     private Card[] stackFourOnTop() {
-        Card top1 = new GrizzlyBears();
-        Card top2 = new LlanowarElves();
-        Card top3 = new Shock();
-        Card top4 = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(top1, top2, top3, top4)); // top1 is the very top
-        return new Card[]{top1, top2, top3, top4};
+        Card top1 = new ElvishWarrior();
+        Card top2 = new IndomitableAncients();
+        Card top3 = new MudbuttonClanger();
+        Card top4 = new MothdustChangeling();
+        Card untouched = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(top1, top2, top3, top4, untouched)); // top1 is the very top
+        return new Card[]{top1, top2, top3, top4, untouched};
     }
 
     @Test
@@ -37,12 +40,10 @@ class ThievesFortuneTest extends BaseCardTest {
     void normalCastPicksOneToHand() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new ThievesFortune()));
-        harness.addMana(player1, ManaColor.BLUE, 3); // normal {2}{U}
 
         Card[] top = stackFourOnTop();
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ThievesFortune(), "{2}{U}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(top[0].getId()));
 
@@ -59,7 +60,7 @@ class ThievesFortuneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // First chosen is closest to the top of the bottom section.
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top[1], top[2], top[3]);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top[4], top[1], top[2], top[3]);
         harness.assertInGraveyard(player1, "Thieves' Fortune");
     }
 
@@ -84,6 +85,35 @@ class ThievesFortuneTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
                 List.of(reorder.indexOf(top[0]), reorder.indexOf(top[2]), reorder.indexOf(top[3]))));
 
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top[4], top[0], top[2], top[3]);
+        harness.assertInGraveyard(player1, "Thieves' Fortune");
+    }
+
+    @Test
+    @DisplayName("With only one library card, it goes to hand without another choice")
+    void worksWithOneCardLibrary() {
+        Card onlyCard = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new ThievesFortune(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Thieves' Fortune");
+    }
+
+    @Test
+    @DisplayName("With an empty library, it resolves without a choice")
+    void worksWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new ThievesFortune(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Thieves' Fortune");
     }
 

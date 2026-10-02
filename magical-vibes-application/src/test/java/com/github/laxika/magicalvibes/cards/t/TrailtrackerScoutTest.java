@@ -52,12 +52,12 @@ class TrailtrackerScoutTest extends BaseCardTest {
             }
         }
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        int bearsIndex = gd.playerGraveyards.get(player1.getId()).stream()
-                .map(Card::getName)
-                .toList()
-                .indexOf("Grizzly Bears");
-        harness.handleGraveyardCardChosen(player1, bearsIndex);
+        resolveAllTriggers();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).extracting(Card::getName).containsExactly("Grizzly Bears");
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");

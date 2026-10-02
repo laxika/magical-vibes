@@ -1,28 +1,38 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.a.ArchonOfJustice;
+import com.github.laxika.magicalvibes.cards.g.GlenElendraArchmage;
+import com.github.laxika.magicalvibes.cards.h.HotheadedGiant;
+import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.w.WickerboughElder;
+import com.github.laxika.magicalvibes.cards.w.WistfulSelkie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({
+        TalarasBane.class,
+        WickerboughElder.class,
+        HotheadedGiant.class,
+        ArchonOfJustice.class,
+        GlenElendraArchmage.class,
+        RavensCrime.class,
+        WistfulSelkie.class
+})
 class TalarasBaneTest extends BaseCardTest {
 
     @Test
     @DisplayName("Caster gains life equal to the chosen green creature's toughness, then it is discarded")
     void gainsLifeEqualToToughnessThenDiscards() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GiantSpider(), new HillGiant())));
+        harness.setHand(player2, List.of(new WickerboughElder(), new HotheadedGiant()));
         harness.setHand(player1, List.of(new TalarasBane()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -32,40 +42,50 @@ class TalarasBaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
-        // Only the green creature (Giant Spider) is a legal choice; the red Hill Giant is filtered out.
+        // Only the green creature (Wickerbough Elder) is a legal choice; the red Hotheaded Giant is filtered out.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
                 .containsExactly(0);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        // Giant Spider is 2/4 — gain 4 life.
+        // Wickerbough Elder is 4/4 — gain 4 life.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
-        harness.assertInGraveyard(player2, "Giant Spider");
-        harness.assertNotInHand(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Wickerbough Elder");
+        harness.assertNotInHand(player2, "Wickerbough Elder");
     }
 
     @Test
-    @DisplayName("White creatures are valid choices; non-green/white and noncreature cards are not")
-    void whiteCreatureValidOthersFiltered() {
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new SerraAngel(), new FugitiveWizard(), new GrizzlyBears())));
+    @DisplayName("White and multicolored green creatures are valid; other cards are filtered out")
+    void eligibleCreatureColorsAreFilteredAndWhiteCanBeChosen() {
+        harness.setHand(player2, List.of(
+                new ArchonOfJustice(), new GlenElendraArchmage(), new WickerboughElder(),
+                new RavensCrime(), new WistfulSelkie()));
         harness.setHand(player1, List.of(new TalarasBane()));
         harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        // Serra Angel (white) at index 0 and Grizzly Bears (green) at index 2 are legal; the blue
-        // Fugitive Wizard at index 1 is not.
+        // Archon of Justice (white), Wickerbough Elder (green), and Wistful Selkie (green/blue)
+        // are legal. The blue Glen Elendra Archmage and black Raven's Crime are not.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
-                .containsExactly(0, 2);
+                .containsExactly(0, 2, 4);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 4);
+        harness.assertInGraveyard(player2, "Archon of Justice");
+        harness.assertNotInHand(player2, "Archon of Justice");
     }
 
     @Test
     @DisplayName("No green or white creature in hand: no life gain, no discard")
     void noValidCreatureDoesNothing() {
-        harness.setHand(player2, new ArrayList<>(List.of(new HillGiant(), new FugitiveWizard())));
+        harness.setHand(player2, List.of(new HotheadedGiant(), new GlenElendraArchmage()));
         harness.setHand(player1, List.of(new TalarasBane()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -83,7 +103,7 @@ class TalarasBaneTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target self — must target an opponent")
     void cannotTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TalarasBane(), new GrizzlyBears())));
+        harness.setHand(player1, List.of(new TalarasBane()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))

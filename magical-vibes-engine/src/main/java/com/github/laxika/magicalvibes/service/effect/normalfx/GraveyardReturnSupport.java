@@ -551,7 +551,8 @@ public class GraveyardReturnSupport {
                 && effect.grantOnDeathEffect() == null
                 && (effect.battlefieldEffectGrants() == null || effect.battlefieldEffectGrants().isEmpty())
                 && (effect.perpetualBattlefieldEffectGrants() == null
-                || effect.perpetualBattlefieldEffectGrants().isEmpty())) {
+                || effect.perpetualBattlefieldEffectGrants().isEmpty())
+                && !effect.perpetuallySetBasePowerToSourcePower()) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -583,6 +584,19 @@ public class GraveyardReturnSupport {
             }
             if (effect.unearth()) {
                 p.setEnteredViaUnearth(true);
+            }
+            if (effect.perpetuallySetBasePowerToSourcePower() && entry != null) {
+                Permanent source = entry.getSourcePermanentId() == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                if (source == null) {
+                    source = entry.getSourcePermanentSnapshot();
+                }
+                if (source != null) {
+                    Card modifiedCard = p.getCard().createRuntimeCopy();
+                    modifiedCard.setPower(gameQueryService.getEffectivePower(gameData, source));
+                    p.exchangeCard(modifiedCard);
+                }
             }
             if (effect.grantKeywords() != null) {
                 p.getPersistentGrantedKeywords().addAll(effect.grantKeywords());

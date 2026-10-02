@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiftwingCloudskate.class, GrizzlyBears.class, Island.class})
+@CardUsed({RiftwingCloudskate.class, Island.class})
 class RiftwingCloudskateTest extends BaseCardTest {
 
     @Test
@@ -48,6 +47,17 @@ class RiftwingCloudskateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Suspend counters are removed only during the owner's upkeep")
+    void suspendCountersRemainThroughOpponentsUpkeep() {
+        RiftwingCloudskate card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+    }
+
+    @Test
     @DisplayName("The last suspend counter offers a free cast and grants haste")
     void lastCounterOffersFreeCastWithHaste() {
         harness.addToBattlefield(player2, new Island());
@@ -67,9 +77,31 @@ class RiftwingCloudskateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         var permanent = findPermanent(player1, "Riftwing Cloudskate");
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInHand(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Declining the suspend cast leaves Riftwing Cloudskate in exile")
+    void decliningSuspendCastLeavesCardInExile() {
+        RiftwingCloudskate card = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertNotOnBattlefield(player1, "Riftwing Cloudskate");
     }
 
     private RiftwingCloudskate suspendCard() {

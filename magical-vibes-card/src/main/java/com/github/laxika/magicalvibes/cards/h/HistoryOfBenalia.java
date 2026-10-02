@@ -21,6 +21,7 @@ import java.util.Set;
  * III — Knights you control get +2/+1 until end of turn.
  */
 @CardRegistration(set = "DOM", collectorNumber = "21")
+@CardRegistration(set = "YBRO", collectorNumber = "31")
 public class HistoryOfBenalia extends Card {
 
     public HistoryOfBenalia() {

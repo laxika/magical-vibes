@@ -2,13 +2,13 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AncientGrudge.class, PrismaticLens.class, AshcoatBear.class})
 class AncientGrudgeTest extends BaseCardTest {
 
     
@@ -25,16 +26,15 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Ancient Grudge destroys target artifact")
     void destroysArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setHand(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Prismatic Lens");
+        harness.assertInGraveyard(player2, "Prismatic Lens");
         // Spell goes to graveyard (normal cast, not flashback)
         harness.assertInGraveyard(player1, "Ancient Grudge");
     }
@@ -42,40 +42,50 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature with Ancient Grudge")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AshcoatBear());
         harness.setHand(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Ashcoat Bear");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature when casting Ancient Grudge with flashback")
+    void cannotFlashbackTargetCreature() {
+        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.setGraveyard(player1, List.of(new AncientGrudge()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID creatureId = harness.getPermanentId(player2, "Ashcoat Bear");
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Flashback from graveyard destroys target artifact")
     void flashbackDestroysArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
-        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Prismatic Lens");
+        harness.assertInGraveyard(player2, "Prismatic Lens");
     }
 
     @Test
     @DisplayName("Flashback spell is exiled after resolving, not sent to graveyard")
     void flashbackExilesAfterResolving() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
@@ -88,11 +98,11 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback spell is exiled when it fizzles")
     void flashbackExilesOnFizzle() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
         harness.castFlashback(player1, 0, targetId);
 
         // Remove the target before resolution to cause fizzle
@@ -111,11 +121,11 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback puts spell on stack as instant spell")
     void flashbackPutsOnStackAsSpell() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
         harness.castFlashback(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -130,12 +140,12 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback pays the flashback cost, not the mana cost")
     void flashbackPaysFlashbackCost() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         // Only add green mana (flashback cost is {G}, not {1}{R})
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
         harness.castFlashback(player1, 0, targetId);
 
         // Mana should be consumed
@@ -146,11 +156,11 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast flashback without enough mana")
     void flashbackFailsWithoutMana() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         // No mana added
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -158,11 +168,11 @@ class AncientGrudgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback removes card from graveyard when cast")
     void flashbackRemovesFromGraveyard() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new PrismaticLens());
         harness.setGraveyard(player1, List.of(new AncientGrudge()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID targetId = harness.getPermanentId(player2, "Prismatic Lens");
         harness.castFlashback(player1, 0, targetId);
 
         // Card should no longer be in the graveyard

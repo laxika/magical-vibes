@@ -2553,6 +2553,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @CardUsed({CrypticCommand.class, AirElemental.class, Island.class})
     @DisplayName("Hard AI casts Cryptic Command with its choose-two target")
     void castsCrypticCommandWithChooseTwoTarget() {
         HardAiDecisionEngine ai = createHardAi(player1);

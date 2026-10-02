@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
+import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,25 +12,28 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MerrowCommerce.class, CoralMerfolk.class, GrizzlyBears.class})
+@CardUsed({MerrowCommerce.class, DeeptreadMerrow.class, HillcomberGiant.class})
 class MerrowCommerceTest extends BaseCardTest {
 
-    private void advanceToEndStepTrigger() {
-        harness.forceActivePlayer(player1);
+    private void reachEndStep(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to END_STEP → trigger fires
-        harness.passBothPriorities(); // resolve the untap trigger
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
+
+    private void resolveEndStepTrigger(Player activePlayer) {
+        reachEndStep(activePlayer);
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 
     @Test
     @DisplayName("Untaps all Merfolk you control at the beginning of your end step")
     void untapsControlledMerfolk() {
         harness.addToBattlefield(player1, new MerrowCommerce());
-        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
         merfolk.tap();
 
-        advanceToEndStepTrigger();
+        resolveEndStepTrigger(player1);
 
         assertThat(merfolk.isTapped()).isFalse();
     }
@@ -38,11 +42,47 @@ class MerrowCommerceTest extends BaseCardTest {
     @DisplayName("Does not untap non-Merfolk creatures you control")
     void leavesNonMerfolkTapped() {
         harness.addToBattlefield(player1, new MerrowCommerce());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.tap();
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+        giant.tap();
 
-        advanceToEndStepTrigger();
+        resolveEndStepTrigger(player1);
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(giant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untaps all controlled Merfolk and leaves opposing Merfolk tapped")
+    void untapsAllControlledMerfolkOnly() {
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        Permanent firstMerfolk = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        Permanent secondMerfolk = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        Permanent nonMerfolk = harness.addToBattlefieldAndReturn(player1, new HillcomberGiant());
+        Permanent opposingMerfolk = harness.addToBattlefieldAndReturn(player2, new DeeptreadMerrow());
+
+        commerce.tap();
+        firstMerfolk.tap();
+        secondMerfolk.tap();
+        nonMerfolk.tap();
+        opposingMerfolk.tap();
+
+        resolveEndStepTrigger(player1);
+
+        assertThat(commerce.isTapped()).isFalse();
+        assertThat(firstMerfolk.isTapped()).isFalse();
+        assertThat(secondMerfolk.isTapped()).isFalse();
+        assertThat(nonMerfolk.isTapped()).isTrue();
+        assertThat(opposingMerfolk.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new MerrowCommerce());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        merfolk.tap();
+
+        reachEndStep(player2);
+
+        assertThat(merfolk.isTapped()).isTrue();
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RestoreBalance.class, Forest.class, GrizzlyBears.class})
+@CardUsed({RestoreBalance.class, Forest.class, AshcoatBear.class})
 class RestoreBalanceTest extends BaseCardTest {
 
     @Test
@@ -35,16 +35,44 @@ class RestoreBalanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Players choose creatures before discarding cards")
+    void creaturesAreChosenBeforeCardsAreDiscarded() {
+        RestoreBalance card = new RestoreBalance();
+        harness.setHand(player1, List.of(card, new AshcoatBear(), new AshcoatBear()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addToBattlefield(player1, new AshcoatBear());
+        harness.addToBattlefield(player1, new AshcoatBear());
+        harness.addToBattlefield(player2, new AshcoatBear());
+
+        harness.activateHandAbility(player1, 0, null);
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice creatureChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(creatureChoice).isNotNull();
+        assertThat(creatureChoice.maxCount()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The suspended card free-casts and balances lands, hands, and creatures")
     void freeCastBalancesAllCategories() {
         RestoreBalance card = new RestoreBalance();
-        harness.setHand(player1, new ArrayList<>(List.of(card, new GrizzlyBears(), new Forest())));
+        harness.setHand(player1, new ArrayList<>(List.of(card, new AshcoatBear(), new Forest())));
         harness.setHand(player2, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         List<Permanent> player1Lands = addForests(player1, 3);
         harness.addToBattlefield(player2, new Forest());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AshcoatBear());
+        harness.addToBattlefield(player1, new AshcoatBear());
 
         harness.activateHandAbility(player1, 0, null);
         for (int i = 0; i < 5; i++) {

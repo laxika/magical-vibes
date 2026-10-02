@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
+import com.github.laxika.magicalvibes.cards.d.DrifterIlDal;
+import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
+import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
+import com.github.laxika.magicalvibes.cards.h.Hivestone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,13 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TemporalIsolation.class, FountainOfYouth.class, GrizzlyBears.class, LightningBolt.class, ZuranSpellcaster.class})
+@CardUsed({TemporalIsolation.class, DurkwoodBaloth.class, DrifterIlDal.class,
+        FledglingMawcor.class, Hivestone.class})
 class TemporalIsolationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature has shadow")
     void enchantedCreatureHasShadow() {
-        Permanent creature = addCreature(player1);
+        Permanent creature = addCreatureReady(player1, new DurkwoodBaloth());
 
         enchant(creature);
 
@@ -34,33 +36,45 @@ class TemporalIsolationTest extends BaseCardTest {
     @Test
     @DisplayName("A non-shadow creature cannot block the enchanted creature")
     void nonShadowCreatureCannotBlockEnchantedAttacker() {
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBaloth());
         attacker.setAttacking(true);
         enchant(attacker);
-        addCreature(player2);
+        addCreatureReady(player2, new DurkwoodBaloth());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
-                new com.github.laxika.magicalvibes.networking.message.BlockerAssignment(0, 0)
+                new BlockerAssignment(0, 0)
         ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Enchanted creature deals no combat damage to a shadow blocker")
+    void enchantedCreatureDealsNoCombatDamageToShadowBlocker() {
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBaloth());
+        attacker.setAttacking(true);
+        enchant(attacker);
+        Permanent blocker = addCreatureReady(player2, new DrifterIlDal());
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Drifter il-Dal");
     }
 
     @Test
     @DisplayName("Enchanted creature deals no combat damage")
     void enchantedCreatureDealsNoCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent attacker = addCreature(player1);
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBaloth());
         attacker.setAttacking(true);
         enchant(attacker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
@@ -72,11 +86,10 @@ class TemporalIsolationTest extends BaseCardTest {
     @DisplayName("Enchanted creature deals no noncombat damage")
     void enchantedCreatureDealsNoNoncombatDamage() {
         harness.setLife(player2, 20);
-        Permanent spellcaster = new Permanent(new ZuranSpellcaster());
-        spellcaster.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(spellcaster);
+        Permanent spellcaster = addCreatureReady(player1, new FledglingMawcor());
         enchant(spellcaster);
 
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
@@ -86,22 +99,22 @@ class TemporalIsolationTest extends BaseCardTest {
     @Test
     @DisplayName("Damage dealt to the enchanted creature is not prevented")
     void damageToEnchantedCreatureStillApplies() {
-        Permanent creature = addCreature(player2);
+        Permanent creature = addCreatureReady(player2, new DrifterIlDal());
         enchant(creature);
-        harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
+        Permanent spellcaster = addCreatureReady(player1, new FledglingMawcor());
 
-        harness.castInstant(player1, 0, creature.getId());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(spellcaster),
+                null, creature.getId());
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Drifter il-Dal");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Hivestone());
         harness.setHand(player1, List.of(new TemporalIsolation()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -110,17 +123,26 @@ class TemporalIsolationTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    @DisplayName("Can be cast during an opponent's turn because it has flash")
+    void canBeCastDuringOpponentsTurnWithFlash() {
+        Permanent creature = addCreatureReady(player2, new DurkwoodBaloth());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TemporalIsolation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.getGameService().passPriority(gd, player2);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     private Permanent enchant(Permanent creature) {
-        Permanent aura = new Permanent(new TemporalIsolation());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TemporalIsolation());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BallynockTrapper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Hateflayer.class, BallynockTrapper.class})
 class HateflayerTest extends BaseCardTest {
 
     @Test
@@ -38,17 +40,17 @@ class HateflayerTest extends BaseCardTest {
     @DisplayName("Wither: damage to a creature is dealt as -1/-1 counters, killing a 2/2")
     void witherDealsMinusCountersToCreature() {
         addTapped(player1, new Hateflayer()); // 5/5, wither
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears()); // 2/2
+        Permanent target = addCreatureReady(player2, new BallynockTrapper()); // 2/2
         harness.addMana(player1, ManaColor.RED, 3);
         enterMainWithPriority(player1);
 
-        UUID targetId = bears.getId();
+        UUID targetId = target.getId();
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
-        assertThat(bears.getMarkedDamage()).isEqualTo(0);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+        assertThat(target.getMarkedDamage()).isEqualTo(0);
+        harness.assertInGraveyard(player2, "Ballynock Trapper");
     }
 
     @Test

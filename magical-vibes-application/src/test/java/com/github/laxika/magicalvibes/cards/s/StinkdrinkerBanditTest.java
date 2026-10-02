@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InkDissolver;
+import com.github.laxika.magicalvibes.cards.l.LatchkeyFaerie;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +18,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StinkdrinkerBandit.class, InkDissolver.class, LatchkeyFaerie.class})
 class StinkdrinkerBanditTest extends BaseCardTest {
-
-    // ===== "Whenever a Rogue you control attacks and isn't blocked, it gets +2/+1 until end of turn" =====
 
     @Test
     @DisplayName("Unblocked Rogue gets +2/+1 until end of turn")
     void unblockedRogueGetsBoost() {
         Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
-        bandit.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears()); // a potential blocker that declines to block
+        addCreatureReady(player2, new InkDissolver()); // a potential blocker that declines to block
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of()); // no blocks — the Bandit is unblocked
         harness.passBothPriorities();
 
@@ -39,10 +39,9 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @DisplayName("A blocked Rogue does not get the boost")
     void blockedRogueGetsNoBoost() {
         Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
-        bandit.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new InkDissolver());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -51,27 +50,39 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A non-Rogue attacking unblocked is not boosted")
-    void nonRogueUnblockedNotBoosted() {
-        addCreatureReady(player1, new StinkdrinkerBandit()); // source, not attacking
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setAttacking(true);
+    @DisplayName("Another unblocked Rogue gets +2/+1")
+    void anotherUnblockedRogueGetsBoost() {
+        addCreatureReady(player1, new StinkdrinkerBandit());
+        Permanent rogue = addCreatureReady(player1, new LatchkeyFaerie());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
+        assertThat(rogue.getPowerModifier()).isEqualTo(2);
+        assertThat(rogue.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A non-Rogue attacking unblocked is not boosted")
+    void nonRogueUnblockedNotBoosted() {
+        addCreatureReady(player1, new StinkdrinkerBandit()); // source, not attacking
+        Permanent nonRogue = addCreatureReady(player1, new InkDissolver());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(nonRogue.getPowerModifier()).isEqualTo(0);
+        assertThat(nonRogue.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
     @DisplayName("The +2/+1 wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent bandit = addCreatureReady(player1, new StinkdrinkerBandit());
-        bandit.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -85,16 +96,23 @@ class StinkdrinkerBanditTest extends BaseCardTest {
         assertThat(bandit.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Prowl {1}{B} (Goblin or Rogue) =====
-
     @Test
     @DisplayName("Can be cast for its prowl cost after Goblin combat damage")
     void prowlAvailableAfterGoblinDamage() {
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.forceActivePlayer(player1);
-        gd.combatDamageToPlayerControllerSubtypesThisTurn
-                .computeIfAbsent(player1.getId(), k -> ConcurrentHashMap.newKeySet())
-                .add(CardSubtype.GOBLIN);
+        recordCombatDamageSubtype(CardSubtype.GOBLIN);
+
+        harness.setHand(player1, List.of(new StinkdrinkerBandit()));
+        harness.addMana(player1, ManaColor.BLACK, 2); // prowl {1}{B}
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stinkdrinker Bandit");
+    }
+
+    @Test
+    @DisplayName("Can be cast for its prowl cost after Rogue combat damage")
+    void prowlAvailableAfterRogueDamage() {
+        recordCombatDamageSubtype(CardSubtype.ROGUE);
 
         harness.setHand(player1, List.of(new StinkdrinkerBandit()));
         harness.addMana(player1, ManaColor.BLACK, 2); // prowl {1}{B}
@@ -107,8 +125,7 @@ class StinkdrinkerBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Prowl is unavailable without qualifying combat damage")
     void prowlUnavailableWithoutQualifyingDamage() {
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.forceActivePlayer(player1);
+        recordCombatDamageSubtype(CardSubtype.WIZARD);
 
         harness.setHand(player1, List.of(new StinkdrinkerBandit()));
         harness.addMana(player1, ManaColor.BLACK, 2); // enough for prowl {1}{B}, not for the normal {3}{B}
@@ -117,5 +134,11 @@ class StinkdrinkerBanditTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    private void recordCombatDamageSubtype(CardSubtype subtype) {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player1.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(subtype);
+    }
 }

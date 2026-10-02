@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.c.CurseOfThePiercedHeart;
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -12,12 +11,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.cards.p.Persuasion;
+import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,14 +34,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         AuraGraft.class,
-        BlackKnight.class,
         CurseOfThePiercedHeart.class,
         EvilPresence.class,
         GloriousAnthem.class,
         GrizzlyBears.class,
         HolyStrength.class,
         Island.class,
-        Pacifism.class
+        Pacifism.class,
+        PaladinEnVec.class,
+        Persuasion.class,
+        UnholyStrength.class
 })
 class AuraGraftTest extends BaseCardTest {
 
@@ -144,8 +149,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // Aura should now be on player1's battlefield (gained control)
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
@@ -168,8 +172,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(gd.pendingEffectResolutionEntry).isNotNull();
         harness.clearMessages();
@@ -195,13 +198,52 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // Reattach to the other opponent creature
         harness.handlePermanentChosen(player1, opponentCreature2.getId());
 
         assertThat(aura.getAttachedTo()).isEqualTo(opponentCreature2.getId());
+    }
+
+    @Test
+    @DisplayName("Reattaching a control Aura transfers control of the new creature")
+    void reattachingControlAuraTransfersControl() {
+        Permanent originalCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent destinationCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Persuasion()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player2, 0, originalCreature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player2, "Persuasion");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(originalCreature.getId()));
+
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(aura.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(originalCreature.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(destinationCreature.getId());
+
+        harness.handlePermanentChosen(player1, destinationCreature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(destinationCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(destinationCreature.getId()));
     }
 
     @Test
@@ -214,8 +256,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // The currently enchanted creature should NOT be a valid choice
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentCreature.getId());
@@ -233,8 +274,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         // Holy Strength gives +1/+2, Grizzly Bears is 2/2 → should be 3/4
@@ -259,8 +299,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Only the other land should be a valid reattach target — not the creature
@@ -273,15 +312,14 @@ class AuraGraftTest extends BaseCardTest {
     @DisplayName("Does not offer a permanent protected from the aura as a reattachment target")
     void protectedPermanentIsNotAValidReattachmentTarget() {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent aura = addAuraAttachedTo(player2, new HolyStrength(), opponentCreature);
-        Permanent protectedCreature = addCreatureReady(player1, new BlackKnight());
+        Permanent aura = addAuraAttachedTo(player2, new UnholyStrength(), opponentCreature);
+        Permanent protectedCreature = addCreatureReady(player1, new PaladinEnVec());
         Permanent legalCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(legalCreature.getId())
@@ -300,8 +338,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // Aura should remain on player1's battlefield (gain control is no-op for own aura)
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
@@ -325,8 +362,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // Aura moved to player1's control
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
@@ -376,8 +412,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         harness.assertInGraveyard(player1, "Aura Graft");
@@ -395,8 +430,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class)
@@ -413,8 +447,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player2, myCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -433,8 +466,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(opponentCreature2.getId(), myCreature1.getId(), myCreature2.getId())
@@ -453,8 +485,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         // Log should record gaining control
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains control of") && log.contains("Holy Strength"));

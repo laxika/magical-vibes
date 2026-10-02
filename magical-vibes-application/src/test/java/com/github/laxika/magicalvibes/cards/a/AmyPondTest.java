@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RoryWilliams;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -12,13 +12,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AmyPond.class, AncestralVision.class, Forest.class})
+@CardUsed({AmyPond.class, RoryWilliams.class, AncestralVision.class, Forest.class})
 class AmyPondTest extends BaseCardTest {
 
     @Test
     void partnerWithRoryLetsTargetPlayerSearchTheirLibrary() {
-        Card rory = new Card();
-        rory.setName("Rory Williams");
+        RoryWilliams rory = new RoryWilliams();
         Forest decoy = new Forest();
         harness.setLibrary(player2, List.of(decoy, rory));
         harness.setHand(player1, List.of(new AmyPond()));

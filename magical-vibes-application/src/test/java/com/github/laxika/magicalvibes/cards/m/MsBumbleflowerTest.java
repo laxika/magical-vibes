@@ -22,6 +22,7 @@ class MsBumbleflowerTest extends BaseCardTest {
         Permanent targetCreature = addCreatureReady(player1, new GrizzlyBears());
         GrizzlyBears opponentDraw = new GrizzlyBears();
         harness.setLibrary(player2, List.of(opponentDraw));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
