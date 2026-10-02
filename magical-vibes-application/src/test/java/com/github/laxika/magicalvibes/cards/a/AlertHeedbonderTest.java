@@ -56,9 +56,71 @@ class AlertHeedbonderTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
 
+    @Test
+    @DisplayName("Each Heedbonder triggers and counts both vigilant creatures")
+    void multipleHeedbondersEachGainLife() {
+        harness.addToBattlefield(player1, new AlertHeedbonder());
+        harness.addToBattlefield(player1, new AlertHeedbonder());
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Tapped vigilant creatures still count")
+    void tappedVigilantCreatureCounts() {
+        var heedbonder = harness.addToBattlefieldAndReturn(player1, new AlertHeedbonder());
+        heedbonder.setTapped(true);
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("A removed source does not count but its trigger still resolves")
+    void removedSourceDoesNotCountAtResolution() {
+        var removed = harness.addToBattlefieldAndReturn(player1, new AlertHeedbonder());
+        harness.addToBattlefield(player1, new AlertHeedbonder());
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(2);
+        gd.playerBattlefields.get(player1.getId()).remove(removed);
+        gd.playerGraveyards.get(player1.getId()).add(removed.getCard());
+
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(11);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Gains no life when no vigilant creatures remain at resolution")
+    void noVigilantCreaturesAtResolutionGainsNoLife() {
+        var heedbonder = harness.addToBattlefieldAndReturn(player1, new AlertHeedbonder());
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(heedbonder);
+        gd.playerGraveyards.get(player1.getId()).add(heedbonder.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
