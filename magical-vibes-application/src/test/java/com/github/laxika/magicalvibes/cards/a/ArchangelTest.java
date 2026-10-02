@@ -38,8 +38,7 @@ class ArchangelTest extends BaseCardTest {
         addCreatureReady(player1, new Archangel());
         Permanent blocker = addCreatureReady(player2, new Archangel());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -51,8 +50,7 @@ class ArchangelTest extends BaseCardTest {
         addCreatureReady(player1, new Archangel());
         Permanent blocker = addCreatureReady(player2, new NorwoodArchers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -65,6 +63,33 @@ class ArchangelTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
+        assertThat(angel.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a tapped Archangel to attack")
+    void tappedArchangelCannotAttack() {
+        Permanent angel = addCreatureReady(player1, new Archangel());
+        angel.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(angel.isAttacking()).isFalse();
+        assertThat(angel.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a summoning-sick Archangel to attack")
+    void summoningSickArchangelCannotAttack() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new Archangel());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+
+        assertThat(angel.isAttacking()).isFalse();
         assertThat(angel.isTapped()).isFalse();
     }
 }
