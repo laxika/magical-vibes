@@ -46,6 +46,9 @@ public class PutChosenCardFromHandOntoBattlefieldEffectHandler implements Normal
 
         hand.remove(selectedCard);
         Permanent permanent = new Permanent(selectedCard, Zone.LIBRARY);
+        if (chosenEffect.enterTapped()) {
+            permanent.tap();
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
         if (selectedCard.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(

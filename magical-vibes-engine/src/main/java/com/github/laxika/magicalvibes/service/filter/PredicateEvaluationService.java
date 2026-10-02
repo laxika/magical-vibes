@@ -245,6 +245,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsDamagedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -363,6 +364,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanMa
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
@@ -1256,6 +1258,7 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isCreature(gameData, permanent);
             }
+            case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
             case PermanentIsCommanderPredicate ignored ->
                     permanent.isCommander()
                             || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
@@ -3349,6 +3352,7 @@ public class PredicateEvaluationService {
                         && !isBlocked(gameData, permanent);
             }
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEquippedPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -4404,6 +4408,7 @@ public class PredicateEvaluationService {
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+            case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
             case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
             case PermanentIsArtifactPredicate ignored ->
                     state.hasCardType(CardType.ARTIFACT);
@@ -4746,6 +4751,7 @@ public class PredicateEvaluationService {
                             : entry.getCard().getParsedManaCost().getXSymbolCount());
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
+            case StackEntryManaValueEqualsSourceChosenNumberPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceCountersPredicate ignored -> false;
             case StackEntryManaValueGreaterThanControllerExperienceCountersPredicate ignored -> false;
             case StackEntryManaValueEqualsSourcePowerPredicate ignored -> false;

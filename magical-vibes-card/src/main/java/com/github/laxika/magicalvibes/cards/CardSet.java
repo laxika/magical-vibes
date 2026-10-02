@@ -139,6 +139,7 @@ public enum CardSet {
     SET_DIS("DIS"),
     SET_MKM("MKM"),
     SET_MKC("MKC"),
+    SET_YMKM("YMKM"),
     SET_INR("INR"),
     SET_IKO("IKO"),
     SET_ICE("ICE"),

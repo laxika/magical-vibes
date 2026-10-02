@@ -970,6 +970,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  controller's graveyard. Like {@link #ON_ALLY_CREATURE_DIES} but fired from the graveyard.
      *  Checked in {@code TriggerCollectionService.checkGraveyardAllyCreatureDeathTriggers}. */
     GRAVEYARD_ON_ALLY_CREATURE_DIES,
+    /** Triggers whenever a creature an opponent controls dies, while this card is in its owner's
+     *  graveyard. Checked in {@code TriggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers}. */
+    GRAVEYARD_ON_OPPONENT_CREATURE_DIES,
     /** Triggers from a graveyard when a creature enters from that graveyard or is cast from it. */
     GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD,
     /** Triggers whenever an artifact the controller controls enters the battlefield, while this card is

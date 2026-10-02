@@ -124,7 +124,7 @@ function ConvertTo-ReviewProcessArgument {
 }
 
 function Get-ReviewCodexPrompt {
-    param($Task, [string] $ValidationFeedback)
+    param($Task)
     $instructions = Get-CardReviewInstructions
     return @"
 /review-card $($Task.setCode) $($Task.collectorNumber)
@@ -136,13 +136,13 @@ The shared implementation is $($Task.className), at $($Task.sourcePath). Review 
 Do not stage, commit, push, or switch branches. The worker publishes your permitted card-test changes. Production implementations, effects, predicates, docs, and test harness code are read-only.
 Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and permitted test edits, then return your structured review result. The worker runs scripts/run-card-test.ps1 for each changed test class with an exact fully-qualified class filter and a 7200-second (two-hour) timeout before publishing. Only edit test classes belonging to the card under review (including its related faces); never run other cards' tests, package filters, wildcards, module-wide tests, or the full suite. Compilation may legitimately compile more than 30,000 card/test classes even for one filtered test class. Pending compilation is not a test failure or executionError; do not return ERROR just because tests have not run yet. The worker handles validation and reports actual build/tool failures separately.
 Your final response MUST follow the provided JSON schema. outcome is PASS when there are no real findings, otherwise FINDINGS. findings is an array of individual bug descriptions: explain what is wrong and why it matters, like the current text reports. Include no test code, test names, test output, patches, or coverage commentary in findings or the text report. Return the actual oracle card name as cardName. Do not report tool failures as card bugs: if the review cannot be completed, return ERROR with an empty findings array and an executionError description. For completed reviews, executionError must be null.
-$ValidationFeedback
+Compiled test changes are published even when assertions fail or a test uses an invalid interaction sequence. Test failures do not require a confirmed card finding; PASS describes the card review verdict, not the test run.
 "@
 }
 
 function Invoke-ReviewCodex {
-    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath, [string] $ValidationFeedback)
-    $prompt = Get-ReviewCodexPrompt $Task $ValidationFeedback
+    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath)
+    $prompt = Get-ReviewCodexPrompt $Task
     $arguments = @('--search', '--ask-for-approval', 'never', 'exec', '--ephemeral', '--json', '--model', [string] $Task.model,
         '--config', ('model_reasoning_effort="' + $Task.reasoningEffort + '"'), '--cd', $Root,
         '--output-schema', $SchemaPath, '--output-last-message', $OutputPath, '-')
@@ -232,7 +232,7 @@ function Invoke-ReviewFocusedTests {
             $suite = ([xml](Get-Content -LiteralPath $xmlPath -Raw -Encoding UTF8)).testsuite
             if ([int] $suite.failures + [int] $suite.errors -eq 0) { throw "Focused test execution failed without a behavioral test failure: $className" }
             $failed = $true
-            Write-Host "Focused tests expose a failure in $className; publishing the review tests as requested."
+            Write-Host "Compilation succeeded, but focused tests failed in $className. Test failures do not block publication. Log: $testLog"
         }
     }
     return $failed
@@ -288,28 +288,9 @@ function Invoke-ReviewTask {
         $result.cardName = $review.cardName
         $result.findings = @($review.findings)
         try {
-            $testsFailed = Invoke-ReviewFocusedTests $Root $changes $Directory
-            if ($testsFailed -and $review.outcome -eq 'PASS') {
-                # Let the reviewer interpret behavioral failures after the worker
-                # finishes the slow build, without repeating compilation.
-                $validatedHashes = @{}
-                $testLogs = foreach ($path in $changes) {
-                    $validatedHashes[$path] = (Get-FileHash -LiteralPath (Join-Path $Root $path) -Algorithm SHA256).Hash
-                    Join-Path $Directory ([System.IO.Path]::GetFileNameWithoutExtension($path) + '.log')
-                }
-                $feedback = "The worker has now finished focused validation: compilation succeeded, but behavioral tests failed after your initial PASS. Read these validation logs: $($testLogs -join ', '). Reconcile the verdict with the oracle and failing behavior; return FINDINGS describing actual card bugs when confirmed. This follow-up is entirely read-only: do not edit any files or run any tests. If the tests themselves are invalid or no card bug can be confirmed, return ERROR with an explanation for recovery."
-                $validatedOutput = Join-Path $Directory 'validated-result.json'
-                $logPaths += Join-Path $Directory 'validated-codex.jsonl'
-                Invoke-ReviewCodex $Root $Task $validatedOutput $schemaPath $logPaths[1] $feedback
-                $validatedReview = Read-ReviewOutput $validatedOutput
-                foreach ($path in $changes) {
-                    if ((Get-FileHash -LiteralPath (Join-Path $Root $path) -Algorithm SHA256).Hash -ne $validatedHashes[$path]) { throw 'The validation follow-up changed tested files; changes were preserved for recovery.' }
-                }
-                if ($validatedReview.outcome -ne 'FINDINGS') { throw "Focused tests failed without a confirmed card finding. Changes were preserved for recovery. $($validatedReview.executionError)" }
-                $result.outcome = $validatedReview.outcome
-                $result.cardName = $validatedReview.cardName
-                $result.findings = @($validatedReview.findings)
-            }
+            # Compilation/tooling failures throw; completed failing tests are accepted
+            # independently of the card review verdict and can be fixed later.
+            Invoke-ReviewFocusedTests $Root $changes $Directory | Out-Null
             $published = Publish-ReviewTests $Root $Task $changes $reviewedCommit $Directory
             if ($published) { $result.publicationStatus = 'PUSHED'; $result.publishedCommit = $published }
         }

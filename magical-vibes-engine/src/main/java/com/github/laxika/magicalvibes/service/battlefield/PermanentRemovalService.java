@@ -2131,6 +2131,8 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkAllyCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
+                    triggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers(
+                            gameData, controllerId, target);
                     triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                     triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
