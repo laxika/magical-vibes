@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AkulTheUnrepentant.class, GrizzlyBears.class})
+@CardUsed({AkulTheUnrepentant.class, GrizzlyBears.class, BloodArtist.class, Plains.class})
 class AkulTheUnrepentantTest extends BaseCardTest {
 
     @Test
@@ -97,6 +99,102 @@ class AkulTheUnrepentantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, permanentIndex(source), 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand and still pay the sacrifice cost")
+    void canActivateWithEmptyHand() {
+        Permanent source = addSourceWithOtherCreatures(3);
+        harness.setHand(player1, List.of());
+        prepareSorcerySpeed(player1);
+
+        activateAndPayThreeOtherCreatures(source);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's creatures cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreatures() {
+        Permanent source = addSourceWithOtherCreatures(2);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareSorcerySpeed(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, permanentIndex(source), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot put a noncreature card from hand onto the battlefield")
+    void cannotPutNoncreatureCardOntoBattlefield() {
+        Permanent source = addSourceWithOtherCreatures(3);
+        Plains land = new Plains();
+        harness.setHand(player1, List.of(land));
+        prepareSorcerySpeed(player1);
+
+        activateAndPayThreeOtherCreatures(source);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate during combat even on the controller's turn")
+    void cannotActivateDuringCombat() {
+        Permanent source = addSourceWithOtherCreatures(3);
+        prepareSorcerySpeed(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, permanentIndex(source), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("A creature sacrificed with the other two sees all three simultaneous deaths")
+    void sacrificedBloodArtistSeesAllThreeDeaths() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new AkulTheUnrepentant());
+        Permanent artist = harness.addToBattlefieldAndReturn(player1, new BloodArtist());
+        addOtherCreatures(2);
+        harness.setHand(player1, List.of());
+        prepareSorcerySpeed(player1);
+
+        harness.activateAbility(player1, permanentIndex(source), 0, null, null);
+        harness.handlePermanentChosen(player1, artist.getId());
+        while (gd.playerBattlefields.get(player1.getId()).size() > 1) {
+            PendingInteraction.PermanentChoice choice =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            harness.handlePermanentChosen(player1, choice.validPermanentIds().getFirst());
+        }
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice
+                && choice.validPermanentIds().contains(player2.getId())) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+
+        assertThat(gd.stack).hasSize(4);
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
     }
 
     private Permanent addSourceWithOtherCreatures(int count) {
