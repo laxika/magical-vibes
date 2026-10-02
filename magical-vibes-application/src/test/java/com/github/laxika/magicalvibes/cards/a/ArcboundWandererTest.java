@@ -17,6 +17,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ArcboundWandererTest extends BaseCardTest {
 
     @Test
+    void colorlessOnlyCastingMakesItDieWithoutCounters() {
+        harness.setHand(player1, List.of(new ArcboundWanderer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Arcbound Wanderer");
+        harness.assertInGraveyard(player1, "Arcbound Wanderer");
+    }
+
+    @Test
+    void modularAddsAllCountersPresentAtDeathToExistingCounters() {
+        Permanent wanderer = addCreatureReady(player1, new ArcboundWanderer());
+        wanderer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 7);
+        wanderer.setMarkedDamage(7);
+        Permanent arachnoid = addCreatureReady(player1, new Arachnoid());
+        arachnoid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, arachnoid.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Arcbound Wanderer");
+        assertThat(arachnoid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(9);
+    }
+
+    @Test
     void sunburstPutsOneCounterForEachColorSpent() {
         harness.setHand(player1, List.of(new ArcboundWanderer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
