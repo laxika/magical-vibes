@@ -188,7 +188,7 @@ class ArcumsSleighTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SnowCoveredIsland());
         Permanent sleigh = harness.addToBattlefieldAndReturn(player1, new ArcumsSleigh());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
-        sleigh.setTapped(true);
+        sleigh.tap();
 
         enterCombat();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

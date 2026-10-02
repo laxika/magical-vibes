@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.c.CliffhavenSellsword;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionSkulker;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionDiviner;
 import com.github.laxika.magicalvibes.cards.g.GnarlidColony;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchpriestOfIona.class, CliffhavenSellsword.class, ExpeditionSkulker.class,
+@CardUsed({ArchpriestOfIona.class, ElvishWarrior.class, ExpeditionSkulker.class,
         ExpeditionDiviner.class, GnarlidColony.class, KorCelebrant.class, StoneworkPackbeast.class})
 class ArchpriestOfIonaTest extends BaseCardTest {
 
@@ -28,7 +28,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(2);
 
-        harness.addToBattlefield(player1, new CliffhavenSellsword());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         harness.addToBattlefield(player1, new ExpeditionDiviner());
 
         assertThat(gqs.getEffectivePower(gd, archpriest)).isEqualTo(4);
@@ -57,7 +57,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
         harness.addToBattlefield(player1, new KorCelebrant());
         harness.addToBattlefield(player1, new ExpeditionSkulker());
-        harness.addToBattlefield(player1, new CliffhavenSellsword());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
@@ -73,7 +73,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     void oneCreatureCannotFillTwoPartyRoles() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
         harness.addToBattlefield(player1, new StoneworkPackbeast());
-        harness.addToBattlefield(player1, new CliffhavenSellsword());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
@@ -108,7 +108,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     void losingPartyMemberBeforeResolutionPreventsBothEffects() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
         harness.addToBattlefield(player1, new ExpeditionSkulker());
-        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new CliffhavenSellsword());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
         harness.addToBattlefield(player1, new ExpeditionDiviner());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
@@ -154,7 +154,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     void opposingPartyMembersDoNotIncreasePowerOrEnableTrigger() {
         Permanent archpriest = harness.addToBattlefieldAndReturn(player1, new ArchpriestOfIona());
         harness.addToBattlefield(player2, new ExpeditionSkulker());
-        harness.addToBattlefield(player2, new CliffhavenSellsword());
+        harness.addToBattlefield(player2, new ElvishWarrior());
         harness.addToBattlefield(player2, new ExpeditionDiviner());
 
         advanceToCombat(player1);
@@ -167,7 +167,7 @@ class ArchpriestOfIonaTest extends BaseCardTest {
     private void addFullParty() {
         harness.addToBattlefield(player1, new KorCelebrant());
         harness.addToBattlefield(player1, new ExpeditionSkulker());
-        harness.addToBattlefield(player1, new CliffhavenSellsword());
+        harness.addToBattlefield(player1, new ElvishWarrior());
         harness.addToBattlefield(player1, new ExpeditionDiviner());
     }
 

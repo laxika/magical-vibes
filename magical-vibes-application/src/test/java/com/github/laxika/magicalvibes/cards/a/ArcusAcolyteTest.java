@@ -92,7 +92,7 @@ class ArcusAcolyteTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
-        creature.setTapped(false);
+        creature.untap();
         assertThat(gs.getEffectiveActivatedAbilities(gd, creature)).isEmpty();
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

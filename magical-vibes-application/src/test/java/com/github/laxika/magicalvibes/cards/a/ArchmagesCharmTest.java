@@ -106,7 +106,7 @@ class ArchmagesCharmTest extends BaseCardTest {
     @Test
     void controlModeCanTargetOwnPermanentWithoutUntappingIt() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ArchmagesCharm()));
         addBlueMana(player1);
 
@@ -120,7 +120,7 @@ class ArchmagesCharmTest extends BaseCardTest {
     @Test
     void controlModeCanGainControlOfNoncreatureArtifactWithoutTriggeringEntryAbility() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArcumsAstrolabe());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ArchmagesCharm()));
         harness.setLibrary(player1, List.of(new Island()));
         addBlueMana(player1);

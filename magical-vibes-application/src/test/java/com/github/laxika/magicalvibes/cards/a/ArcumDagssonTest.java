@@ -112,7 +112,7 @@ class ArcumDagssonTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent arcum = addCreatureReady(player1, new ArcumDagsson());
-        arcum.setTapped(true);
+        arcum.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianIronfoot());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

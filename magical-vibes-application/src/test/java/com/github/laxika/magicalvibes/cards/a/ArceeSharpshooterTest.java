@@ -138,7 +138,7 @@ class ArceeSharpshooterTest extends BaseCardTest {
         Permanent arcee = harness.addToBattlefieldAndReturn(player1, new ArceeSharpshooter());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArceeSharpshooter());
         arcee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        arcee.setTapped(true);
+        arcee.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, 1, target.getId());

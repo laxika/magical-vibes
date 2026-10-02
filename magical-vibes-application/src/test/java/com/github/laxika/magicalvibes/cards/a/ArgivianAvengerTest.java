@@ -85,7 +85,7 @@ class ArgivianAvengerTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent avenger = harness.addToBattlefieldAndReturn(player1, new ArgivianAvenger());
         avenger.setSummoningSick(true);
-        avenger.setTapped(true);
+        avenger.tap();
         int toughness = gqs.getEffectiveToughness(gd, avenger);
 
         activateAvenger();

@@ -81,7 +81,7 @@ class ArchitectOfTheUntamedTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndPaysBeforeResolution() {
         Permanent architect = harness.addToBattlefieldAndReturn(player1, new ArchitectOfTheUntamed());
         architect.setSummoningSick(true);
-        architect.setTapped(true);
+        architect.tap();
         gd.playerEnergyCounters.put(player1.getId(), 10);
 
         harness.activateAbility(player1, 0, null, null);

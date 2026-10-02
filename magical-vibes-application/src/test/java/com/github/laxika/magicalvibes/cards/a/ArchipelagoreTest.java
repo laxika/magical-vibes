@@ -89,7 +89,7 @@ class ArchipelagoreTest extends BaseCardTest {
     void mutationCanLockAnAlreadyTappedCreatureYouControl() {
         Permanent archipelagore = addCreatureReady(player1, new Archipelagore());
         Permanent creature = addCreatureReady(player1, new MosscoatGoriak());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));

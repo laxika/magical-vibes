@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -134,7 +134,7 @@ class ArcboundShikariTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, Map.of(0, List.of(0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shikari);

@@ -49,7 +49,7 @@ class ArchersParapetTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent parapet = addReadyParapet();
-        parapet.setTapped(true);
+        parapet.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

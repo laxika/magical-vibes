@@ -89,7 +89,7 @@ class ArcticMerfolkTest extends BaseCardTest {
     @DisplayName("A tapped creature can pay kicker and is returned before the spell resolves")
     void returnsTappedCreatureDuringCasting() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new ArcticMerfolk()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
