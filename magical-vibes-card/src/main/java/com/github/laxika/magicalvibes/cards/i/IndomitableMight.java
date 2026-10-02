@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AFC", collectorNumber = "40")
+@CardRegistration(set = "WOC", collectorNumber = "127")
 public class IndomitableMight extends Card {
 
     public IndomitableMight() {

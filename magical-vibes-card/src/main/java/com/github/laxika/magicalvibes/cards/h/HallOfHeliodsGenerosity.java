@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "241")
 @CardRegistration(set = "DSC", collectorNumber = "283")
+@CardRegistration(set = "WOC", collectorNumber = "162")
 public class HallOfHeliodsGenerosity extends Card {
 
     public HallOfHeliodsGenerosity() {

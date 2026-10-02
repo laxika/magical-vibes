@@ -685,7 +685,8 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS && effect.fromAnywhereThisTurn()) {
+        if (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS
+                && (effect.fromAnywhereThisTurn() || effect.fromBattlefieldThisTurn())) {
             resolveTrackedReturnAllFromAllGraveyards(gameData, entry, effect, controllerId, sourceCardId);
             return;
         }
@@ -860,9 +861,11 @@ public class GraveyardReturnSupport {
             GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
             UUID controllerId, UUID sourceCardId) {
         Map<UUID, List<Card>> cardsByGraveyard = new LinkedHashMap<>();
+        Map<UUID, Set<UUID>> trackedCardsByGraveyard = effect.fromBattlefieldThisTurn()
+                ? gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn;
         for (Map.Entry<UUID, List<Card>> graveyardEntry : gameData.playerGraveyards.entrySet()) {
-            Set<UUID> trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                    .get(graveyardEntry.getKey());
+            Set<UUID> trackedIds = trackedCardsByGraveyard.get(graveyardEntry.getKey());
             if (trackedIds == null || trackedIds.isEmpty()) {
                 continue;
             }
@@ -892,8 +895,7 @@ public class GraveyardReturnSupport {
             for (Map.Entry<UUID, List<Card>> cardsEntry : cardsByGraveyard.entrySet()) {
                 UUID graveyardOwnerId = cardsEntry.getKey();
                 List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-                Set<UUID> trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                        .get(graveyardOwnerId);
+                Set<UUID> trackedIds = trackedCardsByGraveyard.get(graveyardOwnerId);
                 for (Card card : cardsEntry.getValue()) {
                     graveyard.remove(card);
                     if (trackedIds != null) {

@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "180")
 @CardRegistration(set = "CMM", collectorNumber = "519")
 @CardRegistration(set = "OTC", collectorNumber = "148")
+@CardRegistration(set = "WOC", collectorNumber = "116")
 public class RankleMasterOfPranks extends Card {
 
     public RankleMasterOfPranks() {

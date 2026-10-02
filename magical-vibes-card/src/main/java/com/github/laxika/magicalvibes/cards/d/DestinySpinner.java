@@ -20,6 +20,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "168")
+@CardRegistration(set = "WOC", collectorNumber = "123")
 public class DestinySpinner extends Card {
 
     public DestinySpinner() {

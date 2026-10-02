@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.amount.BeheldPower;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedThisResolution;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDelved;
@@ -199,6 +200,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
+import com.github.laxika.magicalvibes.model.amount.PermanentTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.PileGroupingOrGuessCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostGame;
@@ -454,6 +456,10 @@ public class AmountEvaluationService {
                     countBasicLandTypesAmongControlledLands(gameData, domainAmount, ctx);
             case CardTypesAmongCardsInGraveyard c ->
                     countCardTypesAmongCardsInGraveyard(gameData, c, ctx);
+            case CardTypesAmongPermanentsSacrificedThisTurn ignored ->
+                    countCardTypesAmongPermanentsSacrificedThisTurn(gameData, ctx);
+            case PermanentTypesAmongCardsInGraveyard ignored ->
+                    countPermanentTypesAmongCardsInGraveyard(gameData, ctx);
             case NonCreatureSubtypesAmongCardsInGraveyard c ->
                     countNonCreatureSubtypesAmongCardsInGraveyard(gameData, c, ctx);
             case CardTypesAmongControlledPermanents c ->
@@ -1496,6 +1502,37 @@ public class AmountEvaluationService {
                 }
                 found.addAll(card.getAdditionalTypes());
             }
+        }
+        return found.size();
+    }
+
+    private int countPermanentTypesAmongCardsInGraveyard(GameData gameData, AmountContext ctx) {
+        Set<CardType> found = EnumSet.noneOf(CardType.class);
+        if (ctx.controllerId() == null) return 0;
+        for (Card card : gameData.playerGraveyards.getOrDefault(ctx.controllerId(), List.of())) {
+            if (card.isToken()) continue;
+            if (card.getType() != null && card.getType().isPermanentType()) {
+                found.add(card.getType());
+            }
+            card.getAdditionalTypes().stream()
+                    .filter(CardType::isPermanentType)
+                    .forEach(found::add);
+        }
+        return found.size();
+    }
+
+    private int countCardTypesAmongPermanentsSacrificedThisTurn(
+            GameData gameData, AmountContext ctx) {
+        Set<CardType> found = EnumSet.noneOf(CardType.class);
+        if (ctx.controllerId() == null) return 0;
+        for (Card card : gameData.permanentsSacrificedThisTurn
+                .getOrDefault(ctx.controllerId(), List.of())) {
+            if (card.getType() != null && card.getType().isPermanentType()) {
+                found.add(card.getType());
+            }
+            card.getAdditionalTypes().stream()
+                    .filter(CardType::isPermanentType)
+                    .forEach(found::add);
         }
         return found.size();
     }

@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "INV", collectorNumber = "121")
 @CardRegistration(set = "C13", collectorNumber = "91")
 @CardRegistration(set = "C21", collectorNumber = "151")
+@CardRegistration(set = "WOC", collectorNumber = "117")
 public class RecklessSpite extends Card {
 
     public RecklessSpite() {

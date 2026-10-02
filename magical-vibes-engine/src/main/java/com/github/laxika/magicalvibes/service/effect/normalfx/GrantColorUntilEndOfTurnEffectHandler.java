@@ -105,6 +105,22 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
+        if (e.scope() == GrantScope.SELF) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (target == null) {
+                return;
+            }
+            applyEffect(gameData, entry, e, target);
+            String suffix = e.additive()
+                    ? " in addition to its other colors until end of turn."
+                    : " until end of turn.";
+            gameLogService.append(gameData, GameLog.builder().card(target.getCard())
+                    .text(" becomes " + colorName(e) + suffix).build());
+            log.info("Game {} - {} becomes {}{}", gameData.id, target.getCard().getName(),
+                    colorName(e), suffix.substring(0, suffix.length() - 1));
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             if (e.canTargetSpell()) {

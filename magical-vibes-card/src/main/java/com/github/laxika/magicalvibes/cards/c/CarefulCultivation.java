@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "178")
+@CardRegistration(set = "WOC", collectorNumber = "122")
 public class CarefulCultivation extends Card {
 
     public CarefulCultivation() {

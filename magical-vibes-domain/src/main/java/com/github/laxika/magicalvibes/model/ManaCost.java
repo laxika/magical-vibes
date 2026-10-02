@@ -171,6 +171,17 @@ public class ManaCost {
                 cumulativeUpkeepPayment);
     }
 
+    /** Returns this cost with its generic component converted to colored mana of {@code color}. */
+    public ManaCost withGenericCostsAsColor(ManaColor color) {
+        if (color == null || genericCost == 0) {
+            return this;
+        }
+        Map<ManaColor, Integer> colored = new EnumMap<>(coloredCosts);
+        colored.merge(color, genericCost, Integer::sum);
+        return new ManaCost(0, colored, phyrexianCosts, hybridCosts, snowCost,
+                legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
     /**
      * Returns this cost after reducing it by the regular generic and colored components of
      * {@code reduction}. Matching colored components reduce the same colored requirements first;

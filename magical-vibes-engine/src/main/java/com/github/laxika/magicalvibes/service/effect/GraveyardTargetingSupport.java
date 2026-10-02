@@ -213,7 +213,8 @@ public class GraveyardTargetingSupport {
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets) {
             return new Target(returnTargets.filter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                    "to your hand", returnTargets.maxTargets(), returnTargets.minTargets());
+                    "to your hand", returnTargets.maxTargets(), returnTargets.minTargets(), null,
+                    false, null, returnTargets.dynamicMaxTargets());
         }
         if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnTargets) {
             int maxTargets = returnTargets.xScaled() ? 1
@@ -275,18 +276,26 @@ public class GraveyardTargetingSupport {
      */
     public record Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                          int maxTargets, int minTargets, DynamicAmount maximumManaValue,
-                         boolean singleGraveyard, Integer maximumTotalPower) {
+                         boolean singleGraveyard, Integer maximumTotalPower,
+                         DynamicAmount dynamicMaxTargets) {
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets, DynamicAmount maximumManaValue,
                 boolean singleGraveyard) {
             this(filter, scope, destination, maxTargets, minTargets, maximumManaValue,
-                    singleGraveyard, null);
+                    singleGraveyard, null, null);
         }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
                 int maxTargets, int minTargets, DynamicAmount maximumManaValue) {
             this(filter, scope, destination, maxTargets, minTargets, maximumManaValue, false, null);
+        }
+
+        public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,
+                int maxTargets, int minTargets, DynamicAmount maximumManaValue,
+                boolean singleGraveyard, Integer maximumTotalPower) {
+            this(filter, scope, destination, maxTargets, minTargets, maximumManaValue,
+                    singleGraveyard, maximumTotalPower, null);
         }
 
         public Target(CardPredicate filter, GraveyardSearchScope scope, String destination,

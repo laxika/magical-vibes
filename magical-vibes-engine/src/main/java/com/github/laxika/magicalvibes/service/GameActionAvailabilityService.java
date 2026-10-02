@@ -482,11 +482,17 @@ public class GameActionAvailabilityService {
             flagged.setAllManaSpendableAsAnyColor(true);
             pool = flagged;
         }
-        if (gameQueryService.getEffectiveCardColors(gameData, card).size() >= 2
-                && pool.getMulticoloredSpellOnlyManaTotal() > 0) {
+        var effectiveCardColors = gameQueryService.getEffectiveCardColors(gameData, card);
+        if (effectiveCardColors.size() >= 2 && pool.getMulticoloredSpellOnlyManaTotal() > 0
+                || effectiveCardColors.size() == 1 && pool.getMonocoloredSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);
-            pool.promoteMulticoloredSpellOnlyMana();
+            if (effectiveCardColors.size() >= 2) {
+                pool.promoteMulticoloredSpellOnlyMana();
+            } else {
+                pool.promoteMonocoloredSpellOnlyMana(ManaColor.valueOf(
+                        effectiveCardColors.iterator().next().name()));
+            }
         }
         if (!card.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
             pool = pool instanceof VirtualManaPool virtual

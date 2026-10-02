@@ -66,6 +66,8 @@ public class ActivatedAbility {
     private boolean manaCostOfEnchantedPermanent;
     /** Colors that may be spent on X in this ability's mana cost, or null when unrestricted. */
     private Set<ManaColor> xColorRestrictions;
+    /** Whether the activation cost's generic mana must be paid with the source's chosen color. */
+    private boolean sourceChosenColorManaOnly;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
     private int minCardsInHandToActivate;
     /** Maximum number of cards the controller may have in hand to activate, or null for no restriction (e.g. Dread Wanderer's "one or fewer cards in hand" = 1). Set via {@link #withMaxCardsInHand(int)}. */
@@ -363,6 +365,7 @@ public class ActivatedAbility {
         copy.xColorRestrictions = this.xColorRestrictions == null
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
+        copy.sourceChosenColorManaOnly = this.sourceChosenColorManaOnly;
         copy.exileOnly = this.exileOnly;
         return copy;
     }
@@ -370,6 +373,12 @@ public class ActivatedAbility {
     /** Restricts every mana spent on this ability's X cost to one color. */
     public ActivatedAbility withXColorRestriction(ManaColor color) {
         this.xColorRestrictions = EnumSet.of(color);
+        return this;
+    }
+
+    /** Restricts generic activation-cost mana to the source permanent's chosen color. */
+    public ActivatedAbility withSourceChosenColorManaOnly() {
+        this.sourceChosenColorManaOnly = true;
         return this;
     }
 

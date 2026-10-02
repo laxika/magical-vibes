@@ -125,6 +125,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Attach the source Aura to the chosen permanent after a resolving effect pauses for input. */
     record AttachSourceAuraToChosenPermanent(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Choose a legal object for a selected Aura, then continue with any remaining Auras. */
+    record AttachSelectedAuraToLegalTarget(UUID auraPermanentId, List<UUID> remainingAuraPermanentIds)
+            implements PermanentChoiceContext {
+        public AttachSelectedAuraToLegalTarget {
+            remainingAuraPermanentIds = List.copyOf(remainingAuraPermanentIds);
+        }
+    }
+
     /** Inventory Management: choose the creature for one selected Aura or Equipment. */
     record InventoryManagementAttachment(UUID controllerId, UUID attachmentId,
                                          List<UUID> remainingAttachmentIds)

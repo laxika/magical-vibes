@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "ROE", collectorNumber = "175")
 @CardRegistration(set = "PC2", collectorNumber = "55")
 @CardRegistration(set = "PCA", collectorNumber = "55")
+@CardRegistration(set = "WOC", collectorNumber = "120")
 public class AuraGnarlid extends Card {
 
     public AuraGnarlid() {

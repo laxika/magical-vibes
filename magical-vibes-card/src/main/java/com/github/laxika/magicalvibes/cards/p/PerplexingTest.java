@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "229")
 @CardRegistration(set = "C21", collectorNumber = "30")
 @CardRegistration(set = "BLC", collectorNumber = "171")
+@CardRegistration(set = "WOC", collectorNumber = "102")
 public class PerplexingTest extends Card {
 
     public PerplexingTest() {
