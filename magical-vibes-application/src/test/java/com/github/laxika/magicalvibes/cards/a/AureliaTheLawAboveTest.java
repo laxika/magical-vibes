@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,6 +69,75 @@ class AureliaTheLawAboveTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Two attackers do not trigger either ability")
+    void doesNotTriggerBelowThreeAttackers() {
+        addReadyAurelia(player1);
+        addReadyAttackers(player1, 2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1, 2)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Four attackers trigger only the card draw ability")
+    void fourAttackersOnlyDraw() {
+        addReadyAurelia(player1);
+        addReadyAttackers(player1, 4);
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(1, 2, 3, 4));
+            assertThat(gd.stack).hasSize(1);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Five attackers put two independent abilities on the stack")
+    void fiveAttackersCreateSeparateTriggers() {
+        addReadyAurelia(player1);
+        addReadyAttackers(player1, 5);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1, 2, 3, 4, 5)));
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Aurelia counts toward the threshold and six attackers still draw only one card")
+    void aureliaCountsAndTriggersOnlyOnceAboveThreshold() {
+        addReadyAurelia(player1);
+        addReadyAttackers(player1, 5);
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest, new Forest()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1, 2, 3, 4, 5));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
     }
 
     private Permanent addReadyAurelia(Player player) {

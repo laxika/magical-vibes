@@ -5,15 +5,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KavuLair;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,19 +108,58 @@ class AuraShardsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Drake-Skull Cameo");
     }
 
+    @Test
+    @DisplayName("Aura Shards may destroy itself when its trigger resolves")
+    void mayDestroyItself() {
+        Permanent shards = harness.addToBattlefieldAndReturn(player1, new AuraShards());
+
+        castYavimayaBarbarian(player1);
+        resolveCreatureAndTrigger();
+        harness.handlePermanentChosen(player1, shards.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Aura Shards");
+        harness.assertNotOnBattlefield(player1, "Aura Shards");
+        harness.assertOnBattlefield(player1, "Yavimaya Barbarian");
+    }
+
+    @Test
+    @DisplayName("The controller may spare Aura Shards when it is the only legal target")
+    void mayDeclineToDestroyItself() {
+        Permanent shards = harness.addToBattlefieldAndReturn(player1, new AuraShards());
+
+        castYavimayaBarbarian(player1);
+        resolveCreatureAndTrigger();
+        harness.handlePermanentChosen(player1, shards.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Aura Shards");
+        harness.assertNotInGraveyard(player1, "Aura Shards");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact entering does not trigger Aura Shards")
+    void noncreatureEnteringDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AuraShards());
+
+        harness.castFromHand(player1, new DrakeSkullCameo(), "{3}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drake-Skull Cameo");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castYavimayaBarbarian(Player player) {
-        harness.setHand(player, List.of(new YavimayaBarbarian()));
-        harness.addMana(player, ManaColor.RED, 1);
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new YavimayaBarbarian(), "{R}{G}");
     }
 
     private void castRagingKavu(Player player) {
-        harness.setHand(player, List.of(new RagingKavu()));
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.addMana(player, ManaColor.RED, 1);
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new RagingKavu(), "{1}{R}{G}");
     }
 
     private void resolveCreatureAndTrigger() {
