@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(BaronAirshipKingdom.class)
 class BaronAirshipKingdomTest extends BaseCardTest {
@@ -68,9 +69,31 @@ class BaronAirshipKingdomTest extends BaseCardTest {
     }
 
     private Permanent addBaronReady(Player player) {
-        Permanent permanent = new Permanent(new BaronAirshipKingdom());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new BaronAirshipKingdom());
         permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("Baron enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent baron = harness.enterBattlefieldAndReturn(player1, new BaronAirshipKingdom());
+
+        assertThat(baron.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Baron cannot activate its mana ability")
+    void cannotActivateWhileTapped() {
+        Permanent baron = addBaronReady(player1);
+        baron.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 }
