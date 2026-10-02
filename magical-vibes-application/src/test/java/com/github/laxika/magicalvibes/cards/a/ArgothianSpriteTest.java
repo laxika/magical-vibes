@@ -57,7 +57,7 @@ class ArgothianSpriteTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sprite = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
         sprite.setSummoningSick(true);
-        sprite.setTapped(true);
+        sprite.tap();
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.activateAbility(player1, 0, 0, null, null);
