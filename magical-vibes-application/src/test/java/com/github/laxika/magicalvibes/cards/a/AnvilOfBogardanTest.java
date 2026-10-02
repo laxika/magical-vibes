@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,11 +28,11 @@ class AnvilOfBogardanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.addToBattlefield(player1, new AnvilOfBogardan());
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new Python(), new Python(), new Python(),
                 new Python(), new Python(), new Python(),
                 new Python(), new Python(), new Python()
-        )));
+        ));
 
         harness.getGameService().advanceStep(gd);
 
@@ -47,11 +46,11 @@ class AnvilOfBogardanTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.addToBattlefield(player1, new AnvilOfBogardan());
-        harness.setHand(player2, new ArrayList<>(List.of(
+        harness.setHand(player2, List.of(
                 new Python(), new Python(), new Python(),
                 new Python(), new Python(), new Python(),
                 new Python(), new Python(), new Python()
-        )));
+        ));
 
         harness.getGameService().advanceStep(gd);
 
@@ -63,7 +62,7 @@ class AnvilOfBogardanTest extends BaseCardTest {
     @DisplayName("Active player draws an additional card then discards during their draw step")
     void drawStepDrawThenDiscard() {
         harness.addToBattlefield(player1, new AnvilOfBogardan());
-        harness.setHand(player1, new ArrayList<>(List.of(new Python(), new Python())));
+        harness.setHand(player1, List.of(new Python(), new Python()));
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToDraw(player1);
@@ -87,7 +86,7 @@ class AnvilOfBogardanTest extends BaseCardTest {
     @DisplayName("Opponent draws an additional card then discards during their draw step")
     void opponentDrawStepDrawThenDiscard() {
         harness.addToBattlefield(player1, new AnvilOfBogardan());
-        harness.setHand(player2, new ArrayList<>(List.of(new Python(), new Python())));
+        harness.setHand(player2, List.of(new Python(), new Python()));
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
         advanceToDraw(player2);
@@ -110,7 +109,7 @@ class AnvilOfBogardanTest extends BaseCardTest {
     void eachAnvilTriggersIndependently() {
         harness.addToBattlefield(player1, new AnvilOfBogardan());
         harness.addToBattlefield(player1, new AnvilOfBogardan());
-        harness.setHand(player1, new ArrayList<>(List.of(new Python())));
+        harness.setHand(player1, List.of(new Python()));
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToDraw(player1);
@@ -136,7 +135,7 @@ class AnvilOfBogardanTest extends BaseCardTest {
     @DisplayName("A draw trigger resolves after Anvil leaves the battlefield")
     void triggerResolvesAfterAnvilLeaves() {
         var anvil = harness.addToBattlefieldAndReturn(player1, new AnvilOfBogardan());
-        harness.setHand(player1, new ArrayList<>(List.of(new Python(), new Python())));
+        harness.setHand(player1, List.of(new Python(), new Python()));
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
         advanceToDraw(player1);
@@ -156,10 +155,10 @@ class AnvilOfBogardanTest extends BaseCardTest {
     @DisplayName("Removing Anvil restores the normal cleanup hand limit")
     void removingAnvilRestoresCleanupHandLimit() {
         var anvil = harness.addToBattlefieldAndReturn(player1, new AnvilOfBogardan());
-        harness.setHand(player1, new ArrayList<>(List.of(
+        harness.setHand(player1, List.of(
                 new Python(), new Python(), new Python(), new Python(),
                 new Python(), new Python(), new Python(), new Python()
-        )));
+        ));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -171,5 +170,49 @@ class AnvilOfBogardanTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("A player with an empty hand may discard the card just drawn by Anvil")
+    void emptyHandCanDiscardAdditionalDraw() {
+        harness.addToBattlefield(player1, new AnvilOfBogardan());
+        harness.setHand(player2, List.of());
+        var normalDraw = new Python();
+        var additionalDraw = new Python();
+        harness.setLibrary(player2, List.of(normalDraw, additionalDraw, new Python()));
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(normalDraw, additionalDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(normalDraw);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(additionalDraw);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Anvil still triggers at the beginning of the draw step")
+    void tappedAnvilStillDrawsAndDiscards() {
+        var anvil = harness.addToBattlefieldAndReturn(player1, new AnvilOfBogardan());
+        harness.setHand(player2, List.of(new Python()));
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+        anvil.setTapped(true);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 }
