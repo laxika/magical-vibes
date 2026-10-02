@@ -78,4 +78,42 @@ class BebopRocksteadyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bebopRocksteady, otherPermanent);
     }
+
+    @Test
+    @DisplayName("An empty hand forces sacrificing Bebop & Rocksteady when it is the only permanent")
+    void sacrificesItselfWithNoCardsInHand() {
+        harness.setHand(player1, List.of());
+        BebopRocksteady card = new BebopRocksteady();
+        Permanent source = addCreatureReady(player1, card);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, source.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attacking controller discards from their own hand")
+    void otherPlayerDiscardsFromTheirOwnHand() {
+        Shock discarded = new Shock();
+        Shock untouched = new Shock();
+        harness.setHand(player2, List.of(discarded));
+        harness.setHand(player1, List.of(untouched));
+        Permanent source = addCreatureReady(player2, new BebopRocksteady());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Discard a card");
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(untouched);
+    }
 }
