@@ -119,11 +119,63 @@ class AncientHydraTest extends BaseCardTest {
     @Test
     @DisplayName("The damage ability cannot target a land")
     void cannotTargetLand() {
-        addCreatureReady(player1, new AncientHydra());
+        Permanent hydra = addCreatureReady(player1, new AncientHydra());
+        hydra.setCounterCount(CounterType.FADE, 1);
         Permanent land = harness.addToBattlefieldAndReturn(player2, new KorHaven());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("The damage ability requires mana and does not spend a counter when payment fails")
+    void cannotActivateWithoutMana() {
+        Permanent hydra = addCreatureReady(player1, new AncientHydra());
+        hydra.setCounterCount(CounterType.FADE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hydra.getCounterCount(CounterType.FADE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The damage ability works while tapped and summoning sick, paying the counter immediately")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new AncientHydra());
+        hydra.setSummoningSick(true);
+        hydra.setTapped(true);
+        hydra.setCounterCount(CounterType.FADE, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(hydra.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        harness.assertOnBattlefield(player1, "Ancient Hydra");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("A pending damage ability resolves after Ancient Hydra kills itself")
+    void damageResolvesAfterSourceDies() {
+        Permanent hydra = addCreatureReady(player1, new AncientHydra());
+        hydra.setCounterCount(CounterType.FADE, 2);
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, hydra.getId());
+        assertThat(hydra.getCounterCount(CounterType.FADE)).isZero();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ancient Hydra");
+        harness.assertInGraveyard(player1, "Ancient Hydra");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 }
