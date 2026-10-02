@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
+import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AjaniGoldmane.class, AnointerPriest.class, WoodlandChangeling.class})
+@CardUsed({AjaniGoldmane.class, AnointerPriest.class, WoodlandChangeling.class, SarkhanTheMasterless.class})
 class AjaniGoldmaneTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -54,7 +55,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard() instanceof AjaniGoldmane);
-        Permanent ajani = bf.stream().filter(p -> p.getCard() instanceof AjaniGoldmane).findFirst().orElseThrow();
+        Permanent ajani = findPermanent(player1, "Ajani Goldmane");
         assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(ajani.isSummoningSick()).isFalse();
     }
@@ -146,6 +147,56 @@ class AjaniGoldmaneTest extends BaseCardTest {
 
         assertThat(creatureEnteringLater.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, creatureEnteringLater, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("-1 affects creatures present at resolution rather than activation")
+    void minusOneAffectsCreaturesEnteringBeforeResolution() {
+        addReadyAjani(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new WoodlandChangeling());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("-1 grants vigilance to Ajani himself when he is a creature")
+    void minusOneIncludesAnimatedAjani() {
+        Permanent ajani = addReadyAjani(player1);
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheMasterless());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, ajani)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ajani.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(sarkhan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, sarkhan, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ajani, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Avatar's life-based power and toughness still receive +1/+1 counters")
+    void avatarCountersApplyAfterLifeBasedPowerToughness() {
+        Permanent ajani = addReadyAjani(player1);
+        ajani.setCounterCount(CounterType.LOYALTY, 7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent avatar = findAvatarToken();
+
+        avatar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 30);
+        assertThat(avatar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(13);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(13);
     }
 
     // ===== -6 ability: Create Avatar token =====
@@ -298,10 +349,6 @@ class AjaniGoldmaneTest extends BaseCardTest {
     }
 
     private Permanent findAvatarToken() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().isToken()
-                        && p.getCard().getSubtypes().contains(CardSubtype.AVATAR))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Avatar token not found"));
+        return findPermanent(player1, "Avatar");
     }
 }
