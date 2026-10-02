@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "EMA", collectorNumber = "56")
 @CardRegistration(set = "DDO", collectorNumber = "37")
 @CardRegistration(set = "2XM", collectorNumber = "55")
+@CardRegistration(set = "C18", collectorNumber = "91")
 public class InkwellLeviathan extends Card {
 
     public InkwellLeviathan() {

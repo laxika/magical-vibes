@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DSC", collectorNumber = "123")
+@CardRegistration(set = "C18", collectorNumber = "12")
 public class PrimordialMist extends Card {
 
     public PrimordialMist() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "32")
 @CardRegistration(set = "DSC", collectorNumber = "111")
+@CardRegistration(set = "C18", collectorNumber = "81")
 public class ArchetypeOfImagination extends Card {
 
     public ArchetypeOfImagination() {

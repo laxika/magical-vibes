@@ -111,6 +111,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
             } else if (seek.destination() == LibrarySearchDestination.BATTLEFIELD
                     || seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                 Permanent permanent = new Permanent(chosen, Zone.LIBRARY);
+                if (seek.battlefieldCloaked()) {
+                    permanent.setFaceDownAsCloaked();
+                }
                 if (seek.grantSubtype() != null) {
                     permanent.getGrantedSubtypes().add(seek.grantSubtype());
                 }
@@ -120,8 +123,13 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 if (seek.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED) {
                     permanent.tap();
                 }
+                if (seek.battlefieldCloaked()) {
+                    battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, chosen);
+                }
                 gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                        .text("seeks and puts " + chosen.getName() + " onto the battlefield.").build());
+                        .text(seek.battlefieldCloaked()
+                                ? "seeks and cloaks a card onto the battlefield."
+                                : "seeks and puts " + chosen.getName() + " onto the battlefield.").build());
             } else if (seek.destination() == LibrarySearchDestination.EXILE_WITH_SOURCE) {
                 if (seek.faceDown()) {
                     exileService.exileCardFaceDown(gameData, controllerId, chosen, sourcePermanentId);

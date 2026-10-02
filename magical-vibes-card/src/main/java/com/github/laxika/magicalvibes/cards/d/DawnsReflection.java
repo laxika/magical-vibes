@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5DN", collectorNumber = "85")
+@CardRegistration(set = "C18", collectorNumber = "139")
 public class DawnsReflection extends Card {
 
     public DawnsReflection() {

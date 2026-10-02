@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "JOU", collectorNumber = "129")
+@CardRegistration(set = "C18", collectorNumber = "155")
 public class KruphixsInsight extends Card {
 
     public KruphixsInsight() {

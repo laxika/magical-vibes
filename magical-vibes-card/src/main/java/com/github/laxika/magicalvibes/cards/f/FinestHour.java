@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "126")
+@CardRegistration(set = "C18", collectorNumber = "180")
 public class FinestHour extends Card {
 
     public FinestHour() {

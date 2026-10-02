@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "229")
 @CardRegistration(set = "DDU", collectorNumber = "61")
+@CardRegistration(set = "C18", collectorNumber = "219")
 public class ScuttlingDoomEngine extends Card {
 
     public ScuttlingDoomEngine() {

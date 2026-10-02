@@ -15,7 +15,8 @@ import java.util.Objects;
  */
 public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                                 LibrarySearchDestination destination, ManaValueBound manaValueBound,
-                                boolean faceDown, boolean grantPlayUntilNextTurn, CardSubtype grantSubtype)
+                                boolean faceDown, boolean grantPlayUntilNextTurn, CardSubtype grantSubtype,
+                                boolean battlefieldCloaked)
         implements TriggeringSpellManaValueEffect {
 
     public SeekLibraryEffect {
@@ -24,61 +25,67 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter, LibrarySearchDestination destination) {
-        this(new Fixed(nonNegative(count)), filter, destination, null, false, false, null);
+        this(new Fixed(nonNegative(count)), filter, destination, null, false, false, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination) {
-        this(count, filter, destination, null, false, false, null);
+        this(count, filter, destination, null, false, false, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound) {
-        this(count, filter, destination, manaValueBound, false, false, null);
+        this(count, filter, destination, manaValueBound, false, false, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound,
                              CardSubtype grantSubtype) {
-        this(count, filter, destination, manaValueBound, false, false, grantSubtype);
+        this(count, filter, destination, manaValueBound, false, false, grantSubtype, false);
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter, LibrarySearchDestination destination,
                              ManaValueBound manaValueBound, CardSubtype grantSubtype) {
-        this(new Fixed(nonNegative(count)), filter, destination, manaValueBound, false, false, grantSubtype);
+        this(new Fixed(nonNegative(count)), filter, destination, manaValueBound, false, false, grantSubtype, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound,
                              boolean faceDown) {
-        this(count, filter, destination, manaValueBound, faceDown, false, null);
+        this(count, filter, destination, manaValueBound, faceDown, false, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound,
                              boolean faceDown, boolean grantPlayUntilNextTurn) {
-        this(count, filter, destination, manaValueBound, faceDown, grantPlayUntilNextTurn, null);
+        this(count, filter, destination, manaValueBound, faceDown, grantPlayUntilNextTurn, null, false);
     }
 
     public SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                              LibrarySearchDestination destination, ManaValueBound manaValueBound,
                              boolean faceDown, CardSubtype grantSubtype) {
-        this(count, filter, destination, manaValueBound, faceDown, false, grantSubtype);
+        this(count, filter, destination, manaValueBound, faceDown, false, grantSubtype, false);
     }
 
     public SeekLibraryEffect(int count, CardPredicate filter) {
-        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null, false, false, null);
+        this(new Fixed(nonNegative(count)), filter, LibrarySearchDestination.HAND, null, false, false, null, false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue, boolean entersTapped) {
         this(new Fixed(1), filter,
                 entersTapped ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                         : LibrarySearchDestination.BATTLEFIELD,
-                new ManaValueBound(new Fixed(maxManaValue), false, 0), false, false, null);
+                new ManaValueBound(new Fixed(maxManaValue), false, 0), false, false, null, false);
     }
 
     public SeekLibraryEffect(CardPredicate filter, int maxManaValue) {
         this(filter, maxManaValue, false);
+    }
+
+    public static SeekLibraryEffect cloakedToBattlefield(DynamicAmount count, CardPredicate filter,
+                                                          ManaValueBound manaValueBound) {
+        return new SeekLibraryEffect(count, filter, LibrarySearchDestination.BATTLEFIELD,
+                manaValueBound, false, false, null, true);
     }
 
     private static int nonNegative(int count) {

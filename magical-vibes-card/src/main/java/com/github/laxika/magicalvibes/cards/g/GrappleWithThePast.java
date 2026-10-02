@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "82")
 @CardRegistration(set = "TDC", collectorNumber = "257")
 @CardRegistration(set = "M3C", collectorNumber = "230")
+@CardRegistration(set = "C18", collectorNumber = "148")
 public class GrappleWithThePast extends Card {
 
     public GrappleWithThePast() {

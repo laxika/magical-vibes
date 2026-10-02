@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "MKM", collectorNumber = "255")
 @CardRegistration(set = "2XM", collectorNumber = "269")
 @CardRegistration(set = "SIR", collectorNumber = "254")
+@CardRegistration(set = "C18", collectorNumber = "208")
 public class MagnifyingGlass extends Card {
 
     public MagnifyingGlass() {

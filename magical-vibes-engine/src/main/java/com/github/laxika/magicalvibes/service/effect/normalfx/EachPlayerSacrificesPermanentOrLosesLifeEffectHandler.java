@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -28,6 +30,7 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -44,7 +47,7 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
         if (!state.active) {
             state.reset();
             state.active = true;
-            state.remaining.addAll(apnapPlayers(gameData));
+            state.remaining.addAll(apnapPlayers(gameData, entry.getControllerId(), sacrificeEffect.opponentsOnly()));
         }
 
         if (state.chosenMode != null) {
@@ -70,10 +73,24 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
 
             List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
             if (matchingIds.isEmpty()) {
-                lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), sourceName);
+                lifeSupport.applyLifeLoss(gameData, playerId,
+                        lifeLoss(gameData, entry, effect, playerId), sourceName);
                 continue;
             }
 
+            if (!effect.mayChooseLife()) {
+                if (matchingIds.size() == 1) {
+                    sacrifice(gameData, matchingIds.getFirst(), playerId);
+                    continue;
+                }
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginPermanentChoice(gameData, playerId, matchingIds,
+                        new PermanentChoiceContext.SacrificeCreature(playerId),
+                        "Choose " + effect.sacrificeDescription() + " to sacrifice.");
+                return;
+            }
+
+            int lifeLoss = lifeLoss(gameData, entry, effect, playerId);
             gameData.rerunCurrentEffectAfterInteraction = true;
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     playerId, null, null,
@@ -81,10 +98,10 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
                     List.of(
                             ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.sacrifice(
                                     effect.sacrificeDescription()),
-                            ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.loseLife(effect.lifeLoss())
+                            ChoiceContext.EachPlayerSacrificeOrLoseLifeChoice.loseLife(lifeLoss)
                     ),
                     sourceName + " — sacrifice " + effect.sacrificeDescription()
-                            + " or lose " + effect.lifeLoss() + " life."));
+                            + " or lose " + lifeLoss + " life."));
             return;
         }
 
@@ -100,7 +117,8 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
                 effect.sacrificeDescription()).equals(chosenMode)) {
             List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
             if (matchingIds.isEmpty()) {
-                lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), entry.getCard().getName());
+                lifeSupport.applyLifeLoss(gameData, playerId,
+                        lifeLoss(gameData, entry, effect, playerId), entry.getCard().getName());
                 advance(gameData, entry, effect, state);
             } else if (matchingIds.size() == 1) {
                 sacrifice(gameData, matchingIds.getFirst(), playerId);
@@ -114,7 +132,8 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
             return;
         }
 
-        lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), entry.getCard().getName());
+        lifeSupport.applyLifeLoss(gameData, playerId,
+                lifeLoss(gameData, entry, effect, playerId), entry.getCard().getName());
         advance(gameData, entry, effect, state);
     }
 
@@ -136,13 +155,23 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
         }
     }
 
-    private List<UUID> apnapPlayers(GameData gameData) {
+    private int lifeLoss(GameData gameData, StackEntry entry,
+            EachPlayerSacrificesPermanentOrLosesLifeEffect effect, UUID playerId) {
+        return amountEvaluationService.evaluate(gameData, effect.lifeLoss(),
+                AmountContext.forStackEntry(entry, null)
+                        .withControllerId(playerId)
+                        .withTargetPermanentId(playerId));
+    }
+
+    private List<UUID> apnapPlayers(GameData gameData, UUID controllerId, boolean opponentsOnly) {
         List<UUID> players = new ArrayList<>();
-        if (gameData.activePlayerId != null && gameData.playerIds.contains(gameData.activePlayerId)) {
+        if (gameData.activePlayerId != null && gameData.playerIds.contains(gameData.activePlayerId)
+                && (!opponentsOnly || !gameData.activePlayerId.equals(controllerId))) {
             players.add(gameData.activePlayerId);
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!players.contains(playerId) && gameData.playerIds.contains(playerId)) {
+            if (!players.contains(playerId) && gameData.playerIds.contains(playerId)
+                    && (!opponentsOnly || !playerId.equals(controllerId))) {
                 players.add(playerId);
             }
         }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "PCA", collectorNumber = "78")
 @CardRegistration(set = "NEC", collectorNumber = "130")
 @CardRegistration(set = "WOC", collectorNumber = "133")
+@CardRegistration(set = "C18", collectorNumber = "162")
 public class SnakeUmbra extends Card {
 
     public SnakeUmbra() {

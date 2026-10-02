@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "DDQ", collectorNumber = "70")
 @CardRegistration(set = "NEO", collectorNumber = "267")
 @CardRegistration(set = "40K", collectorNumber = "276")
+@CardRegistration(set = "C18", collectorNumber = "244")
 public class DismalBackwater extends Card {
 
     public DismalBackwater() {

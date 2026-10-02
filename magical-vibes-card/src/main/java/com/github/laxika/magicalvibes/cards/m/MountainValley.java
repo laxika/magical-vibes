@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "328")
 @CardRegistration(set = "VMA", collectorNumber = "306")
+@CardRegistration(set = "C18", collectorNumber = "268")
 public class MountainValley extends Card {
 
     public MountainValley() {

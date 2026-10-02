@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "ORI", collectorNumber = "79")
 @CardRegistration(set = "MOC", collectorNumber = "241")
 @CardRegistration(set = "NEC", collectorNumber = "98")
+@CardRegistration(set = "C18", collectorNumber = "107")
 public class ThopterSpyNetwork extends Card {
 
     public ThopterSpyNetwork() {

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "237")
 @CardRegistration(set = "RNA", collectorNumber = "238")
+@CardRegistration(set = "C18", collectorNumber = "218")
 public class ScrabblingClaws extends Card {
 
     public ScrabblingClaws() {

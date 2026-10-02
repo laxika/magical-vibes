@@ -459,6 +459,30 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires triggers watching the source controller's commander entering the command zone. */
+    public void checkYourCommanderPutIntoCommandZoneTriggers(GameData gameData, Card commander,
+                                                               UUID commanderOwnerId) {
+        if (commander == null || commanderOwnerId == null
+                || gameData.playerCommanders.getOrDefault(commanderOwnerId, List.of()).stream()
+                .noneMatch(card -> card.getId().equals(commander.getId())
+                        || card.getBackFaceCard() != null
+                        && card.getBackFaceCard().getId().equals(commander.getId()))) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(commanderOwnerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+
+        TriggerContext context = new TriggerContext.CommanderPutIntoCommandZone(
+                commander, commanderOwnerId);
+        for (Permanent permanent : new ArrayList<>(battlefield)) {
+            dispatchSlot(gameData, permanent, commanderOwnerId,
+                    EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE, context);
+        }
+    }
+
     public void checkSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         checkSpellCastTriggers(gameData, spellCard, castingPlayerId, true);
     }
@@ -10293,6 +10317,47 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires creature-death triggers from graveyards when a suspected opposing creature dies. */
+    public void checkGraveyardOpponentCreatureDeathTriggers(GameData gameData,
+                                                              UUID dyingCreatureControllerId,
+                                                              Permanent dyingPermanent) {
+        Card dyingCard = dyingPermanent.getCard();
+        for (Map.Entry<UUID, List<Card>> graveyardEntry : gameData.playerGraveyards.entrySet()) {
+            UUID sourceControllerId = graveyardEntry.getKey();
+            if (sourceControllerId.equals(dyingCreatureControllerId)) {
+                continue;
+            }
+            for (Card sourceCard : new ArrayList<>(graveyardEntry.getValue())) {
+                if (sourceCard.getId().equals(dyingCard.getId())) {
+                    continue;
+                }
+                boolean sourceDiedAtTheSameTime = gameData.simultaneousDyingCreatures.values().stream()
+                        .anyMatch(permanent -> permanent.getCard().getId().equals(sourceCard.getId()));
+                if (sourceDiedAtTheSameTime) {
+                    continue;
+                }
+
+                List<CardEffect> effects = gameQueryService.getEffectiveGraveyardEffects(
+                        gameData, sourceCard, EffectSlot.GRAVEYARD_ON_OPPONENT_CREATURE_DIES);
+                if (effects == null || effects.isEmpty()) {
+                    continue;
+                }
+                for (CardEffect effect : effects) {
+                    if (effect instanceof BatchedCreatureDeathTriggerEffect) {
+                        continue;
+                    }
+                    CardEffect resolved = unwrapCreatureDeathConditional(
+                            effect, dyingCard, dyingPermanent, gameData, sourceControllerId);
+                    if (resolved == null) {
+                        continue;
+                    }
+                    queueGraveyardCreatureDeathTrigger(gameData, sourceCard, sourceControllerId,
+                            resolved, dyingCard, dyingCreatureControllerId);
+                }
+            }
+        }
+    }
+
     /**
      * "Whenever a creature or planeswalker you control dies" ({@link EffectSlot#ON_ALLY_CREATURE_OR_PLANESWALKER_DIES}).
      * Called once per dying permanent that was a creature and/or a planeswalker, so a permanent
@@ -11121,6 +11186,43 @@ public class TriggerCollectionService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
                 gameData.id, sourceCard.getName());
+    }
+
+    private void queueGraveyardCreatureDeathTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+                                                     CardEffect effect, Card dyingCard,
+                                                     UUID dyingCreatureControllerId) {
+        if (effect instanceof MayPayManaEffect mayPay) {
+            gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
+        } else if (effect instanceof MayEffect may) {
+            gameData.queueMayAbility(sourceCard, controllerId, may);
+        } else {
+            StackEntry triggerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect))
+            );
+            triggerEntry.setTriggeringCardId(dyingCard.getId());
+            LoseLifeEffect loseLife = findLoseLifeEffect(effect);
+            if (loseLife != null && loseLife.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
+                triggerEntry.setTargetId(dyingCreatureControllerId);
+            }
+            gameData.stack.add(triggerEntry);
+        }
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} graveyard creature-death trigger queued",
+                gameData.id, sourceCard.getName());
+    }
+
+    private LoseLifeEffect findLoseLifeEffect(CardEffect effect) {
+        if (effect instanceof LoseLifeEffect loseLife) {
+            return loseLife;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return findLoseLifeEffect(conditional.wrapped());
+        }
+        return null;
     }
 
     /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */

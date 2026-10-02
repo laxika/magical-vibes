@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "186")
 @CardRegistration(set = "C21", collectorNumber = "137")
+@CardRegistration(set = "C18", collectorNumber = "14")
 public class Bloodtracker extends Card {
 
     public Bloodtracker() {

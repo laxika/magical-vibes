@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "CMM", collectorNumber = "172")
+@CardRegistration(set = "C18", collectorNumber = "16")
 public class LoyalSubordinate extends Card {
 
     public LoyalSubordinate() {

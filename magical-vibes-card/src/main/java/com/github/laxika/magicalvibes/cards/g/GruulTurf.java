@@ -28,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "310")
 @CardRegistration(set = "C19", collectorNumber = "250")
 @CardRegistration(set = "NEC", collectorNumber = "170")
+@CardRegistration(set = "C18", collectorNumber = "252")
 public class GruulTurf extends Card {
 
     public GruulTurf() {

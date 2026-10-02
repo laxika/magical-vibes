@@ -74,6 +74,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.PlanarCardChoice.class, this::projectPlanarCardChoice);
         register(PendingInteraction.PlanarDieChoice.class, this::projectPlanarDieChoice);
         register(PendingInteraction.SpellbookDraftChoice.class, this::projectSpellbookDraftChoice);
+        register(PendingInteraction.DraftTwiceSpellbookChoice.class,
+                this::projectDraftTwiceSpellbookChoice);
         register(PendingInteraction.SpellbookDraftToExileChoice.class,
                 this::projectSpellbookDraftToExileChoice);
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
@@ -197,6 +199,8 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class,
                 this::projectArtifactPermanentOrGraveyardCardChoice);
         register(PendingInteraction.BeholdChoice.class, this::projectBeholdChoice);
+        register(PendingInteraction.PerpetualCreatureCardOrPermanentChoice.class,
+                this::projectPerpetualCreatureCardOrPermanentChoice);
         register(PendingInteraction.AttachAurasChoice.class, this::projectAttachAurasChoice);
         register(PendingInteraction.ReturnAurasFromGraveyardChoice.class,
                 this::projectReturnAurasFromGraveyardChoice);
@@ -255,6 +259,8 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPerpetualTriggeredAbilityCardsChoice);
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
+        register(PendingInteraction.PerpetualHandOrGraveyardCardChoice.class,
+                this::projectPerpetualHandOrGraveyardCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
         register(PendingInteraction.RetracedImageCardChoice.class,
@@ -1274,6 +1280,19 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
+    private InteractionPromptMessage projectPerpetualCreatureCardOrPermanentChoice(
+            GameData gameData, PendingInteraction.PerpetualCreatureCardOrPermanentChoice interaction) {
+        UUID playerId = interaction.playerId();
+        List<CardView> cardViews = new ArrayList<>();
+        addMatchingCardViews(cardViews,
+                gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .map(Permanent::getCard).toList(), interaction.validCardIds());
+        addMatchingCardViews(cardViews,
+                gameData.playerHands.getOrDefault(playerId, List.of()), interaction.validCardIds());
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews, 1, 1, interaction.prompt());
+    }
+
     private InteractionPromptMessage projectAttachAurasChoice(
             GameData gameData, PendingInteraction.AttachAurasChoice interaction) {
         UUID playerId = interaction.playerId();
@@ -1538,6 +1557,13 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(), interaction.prompt(), false);
     }
 
+    private InteractionPromptMessage projectPerpetualHandOrGraveyardCardChoice(
+            GameData gameData, PendingInteraction.PerpetualHandOrGraveyardCardChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1, 1,
+                interaction.prompt());
+    }
+
     private InteractionPromptMessage projectPutCardsFromHandOnLibraryCardChoice(
             GameData gameData,
             PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
@@ -1649,6 +1675,13 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()),
                 interaction.minCount(), interaction.maxCount(),
                 interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectDraftTwiceSpellbookChoice(
+            GameData gameData, PendingInteraction.DraftTwiceSpellbookChoice interaction) {
+        return InteractionPromptMessage.multiCardPick(
+                new ArrayList<>(interaction.validCardIds()), cardViews(interaction.cards()), 1,
+                "Choose a card from " + interaction.sourceCardName() + "'s spellbook.");
     }
 
     private InteractionPromptMessage projectApplejackToyChoice(

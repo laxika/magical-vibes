@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "ZEN", collectorNumber = "182")
 @CardRegistration(set = "MM2", collectorNumber = "161")
 @CardRegistration(set = "DDP", collectorNumber = "22")
+@CardRegistration(set = "C18", collectorNumber = "161")
 public class ScuteMob extends Card {
 
     public ScuteMob() {

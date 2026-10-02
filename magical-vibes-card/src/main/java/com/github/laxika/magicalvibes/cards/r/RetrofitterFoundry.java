@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "SLC", collectorNumber = "18")
 @CardRegistration(set = "SLC", collectorNumber = "45")
 @CardRegistration(set = "HA6", collectorNumber = "10")
+@CardRegistration(set = "C18", collectorNumber = "57")
 public class RetrofitterFoundry extends Card {
 
     public RetrofitterFoundry() {

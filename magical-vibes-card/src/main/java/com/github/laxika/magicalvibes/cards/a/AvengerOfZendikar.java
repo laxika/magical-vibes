@@ -30,6 +30,7 @@ import java.util.Set;
 @CardRegistration(set = "TDC", collectorNumber = "247")
 @CardRegistration(set = "M3C", collectorNumber = "221")
 @CardRegistration(set = "OTC", collectorNumber = "187")
+@CardRegistration(set = "C18", collectorNumber = "129")
 public class AvengerOfZendikar extends Card {
 
     public AvengerOfZendikar() {

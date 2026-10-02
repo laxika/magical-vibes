@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "NEC", collectorNumber = "134")
+@CardRegistration(set = "C18", collectorNumber = "36")
 public class WhiptongueHydra extends Card {
 
     public WhiptongueHydra() {

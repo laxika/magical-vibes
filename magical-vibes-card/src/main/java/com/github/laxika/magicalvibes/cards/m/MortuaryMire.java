@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "C20", collectorNumber = "289")
 @CardRegistration(set = "MIC", collectorNumber = "176")
 @CardRegistration(set = "C19", collectorNumber = "260")
+@CardRegistration(set = "C18", collectorNumber = "266")
 @CardRegistration(set = "PIP", collectorNumber = "272")
 @CardRegistration(set = "PIP", collectorNumber = "800")
 public class MortuaryMire extends Card {

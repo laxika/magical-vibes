@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "279")
+@CardRegistration(set = "C18", collectorNumber = "29")
 public class CrashOfRhinoBeetles extends Card {
 
     public CrashOfRhinoBeetles() {

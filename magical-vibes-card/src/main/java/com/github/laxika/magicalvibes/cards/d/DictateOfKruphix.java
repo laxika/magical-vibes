@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "37")
+@CardRegistration(set = "C18", collectorNumber = "86")
 public class DictateOfKruphix extends Card {
 
     public DictateOfKruphix() {

@@ -118,7 +118,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.ExilePermanentsOrHandCardsChoice,
         PendingInteraction.ArtifactPermanentOrGraveyardCardChoice,
-        PendingInteraction.BeholdChoice,
+        PendingInteraction.BeholdChoice, PendingInteraction.PerpetualCreatureCardOrPermanentChoice,
         PendingInteraction.AttachAurasChoice, PendingInteraction.ReturnAurasFromGraveyardChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -163,8 +163,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.DiscardCostChoice,
         PendingInteraction.PlanarAbilityHandCardChoice,
         PendingInteraction.PerpetualPowerToughnessChoice,
+        PendingInteraction.PerpetualHandOrGraveyardCardChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.SpellbookCardChoice,
+        PendingInteraction.DraftTwiceSpellbookChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
@@ -2487,6 +2489,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
+    /** Chooses a creature card in hand or a creature permanent the player controls. */
+    record PerpetualCreatureCardOrPermanentChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                                   String prompt, int powerBoost, int toughnessBoost)
+            implements PendingInteraction {
+
+        public PerpetualCreatureCardOrPermanentChoice {
+            validCardIds = java.util.List.copyOf(validCardIds);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+        }
+    }
+
     /**
      * "Attach to this creature any number of Auras on the battlefield and put onto the battlefield
      * attached to it any number of Aura cards from your graveyard and/or hand" (Bruna, Light of
@@ -3794,6 +3816,30 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+    }
+
+    /** Chooses a matching card from hand or graveyard for a perpetual incorporation. */
+    record PerpetualHandOrGraveyardCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
+                                              String perpetualManaCostIncrease, CardEffect selfCastAbility)
+            implements PendingInteraction {
+
+        public PerpetualHandOrGraveyardCardChoice {
+            cards = java.util.List.copyOf(cards);
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 
@@ -5433,6 +5479,39 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
+        }
+    }
+
+    /** One of the two sequential drafts from a spellbook. */
+    record DraftTwiceSpellbookChoice(
+            UUID playerId,
+            java.util.List<Card> cards,
+            java.util.List<Card> draftedCards,
+            java.util.List<DraftFromSpellbookEffect.SpellbookCard> spellbook,
+            String sourceCardName,
+            int draftNumber) implements PendingInteraction {
+
+        public DraftTwiceSpellbookChoice {
+            cards = java.util.List.copyOf(cards);
+            draftedCards = java.util.List.copyOf(draftedCards);
+            spellbook = java.util.List.copyOf(spellbook);
+            if (draftNumber < 1 || draftNumber > 2) {
+                throw new IllegalArgumentException("Draft number must be one or two");
+            }
+        }
+
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
         }
     }
 

@@ -11,8 +11,7 @@ $script:mockOutcome = 'FINDINGS'
 $script:mockInvalid = $false
 $script:mockProduction = $false
 $script:mockPassWithTests = $false
-$script:mockValidatedOutcome = 'FINDINGS'
-$script:validationFollowups = 0
+$script:reviewInvocations = 0
 $script:mockTestBuildFailure = $false
 $script:mockTestAssertionFailure = $false
 $script:simulatePushFailure = $false
@@ -26,20 +25,16 @@ function Assert-ReviewTest {
 }
 
 function Invoke-ReviewCodex {
-    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath, [string] $ValidationFeedback)
+    param([string] $Root, $Task, [string] $OutputPath, [string] $SchemaPath, [string] $LogPath)
+    $script:reviewInvocations++
     [System.IO.File]::WriteAllText($LogPath, '{"type":"turn.completed","usage":{"input_tokens":1000,"cached_input_tokens":800,"output_tokens":200}}')
     if ($script:mockInvalid) { [System.IO.File]::WriteAllText($OutputPath, '{invalid'); return }
     $outcome = $script:mockOutcome
-    if ($ValidationFeedback) {
-        $script:validationFollowups++
-        Assert-ReviewTest ($ValidationFeedback -match 'FirstCardTest\.log' -and $ValidationFeedback -match 'do not edit any files or run any tests') 'Validation follow-up omitted the focused log or read-only restriction'
-        $outcome = $script:mockValidatedOutcome
-    }
     $result = @{ outcome = $outcome; cardName = 'First Card'; findings = @(); executionError = $null }
     if ($outcome -eq 'FINDINGS') { $result.findings = @('The trigger uses the wrong controller.') }
     if ($outcome -eq 'ERROR') { $result.executionError = 'Oracle lookup was unavailable' }
     [System.IO.File]::WriteAllText($OutputPath, ($result | ConvertTo-Json -Depth 5))
-    if (-not $ValidationFeedback -and ($script:mockOutcome -eq 'FINDINGS' -or $script:mockPassWithTests)) {
+    if ($script:mockOutcome -eq 'FINDINGS' -or $script:mockPassWithTests) {
         Add-Content -LiteralPath (Join-Path $Root $script:taskTestPath) -Value '// focused regression'
     }
     if ($script:mockProduction) { Add-Content -LiteralPath (Join-Path $Root 'production.txt') -Value 'unexpected edit' }
@@ -136,6 +131,34 @@ try {
     Assert-ReviewTest ($call[3] -eq 'example.cards.a.FirstCardTest' -and $call[4] -eq '-TimeoutSeconds' -and $call[5] -eq 7200) 'The focused class or two-hour timeout was not forwarded to the test runner'
     Write-Host 'PASS worker validates only the exact changed class with a two-hour timeout'
 
+    $script:focusedXml = Join-Path $checkout 'magical-vibes-application/build/test-results/test/TEST-example.cards.a.FirstCardTest.xml'
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $script:focusedXml) | Out-Null
+    function powershell.exe {
+        if ($script:focusedResult -in @('assertion', 'interaction')) {
+            $failure = if ($script:focusedResult -eq 'assertion') { '<failure message="Expected 19 but was 20" />' } else { '<error message="Not awaiting PermanentChosen input" />' }
+            $counts = if ($script:focusedResult -eq 'assertion') { 'failures="1" errors="0"' } else { 'failures="0" errors="1"' }
+            [System.IO.File]::WriteAllText($script:focusedXml, "<testsuite tests=`"1`" $counts><testcase name=`"trampleDamageTriggersDestruction`">$failure</testcase></testsuite>")
+        }
+        $global:LASTEXITCODE = if ($script:focusedResult -eq 'timeout') { 124 } else { 1 }
+    }
+    try {
+        foreach ($mode in @('assertion', 'interaction')) {
+            $script:focusedResult = $mode
+            $failed = & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot
+            Assert-ReviewTest $failed "Focused validation rejected a compiled $mode failure"
+        }
+        Remove-Item -LiteralPath $script:focusedXml
+        foreach ($mode in @('build', 'timeout')) {
+            $script:focusedResult = $mode
+            $message = ''
+            try { & $script:actualFocusedTests $checkout @($script:taskTestPath) $testRoot | Out-Null } catch { $message = $_.Exception.Message }
+            $expected = if ($mode -eq 'build') { 'build or tooling failure' } else { 'two-hour' }
+            Assert-ReviewTest ($message -match $expected) "Focused validation accepted a $mode failure"
+        }
+    }
+    finally { Remove-Item Function:\powershell.exe }
+    Write-Host 'PASS focused validation accepts assertion/interaction failures and rejects build failures/timeouts'
+
     $unicodePath = Join-Path $testRoot 'unicode-result.json'
     $unicodeName = 'A' + [char] 0x00e9 + 'ther Adept'
     $unicodeFinding = 'The target restriction ' + [char] 0x2014 + ' is incorrect.'
@@ -228,23 +251,19 @@ try {
     $script:mockTestAssertionFailure = $false
     Write-Host 'PASS bug-exposing failing tests publish with descriptions only'
 
-    $checkout = New-ReviewTestCheckout 'validation-finding'
+    $checkout = New-ReviewTestCheckout 'unconfirmed-test-failure'
     $script:mockOutcome = 'PASS'
     $script:mockPassWithTests = $true
     $script:mockTestAssertionFailure = $true
-    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-validation-finding')
-    Assert-ReviewTest ($result.Result.outcome -eq 'FINDINGS' -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop -and $script:validationFollowups -eq 1) 'A worker-discovered behavioral bug did not receive a review finding and publish automatically'
-    Assert-ReviewTest ($result.Result.inputTokens -eq 2000 -and $result.Result.cachedInputTokens -eq 1600 -and $result.Result.outputTokens -eq 400 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000592) 'Validation follow-up cost was not included in the attempt total'
-    Write-Host 'PASS worker-discovered failures receive a read-only review follow-up'
-
-    $checkout = New-ReviewTestCheckout 'validation-unconfirmed'
-    $script:mockValidatedOutcome = 'PASS'
-    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-validation-unconfirmed')
-    Assert-ReviewTest ($result.Result.publicationStatus -eq 'FAILED' -and $result.Stop -and $result.Result.publicationError -match 'without a confirmed card finding') 'Unexplained failing tests were published as a pass'
-    $script:mockValidatedOutcome = 'FINDINGS'
+    $beforeInvocations = $script:reviewInvocations
+    $result = Invoke-ReviewTask $checkout $task (Join-Path $checkout 'magical-vibes-review-server/build/task-unconfirmed-test-failure')
+    Assert-ReviewTest ($result.Result.outcome -eq 'PASS' -and $result.Result.findings.Count -eq 0 -and $result.Result.publicationStatus -eq 'PUSHED' -and -not $result.Stop) 'Compiled failing tests without a confirmed card bug were not published'
+    Assert-ReviewTest ($null -eq $result.Result.executionError -and $null -eq $result.Result.publicationError) 'A test failure was classified as an execution or publication failure'
+    Assert-ReviewTest ($script:reviewInvocations -eq $beforeInvocations + 1 -and $result.Result.inputTokens -eq 1000 -and $result.Result.estimatedCostUsd -eq [decimal] 0.000296) 'A test failure triggered another review or an extra token charge'
+    Assert-ReviewTest ((Get-ReviewGitText $checkout @('rev-parse', 'HEAD')) -eq (Get-ReviewGitText $checkout @('rev-parse', 'origin/main')) -and @(Get-ReviewChangedPaths $checkout).Count -eq 0) 'Accepted failing tests were not pushed or left unfinished changes'
     $script:mockPassWithTests = $false
     $script:mockTestAssertionFailure = $false
-    Write-Host 'PASS unconfirmed test failures preserve edits for recovery'
+    Write-Host 'PASS compiled failing tests publish without findings or a follow-up review'
 
     $pendingPath = Join-Path $testRoot 'pending.json'
     [System.IO.File]::WriteAllText($pendingPath, (@{serverUrl='http://review.test'; taskId=1; result=@{outcome='PASS'; inputTokens=1000; cachedInputTokens=800; outputTokens=200; estimatedCostUsd=[decimal] 0.000296}; stop=$false} | ConvertTo-Json -Depth 5))

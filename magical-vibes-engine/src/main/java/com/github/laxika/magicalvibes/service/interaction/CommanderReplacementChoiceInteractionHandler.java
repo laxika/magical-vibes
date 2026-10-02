@@ -19,7 +19,10 @@ public class CommanderReplacementChoiceInteractionHandler implements Interaction
         game.pendingCommanderZoneMoves.remove(move);
         game.interaction.clearAwaitingInput();
         boolean accepted = ((InteractionAnswer.MayAbilityChosen) answer).accepted();
-        if (accepted) game.playerCommandZones.computeIfAbsent(move.ownerId(), id -> new ArrayList<>()).add(move.card());
+        if (accepted) {
+            game.playerCommandZones.computeIfAbsent(move.ownerId(), id -> new ArrayList<>()).add(move.card());
+            triggers.checkYourCommanderPutIntoCommandZoneTriggers(game, move.card(), move.ownerId());
+        }
         else {
             game.completingCommanderZoneMove = move.card().getId();
             try {

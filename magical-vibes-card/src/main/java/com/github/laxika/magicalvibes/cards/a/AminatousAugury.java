@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastOnePer
 @CardRegistration(set = "CMM", collectorNumber = "73")
 @CardRegistration(set = "CMM", collectorNumber = "479")
 @CardRegistration(set = "DSC", collectorNumber = "71")
+@CardRegistration(set = "C18", collectorNumber = "6")
 public class AminatousAugury extends Card {
 
     public AminatousAugury() {

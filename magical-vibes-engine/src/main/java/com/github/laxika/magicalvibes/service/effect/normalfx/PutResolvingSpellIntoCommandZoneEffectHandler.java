@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutResolvingSpellIntoCommandZoneEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ import java.util.List;
 public class PutResolvingSpellIntoCommandZoneEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +38,8 @@ public class PutResolvingSpellIntoCommandZoneEffectHandler implements NormalEffe
                 entry.getOwnerId(), ignored -> new ArrayList<>());
         commandZone.removeIf(commandZoneCard -> commandZoneCard.getId().equals(card.getId()));
         commandZone.add(card);
+        triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(
+                gameData, card, entry.getOwnerId());
         entry.setSpellDispositionHandled(true);
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is put into its owner's command zone."));

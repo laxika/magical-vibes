@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "150")
+@CardRegistration(set = "C18", collectorNumber = "202")
 public class DarksteelJuggernaut extends Card {
 
     public DarksteelJuggernaut() {

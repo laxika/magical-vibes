@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "104")
+@CardRegistration(set = "C18", collectorNumber = "10")
 public class LoyalDrake extends Card {
 
     public LoyalDrake() {

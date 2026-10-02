@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.NameCardMillTargetDrawEffect;
 
 @CardRegistration(set = "ODY", collectorNumber = "94")
 @CardRegistration(set = "SLD", collectorNumber = "2156")
+@CardRegistration(set = "C18", collectorNumber = "98")
 public class Predict extends Card {
 
     public Predict() {

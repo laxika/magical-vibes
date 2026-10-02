@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 
 @CardRegistration(set = "THS", collectorNumber = "191")
 @CardRegistration(set = "NCC", collectorNumber = "335")
+@CardRegistration(set = "C18", collectorNumber = "173")
 public class DaxosOfMeletis extends Card {
 
     public DaxosOfMeletis() {

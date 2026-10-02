@@ -591,6 +591,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         for (Card leaving : target.cardsLeavingBattlefield()) {
             gameData.playerCommandZones.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).add(leaving);
+            triggerCollectionService.checkYourCommanderPutIntoCommandZoneTriggers(gameData, leaving, ownerId);
         }
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleExileReturnOnLeave(gameData, target);
@@ -2056,7 +2057,7 @@ public class PermanentRemovalService {
                         may, null, opponentExileReplacement.sourcePermanentId());
             } else if (whenExiledEffect != null) {
                 resolveMandatoryOpponentExileRider(gameData, opponentExileReplacement, whenExiledEffect,
-                        wasCreature && exiledFromBattlefield > 0);
+                        wasCreature && exiledFromBattlefield > 0, dyingPowerAtDeath);
             }
         }
         graveyardService.notifyCardsExiledFromBattlefield(
@@ -2130,6 +2131,8 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkAllyCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
+                    triggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers(
+                            gameData, controllerId, target);
                     triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                     triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
@@ -2189,7 +2192,7 @@ public class PermanentRemovalService {
 
     private void resolveMandatoryOpponentExileRider(
             GameData gameData, OpponentDyingCreatureExileReplacement replacement,
-            CardEffect rider, boolean creatureExiled) {
+            CardEffect rider, boolean creatureExiled, int dyingPowerAtDeath) {
         if (!creatureExiled) {
             return;
         }
@@ -2206,6 +2209,7 @@ public class PermanentRemovalService {
                 new ArrayList<>(List.of(rider)),
                 0,
                 replacement.sourcePermanentId());
+        riderEntry.setEventValue(Math.max(0, dyingPowerAtDeath));
         handler.resolve(gameData, riderEntry, rider);
     }
 

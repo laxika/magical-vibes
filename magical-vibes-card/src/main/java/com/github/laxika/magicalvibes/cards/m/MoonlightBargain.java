@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "RAV", collectorNumber = "95")
+@CardRegistration(set = "C18", collectorNumber = "114")
 public class MoonlightBargain extends Card {
 
     public MoonlightBargain() {

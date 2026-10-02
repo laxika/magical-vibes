@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 @CardRegistration(set = "DDL", collectorNumber = "34")
 @CardRegistration(set = "C13", collectorNumber = "309")
 @CardRegistration(set = "C15", collectorNumber = "295")
+@CardRegistration(set = "C18", collectorNumber = "270")
 public class NewBenalia extends Card {
 
     public NewBenalia() {
