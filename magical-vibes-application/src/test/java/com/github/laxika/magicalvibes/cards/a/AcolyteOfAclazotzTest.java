@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AcolyteOfAclazotz.class, GrizzlyBears.class, Millstone.class})
@@ -48,6 +49,67 @@ class AcolyteOfAclazotzTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The sacrifice and tap costs are paid before the life changes resolve")
+    void paysCostsBeforeResolution() {
+        addReadyAcolyte();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Acolyte cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefieldAndReturn(player1, new AcolyteOfAclazotz()).setSummoningSick(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Acolyte cannot activate its tap ability")
+    void cannotActivateWhileTapped() {
+        addReadyAcolyte();
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        harness.addToBattlefield(player1, new Millstone());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Millstone");
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled creatures and artifacts cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsPermanents() {
+        addReadyAcolyte();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Millstone());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Millstone");
     }
 
     private void addReadyAcolyte() {
