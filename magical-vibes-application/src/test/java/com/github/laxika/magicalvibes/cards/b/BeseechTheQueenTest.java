@@ -23,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         BriarberryCohort.class, KulrathKnight.class})
 class BeseechTheQueenTest extends BaseCardTest {
 
-    // ===== Mana-value bound driven by lands controlled =====
-
     @Test
     @DisplayName("Bound equals lands controlled: with 2 lands, only cards with MV <= 2 are offered (any card type)")
     void boundEqualsLandsControlled() {
@@ -36,7 +34,7 @@ class BeseechTheQueenTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // Library: Plains (MV 0), Goldenglow Moth (MV 1), Briarberry Cohort (MV 2), Kulrath Knight (MV 5).
-        // 2 lands controlled → MV <= 2: Plains, Goldenglow Moth, Briarberry Cohort. The land IS eligible
+        // With 2 lands, Plains, Goldenglow Moth, and Briarberry Cohort are eligible.
         // (null filter = any card), unlike Citanul Flute / Green Sun's Zenith which filter by type.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Goldenglow Moth", "Briarberry Cohort");
@@ -87,8 +85,6 @@ class BeseechTheQueenTest extends BaseCardTest {
                 .anyMatch(entry -> entry.contains("finds no card with mana value"));
     }
 
-    // ===== Choosing / revealing =====
-
     @Test
     @DisplayName("Chosen card is revealed, put into hand, and library shuffled")
     void chosenCardGoesToHand() {
@@ -111,8 +107,6 @@ class BeseechTheQueenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Fail to find =====
-
     @Test
     @DisplayName("Search can fail to find; choosing index -1 takes nothing and just shuffles")
     void canFailToFind() {
@@ -133,16 +127,12 @@ class BeseechTheQueenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== No match =====
-
     @Test
     @DisplayName("When no card is within the bound, shuffles and logs no match")
     void noEligibleCardShufflesAndLogs() {
         castBeseech(0); // bound 0
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GoldenglowMoth(), new BriarberryCohort())); // lowest MV is 1
+        harness.setLibrary(player1, List.of(new GoldenglowMoth(), new BriarberryCohort()));
 
         harness.passBothPriorities();
 
@@ -151,7 +141,69 @@ class BeseechTheQueenTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no card with mana value"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Land count is evaluated when the spell resolves")
+    void usesLandCountAtResolution() {
+        castBeseech(1);
+        harness.setLibrary(player1, List.of(new BriarberryCohort(), new KulrathKnight()));
+        harness.addToBattlefield(player1, new Plains());
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).extracting(Card::getName).containsExactly("Briarberry Cohort");
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Briarberry Cohort");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals Briarberry Cohort"));
+    }
+
+    @Test
+    @DisplayName("Searching an empty library finishes without a choice")
+    void emptyLibraryFinishesSearch() {
+        castBeseech(2);
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Three black mana can pay all three hybrid symbols")
+    void canPayWithThreeBlackMana() {
+        harness.setHand(player1, List.of(new BeseechTheQueen()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Plains");
+    }
+
+    @Test
+    @DisplayName("Six colorless mana can pay all three hybrid symbols")
+    void canPayWithSixColorlessMana() {
+        harness.setHand(player1, List.of(new BeseechTheQueen()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castSorcery(player1, 0);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Plains");
+    }
 
     private void castBeseech(int landsControlled) {
         for (int i = 0; i < landsControlled; i++) {
@@ -163,9 +215,7 @@ class BeseechTheQueenTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // Plains: MV 0 (land), Goldenglow Moth: MV 1, Briarberry Cohort: MV 2, Kulrath Knight: MV 5
-        deck.addAll(List.of(new Plains(), new GoldenglowMoth(), new BriarberryCohort(), new KulrathKnight()));
+        harness.setLibrary(player1, List.of(new Plains(), new GoldenglowMoth(),
+                new BriarberryCohort(), new KulrathKnight()));
     }
 }
