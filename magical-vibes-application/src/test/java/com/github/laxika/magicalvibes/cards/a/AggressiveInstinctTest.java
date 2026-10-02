@@ -23,8 +23,7 @@ class AggressiveInstinctTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AggressiveInstinct()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         assertThat(source.getMarkedDamage()).isZero();
@@ -51,5 +50,58 @@ class AggressiveInstinctTest extends BaseCardTest {
                 List.of(opposingSource.getId(), opposingTarget.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    void cannotOmitTheOpposingCreatureTarget() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AggressiveInstinct()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastWhenNoOpposingCreatureExists() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AggressiveInstinct()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void lethalDamagePutsOnlyTheVictimIntoTheGraveyard() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AggressiveInstinct()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void dealsNoDamageWhenTheSourceLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AggressiveInstinct()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, source));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }
