@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DeterminedIteration.class)
+@CardUsed({DeterminedIteration.class})
 class DeterminedIterationTest extends BaseCardTest {
 
     @Test
@@ -91,6 +91,56 @@ class DeterminedIterationTest extends BaseCardTest {
         assertThat(soldierTokens(player1)).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Populate cannot copy an opponent's creature token")
+    void ignoresOpponentsCreatureTokens() {
+        harness.addToBattlefield(player1, new DeterminedIteration());
+        harness.addToBattlefield(player2, soldierToken());
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(soldierTokens(player1)).isEmpty();
+        assertThat(soldierTokens(player2)).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A populated token chosen through a prompt is sacrificed, leaving both originals")
+    void promptedCopyIsSacrificedWithoutSacrificingOriginals() {
+        harness.addToBattlefield(player1, new DeterminedIteration());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, soldierToken());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, anotherToken());
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, original.getId());
+        resolveAllTriggers();
+        assertThat(soldierTokens(player1)).hasSize(2);
+
+        advanceToEndStep(player1);
+
+        assertThat(soldierTokens(player1)).containsExactly(original);
+        assertThat(anotherTokens(player1)).containsExactly(other);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice survives Determined Iteration leaving the battlefield")
+    void sacrificeStillOccursAfterEnchantmentLeavesBattlefield() {
+        Permanent iteration = harness.addToBattlefieldAndReturn(player1, new DeterminedIteration());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, soldierToken());
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+        assertThat(soldierTokens(player1)).hasSize(2);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, iteration);
+
+        advanceToEndStep(player1);
+
+        assertThat(soldierTokens(player1)).containsExactly(original);
+    }
+
     private List<Permanent> soldierTokens(Player player) {
         return findPermanents(player, "Soldier Token").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -106,15 +156,13 @@ class DeterminedIterationTest extends BaseCardTest {
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void advanceToEndStep(Player activePlayer) {
         gd.interaction.clearAwaitingInput();
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
         resolveAllTriggers();
     }
