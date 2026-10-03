@@ -39,6 +39,8 @@ class ArchelosLagoonMysticTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleListChoice(player1, "Tapped");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
     }
 
     @Test
@@ -74,6 +76,8 @@ class ArchelosLagoonMysticTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleListChoice(player1, "Untapped");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
     }
 
     @Test

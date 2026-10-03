@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -97,6 +98,26 @@ class ArmguardFamiliarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Armguard Familiar");
         harness.assertInGraveyard(player2, "Shock");
         assertThat(armguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed(Naturalize.class)
+    void attachedFamiliarRetainsItsOwnWard() {
+        Permanent armguard = addReadyArmguard(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        armguard.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, armguard.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Armguard Familiar");
+        harness.assertInGraveyard(player2, "Naturalize");
+        assertThat(armguard.getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test

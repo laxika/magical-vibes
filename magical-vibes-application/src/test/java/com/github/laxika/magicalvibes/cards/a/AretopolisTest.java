@@ -74,11 +74,11 @@ class AretopolisTest extends BaseCardTest {
         int beforeHand = gd.playerHands.get(player1.getId()).size();
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(source.getCounters()).containsEntry(CounterType.SCROLL, 10);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 10);
-        assertThat(gd.planechase.faceUp).containsExactly(source);
+        assertThat(gd.planechase.faceUp).extracting(PlanarObject::getId).containsExactly(source.getId());
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -106,10 +106,10 @@ class AretopolisTest extends BaseCardTest {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.inMutationScope(() -> planar.planeswalk(gd));
 
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 1);
 
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 3);
     }

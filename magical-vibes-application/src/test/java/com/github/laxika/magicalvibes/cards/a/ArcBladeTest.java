@@ -70,6 +70,7 @@ class ArcBladeTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -89,6 +90,7 @@ class ArcBladeTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

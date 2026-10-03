@@ -554,15 +554,33 @@ public class MayMiscHandlerService {
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         if (accepted && !deck.isEmpty()) {
-            Card topCard = deck.removeFirst();
+            Card topCard = deck.getFirst();
+            if (topCard.isAura()) {
+                List<UUID> permanentIds = gameData.orderedPlayerIds.stream()
+                        .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
+                        .filter(candidate -> auraAttachmentService.canEnchant(gameData, topCard, controllerId, candidate))
+                        .map(Permanent::getId).toList();
+                List<UUID> playerIds = topCard.isEnchantPlayer() ? gameData.orderedPlayerIds.stream()
+                        .filter(playerId -> auraAttachmentService.canEnchantPlayer(gameData, topCard, controllerId, playerId))
+                        .toList() : List.of();
+                if (permanentIds.isEmpty() && playerIds.isEmpty()) {
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                deck.removeFirst();
+                gameData.interaction.setPendingAuraCard(topCard);
+                gameData.interaction.setPendingAuraOwnerId(controllerId);
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, permanentIds, playerIds,
+                        "Choose what " + topCard.getName() + " enchants as it enters.");
+                return;
+            }
+            deck.removeFirst();
             Permanent perm = new Permanent(topCard, Zone.LIBRARY);
             if (enterTapped) {
                 perm.tap();
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            if (topCard.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
-            }
+            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, topCard, null, false);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield from the top of their library",

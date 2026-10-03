@@ -45,7 +45,7 @@ public class AshiokNightmareWeaver extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new ExileAllOpponentsHandsEffect(),
-                        new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)),
+                        ExileGraveyardCardsEffect.allOpponentsWithSource()),
                 "\u221210: Exile all cards from all opponents' hands and graveyards."
         ));
     }

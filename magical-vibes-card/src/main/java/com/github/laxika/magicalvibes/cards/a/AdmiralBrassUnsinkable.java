@@ -26,18 +26,17 @@ public class AdmiralBrassUnsinkable extends Card {
     public AdmiralBrassUnsinkable() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(4, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                ReturnCardFromGraveyardEffect.builder()
+                new com.github.laxika.magicalvibes.model.effect.MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardSubtypePredicate(CardSubtype.PIRATE))))
                         .targetGraveyard(true)
-                        .upTo(true)
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
                         .grantHaste(true)
                         .battlefieldEffectGrants(List.of(
                                 SetBasePowerToughnessEffect.indefinitely(4, 4)))
-                        .build());
+                        .build(), "Return the targeted Pirate card?"));
     }
 }

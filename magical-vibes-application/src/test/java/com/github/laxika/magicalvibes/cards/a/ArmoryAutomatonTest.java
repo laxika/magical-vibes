@@ -30,6 +30,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownEquipment.getId());
         harness.handlePermanentChosen(player1, opposingEquipment.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent automaton = findPermanent(player1, "Armory Automaton");
         assertThat(ownEquipment.getAttachedTo()).isEqualTo(automaton.getId());
@@ -51,6 +52,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ownEquipment.getId());
         harness.handlePermanentChosen(player1, opposingEquipment.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownEquipment.getAttachedTo()).isEqualTo(automaton.getId());
         assertThat(opposingEquipment.getAttachedTo()).isEqualTo(automaton.getId());
@@ -169,7 +171,10 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, equipment.get(99).getId());
         harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, true);
+            harness.withAutoStop(gd.currentStep, () -> {
+                harness.clearPriorityPassed();
+                harness.handleMayAbilityChosen(player1, true);
+            });
         }
 
         assertThat(equipment).allSatisfy(item -> assertThat(item.getAttachedTo()).isEqualTo(automaton.getId()));

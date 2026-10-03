@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfExiledCardAttackingOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -37,7 +37,7 @@ public class AngelOfIndemnity extends Card {
                 "{6}{W}{W}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new CreateTokenCopiesOfExiledCardAttackingOpponentsEffect(true)
+                        new EncoreEffect()
                 ),
                 "Encore {6}{W}{W}",
                 ActivationTimingRestriction.SORCERY_SPEED

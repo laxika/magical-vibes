@@ -874,7 +874,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (!(effect instanceof IncreaseOpponentLifeCostForTargetingControlledPermanentEffect taxEffect)) {
                         continue;
                     }
@@ -1114,7 +1114,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     ActivatedAbilityCostIncreasingEffect taxEffect = null;
                     if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
                         taxEffect = directTax;
@@ -1148,7 +1148,7 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     ActivatedAbilityCostIncreasingEffect taxEffect = null;
                     if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
                         taxEffect = directTax;
@@ -1220,7 +1220,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof ActivatedAbilityAdditionalCostEffect additionalCost
                             && predicateEvaluationService.matchesPermanentPredicate(
                                     sourcePermanent, additionalCost.affectedPermanents(),
@@ -1434,7 +1434,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     ActivatedAbilityCostReducingEffect reducingEffect = activeActivatedAbilityCostReducer(
                             gameData, effect, perm, pid);
                     if (reducingEffect != null
@@ -1563,7 +1563,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (!(effect instanceof AdditionalSacrificePerManaSymbolTaxEffect tax)) continue;
                     if (forSpell && !tax.taxesSpells()) continue;
                     if (forAbility && !tax.taxesActivatedAbilities()) continue;
@@ -1637,7 +1637,7 @@ public class CastingCostService {
         if (battlefield == null) return 0;
         int reduction = 0;
         for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 CardEffect activeEffect = effect;
                 while (activeEffect instanceof ConditionalEffect conditional) {
                     if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -1839,7 +1839,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
                             gameData, effect, perm, ownerId);
                     if (altCost != null
@@ -2000,7 +2000,7 @@ public class CastingCostService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return null;
         for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 AlternativeCostForSpellsEffect altCost = activeAlternativeCost(
                         gameData, effect, perm, playerId);
                 if (altCost != null
@@ -2631,7 +2631,7 @@ public class CastingCostService {
                 .orElse(false);
         int totalTax = 0;
         for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
                         && !perm.isFaceDown()
                         && !gameQueryService.hasLostAllAbilities(gameData, perm)
@@ -2681,7 +2681,7 @@ public class CastingCostService {
         int totalTax = 0;
         for (Permanent perm : defenderBattlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 if (effect instanceof DefenderAttackLifeCostEffect tax
                         && (!attackingPlaneswalker || tax.protectsPlaneswalkers())) {
                     totalTax += tax.lifeCost(attackingCreature);
@@ -2741,7 +2741,7 @@ public class CastingCostService {
 
         List<ManaColor> payments = new ArrayList<>();
         for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                 if (effect instanceof RequirePhyrexianPaymentToAttackEffect tax) {
                     payments.add(tax.color());
                 }

@@ -39,7 +39,7 @@ public class SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffectHandler
         SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffect sacrifice =
                 (SacrificeTargetPermanentAtEndStepIfManaValueAtMostEffect) effect;
         gameData.queueDelayedAction(new DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtMost(
-                target.getId(), entry.getControllerId(), sacrifice.maxManaValue()));
+                target.getId(), entry.getControllerId(), sacrifice.maxManaValue(), entry.getCard()));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " will be sacrificed at the beginning of the next end step if its mana value is "
                         + sacrifice.maxManaValue() + " or less."));

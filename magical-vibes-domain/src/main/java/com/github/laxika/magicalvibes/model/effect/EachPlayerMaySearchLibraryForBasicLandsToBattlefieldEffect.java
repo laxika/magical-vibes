@@ -11,8 +11,17 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * <p>Used by New Frontiers, Natural Balance, and Veteran Explorer.
  */
 public record EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(DynamicAmount count,
-                                                                           boolean enterTapped)
+                                                                           boolean enterTapped, boolean optionalSearch)
         implements CardEffect {
+
+    public EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(DynamicAmount count, boolean enterTapped) {
+        this(count, enterTapped, true);
+    }
+
+    /** Requires the search, while still permitting failure to find cards with the required quality. */
+    public static EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect mandatory(int count) {
+        return new EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(new Fixed(count), false, false);
+    }
 
     public EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(int count) {
         this(new Fixed(count), false);

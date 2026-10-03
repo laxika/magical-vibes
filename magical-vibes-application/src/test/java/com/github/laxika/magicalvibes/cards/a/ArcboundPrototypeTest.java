@@ -130,7 +130,7 @@ class ArcboundPrototypeTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         harness.runStateBasedActions();
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextDeathTriggerTarget(gd));
 
         harness.assertInGraveyard(player1, "Arcbound Prototype");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

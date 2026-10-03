@@ -73,6 +73,7 @@ class AlexiosDeimosOfKosmosTest extends BaseCardTest {
         card.setOwnerId(player1.getId());
         Permanent alexios = addCreatureReady(player1, card);
         Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, jace.getCard().getLoyalty());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();

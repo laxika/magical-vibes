@@ -22,4 +22,9 @@ public record GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope scope, Perman
     public static GrantAllCreatureTypesToOwnCreaturesEffect toSelf() {
         return new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.SELF, null);
     }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
+    }
 }

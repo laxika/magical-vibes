@@ -278,12 +278,12 @@ class ArcheryTrainingTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
         assertThat(target.getMarkedDamage()).isEqualTo(1);
 
         creature.untap();
         harness.activateAbility(player1, 0, 1, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
         harness.assertInGraveyard(player2, "Capashen Templar");
     }
 

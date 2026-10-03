@@ -1666,6 +1666,7 @@ public class GraveyardReturnSupport {
         if (enterTapped) {
             permanent.tap();
         }
+        permanent.setEnteredFromZone(Zone.GRAVEYARD);
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         beforeEntry.accept(permanent);
         if (!losesAllAbilities) {
@@ -1968,7 +1969,7 @@ public class GraveyardReturnSupport {
         initializePlaneswalkerLoyalty(permanent, card);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (grantHaste) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         if (enterTapped) {
             permanent.tap();
@@ -2884,14 +2885,16 @@ public class GraveyardReturnSupport {
                     }
                 }
             }
-            int cardsPutIntoGraveyard = 0;
-            for (UUID cardId : otherPileCardIds) {
-                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
-                if (card != null) {
-                    gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
-                    cardsPutIntoGraveyard++;
-                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their graveyard."));
-                }
+            List<Card> graveyardPile = otherPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(card -> card.getId().equals(cardId))
+                            .findFirst().orElse(null))
+                    .filter(Objects::nonNull).toList();
+            List<Card> enteredGraveyard = graveyardService.addCardsFromLibraryToGraveyard(
+                    gameData, controllerId, graveyardPile);
+            int cardsPutIntoGraveyard = enteredGraveyard.size();
+            for (Card card : enteredGraveyard) {
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
+                        " into their graveyard."));
             }
             if (state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                     && gameData.pendingEffectResolutionEntry != null) {

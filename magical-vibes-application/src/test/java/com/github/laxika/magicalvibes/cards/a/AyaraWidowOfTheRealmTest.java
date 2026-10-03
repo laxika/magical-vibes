@@ -281,7 +281,8 @@ class AyaraWidowOfTheRealmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, gd.stack.getLast().getCard().getId());
-        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Flywheel Racer");

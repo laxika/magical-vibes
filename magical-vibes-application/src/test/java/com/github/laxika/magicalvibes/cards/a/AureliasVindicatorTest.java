@@ -82,6 +82,7 @@ class AureliasVindicatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Aurelia's Vindicator"));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);

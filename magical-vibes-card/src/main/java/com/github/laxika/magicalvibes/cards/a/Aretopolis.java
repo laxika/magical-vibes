@@ -18,15 +18,14 @@ public class Aretopolis extends Card {
     public Aretopolis() {
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
-                new GainLifeEffect(new CountersOnSource(CounterType.SCROLL)),
-                new PlaneswalkIfPlanarSourceHasCountersEffect(CounterType.SCROLL, 10)));
+                new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
-                new GainLifeEffect(new CountersOnSource(CounterType.SCROLL)),
-                new PlaneswalkIfPlanarSourceHasCountersEffect(CounterType.SCROLL, 10)));
+                new GainLifeEffect(new CountersOnSource(CounterType.SCROLL))));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.SCROLL),
-                new DrawCardEffect(new CountersOnSource(CounterType.SCROLL)),
-                new PlaneswalkIfPlanarSourceHasCountersEffect(CounterType.SCROLL, 10)));
+                new DrawCardEffect(new CountersOnSource(CounterType.SCROLL))));
+        addEffect(EffectSlot.STATE_TRIGGERED,
+                new PlaneswalkIfPlanarSourceHasCountersEffect(CounterType.SCROLL, 10));
     }
 }

@@ -6,5 +6,9 @@ import java.util.UUID;
  * At the beginning of the next end step, destroy the given permanent if it did not attack this
  * turn. Used by Norritt (single-target analogue of {@link DestroyNonAttackersAtEndStep}).
  */
-public record DestroyPermanentIfDidNotAttackAtEndStep(UUID permanentId) implements DelayedAction {
+public record DestroyPermanentIfDidNotAttackAtEndStep(UUID permanentId, UUID controllerId,
+        com.github.laxika.magicalvibes.model.Card sourceCard) implements DelayedAction {
+    public DestroyPermanentIfDidNotAttackAtEndStep(UUID permanentId) {
+        this(permanentId, null, null);
+    }
 }
