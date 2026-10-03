@@ -66,7 +66,7 @@ class CrashTest extends BaseCardTest {
     @DisplayName("A tapped Mountain can pay the alternate cost, which is paid before resolution")
     void sacrificesTappedMountainBeforeResolution() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BargainingTable());
         harness.setHand(player1, List.of(new Crash()));
 

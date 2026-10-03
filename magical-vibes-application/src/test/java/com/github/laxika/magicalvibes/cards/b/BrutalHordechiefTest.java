@@ -118,7 +118,7 @@ class BrutalHordechiefTest extends BaseCardTest {
         addCreatureReady(player2, new ArashinCleric());
         addCreatureReady(player2, new ArashinCleric());
         Permanent tappedBlocker = addCreatureReady(player2, new ArashinCleric());
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         activateBlockControl(ManaColor.WHITE, ManaColor.WHITE);
 
         declareAttackersToBlockers(player1, List.of(1));
@@ -160,7 +160,7 @@ class BrutalHordechiefTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_OF_COMBAT,
                 () -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 1))));
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);
-        attacker.setTapped(false);
+        attacker.untap();
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
 
         declareAttackersToBlockers(player1, List.of(1));
@@ -176,7 +176,7 @@ class BrutalHordechiefTest extends BaseCardTest {
     @DisplayName("A summoning-sick tapped Hordechief can activate its ability")
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent hordechief = harness.addToBattlefieldAndReturn(player1, new BrutalHordechief());
-        hordechief.setTapped(true);
+        hordechief.tap();
         addCreatureReady(player1, new ArashinCleric());
         addCreatureReady(player2, new ArashinCleric());
         activateBlockControl(ManaColor.WHITE, ManaColor.WHITE);

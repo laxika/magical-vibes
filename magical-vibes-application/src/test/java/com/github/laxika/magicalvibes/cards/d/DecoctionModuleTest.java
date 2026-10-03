@@ -96,8 +96,8 @@ class DecoctionModuleTest extends BaseCardTest {
     void eachModuleTriggersEvenWhenTapped() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new DecoctionModule());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new DecoctionModule());
-        first.setTapped(true);
-        second.setTapped(true);
+        first.tap();
+        second.tap();
         harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -126,7 +126,7 @@ class DecoctionModuleTest extends BaseCardTest {
     @Test
     void cannotActivateWhenModuleIsTapped() {
         Permanent module = harness.addToBattlefieldAndReturn(player1, new DecoctionModule());
-        module.setTapped(true);
+        module.tap();
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

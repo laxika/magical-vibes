@@ -70,9 +70,9 @@ class BloodKnightTest extends BaseCardTest {
         int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(knight);
 
         declareAttackersAndPrepareBlockers(player2, List.of(attackerIndex));
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> gs.declareBlockers(gd, player1,
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))));
-        harness.passUntil(player2, TurnStep.END_COMBAT);
+        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight);
         assertThat(knight.getMarkedDamage()).isZero();
@@ -88,9 +88,9 @@ class BloodKnightTest extends BaseCardTest {
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
 
         declareAttackersAndPrepareBlockers(List.of(attackerIndex));
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> gs.declareBlockers(gd, player2,
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))));
-        harness.passUntil(player1, TurnStep.END_COMBAT);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player1, "Blood Knight");
         harness.assertInGraveyard(player2, "Riptide Pilferer");

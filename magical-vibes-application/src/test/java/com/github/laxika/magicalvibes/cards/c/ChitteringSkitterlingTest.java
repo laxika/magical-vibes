@@ -85,7 +85,7 @@ class ChitteringSkitterlingTest extends BaseCardTest {
     void sacrificesAnotherCreatureWhileTappedAndSummoningSick() {
         Permanent skitterling = harness.addToBattlefieldAndReturn(player1, new ChitteringSkitterling());
         skitterling.setSummoningSick(true);
-        skitterling.setTapped(true);
+        skitterling.tap();
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ChitteringSkitterling());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new PropheticPrism()));

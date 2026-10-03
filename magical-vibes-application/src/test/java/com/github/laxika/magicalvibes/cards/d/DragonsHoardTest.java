@@ -96,7 +96,7 @@ class DragonsHoardTest extends BaseCardTest {
     @DisplayName("Each Dragon entry creates a separate trigger even while the Hoard is tapped")
     void multipleDragonEntriesTriggerWhileTapped() {
         Permanent hoard = harness.addToBattlefieldAndReturn(player1, new DragonsHoard());
-        hoard.setTapped(true);
+        hoard.tap();
 
         harness.enterBattlefieldAndReturn(player1, new DragonEgg());
         harness.enterBattlefieldAndReturn(player1, new DragonEgg());

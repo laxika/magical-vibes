@@ -239,7 +239,7 @@ class CircleOfDespairTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(victim.getMarkedDamage()).isZero();
 
-        hunter.setTapped(false);
+        hunter.untap();
         harness.activateAbility(player1, indexOf(player1, hunter), null, victim.getId());
         harness.passBothPriorities();
 

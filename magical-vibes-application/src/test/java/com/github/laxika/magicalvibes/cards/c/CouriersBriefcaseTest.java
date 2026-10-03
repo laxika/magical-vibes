@@ -91,7 +91,7 @@ class CouriersBriefcaseTest extends BaseCardTest {
     void tappedBriefcaseCannotActivate() {
         castBriefcase();
         Permanent briefcase = findPermanent(player1, "Courier's Briefcase");
-        briefcase.setTapped(true);
+        briefcase.tap();
         for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK, ManaColor.RED, ManaColor.GREEN)) {
             harness.addMana(player1, color, 1);
         }

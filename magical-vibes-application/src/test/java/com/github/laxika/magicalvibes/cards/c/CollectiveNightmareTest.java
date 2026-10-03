@@ -141,7 +141,7 @@ class CollectiveNightmareTest extends BaseCardTest {
     void tappedCreatureCannotConvoke() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DregRecycler());
         Permanent convoker = harness.addToBattlefieldAndReturn(player1, new DregRecycler());
-        convoker.setTapped(true);
+        convoker.tap();
         harness.setHand(player1, List.of(new CollectiveNightmare()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

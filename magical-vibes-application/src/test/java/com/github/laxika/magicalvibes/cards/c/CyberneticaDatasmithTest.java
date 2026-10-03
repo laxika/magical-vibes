@@ -108,7 +108,7 @@ class CyberneticaDatasmithTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(player1.getId(), player2.getId()));
         harness.passBothPriorities();
-        datasmith.setTapped(false);
+        datasmith.untap();
         Permanent robot = findPermanent(player2, "Robot");
         robot.setSummoningSick(false);
         declareAttackersAndPrepareBlockers(player2, List.of(0));
@@ -143,7 +143,7 @@ class CyberneticaDatasmithTest extends BaseCardTest {
     @Test
     void tappedDatasmithCannotActivateAgain() {
         Permanent datasmith = addCreatureReady(player1, new CyberneticaDatasmith());
-        datasmith.setTapped(true);
+        datasmith.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,

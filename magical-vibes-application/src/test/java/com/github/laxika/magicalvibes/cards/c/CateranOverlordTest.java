@@ -37,7 +37,7 @@ class CateranOverlordTest extends BaseCardTest {
     @Test
     void canRegenerateWhileTappedWithoutPayingMana() {
         Permanent overlord = addCreatureReady(player1, new CateranOverlord());
-        overlord.setTapped(true);
+        overlord.tap();
         Permanent fodder = addCreatureReady(player1, new CeremonialGuard());
 
         harness.activateAbility(player1, 0, null, null);

@@ -72,7 +72,7 @@ class CombineGuildmageTest extends BaseCardTest {
     void enterCounterEffectStacksAndSurvivesSourceLeaving() {
         Permanent guildmage = addCreatureReady(player1, new CombineGuildmage());
         activateEnterWithCounterAbility();
-        guildmage.setTapped(false);
+        guildmage.untap();
         activateEnterWithCounterAbility();
         gd.playerBattlefields.get(player1.getId()).remove(guildmage);
 

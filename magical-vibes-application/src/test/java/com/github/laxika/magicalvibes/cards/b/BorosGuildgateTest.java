@@ -101,7 +101,7 @@ class BorosGuildgateTest extends BaseCardTest {
     @DisplayName("An untapped noncreature Guildgate can produce mana on the turn it enters")
     void canProduceManaOnTurnItEntersAfterUntapping() {
         Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new BorosGuildgate());
-        guildgate.setTapped(false);
+        guildgate.untap();
         guildgate.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, 0, null, null);

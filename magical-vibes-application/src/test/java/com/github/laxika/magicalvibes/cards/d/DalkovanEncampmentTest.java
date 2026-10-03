@@ -176,7 +176,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         resolveTokenAttackTargetChoices();
         assertThat(warriorTokens()).hasSize(2);
 
-        attacker.setTapped(false);
+        attacker.untap();
         declareAttackers(List.of(1));
         resolveTokenAttackTargetChoices();
 

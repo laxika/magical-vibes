@@ -120,7 +120,7 @@ class CartelAristocratTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CartelAristocrat());
         aristocrat.setSummoningSick(true);
-        aristocrat.setTapped(true);
+        aristocrat.tap();
         harness.addToBattlefield(player1, new MillennialGargoyle());
 
         harness.activateAbility(player1, 0, null, null);

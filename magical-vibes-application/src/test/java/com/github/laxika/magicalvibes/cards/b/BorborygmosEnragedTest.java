@@ -174,7 +174,7 @@ class BorborygmosEnragedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         Permanent borborygmos = harness.addToBattlefieldAndReturn(player1, new BorborygmosEnraged());
         borborygmos.setSummoningSick(true);
-        borborygmos.setTapped(true);
+        borborygmos.tap();
         Card forest = new Forest();
         Card island = new Island();
         harness.setHand(player1, List.of(forest, island));

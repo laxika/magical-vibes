@@ -140,7 +140,7 @@ class DarksteelPendantTest extends BaseCardTest {
     @DisplayName("A tapped Pendant cannot activate or spend mana")
     void cannotActivateWhileTapped() {
         Permanent pendant = addReadyPendant();
-        pendant.setTapped(true);
+        pendant.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

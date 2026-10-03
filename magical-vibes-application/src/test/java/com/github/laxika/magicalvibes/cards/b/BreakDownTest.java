@@ -189,7 +189,7 @@ class BreakDownTest extends BaseCardTest {
     void tappedJunkCannotBeActivated() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
         cast(artifact.getId());
-        findPermanent(player1, "Junk").setTapped(true);
+        findPermanent(player1, "Junk").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

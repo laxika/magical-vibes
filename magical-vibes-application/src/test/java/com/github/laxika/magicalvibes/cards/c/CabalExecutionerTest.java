@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -134,7 +136,7 @@ class CabalExecutionerTest extends BaseCardTest {
     @Test
     void faceDownExecutionerDoesNotTriggerOnCombatDamage() {
         Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
-        executioner.setFaceDown(true);
+        executioner.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         executioner.setAttacking(true);
         addCreatureReady(player2, new ElvishWarrior());
 
@@ -150,7 +152,7 @@ class CabalExecutionerTest extends BaseCardTest {
     @Test
     void turningFaceUpBeforeCombatDamageEnablesSacrificeTrigger() {
         Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
-        executioner.setFaceDown(true);
+        executioner.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         executioner.setAttacking(true);
         addCreatureReady(player2, new ElvishWarrior());
         harness.forceActivePlayer(player1);

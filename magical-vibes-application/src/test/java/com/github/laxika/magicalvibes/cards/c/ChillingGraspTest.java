@@ -101,7 +101,7 @@ class ChillingGraspTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         castChillingGrasp(List.of(bears.getId()));
 
         harness.performUntapStep(player1);

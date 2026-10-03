@@ -81,7 +81,7 @@ class DonateTest extends BaseCardTest {
     @DisplayName("Control does not expire at end of turn and does not untap the permanent")
     void controlPersistsAndPreservesTappedState() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
-        target.setTapped(true);
+        target.tap();
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new Donate()));
         harness.addMana(player1, ManaColor.BLUE, 1);

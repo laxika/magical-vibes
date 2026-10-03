@@ -81,7 +81,7 @@ class CarrionFeederTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent feeder = harness.addToBattlefieldAndReturn(player1, new CarrionFeeder());
         feeder.setSummoningSick(true);
-        feeder.setTapped(true);
+        feeder.tap();
         Permanent egotist = addCreatureReady(player1, new ScornfulEgotist());
 
         harness.activateAbility(player1, 0, null, null);

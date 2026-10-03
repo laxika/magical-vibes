@@ -152,7 +152,7 @@ class CrowdsFavorTest extends BaseCardTest {
     @DisplayName("An already tapped creature cannot convoke Crowd's Favor")
     void tappedCreatureCannotConvoke() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FoundryStreetDenizen());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new CrowdsFavor()));
 
         assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0,

@@ -141,7 +141,7 @@ class CrackleWithPowerTest extends BaseCardTest {
     @Test
     void stillDealsFullDamageWhenAnotherTargetLeavesTheBattlefield() {
         var creature = harness.addToBattlefieldAndReturn(player2, new CampusGuide());
-        creature.setTapped(true);
+        creature.tap();
         harness.setLife(player2, 30);
         harness.setHand(player1, List.of(new CrackleWithPower()));
         harness.setHand(player2, List.of(new Expel()));
@@ -162,7 +162,7 @@ class CrackleWithPowerTest extends BaseCardTest {
     @Test
     void doesNotResolveWhenItsOnlyTargetLeavesTheBattlefield() {
         var creature = harness.addToBattlefieldAndReturn(player2, new CampusGuide());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new CrackleWithPower()));
         harness.setHand(player2, List.of(new Expel()));
         harness.addMana(player1, ManaColor.RED, 5);

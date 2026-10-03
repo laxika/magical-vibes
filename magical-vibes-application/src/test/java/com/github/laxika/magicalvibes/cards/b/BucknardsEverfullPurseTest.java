@@ -89,7 +89,7 @@ class BucknardsEverfullPurseTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent purse = harness.addToBattlefieldAndReturn(player1, new BucknardsEverfullPurse());
-        purse.setTapped(true);
+        purse.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

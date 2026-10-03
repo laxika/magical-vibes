@@ -131,7 +131,7 @@ class DrakeUmbraTest extends BaseCardTest {
     void armorIsNotRegeneration() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         attachUmbra(creature);
-        creature.setTapped(true);
+        creature.tap();
         creature.setCantRegenerateThisTurn(true);
         creature.setMarkedDamage(5);
 

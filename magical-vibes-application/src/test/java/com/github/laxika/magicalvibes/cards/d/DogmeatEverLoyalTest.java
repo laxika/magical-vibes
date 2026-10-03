@@ -174,7 +174,7 @@ class DogmeatEverLoyalTest extends BaseCardTest {
     @Test
     void junkCannotBeActivatedWhileTapped() {
         Permanent junk = createJunk();
-        junk.setTapped(true);
+        junk.tap();
         int junkIndex = gd.playerBattlefields.get(player1.getId()).indexOf(junk);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, junkIndex, null, null))

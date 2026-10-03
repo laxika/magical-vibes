@@ -92,7 +92,7 @@ class CausticTarTest extends BaseCardTest {
     @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
     void tappedLandCannotActivateAbility() {
         Permanent forest = attachedTar();
-        forest.setTapped(true);
+        forest.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

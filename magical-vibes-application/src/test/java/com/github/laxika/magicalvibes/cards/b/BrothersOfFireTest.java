@@ -162,7 +162,7 @@ class BrothersOfFireTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent brothers = harness.addToBattlefieldAndReturn(player1, new BrothersOfFire());
         brothers.setSummoningSick(true);
-        brothers.setTapped(true);
+        brothers.tap();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 2);

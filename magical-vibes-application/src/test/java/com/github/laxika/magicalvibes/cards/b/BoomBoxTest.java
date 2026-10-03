@@ -154,7 +154,7 @@ class BoomBoxTest extends BaseCardTest {
     @DisplayName("Requires an untapped Boom Box")
     void tappedSourceCannotActivate() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new BoomBox());
-        source.setTapped(true);
+        source.tap();
         addMana();
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of()))

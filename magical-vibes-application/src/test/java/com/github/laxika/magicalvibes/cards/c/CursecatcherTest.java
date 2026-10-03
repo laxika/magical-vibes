@@ -163,7 +163,7 @@ class CursecatcherTest extends BaseCardTest {
     @DisplayName("Tapped Cursecatcher can sacrifice itself to counter its controller's spell")
     void tappedCursecatcherCanCounterOwnSpell() {
         harness.addToBattlefield(player1, new Cursecatcher());
-        harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().tap();
         Shock shock = new Shock();
         harness.setHand(player1, List.of(shock));
         harness.addMana(player1, ManaColor.RED, 1);

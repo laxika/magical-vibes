@@ -32,7 +32,7 @@ class BoompileTest extends BaseCardTest {
     @DisplayName("A tapped Boompile cannot activate its ability")
     void tappedBoompileCannotActivate() {
         harness.addToBattlefield(player1, new Boompile());
-        findPermanent(player1, "Boompile").setTapped(true);
+        findPermanent(player1, "Boompile").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

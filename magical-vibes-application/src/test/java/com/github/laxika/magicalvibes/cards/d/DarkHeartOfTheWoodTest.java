@@ -69,7 +69,7 @@ class DarkHeartOfTheWoodTest extends BaseCardTest {
     @DisplayName("A tapped Forest is sacrificed immediately, before life is gained")
     void tappedForestIsPaidAsCostBeforeResolution() {
         harness.addToBattlefield(player1, new DarkHeartOfTheWood());
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

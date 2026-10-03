@@ -130,7 +130,7 @@ class ChampionOfRhonasTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(champion);
         gd.playerBattlefields.get(player2.getId()).add(champion);
         champion.setAttacking(false);
-        champion.setTapped(true);
+        champion.tap();
         harness.performUntapStep(player2);
 
         assertThat(champion.isTapped()).isFalse();

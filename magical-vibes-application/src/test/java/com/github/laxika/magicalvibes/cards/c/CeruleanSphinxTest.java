@@ -68,7 +68,7 @@ class CeruleanSphinxTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Sphinx can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new CeruleanSphinx());
-        sphinx.setTapped(true);
+        sphinx.tap();
         sphinx.setSummoningSick(true);
 
         harness.addMana(player1, ManaColor.BLUE, 1);

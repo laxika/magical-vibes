@@ -149,7 +149,7 @@ class BronzeWalrusTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent walrus = addCreatureReady(player1, new BronzeWalrus());
-        walrus.setTapped(true);
+        walrus.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

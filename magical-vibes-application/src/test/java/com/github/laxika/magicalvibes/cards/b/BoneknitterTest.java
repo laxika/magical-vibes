@@ -68,7 +68,7 @@ class BoneknitterTest extends BaseCardTest {
     @DisplayName("A tapped Boneknitter can repeatedly regenerate itself without untapping")
     void tappedBoneknitterCanRegenerateItselfRepeatedly() {
         Permanent boneknitter = harness.addToBattlefieldAndReturn(player1, new Boneknitter());
-        boneknitter.setTapped(true);
+        boneknitter.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

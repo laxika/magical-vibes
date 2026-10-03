@@ -121,6 +121,7 @@ class LibraryChoiceHandlerServiceTest {
                 murmursFromBeyondEffectHandler,
                 animalMagnetismEffectHandler,
                 memoriesReturningEffectHandler,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifoldInsightsEffectHandler.class),
                 mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),

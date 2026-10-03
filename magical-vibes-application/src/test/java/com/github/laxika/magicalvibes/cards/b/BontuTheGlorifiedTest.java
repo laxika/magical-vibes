@@ -149,7 +149,7 @@ class BontuTheGlorifiedTest extends BaseCardTest {
     @Test
     void sacrificeEnablesCombatBeforeAbilityResolvesAndEmptyLibraryStillDrains() {
         var bontu = addCreatureReady(player1, new BontuTheGlorified());
-        bontu.setTapped(true);
+        bontu.tap();
         harness.addToBattlefield(player1, new DuneBeetle());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -157,7 +157,7 @@ class BontuTheGlorifiedTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         harness.assertInGraveyard(player1, "Dune Beetle");
-        bontu.setTapped(false);
+        bontu.untap();
         assertThat(als.canAttack(gd, bontu, player1.getId())).isTrue();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
