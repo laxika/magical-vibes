@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DiscipleOfTheRing.class, Shock.class, RuneclawBear.class, Divination.class})
 class DiscipleOfTheRingTest extends BaseCardTest {
 
     private static final int COUNTER_ABILITY = 0;
@@ -108,7 +110,7 @@ class DiscipleOfTheRingTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        GrizzlyBears bears = new GrizzlyBears();
+        RuneclawBear bears = new RuneclawBear();
         harness.setHand(player2, List.of(bears));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
@@ -136,8 +138,7 @@ class DiscipleOfTheRingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(4);
@@ -150,7 +151,7 @@ class DiscipleOfTheRingTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, TAP_ABILITY, null, bears.getId());
         harness.handleGraveyardCardChosen(player1, 0);
@@ -168,7 +169,7 @@ class DiscipleOfTheRingTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears.tap();
 
         harness.activateAbility(player1, 0, UNTAP_ABILITY, null, bears.getId());
@@ -185,7 +186,7 @@ class DiscipleOfTheRingTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, TAP_ABILITY, null, bears.getId());
         harness.handleGraveyardCardChosen(player1, 0);
@@ -199,12 +200,127 @@ class DiscipleOfTheRingTest extends BaseCardTest {
     @DisplayName("Cannot activate without an instant or sorcery card in the graveyard")
     void cannotActivateWithoutInstantOrSorceryInGraveyard() {
         harness.addToBattlefield(player1, new DiscipleOfTheRing());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, TAP_ABILITY, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Disciple can activate repeatedly and its pump effects accumulate")
+    void tappedDiscipleCanPumpRepeatedly() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DiscipleOfTheRing());
+        disciple.tap();
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, PUMP_ABILITY, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, PUMP_ABILITY, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(disciple.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(6);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard cannot supply the exile cost")
+    void cannotExileFromOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new DiscipleOfTheRing());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, PUMP_ABILITY, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile cost alone does not allow activation without mana")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new DiscipleOfTheRing());
+        harness.setGraveyard(player1, List.of(new Shock()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, PUMP_ABILITY, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tap and untap modes cannot target a player")
+    void tapAndUntapRejectPlayerTarget() {
+        harness.addToBattlefield(player1, new DiscipleOfTheRing());
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, TAP_ABILITY, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, UNTAP_ABILITY, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile cost is paid immediately and is not refunded when the target dies")
+    void exileCostRemainsPaidWhenTargetDies() {
+        harness.addToBattlefield(player1, new DiscipleOfTheRing());
+        Shock costCard = new Shock();
+        harness.setGraveyard(player1, List.of(costCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, TAP_ABILITY, null, bear.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertNotInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(costCard);
+        assertThat(bear.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(costCard);
+    }
+
+    @Test
+    @DisplayName("Counter mode cannot target an activated ability on the stack")
+    void counterModeRejectsActivatedAbility() {
+        harness.addToBattlefield(player1, new DiscipleOfTheRing());
+        harness.addToBattlefield(player2, new DiscipleOfTheRing());
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, PUMP_ABILITY, null, null);
+        harness.handleGraveyardCardChosen(player2, 0);
+        var abilityId = gd.stack.getLast().getTargetableId();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, COUNTER_ABILITY, null, abilityId, Zone.STACK))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.stack).hasSize(1);
     }
 }
