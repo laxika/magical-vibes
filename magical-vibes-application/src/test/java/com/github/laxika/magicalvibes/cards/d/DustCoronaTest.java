@@ -69,6 +69,36 @@ class DustCoronaTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Dust Corona can enchant an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new DustCorona()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Dust Corona");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dust Corona does not prevent flying creatures from blocking other attackers")
+    void flyingCreatureCanBlockUnenchantedAttacker() {
+        Permanent enchantedAttacker = addAttacker();
+        attachDustCorona(enchantedAttacker);
+        Permanent unenchantedAttacker = addAttacker();
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GossamerPhantasm());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, unenchantedAttacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttacker() {
         Permanent attacker = addCreatureReady(player1, new ProdigalPyromancer());
         attacker.setAttacking(true);
