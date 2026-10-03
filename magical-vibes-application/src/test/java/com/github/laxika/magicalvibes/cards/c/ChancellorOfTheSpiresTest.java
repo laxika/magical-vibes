@@ -6,16 +6,18 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.cards.a.Artillerize;
+import com.github.laxika.magicalvibes.cards.n.NoxiousRevival;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.CardUsedExtension;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +25,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
+@ExtendWith(CardUsedExtension.class)
+@CardUsed({ChancellorOfTheSpires.class, Shock.class, GrizzlyBears.class,
+        CounselOfTheSoratami.class, Artillerize.class, NoxiousRevival.class})
 class ChancellorOfTheSpiresTest {
 
     protected GameTestHarness harness;
     protected Player player1;
     protected Player player2;
-    protected GameService gs;
-    protected GameQueryService gqs;
     protected GameData gd;
 
     @BeforeEach
@@ -37,91 +40,80 @@ class ChancellorOfTheSpiresTest {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
     }
 
-    // ===== Opening hand trigger: mill =====
-
     @Test
-    @DisplayName("Chancellor in opening hand prompts may ability at first upkeep")
-    void openingHandTriggerPromptsMayAbility() {
+    @DisplayName("Chancellor reveal is chosen before the first turn, without using the stack")
+    void openingHandRevealIsPregameChoice() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
-
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("CR 603.5: MayEffect triggered ability goes on the stack at first upkeep")
-    void mayEffectGoesOnStackAtFirstUpkeep() {
+    @DisplayName("Accepting the pregame reveal creates a mandatory first-upkeep trigger")
+    void revealedChancellorTriggersAtFirstUpkeep() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
 
-        // CR 603.5: MayEffect goes on the stack immediately (not as a pending may ability)
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chancellor of the Spires");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(ChancellorOfTheSpires.class);
     }
 
     @Test
-    @DisplayName("Resolving Chancellor opening hand trigger mills opponent 7 cards")
+    @DisplayName("Revealed Chancellor mills seven automatically when its upkeep trigger resolves")
     void openingHandTriggerMillsOpponent() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
-
-        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
-
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
-        harness.passBothPriorities();
-
-        // Accept — inner effect resolves inline
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
         harness.handleMayAbilityChosen(player1, true);
 
-        int deckSizeAfter = gd.playerDecks.get(player2.getId()).size();
-        assertThat(deckSizeBefore - deckSizeAfter).isEqualTo(7);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSizeGreaterThanOrEqualTo(7);
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+        int graveyardSizeBefore = gd.playerGraveyards.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 7);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardSizeBefore + 7);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Declining Chancellor reveal does not mill opponent")
+    @DisplayName("Declining the pregame reveal creates no upkeep trigger and mills nothing")
     void decliningRevealDoesNotMill() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.skipMulligan();
-
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
-
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
-        harness.passBothPriorities();
+        harness.skipMulligan();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
 
         harness.handleMayAbilityChosen(player1, false);
 
-        int deckSizeAfter = gd.playerDecks.get(player2.getId()).size();
-        assertThat(deckSizeBefore).isEqualTo(deckSizeAfter);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
     }
 
     @Test
-    @DisplayName("Chancellor stays in hand after opening hand trigger")
+    @DisplayName("Chancellor stays in hand after revealing it and resolving its upkeep trigger")
     void chancellorRemainsInHandAfterTrigger() {
         harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
         harness.skipMulligan();
-
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        // Accept — inner effect resolves inline
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chancellor of the Spires"));
+        harness.assertInHand(player1, "Chancellor of the Spires");
     }
-
-    // ===== ETB: cast from opponent's graveyard =====
 
     @Test
     @DisplayName("ETB with instant/sorcery in opponent's graveyard prompts graveyard choice")
@@ -132,9 +124,7 @@ class ChancellorOfTheSpiresTest {
         harness.setGraveyard(player2, List.of(new Shock()));
 
         // Cast Chancellor
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature spell → ETB → graveyard choice
 
         // Should be prompting for graveyard choice
@@ -151,9 +141,7 @@ class ChancellorOfTheSpiresTest {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(shock, bears));
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities();
 
         // Only Shock should be selectable (instant), not Grizzly Bears (creature)
@@ -170,11 +158,7 @@ class ChancellorOfTheSpiresTest {
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setGraveyard(player2, List.of(counsel));
 
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select the Counsel of the Soratami from graveyard
@@ -185,9 +169,7 @@ class ChancellorOfTheSpiresTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // resolve the cast Counsel of the Soratami
 
-        // Player1 should have drawn 2 cards from Counsel of the Soratami
-        // handSizeBefore was after Chancellor left hand (cast), so hand is empty
-        // Then drew 2 cards from Counsel = 2
+        // The Chancellor left the hand, then the sorcery drew two cards.
         assertThat(gd.playerHands.get(player1.getId()).size()).isGreaterThanOrEqualTo(2);
     }
 
@@ -200,14 +182,11 @@ class ChancellorOfTheSpiresTest {
         harness.setGraveyard(player2, List.of(shock));
 
         // Add a creature for Shock to target
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         harness.setLife(player2, 20);
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select Shock from opponent's graveyard
@@ -225,8 +204,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve Shock → deals 2 damage to Grizzly Bears
 
         // Grizzly Bears (2/2) should be destroyed by 2 damage
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -237,9 +215,7 @@ class ChancellorOfTheSpiresTest {
         Shock shock = new Shock();
         harness.setGraveyard(player2, List.of(shock));
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
@@ -249,8 +225,7 @@ class ChancellorOfTheSpiresTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Shock should still be in opponent's graveyard
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+        harness.assertInGraveyard(player2, "Shock");
     }
 
     @Test
@@ -261,9 +236,7 @@ class ChancellorOfTheSpiresTest {
         // Only creature in opponent's graveyard — no valid targets
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature → ETB
 
         // No graveyard choice should be prompted
@@ -275,9 +248,7 @@ class ChancellorOfTheSpiresTest {
     void etbWithEmptyOpponentGraveyardDoesNotPrompt() {
         harness.skipMulligan();
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities();
 
         // No graveyard choice should be prompted
@@ -292,9 +263,7 @@ class ChancellorOfTheSpiresTest {
         Shock shock = new Shock();
         harness.setGraveyard(player2, List.of(shock));
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
         // Select Shock
@@ -320,12 +289,116 @@ class ChancellorOfTheSpiresTest {
         harness.setGraveyard(player1, List.of(shock));
         harness.setGraveyard(player2, List.of());
 
-        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
-        harness.addMana(player1, ManaColor.BLUE, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
         harness.passBothPriorities();
 
         // No graveyard choice should be prompted (only own cards, not opponent's)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A cast opponent-owned spell returns to that opponent's graveyard")
+    void castSpellReturnsToOwnersGraveyard() {
+        harness.skipMulligan();
+        Shock shock = new Shock();
+        harness.setGraveyard(player2, List.of(shock));
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Chancellor cannot cast Artillerize when its mandatory sacrifice cannot be paid")
+    void cannotCastSpellWithUnpayableAdditionalCost() {
+        harness.skipMulligan();
+        Artillerize artillerize = new Artillerize();
+        ChancellorOfTheSpires chancellor = new ChancellorOfTheSpires();
+        harness.setGraveyard(player2, List.of(artillerize));
+        harness.castFromHand(player1, chancellor, "{4}{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(artillerize.getId()));
+
+        // The creature leaves before its triggered ability resolves.
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(chancellor));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(artillerize.getId()));
+        harness.assertInGraveyard(player2, "Artillerize");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Chancellor casts Noxious Revival with a graveyard card as its target")
+    void castsSpellTargetingGraveyardCard() {
+        harness.skipMulligan();
+        NoxiousRevival revival = new NoxiousRevival();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(revival, bears));
+        harness.castFromHand(player1, new ChancellorOfTheSpires(), "{4}{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(revival.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(bears.getId());
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Noxious Revival");
+        harness.assertLife(player1, 20);
+    }
+    @Test
+    @DisplayName("Each revealed Chancellor creates its own seven-card mill trigger")
+    void multipleRevealedChancellorsMillSeparately() {
+        harness.setHand(player1, List.of(new ChancellorOfTheSpires(), new ChancellorOfTheSpires()));
+        harness.skipMulligan();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+        int graveyardSizeBefore = gd.playerGraveyards.get(player2.getId()).size();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 14);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardSizeBefore + 14);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opening-hand trigger mills all remaining cards when fewer than seven remain")
+    void openingHandTriggerMillsShortLibrary() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        GrizzlyBears third = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.setHand(player1, List.of(new ChancellorOfTheSpires()));
+        harness.skipMulligan();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second, third);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
