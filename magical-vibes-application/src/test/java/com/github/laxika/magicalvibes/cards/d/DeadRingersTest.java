@@ -51,8 +51,8 @@ class DeadRingersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Uses a departed target's last-known color and destroys the remaining target")
-    void usesDepartedTargetsLastKnownColor() {
+    @DisplayName("Does not destroy the remaining creature when one target leaves the battlefield")
+    void doesNothingWhenOneTargetLeavesBattlefield() {
         Permanent departed = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         castDeadRingersOnStack(List.of(departed.getId(), remaining.getId()));
@@ -62,15 +62,14 @@ class DeadRingersTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(remaining.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(remaining);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(remaining.getCard().getId()));
+                .noneMatch(card -> card.getId().equals(remaining.getCard().getId()));
     }
 
     @Test
-    @DisplayName("Uses the color of a target that becomes illegal before resolution")
-    void usesColorOfTargetThatBecomesIllegal() {
+    @DisplayName("Does not destroy either creature when one target becomes illegal")
+    void doesNothingWhenOneTargetBecomesIllegal() {
         Permanent illegalTarget = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         castDeadRingersOnStack(List.of(illegalTarget.getId(), remaining.getId()));
@@ -80,15 +79,14 @@ class DeadRingersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .contains(illegalTarget)
-                .noneMatch(permanent -> permanent.getId().equals(remaining.getId()));
+                .contains(illegalTarget, remaining);
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getId().equals(remaining.getCard().getId()));
+                .noneMatch(card -> card.getId().equals(remaining.getCard().getId()));
     }
 
     @Test
-    @DisplayName("Remembers a departed target's changed color rather than its printed color")
-    void remembersChangedColorOfDepartedTarget() {
+    @DisplayName("Does not use a departed target's changed color")
+    void doesNotUseChangedColorOfDepartedTarget() {
         Permanent departed = harness.addToBattlefieldAndReturn(player2, new SpectralLynx());
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
         castDeadRingersOnStack(List.of(departed.getId(), remaining.getId()));
@@ -101,8 +99,8 @@ class DeadRingersTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, departed));
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Coastal Drake");
-        harness.assertInGraveyard(player2, "Coastal Drake");
+        harness.assertOnBattlefield(player2, "Coastal Drake");
+        harness.assertNotInGraveyard(player2, "Coastal Drake");
     }
 
     @Test
@@ -174,6 +172,76 @@ class DeadRingersTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Checks colors on resolution rather than when cast")
+    void doesNothingWhenLegalTargetsColorsStopMatching() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        castDeadRingersOnStack(List.of(first.getId(), second.getId()));
+
+        harness.inMutationScope(() -> {
+            first.setColorOverridden(true);
+            first.getTransientColors().add(CardColor.RED);
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("Destroys targets whose colors become equal before resolution")
+    void destroysLegalTargetsWhoseColorsStartMatching() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CoastalDrake());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GaeasSkyfolk());
+        castDeadRingersOnStack(List.of(first.getId(), second.getId()));
+
+        harness.inMutationScope(() -> {
+            first.setColorOverridden(true);
+            first.getTransientColors().addAll(List.of(CardColor.BLUE, CardColor.GREEN));
+        });
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Coastal Drake");
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+    }
+
+    @Test
+    @DisplayName("Indestructible protects only that target")
+    void destroysOtherTargetWhenOneIsIndestructible() {
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        protectedCreature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        castDeadRingers(List.of(protectedCreature.getId(), other.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(protectedCreature).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(other.getCard().getId()))
+                .noneMatch(card -> card.getId().equals(protectedCreature.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Does not destroy a colored creature paired with a colorless creature")
+    void doesNothingWhenOnlyOneTargetIsColorless() {
+        harness.addToBattlefield(player2, new EmblazonedGolem());
+        harness.addToBattlefield(player2, new CoastalDrake());
+        List<UUID> targets = gd.playerBattlefields.get(player2.getId()).stream()
+                .map(Permanent::getId).toList();
+        castDeadRingers(targets);
+
+        harness.assertOnBattlefield(player2, "Emblazoned Golem");
+        harness.assertOnBattlefield(player2, "Coastal Drake");
+    }
+
+    @Test
+    @DisplayName("Requires two targets even when only one creature is available")
+    void cannotCastWithOnlyOneTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoastalDrake());
+        prepareDeadRingers();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
