@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosLord.class, BalduvianBears.class})
+@CardUsed({ChaosLord.class, BalduvianBears.class, TurnToFrog.class})
 class ChaosLordTest extends BaseCardTest {
 
     @Test
@@ -142,12 +143,58 @@ class ChaosLordTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack on the turn it entered the battlefield")
     void cannotAttackOnTheTurnItEntered() {
-        harness.setHand(player1, List.of(new ChaosLord()));
-        harness.addMana(player1, ManaColor.RED, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChaosLord(), "{4}{R}{R}{R}");
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Losing abilities removes the permission to attack while summoning sick")
+    void cannotAttackAfterLosingAbilities() {
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new ChaosLord());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, lord.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasLostPrintedAbilities(gd, lord)).isTrue();
+        assertThat(lord.isSummoningSick()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The new controller's upkeep can give Chaos Lord back to its owner")
+    void triggersForNewController() {
+        harness.addToBattlefield(player1, new ChaosLord());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chaos Lord");
+        harness.assertNotOnBattlefield(player2, "Chaos Lord");
+    }
+
+    @Test
+    @DisplayName("An even count at trigger time does not transfer control if it becomes odd")
+    void evenCountBecomingOddDoesNotChangeControl() {
+        harness.addToBattlefield(player1, new ChaosLord());
+        harness.addToBattlefield(player1, new BalduvianBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chaos Lord");
+        harness.assertNotOnBattlefield(player2, "Chaos Lord");
     }
 }
