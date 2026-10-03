@@ -24,6 +24,39 @@ class DimensionXTest extends BaseCardTest {
 
         Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(land.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Entry trigger gains life for the controller, not the opponent")
+    void entryTriggerGainsLifeForController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent land = harness.enterBattlefieldAndReturn(player2, new DimensionX());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("Entry trigger resolves even after the land leaves the battlefield")
+    void entryTriggerResolvesAfterLandLeaves() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DimensionX()));
+        harness.playLand(player1, 0);
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        harness.setGraveyard(player1, List.of(land.getCard()));
 
         harness.passBothPriorities();
 
@@ -50,12 +83,12 @@ class DimensionXTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
         assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new DimensionX());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DimensionX());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
         return land;
     }
 }
