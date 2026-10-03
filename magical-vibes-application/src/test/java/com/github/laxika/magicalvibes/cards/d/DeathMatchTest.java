@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.BarrenMoor;
 import com.github.laxika.magicalvibes.cards.b.BarkhideMauler;
 import com.github.laxika.magicalvibes.cards.c.CrudeRampart;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathMatch.class, BarkhideMauler.class, CrudeRampart.class, BarrenMoor.class})
+@CardUsed({DeathMatch.class, BarkhideMauler.class, CrudeRampart.class, BarrenMoor.class,
+        Opalescence.class})
 class DeathMatchTest extends BaseCardTest {
 
     @Test
@@ -40,9 +43,7 @@ class DeathMatchTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
@@ -124,5 +125,77 @@ class DeathMatchTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @CardUsed({DeathMatch.class, CrudeRampart.class, Opalescence.class})
+    void triggersOnItsOwnEntryWhenOpalescenceMakesItACreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CrudeRampart());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.castFromHand(player1, new DeathMatch(), "{3}{B}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({DeathMatch.class, CrudeRampart.class, Opalescence.class})
+    void anotherEnchantmentEnteringAsACreatureTriggers() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CrudeRampart());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new DeathMatch());
+        harness.castFromHand(player1, new Opalescence(), "{2}{W}{W}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void faceDownCreatureEntryTriggersAndMinusThreeToughnessPutsItInGraveyard() {
+        harness.addToBattlefield(player1, new DeathMatch());
+        harness.setHand(player1, List.of(new CrudeRampart()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown)
+                .findFirst().orElseThrow();
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(entering.getId());
+        harness.handlePermanentChosen(player1, entering.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(entering);
+        harness.assertInGraveyard(player1, "Crude Rampart");
     }
 }
