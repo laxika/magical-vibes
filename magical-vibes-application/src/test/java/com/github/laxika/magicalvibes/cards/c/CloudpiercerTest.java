@@ -55,4 +55,33 @@ class CloudpiercerTest extends BaseCardTest {
                 gd, cloudpiercer, List.of(cloudpiercer.getCard()), player1.getId()));
         resolveAllTriggers();
     }
+
+    @Test
+    void acceptingWithEmptyHandDoesNotDraw() {
+        Forest drawn = new Forest();
+        Permanent cloudpiercer = addCreatureReady(player1, new Cloudpiercer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        triggerMutation(cloudpiercer);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void castingNormallyDoesNotTriggerDiscardAndDraw() {
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.castFromHand(player1, new Cloudpiercer(), "{4}{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Cloudpiercer");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
