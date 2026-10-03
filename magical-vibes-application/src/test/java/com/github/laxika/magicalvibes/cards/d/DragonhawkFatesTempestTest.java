@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
+import com.github.laxika.magicalvibes.cards.t.TakeOutTheTrash;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DamageForCardsStillExiledAtNextEndStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -15,8 +18,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonhawkFatesTempest.class, AirElemental.class, Mountain.class})
+@CardUsed({DragonhawkFatesTempest.class, AirElemental.class, Mountain.class,
+        PullFromEternity.class, TakeOutTheTrash.class})
 class DragonhawkFatesTempestTest extends BaseCardTest {
 
     @Test
@@ -64,7 +69,7 @@ class DragonhawkFatesTempestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(played, unplayed));
         resolveAllTriggers();
 
-        gs.playCardFromExile(gd, player1, played.getId(), null, null);
+        harness.castFromExile(player1, played.getId());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
         harness.forceActivePlayer(player2);
@@ -82,6 +87,70 @@ class DragonhawkFatesTempestTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(unplayed.getId());
+    }
+
+    @Test
+    @DisplayName("Counts cards still exiled when the delayed damage resolves")
+    void countsStillExiledCardsAtResolution() {
+        addDragonhawkAndAirElemental();
+        Card removed = new Mountain();
+        Card remaining = new Mountain();
+        harness.setLibrary(player1, List.of(removed, remaining));
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.END_STEP);
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.setHand(player2, List.of(new PullFromEternity()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, removed.getId());
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(removed.getId())).isNull();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Permission to cast exiled cards ends when the next end step begins")
+    void cannotCastExiledInstantInNextEndStep() {
+        addDragonhawkAndAirElemental();
+        Card instant = new TakeOutTheTrash();
+        harness.setLibrary(player1, List.of(instant));
+        resolveAllTriggers();
+        var dragonhawk = findPermanent(player1, "Dragonhawk, Fate's Tempest");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, instant.getId(), dragonhawk.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each trigger counts only its own cards and deals damage only once")
+    void multipleTriggersTrackSeparateBatches() {
+        addDragonhawkAndAirElemental();
+        Card first = new Mountain();
+        harness.setLibrary(player1, List.of(first));
+        resolveAllTriggers();
+        Card second = new Mountain();
+        harness.setLibrary(player1, List.of(second));
+        findPermanent(player1, "Dragonhawk, Fate's Tempest").setSummoningSick(false);
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.forceStep(TurnStep.END_STEP);
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+
+        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
     private void addDragonhawkAndAirElemental() {
