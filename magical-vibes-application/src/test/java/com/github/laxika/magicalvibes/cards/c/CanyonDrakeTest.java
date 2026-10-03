@@ -120,4 +120,39 @@ class CanyonDrakeTest extends BaseCardTest {
     private int battlefieldIndex(Player player, String cardName) {
         return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, cardName));
     }
+
+    @Test
+    @DisplayName("Only the Drake whose ability was activated gets the boost")
+    void boostsOnlyTheSourceDrake() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CanyonDrake());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CanyonDrake());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(1);
+        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Drake with summoning sickness can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new CanyonDrake());
+        drake.setTapped(true);
+        drake.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getEffectivePower()).isEqualTo(3);
+        assertThat(drake.getEffectiveToughness()).isEqualTo(2);
+        assertThat(drake.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Mountain");
+    }
 }
