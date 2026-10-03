@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Daydream.class, GrizzlyBears.class, Island.class})
 class DaydreamTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Flickers target creature and returns it with a +1/+1 counter")
@@ -27,8 +28,7 @@ class DaydreamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId));
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getId()).isNotEqualTo(bearId);
@@ -61,8 +61,7 @@ class DaydreamTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Daydream()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, List.of(bearPermId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearPermId));
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -76,8 +75,7 @@ class DaydreamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castFlashback(player1, 0, List.of(bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -91,9 +89,54 @@ class DaydreamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castFlashback(player1, 0, List.of(bearId));
+        harness.castAndResolveFlashback(player1, 0, bearId);
+
+        harness.assertNotInGraveyard(player1, "Daydream");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Daydream"));
+    }
+
+    @Test
+    void cannotTargetNoncreature() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Daydream()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returningCreatureLosesOldCountersAndReturnsUntapped() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        original.tap();
+        harness.setHand(player1, List.of(new Daydream()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(original.getId()));
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Daydream");
+    }
+
+    @Test
+    void flashbackExilesSpellWhenTargetChangesController() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Daydream()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFlashback(player1, 0, List.of(bear.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerBattlefields.get(player2.getId()).add(bear);
+        gd.stolenCreatures.put(bear.getId(), player1.getId());
         harness.passBothPriorities();
 
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(bear.getId());
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertNotInGraveyard(player1, "Daydream");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Daydream"));
