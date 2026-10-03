@@ -70,6 +70,7 @@ class DefiantStandTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(3);
 
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -105,8 +106,6 @@ class DefiantStandTest extends BaseCardTest {
     @DisplayName("Cannot cast during declare attackers if not attacked")
     void cannotCastWhenNotAttacked() {
         harness.forceActivePlayer(player1);
-        // Attacker aims at nobody the caster controls.
-        addAttackerTargeting(player1, player1);
         Permanent target = tappedCreature(player2);
         harness.setHand(player2, List.of(new DefiantStand()));
         harness.addMana(player2, ManaColor.WHITE, 2);
@@ -145,6 +144,46 @@ class DefiantStandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an already untapped creature")
+    void canTargetUntappedCreature() {
+        harness.forceActivePlayer(player1);
+        addAttackerTargeting(player1, player2);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new DefiantStand()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can cast after the last declared attacker leaves during the same step")
+    void canCastAfterLastAttackerLeaves() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = tappedCreature(player2);
+        harness.setHand(player2, List.of(new DefiantStand()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getAttackTarget()).isEqualTo(player2.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.castAndResolveInstant(player2, 0, target.getId()));
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.isTapped()).isFalse();
     }
 
     private Permanent addAttackerTargeting(Player attackerController, Player defender) {
