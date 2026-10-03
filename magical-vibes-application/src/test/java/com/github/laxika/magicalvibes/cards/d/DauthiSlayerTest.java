@@ -98,6 +98,34 @@ class DauthiSlayerTest extends BaseCardTest {
                 .hasMessageContaining("shadow");
     }
 
+    @Test
+    @DisplayName("A tapped Dauthi Slayer does not have to attack")
+    void doesNotHaveToAttackWhileTapped() {
+        harness.setLife(player2, 20);
+        Permanent slayer = addCreatureReady(player1, new DauthiSlayer());
+        slayer.tap();
+        addCreatureReady(player1, new Squire());
+
+        declareAttackers(List.of(1));
+
+        harness.assertLife(player2, 19);
+        assertThat(slayer.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped Dauthi Slayer must attack again in a later combat")
+    void mustAttackInEveryCombatWhenAble() {
+        harness.setLife(player2, 20);
+        Permanent slayer = addCreatureReady(player1, new DauthiSlayer());
+        declareAttackers(List.of(0));
+        harness.assertLife(player2, 18);
+        slayer.untap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
     private void addSlayer() {
         addCreatureReady(player1, new DauthiSlayer());
     }
