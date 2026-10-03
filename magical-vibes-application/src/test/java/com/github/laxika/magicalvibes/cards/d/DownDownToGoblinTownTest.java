@@ -102,6 +102,77 @@ class DownDownToGoblinTownTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
+    @Test
+    @DisplayName("Chapter I resolves without a discard when the opponent has only lands")
+    void chapterILeavesLandOnlyHandUnchanged() {
+        Card land = new Forest();
+        harness.setHand(player2, List.of(land));
+        addSagaWithLore(0);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter I resolves without a choice when the opponent's hand is empty")
+    void chapterIHandlesEmptyHand() {
+        harness.setHand(player2, List.of());
+        addSagaWithLore(0);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II ignores an opponent's Army and creates its controller's Goblin Army")
+    void chapterIIIgnoresOpponentsArmy() {
+        Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        addSagaWithLore(1);
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        Permanent army = findPermanent(player1, "Goblin Army");
+        assertThat(army).isNotNull();
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingArmy.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("The Saga remains while chapter IV is on the stack and is sacrificed afterward")
+    void chapterIVSacrificesSagaAfterResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent saga = addSagaWithLore(3);
+
+        triggerNextChapter();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new DownDownToGoblinTown());
         saga.setCounterCount(CounterType.LORE, loreCounters);
