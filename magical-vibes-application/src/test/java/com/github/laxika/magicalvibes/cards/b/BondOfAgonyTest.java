@@ -44,6 +44,40 @@ class BondOfAgonyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Life is paid when casting, while the opponent loses life only on resolution")
+    void paysLifeBeforeResolution() {
+        harness.setHand(player1, List.of(new BondOfAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 4);
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Bond of Agony");
+    }
+
+    @Test
+    @DisplayName("The second player pays the cost and only the other player loses life on resolution")
+    void secondPlayerCanCast() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 18);
+        harness.setLife(player2, 12);
+        harness.setHand(player2, List.of(new BondOfAgony()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player2, 0, 3);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 9);
+    }
+
+    @Test
     @DisplayName("Cannot pay more life than the caster has")
     void cannotPayMoreLifeThanAvailable() {
         harness.setLife(player1, 3);
