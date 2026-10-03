@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreampodDruid.class, Pacifism.class, HolyStrength.class})
+@CardUsed({DreampodDruid.class, Pacifism.class, HolyStrength.class, Naturalize.class, SwordsToPlowshares.class})
 class DreampodDruidTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,7 @@ class DreampodDruidTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(saprolingCount(player1)).isZero();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
     }
 
     @Test
@@ -39,18 +41,11 @@ class DreampodDruidTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(saprolingCount(player1)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        assertThat(saprolingCount(player1)).isEqualTo(2);
-    }
-
-    private long saprolingCount(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> "Saproling".equals(permanent.getCard().getName()))
-                .count();
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
     }
 
     @Test
@@ -89,5 +84,75 @@ class DreampodDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Aura still creates a token for the Druid's controller")
+    void opponentsAuraCreatesTokenForDruidController() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DreampodDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(druid.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the only Aura in response stops token creation")
+    void removingOnlyAuraBeforeResolutionStopsTokenCreation() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DreampodDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(druid.getId());
+        harness.setHand(player1, List.of(new Naturalize()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Auras produce only one token and losing one Aura does not stop it")
+    void remainingAuraAllowsSingleToken() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DreampodDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(druid.getId());
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        otherAura.setAttachedTo(druid.getId());
+        harness.setHand(player1, List.of(new Naturalize()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses last known enchanted status when the Druid leaves before resolution")
+    void createsTokenWhenEnchantedDruidLeavesBeforeResolution() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DreampodDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(druid.getId());
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, druid.getId());
+        harness.assertNotOnBattlefield(player1, "Dreampod Druid");
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
     }
 }
