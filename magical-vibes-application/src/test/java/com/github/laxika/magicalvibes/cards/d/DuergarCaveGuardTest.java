@@ -117,4 +117,53 @@ class DuergarCaveGuardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
+        guard.setSummoningSick(true);
+        guard.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(3);
+        assertThat(guard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hybrid cost cannot be paid with blue mana")
+    void cannotPayWithBlueMana() {
+        Permanent guard = addCreatureReady(player1, new DuergarCaveGuard());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Boosted combat damage puts additional counters on the blocker")
+    void boostedWitherDamagePlacesTwoCounters() {
+        Permanent attacker = addCreatureReady(player1, new DuergarCaveGuard());
+        Permanent blocker = addCreatureReady(player2, new DuergarCaveGuard());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
+    }
 }
