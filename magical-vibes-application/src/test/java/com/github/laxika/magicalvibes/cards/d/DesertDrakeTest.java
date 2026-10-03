@@ -36,8 +36,19 @@ class DesertDrakeTest extends BaseCardTest {
         addCreatureReady(player1, new DesertDrake());
         Permanent blocker = addCreatureReady(player2, new DesertDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Desert Drake can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new GoblinBully());
+        Permanent blocker = addCreatureReady(player2, new DesertDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
