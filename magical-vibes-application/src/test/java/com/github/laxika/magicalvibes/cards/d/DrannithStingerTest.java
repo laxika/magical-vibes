@@ -11,8 +11,73 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({DrannithStinger.class, Censor.class, Compulsion.class, GrizzlyBears.class})
+@CardUsed({DrannithStinger.class, DrannithHealer.class, Censor.class, Compulsion.class, GrizzlyBears.class})
 class DrannithStingerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cycling Stinger costs one generic mana and draws without triggering itself")
+    void cyclingStingerDoesNotTriggerItself() {
+        harness.setHand(player1, List.of(new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithHealer()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Drannith Stinger");
+        harness.assertNotInHand(player1, "Drannith Stinger");
+        harness.assertNotInHand(player1, "Drannith Healer");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Drannith Healer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cycling a second Stinger triggers the battlefield copy before drawing")
+    void cyclingSecondStingerTriggersBeforeDraw() {
+        harness.addToBattlefield(player1, new DrannithStinger());
+        harness.setHand(player1, List.of(new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithHealer()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Drannith Stinger");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertNotInHand(player1, "Drannith Healer");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Drannith Healer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("An opponent cycling does not trigger Stinger")
+    void opponentCyclingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DrannithStinger());
+        harness.setHand(player2, List.of(new DrannithStinger()));
+        harness.setLibrary(player2, List.of(new DrannithHealer()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Drannith Stinger");
+        harness.assertInHand(player2, "Drannith Healer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Cycling another card deals 1 damage to each opponent")
