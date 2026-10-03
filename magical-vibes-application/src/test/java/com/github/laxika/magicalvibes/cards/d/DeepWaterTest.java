@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeepWater.class, Forest.class, Island.class, Mountain.class})
+@CardUsed({DeepWater.class, Forest.class, Island.class, Mountain.class,
+        AncientTomb.class, Unsummon.class, GrizzlyBears.class, InfernalDarkness.class})
 class DeepWaterTest extends BaseCardTest {
 
     @Test
@@ -81,10 +83,8 @@ class DeepWaterTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
         harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -133,5 +133,62 @@ class DeepWaterTest extends BaseCardTest {
         assertThat(harness.getGameActionAvailabilityService()
                 .getPotentialPlayableCardIndices(gd, player1.getId(), List.of()))
                 .containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Lands still produce their normal mana before Deep Water's ability resolves")
+    void doesNotReplaceManaBeforeAbilityResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Deep Water also affects lands entering after the ability resolves")
+    void affectsLandsEnteringAfterResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @CardUsed({InfernalDarkness.class})
+    @DisplayName("The mana recipient chooses the order of competing mana replacements")
+    void competingManaReplacementsRequirePlayerChoice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
