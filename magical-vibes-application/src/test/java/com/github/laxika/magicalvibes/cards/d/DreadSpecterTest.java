@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.f.FetidHorror;
 import com.github.laxika.magicalvibes.cards.p.PrismaticLace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreadSpecter.class, FemerefScouts.class, FetidHorror.class, PrismaticLace.class})
+@CardUsed({DreadSpecter.class, FemerefScouts.class, FetidHorror.class, PrismaticLace.class, EkunduCyclops.class})
 class DreadSpecterTest extends BaseCardTest {
 
     @Test
@@ -36,8 +38,8 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getTargetId().equals(scout.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(scout.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(scout.getId()));
     }
 
     @Test
@@ -53,8 +55,7 @@ class DreadSpecterTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Femeref Scouts");
         harness.assertInGraveyard(player2, "Femeref Scouts");
@@ -75,7 +76,7 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getCard().getName().equals("Dread Specter"));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -96,8 +97,11 @@ class DreadSpecterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player2, "Femeref Scouts");
     }
 
     @Test
@@ -116,8 +120,8 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -135,6 +139,67 @@ class DreadSpecterTest extends BaseCardTest {
                         && se.getCard().getName().equals("Dread Specter"));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each nonblack blocker creates a separate delayed destruction")
+    void multipleNonblackBlockersAreRememberedSeparately() {
+        Permanent specter = addCreatureReady(player1, new DreadSpecter());
+        specter.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new FemerefScouts());
+        Permanent second = addCreatureReady(player2, new FemerefScouts());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+    }
+
+    @Test
+    @DisplayName("With black and nonblack blockers, only the nonblack blocker is remembered")
+    void mixedBlockersOnlyScheduleNonblackCreature() {
+        Permanent specter = addCreatureReady(player1, new DreadSpecter());
+        specter.setAttacking(true);
+        Permanent scout = addCreatureReady(player2, new FemerefScouts());
+        addCreatureReady(player2, new FetidHorror());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+                .containsExactly(scout.getId());
+    }
+
+    @Test
+    @DisplayName("A blocked attacker is destroyed after Dread Specter dies, when the delayed trigger resolves")
+    void sourceDeathDoesNotCancelDelayedDestruction() {
+        Permanent attacker = addCreatureReady(player1, new EkunduCyclops());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new DreadSpecter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player2, "Dread Specter");
+        harness.assertOnBattlefield(player1, "Ekundu Cyclops");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && attacker.getId().equals(entry.getTargetId()));
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ekundu Cyclops");
+        harness.assertInGraveyard(player1, "Ekundu Cyclops");
     }
 }
