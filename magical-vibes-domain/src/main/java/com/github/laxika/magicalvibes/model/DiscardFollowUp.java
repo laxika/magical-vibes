@@ -245,6 +245,15 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, null, null, null, 0, null, false, 0, false);
     }
 
+    /** Each-player discard with per-player amounts and a reflexive effect after the whole queue. */
+    public static DiscardFollowUp eachPlayerVariableAmountsWithThenEffect(
+            List<UUID> remainingChoosers, UUID controllerId, List<Integer> amounts,
+            Card sourceCard, CardEffect thenEffect) {
+        return new DiscardFollowUp(0, null, remainingChoosers, controllerId, 0, 0, amounts, null, 0, 0,
+                sourceCard, thenEffect, null, null, null, null, 0, null, false, 0, false,
+                null, null, null, false, null, null, 0, controllerId, List.of());
+    }
+
     /** Return that many cards from the controller's graveyard to hand once the discard completes. */
     public static DiscardFollowUp graveyardReturn(int returnCount) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, returnCount, List.of(), null, 0, 0,

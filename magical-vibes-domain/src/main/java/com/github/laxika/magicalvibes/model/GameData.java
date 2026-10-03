@@ -1067,6 +1067,8 @@ public class GameData {
     public final Map<UUID, Integer> pendingNextDrawFromOutsideGame = new ConcurrentHashMap<>();
     /** Player IDs → number of pending Urabrask-style next-draw replacements this turn. */
     public final Map<UUID, Integer> pendingNextDrawExileTopCard = new ConcurrentHashMap<>();
+    /** Plots That Span Centuries: one persistent replacement per registration for the controller's next scheme set. */
+    public final Map<UUID, Integer> pendingNextSchemeSetInMotionReplacements = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have begun activating an exhaust ability this turn. */
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
@@ -7185,6 +7187,7 @@ public class GameData {
                 copy.pendingNextDrawFromExiledPile.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.pendingNextDrawFromOutsideGame.putAll(this.pendingNextDrawFromOutsideGame);
         copy.pendingNextDrawExileTopCard.putAll(this.pendingNextDrawExileTopCard);
+        copy.pendingNextSchemeSetInMotionReplacements.putAll(this.pendingNextSchemeSetInMotionReplacements);
         copy.pendingMysticReflections.addAll(this.pendingMysticReflections);
         copy.activeMysticReflectionsForEntryBatch.addAll(this.activeMysticReflectionsForEntryBatch);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);

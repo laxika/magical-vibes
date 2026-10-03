@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CrawlingBarrens.class)
+@CardUsed({CrawlingBarrens.class})
 class CrawlingBarrensTest extends BaseCardTest {
 
     @Test
@@ -69,10 +69,65 @@ class CrawlingBarrensTest extends BaseCardTest {
         assertThat(barrens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Repeated animation keeps all accumulated counters")
+    void repeatedAnimationKeepsAccumulatedCounters() {
+        Permanent barrens = addReadyBarrens(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(barrens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, barrens)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barrens)).isEqualTo(4);
+        assertThat(barrens.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining another animation does not end an existing animation")
+    void decliningSecondAnimationKeepsItAnimated() {
+        Permanent barrens = addReadyBarrens(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.isCreature(gd, barrens)).isTrue();
+        assertThat(barrens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, barrens)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, barrens)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped, newly entered Barrens can activate its counter ability")
+    void tappedNewLandCanActivateCounterAbility() {
+        Permanent barrens = harness.addToBattlefieldAndReturn(player1, new CrawlingBarrens());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(barrens.isTapped()).isTrue();
+        assertThat(barrens.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, barrens)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, barrens)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, barrens)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
     private Permanent addReadyBarrens(Player player) {
-        Permanent barrens = new Permanent(new CrawlingBarrens());
+        Permanent barrens = harness.addToBattlefieldAndReturn(player, new CrawlingBarrens());
         barrens.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(barrens);
         return barrens;
     }
 }

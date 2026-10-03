@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrestedSunmare.class, WrathOfGod.class})
 class CrestedSunmareTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
@@ -26,8 +27,6 @@ class CrestedSunmareTest extends BaseCardTest {
     private long horseTokenCount(Player owner) {
         return countPermanents(owner, "Horse");
     }
-
-    // ===== End-step token creation =====
 
     @Test
     @DisplayName("Creates a 5/5 white Horse token at end step if you gained life this turn")
@@ -73,8 +72,6 @@ class CrestedSunmareTest extends BaseCardTest {
         assertThat(horseTokenCount(player1)).isEqualTo(1);
     }
 
-    // ===== Static: other Horses have indestructible =====
-
     @Test
     @DisplayName("Two Crested Sunmares grant each other indestructible")
     void twoSunmaresGrantEachOtherIndestructible() {
@@ -102,13 +99,11 @@ class CrestedSunmareTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CrestedSunmare());
         harness.addToBattlefield(player1, new CrestedSunmare());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         // Each grants the other indestructible -> both survive.
@@ -120,15 +115,70 @@ class CrestedSunmareTest extends BaseCardTest {
     void loneSunmareDiesToWrath() {
         harness.addToBattlefield(player1, new CrestedSunmare());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Crested Sunmare");
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotTriggerSunmare() {
+        harness.addToBattlefield(player1, new CrestedSunmare());
+        gd.lifeGainedThisTurn.put(player2.getId(), 5);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(horseTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void gainingLifeAfterEndStepBeginsDoesNotTriggerSunmare() {
+        harness.addToBattlefield(player1, new CrestedSunmare());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(horseTokenCount(player1)).isZero();
+    }
+
+    @Test
+    void opposingSunmaresDoNotProtectEachOther() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CrestedSunmare());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new CrestedSunmare());
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void horseTokenSurvivesFirstWrathButLosesProtectionWhenSunmareDies() {
+        harness.addToBattlefield(player1, new CrestedSunmare());
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        Permanent horse = findPermanents(player1, "Horse").getFirst();
+        assertThat(gqs.hasKeyword(gd, horse, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crested Sunmare");
+        assertThat(horseTokenCount(player1)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, horse, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(horseTokenCount(player1)).isZero();
     }
 }

@@ -283,8 +283,17 @@ public record CopyControllerCastSpellOnSpellCastEffect(
             CardPredicate spellFilter,
             com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
             String sacrificeDescription) {
+        return withSacrificeFilter(spellFilter, sacrificeFilter, sacrificeDescription, false);
+    }
+
+    /** Optional sacrifice-before-copy trigger whose permanent-spell copies become tokens. */
+    public static CopyControllerCastSpellOnSpellCastEffect withSacrificeFilter(
+            CardPredicate spellFilter,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+            String sacrificeDescription,
+            boolean permanentSpellToken) {
         return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, null, null, null, null,
                 Set.of(), null, false, Set.of(), false, true, false, false, null, List.of(), null,
-                sacrificeFilter, sacrificeDescription, false, false, Set.of());
+                sacrificeFilter, sacrificeDescription, permanentSpellToken, false, Set.of());
     }
 }

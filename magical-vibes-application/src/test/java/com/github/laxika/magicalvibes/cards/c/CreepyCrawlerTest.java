@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Frightcrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gloom;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CreepyCrawler.class, Frightcrawler.class, GrizzlyBears.class})
+@CardUsed({CreepyCrawler.class, Frightcrawler.class, GrizzlyBears.class, Gloom.class})
 class CreepyCrawlerTest extends BaseCardTest {
 
     @Test
@@ -81,6 +83,94 @@ class CreepyCrawlerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void attackingHorrorLeavingBattlefieldDoesNotEndFear() {
+        GrizzlyBears discardedCard = new GrizzlyBears();
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(discardedCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new Frightcrawler());
+        gd.permanentsEnteredBattlefieldThisTurn.clear();
+        gd.playersAttackedThisTurn.put(horror.getId(), Set.of(player2.getId()));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, horror);
+        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
+        crawler.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void enteringHorrorLeavingBattlefieldDoesNotEndFearAndEmptyHandDoesNotPreventDraw() {
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        Permanent horror = harness.enterBattlefieldAndReturn(player1, new Frightcrawler());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, horror);
+        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
+        crawler.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void faceDownCreatureAttackingMakesOpponentAfraid() {
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        Permanent faceDown = addCreatureReady(player1, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        faceDown.setAttacking(true);
+        gd.playersAttackedThisTurn.put(faceDown.getId(), Set.of(player2.getId()));
+        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
+        crawler.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void opponentsEnteringHorrorDoesNotMakeThemAfraidOfCrawlerController() {
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        Permanent horror = harness.enterBattlefieldAndReturn(player2, new Frightcrawler());
+        horror.setTapped(true);
+        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
+        crawler.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void noncreatureEnchantmentEnteringDoesNotMakeOpponentAfraid() {
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.enterBattlefieldAndReturn(player1, new Gloom());
+        Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
+        crawler.setAttacking(true);
+
+        resolveCombat();
+
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

@@ -29,12 +29,10 @@ class CrazedSkirgeTest extends BaseCardTest {
     @Test
     @DisplayName("Flying prevents a ground creature from blocking Crazed Skirge")
     void flyingPreventsGroundCreatureFromBlocking() {
-        Permanent attacker = addCreatureReady(player1, new CrazedSkirge());
+        addCreatureReady(player1, new CrazedSkirge());
         addCreatureReady(player2, new CoralMerfolk());
 
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -47,8 +45,19 @@ class CrazedSkirgeTest extends BaseCardTest {
         addCreatureReady(player1, new CrazedSkirge());
         Permanent blocker = addCreatureReady(player2, new CrazedSkirge());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered Crazed Skirge can block a ground creature")
+    void newlyEnteredSkirgeCanBlockGroundCreature() {
+        addCreatureReady(player1, new CoralMerfolk());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CrazedSkirge());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

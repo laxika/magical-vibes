@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CracklingDoom.class, GrizzlyBears.class, HillGiant.class})
 class CracklingDoomTest extends BaseCardTest {
 
     private void addCracklingDoomMana() {
@@ -26,15 +28,7 @@ class CracklingDoomTest extends BaseCardTest {
     private void castCracklingDoom() {
         harness.setHand(player1, List.of(new CracklingDoom()));
         addCracklingDoomMana();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-    }
-
-    private List<UUID> permanentIds(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .map(Permanent::getId)
-                .toList();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -66,7 +60,9 @@ class CracklingDoomTest extends BaseCardTest {
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        List<UUID> hillGiantIds = permanentIds(player2, "Hill Giant");
+        List<UUID> hillGiantIds = findPermanents(player2, "Hill Giant").stream()
+                .map(Permanent::getId)
+                .toList();
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.maxCount()).isEqualTo(1);
@@ -76,5 +72,49 @@ class CracklingDoomTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Still deals damage when the opponent controls no creatures")
+    void damagesOpponentWithoutCreatures() {
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castCracklingDoom();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Crackling Doom");
+    }
+
+    @Test
+    @DisplayName("Uses current power including counters rather than printed power")
+    void sacrificesCreatureWithGreatestCurrentPower() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        findPermanent(player2, "Grizzly Bears").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castCracklingDoom();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Greatest power can be negative when every opposing creature has negative power")
+    void sacrificesGreatestPowerWhenAllPowersAreNegative() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        findPermanent(player2, "Grizzly Bears").setPowerModifier(-3);
+        findPermanent(player2, "Hill Giant").setPowerModifier(-5);
+
+        castCracklingDoom();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 }

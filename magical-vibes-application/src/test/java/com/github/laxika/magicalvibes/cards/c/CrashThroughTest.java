@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FeralProwler;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +14,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrashThrough.class, FeralProwler.class})
 class CrashThroughTest extends BaseCardTest {
 
     @Test
     @DisplayName("Crash Through grants trample to own creatures and draws a card")
     void grantsTrampleAndDraws() {
-        Permanent own = addReadyCreature(player1, new GrizzlyBears());
-        Permanent enemy = addReadyCreature(player2, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new FeralProwler());
+        Permanent enemy = addCreatureReady(player2, new FeralProwler());
         harness.setHand(player1, List.of(new CrashThrough()));
         harness.addMana(player1, ManaColor.RED, 1);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(enemy.hasKeyword(Keyword.TRAMPLE)).isFalse();
@@ -37,12 +37,11 @@ class CrashThroughTest extends BaseCardTest {
     @Test
     @DisplayName("Crash Through trample wears off at end of turn")
     void trampleWearsOff() {
-        Permanent own = addReadyCreature(player1, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new FeralProwler());
         harness.setHand(player1, List.of(new CrashThrough()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -52,10 +51,31 @@ class CrashThroughTest extends BaseCardTest {
         assertThat(own.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Crash Through draws a card even without creatures")
+    void drawsWithoutCreatures() {
+        FeralProwler drawn = new FeralProwler();
+        harness.setLibrary(player1, List.of(drawn, new FeralProwler()));
+        harness.setHand(player1, List.of(new CrashThrough()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Crash Through does not grant trample to creatures entering later")
+    void doesNotAffectLaterCreatures() {
+        Permanent original = addCreatureReady(player1, new FeralProwler());
+        harness.setHand(player1, List.of(new CrashThrough()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new FeralProwler());
+
+        assertThat(original.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(later.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }

@@ -32,6 +32,7 @@ import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "86")
 @CardRegistration(set = "MIC", collectorNumber = "114")
+@CardRegistration(set = "DRC", collectorNumber = "91")
 public class DreadhordeInvasion extends Card {
 
     public DreadhordeInvasion() {

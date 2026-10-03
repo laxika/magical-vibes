@@ -797,6 +797,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance() implements MultiPermanentChoiceContext {
     }
 
+    /** The controller chooses any number of creatures with different mana values to destroy. */
+    record ChooseCreaturesWithDifferentManaValuesDestroy() implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
     record CulturalExchange(Card sourceCard, UUID chooserId, UUID firstPlayerId, UUID secondPlayerId,
                             List<UUID> firstChosenIds, boolean firstSelection) implements MultiPermanentChoiceContext {
@@ -1488,5 +1492,16 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record EquipoisePhaseOut(Card sourceCard, UUID controllerId, UUID targetPlayerId, EquipoisePhase phase)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** My Will Is Irresistible: the controller chooses up to three, then the targeted opponent keeps one. */
+    record ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne(
+            UUID controllerId, UUID opponentId, List<UUID> chosenPermanentIds,
+            String sourceName, boolean opponentChoosing)
+            implements MultiPermanentChoiceContext {
+
+        public ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne {
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
+        }
     }
 }

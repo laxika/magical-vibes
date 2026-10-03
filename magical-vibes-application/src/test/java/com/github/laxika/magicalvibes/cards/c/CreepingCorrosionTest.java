@@ -3,37 +3,25 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CreepingCorrosion.class, GrizzlyBears.class, HowlingMine.class, Ornithopter.class,
+        DarksteelPlate.class})
 class CreepingCorrosionTest extends BaseCardTest {
-
-    private static Card indestructibleArtifact() {
-        Card card = new Card();
-        card.setName("Darksteel Relic");
-        card.setType(CardType.ARTIFACT);
-        card.setManaCost("{0}");
-        card.setColor(null);
-        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
-        return card;
-    }
-
-    
 
     @Test
     @DisplayName("Casting Creeping Corrosion puts it on the stack as a sorcery")
@@ -47,7 +35,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Creeping Corrosion");
+        assertThat(entry.getCard()).isInstanceOf(CreepingCorrosion.class);
     }
 
     @Test
@@ -58,8 +46,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CreepingCorrosion()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Howling Mine");
         harness.assertNotOnBattlefield(player2, "Ornithopter");
@@ -74,8 +61,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CreepingCorrosion()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -93,8 +79,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         harness.assertOnBattlefield(player1, "Ornithopter");
     }
@@ -102,13 +87,24 @@ class CreepingCorrosionTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible artifacts survive Creeping Corrosion")
     void indestructibleArtifactsSurvive() {
-        harness.addToBattlefield(player2, indestructibleArtifact());
+        harness.addToBattlefield(player2, new DarksteelPlate());
         harness.setHand(player1, List.of(new CreepingCorrosion()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        harness.assertOnBattlefield(player2, "Darksteel Relic");
+        harness.assertOnBattlefield(player2, "Darksteel Plate");
+    }
+
+    @Test
+    @DisplayName("Creeping Corrosion resolves without artifacts on the battlefield")
+    void resolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new CreepingCorrosion()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Creeping Corrosion");
     }
 }

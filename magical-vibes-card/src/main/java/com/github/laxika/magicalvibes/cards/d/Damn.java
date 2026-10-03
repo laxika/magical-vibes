@@ -24,6 +24,8 @@ import java.util.List;
 @CardRegistration(set = "AA2", collectorNumber = "8")
 @CardRegistration(set = "MH2", collectorNumber = "80")
 @CardRegistration(set = "LCC", collectorNumber = "191")
+@CardRegistration(set = "DSC", collectorNumber = "369")
+@CardRegistration(set = "DRC", collectorNumber = "89")
 public class Damn extends Card {
 
     public Damn() {

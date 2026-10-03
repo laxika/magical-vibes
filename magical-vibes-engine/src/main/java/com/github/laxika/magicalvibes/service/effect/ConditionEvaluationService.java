@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageAtLeastThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerDealtCombatDamageBySubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
@@ -1354,6 +1355,8 @@ public class ConditionEvaluationService {
                     didAnyPlayerLoseLifeThisTurn(gameData, c.minimumAmount());
             case AnyPlayerDealtCombatDamageAtLeastThisTurn c ->
                     didAnyPlayerReceiveCombatDamageAtLeast(gameData, c.minimumAmount());
+            case AnyPlayerDealtCombatDamageBySubtypeThisTurn c ->
+                    didAnyPlayerReceiveCombatDamageBySubtype(gameData, c.subtype());
             case OpponentLostLifeLastTurn ignored ->
                     didAnyOpponentLoseLifeLastTurn(gameData, ctx.controllerId());
             case ControllerDidntLoseLifeThisTurn ignored ->
@@ -3981,6 +3984,15 @@ public class ConditionEvaluationService {
         return gameData.orderedPlayerIds.stream()
                 .anyMatch(playerId -> gameData.combatDamageDealtToPlayersThisTurn
                         .getOrDefault(playerId, 0) >= threshold);
+    }
+
+    private boolean didAnyPlayerReceiveCombatDamageBySubtype(GameData gameData, CardSubtype subtype) {
+        return gameData.combatDamageToPlayersThisTurn.entrySet().stream()
+                .filter(entry -> gameData.combatDamageSourceSubtypesThisTurn
+                        .getOrDefault(entry.getKey(), Set.of()).contains(subtype)
+                        || gameData.combatDamageSourcesWithChangelingThisTurn.contains(entry.getKey()))
+                .flatMap(entry -> entry.getValue().stream())
+                .anyMatch(gameData.orderedPlayerIds::contains);
     }
 
     private int activationCountThisTurn(GameData gameData, ConditionContext ctx, int abilityIndex) {

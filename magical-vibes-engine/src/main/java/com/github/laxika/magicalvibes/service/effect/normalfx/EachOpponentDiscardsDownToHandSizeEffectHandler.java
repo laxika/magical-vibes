@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsDownToHandSizeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -47,11 +48,32 @@ public class EachOpponentDiscardsDownToHandSizeEffectHandler implements NormalEf
         }
 
         if (choosers.isEmpty()) {
+            pushThenEffectIfPresent(gameData, entry, e.thenEffect());
             return;
         }
 
-        playerInteractionSupport.startNextEachPlayerDiscard(gameData,
-                DiscardFollowUp.eachPlayerVariableAmounts(choosers, controllerId, amounts));
+        DiscardFollowUp followUp = e.thenEffect() == null
+                ? DiscardFollowUp.eachPlayerVariableAmounts(choosers, controllerId, amounts)
+                : DiscardFollowUp.eachPlayerVariableAmountsWithThenEffect(
+                        choosers, controllerId, amounts, entry.getCard(), e.thenEffect());
+        followUp = playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
+        if (!gameData.interaction.isAwaitingInput()) {
+            pushThenEffectIfPresent(gameData, entry, e.thenEffect());
+        }
+    }
+
+    private void pushThenEffectIfPresent(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (thenEffect == null) {
+            return;
+        }
+        StackEntry completion = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard(),
+                entry.getControllerId(),
+                entry.getCard().getName() + "'s effect",
+                List.of(thenEffect));
+        completion.setNonTargeting(true);
+        gameData.stack.add(completion);
     }
 
     /** Active player first, then the remaining opponents in seating order. */

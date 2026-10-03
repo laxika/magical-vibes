@@ -1,27 +1,22 @@
-package com.github.laxika.magicalvibes.cards.c;
+﻿package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NettleSwine;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CraterhoofBehemoth.class, NettleSwine.class})
 @DisplayName("Craterhoof Behemoth")
 class CraterhoofBehemothTest extends BaseCardTest {
 
     private void castBehemoth() {
-        harness.setHand(player1, new ArrayList<>(List.of(new CraterhoofBehemoth())));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CraterhoofBehemoth(), "{5}{G}{G}{G}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
     }
@@ -29,21 +24,21 @@ class CraterhoofBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("ETB pumps own creatures by the number of creatures you control and grants trample")
     void etbPumpsAndGrantsTrample() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new NettleSwine());
+        Permanent otherSwine = harness.addToBattlefieldAndReturn(player1, new NettleSwine());
 
         castBehemoth();
 
         Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
 
         // Three creatures on the battlefield when the trigger resolves, Craterhoof included.
-        assertThat(bears.getPowerModifier()).isEqualTo(3);
-        assertThat(bears.getToughnessModifier()).isEqualTo(3);
-        assertThat(otherBears.getPowerModifier()).isEqualTo(3);
+        assertThat(swine.getPowerModifier()).isEqualTo(3);
+        assertThat(swine.getToughnessModifier()).isEqualTo(3);
+        assertThat(otherSwine.getPowerModifier()).isEqualTo(3);
         assertThat(hoof.getPowerModifier()).isEqualTo(3);
         assertThat(hoof.getToughnessModifier()).isEqualTo(3);
 
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(hoof.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 
@@ -61,30 +56,88 @@ class CraterhoofBehemothTest extends BaseCardTest {
     @Test
     @DisplayName("Does not affect creatures an opponent controls")
     void doesNotAffectOpponentCreatures() {
-        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentSwine = harness.addToBattlefieldAndReturn(player2, new NettleSwine());
 
         castBehemoth();
 
-        assertThat(opponentBears.getPowerModifier()).isEqualTo(0);
-        assertThat(opponentBears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(opponentSwine.getPowerModifier()).isEqualTo(0);
+        assertThat(opponentSwine.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
     @DisplayName("Pump and trample wear off at end of turn")
     void wearsOffAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new NettleSwine());
 
         castBehemoth();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(swine.getPowerModifier()).isEqualTo(2);
+        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(swine.getPowerModifier()).isEqualTo(0);
+        assertThat(swine.getToughnessModifier()).isEqualTo(0);
+        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution are counted and receive the bonus")
+    void countsCreaturesAtResolution() {
+        harness.castFromHand(player1, new CraterhoofBehemoth(), "{5}{G}{G}{G}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent swine = harness.enterBattlefieldAndReturn(player1, new NettleSwine());
+        harness.passBothPriorities();
+
+        Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
+        assertThat(swine.getPowerModifier()).isEqualTo(2);
+        assertThat(swine.getToughnessModifier()).isEqualTo(2);
+        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(hoof.getPowerModifier()).isEqualTo(2);
+        assertThat(hoof.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after its source dies and does not count the departed source")
+    void resolvesAfterSourceLeaves() {
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new NettleSwine());
+        harness.castFromHand(player1, new CraterhoofBehemoth(), "{5}{G}{G}{G}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
+        hoof.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hoof);
+        harness.passBothPriorities();
+
+        assertThat(swine.getPowerModifier()).isEqualTo(1);
+        assertThat(swine.getToughnessModifier()).isEqualTo(1);
+        assertThat(swine.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The bonus is fixed and creatures entering later receive neither effect")
+    void doesNotRecalculateOrAffectLaterCreatures() {
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new NettleSwine());
+        castBehemoth();
+
+        Permanent lateSwine = harness.enterBattlefieldAndReturn(player1, new NettleSwine());
+        Permanent hoof = findPermanent(player1, "Craterhoof Behemoth");
+        assertThat(lateSwine.getPowerModifier()).isZero();
+        assertThat(lateSwine.getToughnessModifier()).isZero();
+        assertThat(lateSwine.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(hoof.getPowerModifier()).isEqualTo(2);
+
+        swine.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swine);
+        assertThat(hoof.getPowerModifier()).isEqualTo(2);
+        assertThat(hoof.getToughnessModifier()).isEqualTo(2);
+        assertThat(hoof.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 }

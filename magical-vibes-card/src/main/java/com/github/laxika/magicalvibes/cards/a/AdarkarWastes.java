@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "291")
 @CardRegistration(set = "M3C", collectorNumber = "316")
 @CardRegistration(set = "EOC", collectorNumber = "147")
+@CardRegistration(set = "DRC", collectorNumber = "144")
 public class AdarkarWastes extends Card {
 
     public AdarkarWastes() {

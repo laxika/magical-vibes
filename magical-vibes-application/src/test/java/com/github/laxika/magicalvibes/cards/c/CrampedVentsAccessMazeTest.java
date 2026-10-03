@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrampedVentsAccessMaze.class, GrizzlyBears.class})
+@CardUsed({CrampedVentsAccessMaze.class, GrizzlyBears.class, GiantGrowth.class})
 class CrampedVentsAccessMazeTest extends BaseCardTest {
 
     @Test
@@ -64,9 +66,7 @@ class CrampedVentsAccessMazeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
-        Permanent room = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ROOM))
-                .findFirst().orElseThrow();
+        Permanent room = findPermanent(player1, "Cramped Vents // Access Maze");
         harness.addMana(player1, ManaColor.BLACK, 7);
         harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
         resolveAllTriggers();
@@ -80,13 +80,96 @@ class CrampedVentsAccessMazeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void crampedVentsCountsDamageAlreadyMarkedWhenDeterminingExcess() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setMarkedDamage(1);
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(25);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void unlockingCrampedVentsAfterCastingAccessMazeTriggersDamage() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent room = castRoom(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void accessMazeCannotPayMoreLifeThanTheControllerHas() {
+        castRoom(1);
+        harness.setLife(player1, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void accessMazeCanBeUsedAgainOnTheNextControllerTurn() {
+        castRoom(1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void crampedVentsGainsNoLifeWhenAllDamageIsNeededToBeLethal() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void accessMazeDoesNotAllowLifePaymentDuringAnOpponentsTurn() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castRoom(1);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private Permanent castRoom(int doorIndex) {
         harness.setHand(player1, List.of(new CrampedVentsAccessMaze()));
         harness.addMana(player1, ManaColor.BLACK, doorIndex == 0 ? 4 : 7);
         harness.castModalSorcery(player1, 0, doorIndex, List.of());
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ROOM))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Cramped Vents // Access Maze");
     }
 }
