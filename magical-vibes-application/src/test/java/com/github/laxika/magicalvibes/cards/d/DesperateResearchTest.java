@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DesperateResearch.class, KavuTitan.class, KavuScout.class, Plains.class})
 class DesperateResearchTest extends BaseCardTest {
@@ -117,5 +118,65 @@ class DesperateResearchTest extends BaseCardTest {
         assertThat(gd.playerHands.get(p1)).extracting(Card::getId).contains(hit.getId());
         assertThat(gd.getPlayerExiledCards(p1)).extracting(Card::getId).contains(other.getId());
         assertThat(gd.playerDecks.get(p1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library still allows naming a card and finishes resolving")
+    void emptyLibraryFinishesResolving() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+        harness.handleListChoice(player1, "Kavu Titan");
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Desperate Research");
+    }
+
+    @Test
+    @DisplayName("Rejects a basic land name without revealing or moving library cards")
+    void rejectsBasicLandName() {
+        Card plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+
+        cast();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Plains"))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+
+        harness.handleListChoice(player1, "Kavu Titan");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("All seven matching cards go to hand without exiling any cards")
+    void allSevenMatchingCardsGoToHand() {
+        List<Card> revealed = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            revealed.add(new KavuTitan());
+        }
+        Card untouched = new KavuTitan();
+        List<Card> library = new ArrayList<>(revealed);
+        library.add(untouched);
+        harness.setLibrary(player1, library);
+        Card opponentCard = new KavuScout();
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        cast();
+        harness.handleListChoice(player1, "Kavu Titan");
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsAll(revealed.stream().map(Card::getId).toList())
+                .doesNotContain(untouched.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Desperate Research");
     }
 }
