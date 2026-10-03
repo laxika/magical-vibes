@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -67,6 +68,57 @@ class DauthiWarlordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Dauthi Warlord defines its power in hand and graveyard without counting itself")
+    void powerIsDefinedOutsideBattlefield() {
+        DauthiWarlord inHand = new DauthiWarlord();
+        DauthiWarlord inGraveyard = new DauthiWarlord();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player2, List.of(inGraveyard));
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isZero();
+
+        addShadowCreature(player1);
+        addShadowCreature(player2);
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Destroying another shadow creature reduces Dauthi Warlord's power")
+    void powerUpdatesAfterShadowCreatureIsDestroyed() {
+        addShadowCreature(player1);
+        Permanent warlord = addWarlordReady(player1);
+        Permanent target = addShadowCreature(player2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dauthi Cutthroat");
+        assertThat(gqs.getEffectivePower(gd, warlord)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Dauthi Warlord can block and be blocked only by shadow creatures")
+    void shadowRestrictsBlockingInBothDirections() {
+        Permanent warlord = addWarlordReady(player1);
+        Permanent shadow = addShadowCreature(player2);
+        Permanent goblin = addCreatureReady(player2, new RagingGoblin());
+
+        assertThat(bls.canBlockAttacker(gd, shadow, warlord,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, goblin, warlord,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, warlord, shadow,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, warlord, goblin,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
     private Permanent addWarlordReady(Player player) {
         return addCreatureReady(player, new DauthiWarlord());
     }
