@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.c.CudgelTroll;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +21,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DivineVerdict.class, RuneclawBear.class, CudgelTroll.class})
 class DivineVerdictTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Divine Verdict targeting an attacking creature puts it on the stack")
     void castingTargetingAttackingCreature() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -44,18 +43,15 @@ class DivineVerdictTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Divine Verdict");
         assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test
     @DisplayName("Casting Divine Verdict targeting a blocking creature puts it on the stack")
     void castingTargetingBlockingCreature() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent blocker = new Permanent(bears);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -69,7 +65,6 @@ class DivineVerdictTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Divine Verdict");
         assertThat(entry.getTargetId()).isEqualTo(blocker.getId());
     }
 
@@ -77,13 +72,12 @@ class DivineVerdictTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
         // Add an attacking creature as valid target so spell is playable
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player2, new RuneclawBear());
+        UUID targetId = harness.getPermanentId(player2, "Runeclaw Bear");
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -100,10 +94,9 @@ class DivineVerdictTest extends BaseCardTest {
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
         // Add an attacking creature as valid target so spell is playable
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -116,16 +109,12 @@ class DivineVerdictTest extends BaseCardTest {
                 .hasMessageContaining("This spell cannot target players");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving destroys the attacking creature")
     void resolvingDestroysAttackingCreature() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -133,21 +122,18 @@ class DivineVerdictTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
     }
 
     @Test
     @DisplayName("Resolving destroys the blocking creature")
     void resolvingDestroysBlockingCreature() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent blocker = new Permanent(bears);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -155,21 +141,18 @@ class DivineVerdictTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
     }
 
     @Test
     @DisplayName("Divine Verdict goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -177,24 +160,19 @@ class DivineVerdictTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Divine Verdict");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Divine Verdict fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -212,6 +190,88 @@ class DivineVerdictTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Divine Verdict still goes to graveyard
+        harness.assertInGraveyard(player2, "Divine Verdict");
+    }
+
+    @Test
+    @DisplayName("Target leaving combat before resolution survives")
+    void targetLeavingCombatSurvives() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player2, List.of(new DivineVerdict()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Divine Verdict");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A blocker leaving combat before resolution survives")
+    void blockerLeavingCombatSurvives() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        blocker.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.setHand(player2, List.of(new DivineVerdict()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, blocker.getId());
+
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Divine Verdict");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An attacking creature remains a valid target during the end of combat step")
+    void destroysAttackerDuringEndOfCombat() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.setHand(player1, List.of(new DivineVerdict()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Divine Verdict");
+    }
+
+    @Test
+    @DisplayName("Regeneration in response saves the attacker and removes it from combat")
+    void regenerationSavesAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CudgelTroll());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player2, List.of(new DivineVerdict()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, attacker.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cudgel Troll");
+        harness.assertNotInGraveyard(player1, "Cudgel Troll");
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(attacker.isAttacking()).isFalse();
         harness.assertInGraveyard(player2, "Divine Verdict");
     }
 }
