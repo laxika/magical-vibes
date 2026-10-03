@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChromeDome.class, Ornithopter.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({ChromeDome.class, Ornithopter.class, GrizzlyBears.class, LeoninScimitar.class, Clone.class})
 class ChromeDomeTest extends BaseCardTest {
 
     @Test
@@ -70,11 +70,134 @@ class ChromeDomeTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void canActivateWhileSummoningSick() {
+        Permanent dome = harness.addToBattlefieldAndReturn(player1, new ChromeDome());
+        dome.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(dome.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void canActivateWhileTapped() {
+        Permanent dome = addReadyDome(player1);
+        dome.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void canActivateRepeatedlyWithoutUntapping() {
+        Permanent dome = addReadyDome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(dome.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    @Test
+    void sacrificeWaitsForDelayedTriggerToResolve() {
+        addReadyDome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void grantedHasteIsNotCopiedByClone() {
+        addReadyDome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getName().equals("Clone"))
+                .findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, clone)).isEqualTo(1);
+    }
+
+    @Test
+    void missingTargetDoesNotCreateToken() {
+        addReadyDome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void copyResolvesAfterChromeDomeLeaves() {
+        Permanent dome = addReadyDome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, dome);
+
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, token)).isZero();
     }
 
     @Test
@@ -94,9 +217,8 @@ class ChromeDomeTest extends BaseCardTest {
     }
 
     private Permanent addReadyDome(Player player) {
-        Permanent permanent = new Permanent(new ChromeDome());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ChromeDome());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
