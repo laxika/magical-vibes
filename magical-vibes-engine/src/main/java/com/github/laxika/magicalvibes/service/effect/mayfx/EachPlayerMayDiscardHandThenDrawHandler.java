@@ -37,9 +37,9 @@ public class EachPlayerMayDiscardHandThenDrawHandler implements MayEffectHandler
         }
 
         if (remaining.isEmpty()) {
-            effectHandler.resolveAcceptedPlayers(gameData, ability.sourceCard(),
-                    effect.sourceControllerId(), acceptedPlayerIds, effect.cardsToDraw(),
-                    effect.acceptedPlayersFollowUp());
+            effectHandler.resolveAcceptedPlayers(gameData, gameData.pendingEffectResolutionEntry,
+                    ability.sourceCard(), effect.sourceControllerId(), acceptedPlayerIds,
+                    effect.cardsToDraw(), effect.acceptedPlayersFollowUp());
         } else {
             effectHandler.promptNext(gameData, ability.sourceCard(),
                     new EachPlayerMayDiscardHandThenDrawEffect(

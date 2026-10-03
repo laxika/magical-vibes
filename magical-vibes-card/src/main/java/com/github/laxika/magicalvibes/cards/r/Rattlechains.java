@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "SOI", collectorNumber = "81")
 @CardRegistration(set = "SIR", collectorNumber = "87")
+@CardRegistration(set = "VOC", collectorNumber = "110")
 public class Rattlechains extends Card {
 
     public Rattlechains() {

@@ -1995,15 +1995,25 @@ public class MultiPermanentChoiceHandlerService {
                 // More players still need to choose — prompt the next one
                 destructionSupport.beginNextForcedSacrificeFromQueue(gameData,
                         context.remainingChoosers(), allIds, true, context.afterSacrifices(),
-                        context.recordSacrificedCount());
+                        context.recordSacrificedCount(), context.recordSacrificedPower());
                 return;
             }
 
             // All players have chosen — sacrifice all simultaneously
+            int sacrificedPower = context.recordSacrificedPower()
+                    ? maxEffectivePower(gameData, allIds) : 0;
             performForcedSacrificeWithResolvingController(gameData, allIds);
+            if (context.recordSacrificedPower() && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setEventValue(sacrificedPower);
+            }
         } else {
             // Direct forced sacrifice (e.g. Phyrexian Obliterator) — sacrifice immediately
+            int sacrificedPower = context.recordSacrificedPower()
+                    ? maxEffectivePower(gameData, permanentIds) : 0;
             performForcedSacrificeWithResolvingController(gameData, permanentIds);
+            if (context.recordSacrificedPower() && gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.setEventValue(sacrificedPower);
+            }
         }
 
         if (context.recordSacrificedCount() && gameData.pendingEffectResolutionEntry != null) {
@@ -2022,6 +2032,15 @@ public class MultiPermanentChoiceHandlerService {
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private int maxEffectivePower(GameData gameData, List<UUID> permanentIds) {
+        return permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .max()
+                .orElse(0);
     }
 
     private void performForcedSacrificeWithResolvingController(GameData gameData, List<UUID> permanentIds) {

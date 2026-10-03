@@ -432,26 +432,30 @@ public sealed interface MultiPermanentChoiceContext {
      * with the head of the remainder. For the direct single-player flow both lists are empty
      * and the chosen permanents are sacrificed immediately. {@code recordSacrificedCount} carries
      * the actual number sacrificed back to the parked stack entry for a following effect.
+     * {@code recordSacrificedPower} carries the greatest effective power sacrificed back to the
+     * parked stack entry for a following effect.
      */
     record ForcedSacrifice(UUID sacrificingPlayerId,
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
                            boolean simultaneousFlow,
                            boolean recordSacrificedCount,
+                           boolean recordSacrificedPower,
                            LibrarySearchFollowUp afterSacrifices)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, null);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds,
                                boolean simultaneousFlow) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false, null);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
@@ -460,7 +464,17 @@ public sealed interface MultiPermanentChoiceContext {
                                boolean simultaneousFlow,
                                boolean recordSacrificedCount) {
             this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
-                    simultaneousFlow, recordSacrificedCount, null);
+                    simultaneousFlow, recordSacrificedCount, false, null);
+        }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow,
+                               boolean recordSacrificedCount,
+                               LibrarySearchFollowUp afterSacrifices) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, recordSacrificedCount, false, afterSacrifices);
         }
     }
 

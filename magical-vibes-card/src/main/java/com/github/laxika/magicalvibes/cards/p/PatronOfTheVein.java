@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "207")
+@CardRegistration(set = "VOC", collectorNumber = "135")
 public class PatronOfTheVein extends Card {
 
     public PatronOfTheVein() {

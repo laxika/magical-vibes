@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "OTC", collectorNumber = "265")
 @CardRegistration(set = "LCC", collectorNumber = "311")
 @CardRegistration(set = "C20", collectorNumber = "249")
+@CardRegistration(set = "VOC", collectorNumber = "166")
 public class RakdosSignet extends Card {
 
     public RakdosSignet() {

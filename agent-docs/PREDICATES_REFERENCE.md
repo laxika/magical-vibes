@@ -477,6 +477,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardManaValueLessThanSourceCountersPredicate` | `(CounterType)` | a card whose mana value is strictly less than the number of the specified counters on the source permanent; needs `GameData`, `sourceCardId`, and the source permanent's identity when available |
 | `CardManaValueAtMostPermanentCardsInControllerGraveyardPredicate` | `()` | a card whose mana value is <= the number of permanent cards in the perspective player's graveyard; used by Squirming Emergence |
 | `CardManaValueAtMostControlledLandsPredicate` | `()` | a card whose mana value is <= the number of lands controlled by the perspective player; used by Nissa of Shadowed Boughs |
+| `CardManaValueAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | a card whose mana value is <= the number of matching permanents controlled by the perspective player; used by Spectral Arcanist |
 | `CardManaValueGreaterThanControllerHandSizePredicate` | `()` | a card whose mana value is strictly greater than the perspective player's current hand size; needs `GameData` + perspective player |
 | `CardManaValueEqualsControllerHandSizePredicate` | `()` | a card whose mana value equals the perspective player's current hand size; needs `GameData` + perspective player |
 | `CardManaValueLessThanSourceLoyaltyPredicate` | `()` | a card whose mana value is less than the source planeswalker's loyalty; needs `GameData` and `sourceCardId` (Nahiri, the Unforgiving) |

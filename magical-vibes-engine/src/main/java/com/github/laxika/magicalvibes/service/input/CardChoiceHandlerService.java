@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.InlineDiscardFollowUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
@@ -1246,6 +1247,20 @@ public class CardChoiceHandlerService {
         if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = selectedThenEffect;
             Card sourceCard = followUp.thenEffectSourceCard();
+
+            // Some discard follow-ups are part of the same spell or ability rather than a
+            // reflexive "if you do" trigger. Insert those effects into the parked resolution so
+            // they resolve immediately after the discard completes.
+            if (thenEffect instanceof InlineDiscardFollowUpEffect
+                    && gameData.pendingEffectResolutionEntry != null) {
+                StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                pendingEntry.setTriggeringCardIds(followUp.discardedCardIds());
+                pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                        List.of(thenEffect));
+                resumeRemainingEffectsAfterDiscard(gameData);
+                return;
+            }
+
             int thenEffectTargetGroup = thenEffect.targetGroup();
             if (followUp.thenEffectTargetId() == null
                     && thenEffectTargetGroup >= 0

@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "22")
 @CardRegistration(set = "BLC", collectorNumber = "139")
+@CardRegistration(set = "VOC", collectorNumber = "89")
 public class HangedExecutioner extends Card {
 
     public HangedExecutioner() {
