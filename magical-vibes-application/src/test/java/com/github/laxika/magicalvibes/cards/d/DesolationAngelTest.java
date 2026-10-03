@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed({DesolationAngel.class, CavesOfKoilos.class})
 class DesolationAngelTest extends BaseCardTest {
 
@@ -24,10 +22,8 @@ class DesolationAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof CavesOfKoilos);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof CavesOfKoilos);
+        harness.assertNotOnBattlefield(player1, "Caves of Koilos");
+        harness.assertOnBattlefield(player2, "Caves of Koilos");
     }
 
     @Test
@@ -42,10 +38,8 @@ class DesolationAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof CavesOfKoilos);
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof CavesOfKoilos);
+        harness.assertNotOnBattlefield(player1, "Caves of Koilos");
+        harness.assertNotOnBattlefield(player2, "Caves of Koilos");
     }
 
     @Test
@@ -75,6 +69,46 @@ class DesolationAngelTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Desolation Angel");
         harness.assertOnBattlefield(player2, "Desolation Angel");
+    }
+
+    @Test
+    void withoutKickerDestroysLandsAtTriggerResolution() {
+        harness.addToBattlefield(player1, new CavesOfKoilos());
+        harness.addToBattlefield(player2, new CavesOfKoilos());
+        harness.setHand(player1, List.of(new DesolationAngel()));
+        addBaseMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Desolation Angel");
+        harness.assertOnBattlefield(player1, "Caves of Koilos");
+        harness.assertOnBattlefield(player2, "Caves of Koilos");
+        harness.addToBattlefield(player1, new CavesOfKoilos());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Caves of Koilos");
+        harness.assertInGraveyard(player1, "Caves of Koilos");
+        harness.assertOnBattlefield(player2, "Caves of Koilos");
+        harness.assertNotInGraveyard(player2, "Caves of Koilos");
+    }
+
+    @Test
+    void whenKickedWithNoOwnLandsDestroysOpponentLandsAtTriggerResolution() {
+        harness.setHand(player1, List.of(new DesolationAngel()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Desolation Angel");
+        harness.addToBattlefield(player2, new CavesOfKoilos());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Caves of Koilos");
+        harness.assertInGraveyard(player2, "Caves of Koilos");
+        harness.assertOnBattlefield(player1, "Desolation Angel");
     }
 
     private void addLandsAndNonlands() {
