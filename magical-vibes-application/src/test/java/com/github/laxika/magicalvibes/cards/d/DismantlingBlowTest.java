@@ -66,4 +66,57 @@ class DismantlingBlowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void kickedSpellDoesNotDrawWhenItsTargetLeavesBeforeResolution() {
+        harness.addToBattlefield(player2, new ChromaticSphere());
+        UUID targetId = harness.getPermanentId(player2, "Chromatic Sphere");
+        harness.setHand(player1, List.of(new DismantlingBlow()));
+        harness.setLibrary(player1, List.of(new AlabasterLeech(), new AlabasterLeech()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castKickedInstant(player1, 0, targetId);
+
+        harness.setHand(player2, List.of(new DismantlingBlow()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Chromatic Sphere");
+        harness.assertInGraveyard(player1, "Dismantling Blow");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void cannotTargetANonartifactNonenchantmentCreature() {
+        harness.addToBattlefield(player2, new AlabasterLeech());
+        UUID targetId = harness.getPermanentId(player2, "Alabaster Leech");
+        harness.setHand(player1, List.of(new DismantlingBlow()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canDestroyOwnArtifactAndDrawWithExactKickerMana() {
+        harness.addToBattlefield(player1, new ChromaticSphere());
+        UUID targetId = harness.getPermanentId(player1, "Chromatic Sphere");
+        harness.setHand(player1, List.of(new DismantlingBlow()));
+        harness.setLibrary(player1, List.of(new AlabasterLeech(), new AlabasterLeech()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castKickedInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chromatic Sphere");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
