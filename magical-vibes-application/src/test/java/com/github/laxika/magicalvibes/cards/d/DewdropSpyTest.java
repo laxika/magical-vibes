@@ -78,6 +78,32 @@ class DewdropSpyTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
+    @Test
+    @DisplayName("Looks at the current top card when the trigger resolves and preserves library order")
+    void looksAtTopCardAtResolution() {
+        Card originalTop = new MothdustChangeling();
+        Card newTop = new DewdropSpy();
+        harness.setLibrary(player2, List.of(originalTop));
+        castDewdropSpy(player2.getId());
+
+        harness.passBothPriorities();
+        harness.setLibrary(player2, List.of(newTop, originalTop));
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch look =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(look).isNotNull();
+        assertThat(look.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(look.params().cards()).containsExactly(newTop);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(newTop, originalTop);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Card setTopCard(UUID playerId, Card card) {
         List<Card> deck = gd.playerDecks.get(playerId);
         deck.addFirst(card);
