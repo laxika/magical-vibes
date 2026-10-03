@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
+import com.github.laxika.magicalvibes.cards.l.LostAuramancers;
 import com.github.laxika.magicalvibes.cards.r.RealityStrobe;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DustOfMoments.class, RealityStrobe.class, FomoriNomad.class})
+@CardUsed({DustOfMoments.class, RealityStrobe.class, FomoriNomad.class, LostAuramancers.class})
 class DustOfMomentsTest extends BaseCardTest {
 
     @Test
@@ -77,6 +78,50 @@ class DustOfMomentsTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters)
                 .containsEntry(suspended.getId(), 1)
                 .containsEntry(exiledCardWithNonSuspendCounters.getId(), 4);
+    }
+
+    @Test
+    void removingLastTimeCountersTriggersVanishingSacrifice() {
+        Permanent auramancers = harness.addToBattlefieldAndReturn(player2, new LostAuramancers());
+        auramancers.setCounterCount(CounterType.TIME, 2);
+
+        cast(0);
+        resolveAllTriggers();
+
+        assertThat(auramancers.getCounterCount(CounterType.TIME)).isZero();
+        harness.assertNotOnBattlefield(player2, "Lost Auramancers");
+        harness.assertInGraveyard(player2, "Lost Auramancers");
+    }
+
+    @Test
+    void addingCountersAffectsOpposingPermanentsAndPreservesOtherCounterTypes() {
+        Permanent opposingPermanent = permanentWithTimeCounters(player2, 2);
+        opposingPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent withoutTimeCounters = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        withoutTimeCounters.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        cast(1);
+
+        assertThat(opposingPermanent.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(opposingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(withoutTimeCounters.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(withoutTimeCounters.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void addingCountersIgnoresNonSuspendCountersAndExiledSuspendCardsWithoutTimeCounters() {
+        RealityStrobe withoutTimeCounters = suspendedCard(player1, 0);
+        FomoriNomad nonSuspended = new FomoriNomad();
+        harness.setExile(player2, List.of(nonSuspended));
+        gd.exiledCardTimeCounters.put(nonSuspended.getId(), 3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(nonSuspended.getId());
+
+        cast(1);
+
+        assertThat(gd.exiledCardTimeCounters)
+                .containsEntry(withoutTimeCounters.getId(), 0)
+                .containsEntry(nonSuspended.getId(), 3);
+        assertThat(gd.findExiledCard(withoutTimeCounters.getId())).isNotNull();
     }
 
     private Permanent permanentWithTimeCounters(Player player, int count) {
