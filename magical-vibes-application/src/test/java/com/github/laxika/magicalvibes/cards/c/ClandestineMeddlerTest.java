@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AgencyCoroner;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClandestineMeddler.class, GrizzlyBears.class})
+@CardUsed({ClandestineMeddler.class, AgencyCoroner.class})
 class ClandestineMeddlerTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB suspects up to one other creature you control")
     void entersAndSuspectsTargetCreature() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AgencyCoroner());
 
         castMeddler(bear.getId());
 
@@ -39,7 +39,7 @@ class ClandestineMeddlerTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target an opponent's creature")
     void cannotTargetOpponentsCreature() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new AgencyCoroner());
         harness.setHand(player1, List.of(new ClandestineMeddler()));
         addMana();
 
@@ -51,11 +51,11 @@ class ClandestineMeddlerTest extends BaseCardTest {
     @DisplayName("Surveils once when one or more suspected creatures attack")
     void surveilsOnceForSuspectedAttackers() {
         Permanent meddler = addCreatureReady(player1, new ClandestineMeddler());
-        Permanent firstBear = addCreatureReady(player1, new GrizzlyBears());
-        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstBear = addCreatureReady(player1, new AgencyCoroner());
+        Permanent secondBear = addCreatureReady(player1, new AgencyCoroner());
         firstBear.setSuspected(true);
         secondBear.setSuspected(true);
-        Card topCard = new GrizzlyBears();
+        Card topCard = new AgencyCoroner();
         harness.setLibrary(player1, List.of(topCard));
 
         declareAttackers(List.of(1, 2));
@@ -70,8 +70,8 @@ class ClandestineMeddlerTest extends BaseCardTest {
     @DisplayName("Does not surveil when no suspected creature attacks")
     void doesNotSurveilForUnsuspectedAttackers() {
         addCreatureReady(player1, new ClandestineMeddler());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        Card topCard = new GrizzlyBears();
+        Permanent bear = addCreatureReady(player1, new AgencyCoroner());
+        Card topCard = new AgencyCoroner();
         harness.setLibrary(player1, List.of(topCard));
 
         declareAttackers(List.of(1));
@@ -81,12 +81,123 @@ class ClandestineMeddlerTest extends BaseCardTest {
         assertThat(bear.isSuspected()).isFalse();
     }
 
+    @Test
+    @DisplayName("May decline to suspect even when another creature is available")
+    void mayChooseNoTargetWithAnotherCreatureAvailable() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AgencyCoroner());
+
+        castMeddler(null);
+
+        assertThat(creature.isSuspected()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can suspect another Clandestine Meddler")
+    void canSuspectAnotherMeddler() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ClandestineMeddler());
+
+        castMeddler(other.getId());
+
+        assertThat(other.isSuspected()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> !permanent.getId().equals(other.getId()))
+                .allMatch(permanent -> !permanent.isSuspected());
+    }
+
+    @Test
+    @DisplayName("A suspected Meddler's own attack triggers surveil and may keep the card")
+    void suspectedMeddlerCanAttackAndKeepSurveilledCard() {
+        Permanent meddler = addCreatureReady(player1, new ClandestineMeddler());
+        meddler.setSuspected(true);
+        Card topCard = new AgencyCoroner();
+        Card secondCard = new ClandestineMeddler();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A suspected creature that stays home does not cause surveil")
+    void suspectedNonattackerDoesNotTriggerSurveil() {
+        addCreatureReady(player1, new ClandestineMeddler());
+        Permanent creature = addCreatureReady(player1, new AgencyCoroner());
+        creature.setSuspected(true);
+        Card topCard = new AgencyCoroner();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Opponent's suspected attackers do not trigger surveil")
+    void opponentsSuspectedAttackerDoesNotTriggerSurveil() {
+        addCreatureReady(player1, new ClandestineMeddler());
+        Permanent creature = addCreatureReady(player2, new AgencyCoroner());
+        creature.setSuspected(true);
+        Card topCard = new AgencyCoroner();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Surveil still resolves after the attacker stops being suspected")
+    void attackTriggerDoesNotRecheckSuspectedStatus() {
+        addCreatureReady(player1, new ClandestineMeddler());
+        Permanent creature = addCreatureReady(player1, new AgencyCoroner());
+        creature.setSuspected(true);
+        Card topCard = new AgencyCoroner();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        creature.setSuspected(false);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil still resolves after the suspected attacker leaves the battlefield")
+    void attackTriggerSurvivesAttackerLeaving() {
+        addCreatureReady(player1, new ClandestineMeddler());
+        Permanent creature = addCreatureReady(player1, new AgencyCoroner());
+        creature.setSuspected(true);
+        Card topCard = new AgencyCoroner();
+        harness.setLibrary(player1, List.of(topCard));
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void castMeddler(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new ClandestineMeddler()));
         addMana();
         harness.castCreature(player1, 0, targetId == null ? List.of() : List.of(targetId));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addMana() {
