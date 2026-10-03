@@ -64,4 +64,51 @@ class CatWarriorsTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Forestwalk still prevents blocking when the defending Forest is tapped")
+    void tappedForestStillPreventsBlocking() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cat = addCreatureReady(player1, new CatWarriors());
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A Forest in the defending player's graveyard does not prevent blocking")
+    void forestInGraveyardDoesNotPreventBlocking() {
+        harness.setGraveyard(player2, List.of(new Forest()));
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cat = addCreatureReady(player1, new CatWarriors());
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A blocker with forestwalk cannot block Cat Warriors when its controller has a Forest")
+    void forestwalkOnBlockerDoesNotCancelForestwalk() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blocker = addCreatureReady(player2, new CatWarriors());
+        Permanent cat = addCreatureReady(player1, new CatWarriors());
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(cat);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
