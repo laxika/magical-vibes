@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.e.EchoingRuin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DarksteelPendant.class)
+@CardUsed({DarksteelPendant.class, EchoingRuin.class})
 class DarksteelPendantTest extends BaseCardTest {
 
     @Test
@@ -103,6 +104,51 @@ class DarksteelPendantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Darksteel Pendant survives an artifact destruction spell")
+    void survivesArtifactDestruction() {
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new DarksteelPendant());
+        harness.setHand(player1, List.of(new EchoingRuin()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, pendant.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pendant);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .doesNotContain(pendant.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Pendant can activate its tap ability")
+    void canActivateImmediatelyAfterEntering() {
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new DarksteelPendant());
+        harness.setLibrary(player1, List.of(new DarksteelPendant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pendant.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Pendant cannot activate or spend mana")
+    void cannotActivateWhileTapped() {
+        Permanent pendant = addReadyPendant();
+        pendant.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyPendant() {
