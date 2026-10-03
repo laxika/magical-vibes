@@ -92,9 +92,41 @@ class DiplomaticImmunityTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new DiplomaticImmunity());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DiplomaticImmunity());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
+    }
+
+    @Test
+    void canEnchantOpponentsCreatureAndRemainsAttachedDespiteShroud() {
+        Permanent creature = addCreatureReady(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new DiplomaticImmunity()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        Permanent aura = findPermanent(player1, "Diplomatic Immunity");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+
+        harness.setHand(player2, List.of(new Afterlife()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    void shroudPreventsActivatedAbilityFromTargetingAura() {
+        Permanent creature = addCreatureReady(player1, new FreshVolunteers());
+        Permanent aura = attachAura(creature);
+        harness.addToBattlefield(player1, new RishadanPawnshop());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 }
