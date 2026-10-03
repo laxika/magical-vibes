@@ -40,4 +40,37 @@ class CitanulWoodreadersTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
+
+    @Test
+    @DisplayName("Entering without being cast does not trigger the kicker draw")
+    void enteringWithoutCastingDoesNotDraw() {
+        harness.setLibrary(player1, List.of(new EssenceWarden(), new EssenceWarden()));
+
+        harness.enterBattlefieldAndReturn(player1, new CitanulWoodreaders());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The kicker draw resolves even after Woodreaders leaves the battlefield")
+    void kickerDrawResolvesWithoutSource() {
+        harness.setHand(player1, List.of(new CitanulWoodreaders()));
+        harness.setLibrary(player1, List.of(new EssenceWarden(), new EssenceWarden()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        var permanent = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(permanent.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
