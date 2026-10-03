@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GodlessShrine;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Defile.class, GrizzlyBears.class, HillGiant.class, Swamp.class, AirElemental.class})
+@CardUsed({Defile.class, Swamp.class, AirElemental.class, GodlessShrine.class})
 class DefileTest extends BaseCardTest {
 
     @Test
@@ -78,10 +77,57 @@ class DefileTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Defile counts nonbasic Swamps and ignores an opponent's Swamps")
+    void countsNonbasicSwamps() {
+        harness.addToBattlefield(player1, new GodlessShrine());
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castDefile(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Defile puts a creature with zero toughness into its owner's graveyard")
+    void killsCreatureWithZeroToughness() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Swamp());
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castDefile(target);
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Defile can target its controller's own creature")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        castDefile(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Defile's resolved penalty does not change when more Swamps enter")
+    void penaltyIsFixedAtResolution() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castDefile(target);
+        harness.addToBattlefield(player1, new Swamp());
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
     private void castDefile(Permanent target) {
         harness.setHand(player1, List.of(new Defile()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
