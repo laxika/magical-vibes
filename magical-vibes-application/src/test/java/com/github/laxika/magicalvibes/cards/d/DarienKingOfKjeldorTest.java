@@ -30,8 +30,7 @@ class DarienKingOfKjeldorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, targetLand.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         List<Permanent> soldiers = findPermanents(player1, "Soldier");
@@ -56,8 +55,7 @@ class DarienKingOfKjeldorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, targetLand.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanents(player1, "Soldier")).isEmpty();
@@ -79,5 +77,48 @@ class DarienKingOfKjeldorTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Simultaneous combat damage produces one choice for the total damage")
+    void simultaneousCombatDamageCreatesAllTokensWithOneChoice() {
+        harness.addToBattlefield(player1, new DarienKingOfKjeldor());
+        Permanent firstAttacker = addCreatureReady(player2, new BorealCentaur());
+        Permanent secondAttacker = addCreatureReady(player2, new BorealCentaur());
+        harness.setLife(player1, 20);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(
+                gd.playerBattlefields.get(player2.getId()).indexOf(firstAttacker),
+                gd.playerBattlefields.get(player2.getId()).indexOf(secondAttacker)));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 16);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(4);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to an opponent does not trigger Darien")
+    void damageToOpponentDoesNotCreateTokens() {
+        harness.addToBattlefield(player1, new DarienKingOfKjeldor());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Cryoclasm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, targetLand.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player2, "Soldier")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
