@@ -41,14 +41,12 @@ class EnduringTenacityTest extends BaseCardTest {
     @Test
     @DisplayName("Returns from the graveyard as an enchantment when it dies as a creature")
     void returnsAsEnchantmentWhenItDiesAsCreature() {
-        harness.addToBattlefield(player1, new EnduringTenacity());
-        Permanent enduring = findPermanent(player1, "Enduring Tenacity");
+        Permanent enduring = harness.addToBattlefieldAndReturn(player1, new EnduringTenacity());
 
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, enduring.getId());
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Enduring Tenacity");
@@ -60,8 +58,7 @@ class EnduringTenacityTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return when it dies as a noncreature")
     void doesNotReturnWhenItDiesAsNoncreature() {
-        harness.addToBattlefield(player1, new EnduringTenacity());
-        Permanent enduring = findPermanent(player1, "Enduring Tenacity");
+        Permanent enduring = harness.addToBattlefieldAndReturn(player1, new EnduringTenacity());
 
         harness.setHand(player1, List.of(new OneWithTheStars()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -73,11 +70,67 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, enduring.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Enduring Tenacity");
         harness.assertNotOnBattlefield(player1, "Enduring Tenacity");
+    }
+
+    @Test
+    @DisplayName("Retains its life-gain ability after returning as an enchantment")
+    void retainsLifeGainAbilityAfterReturning() {
+        Permanent enduring = harness.addToBattlefieldAndReturn(player1, new EnduringTenacity());
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, enduring.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Enduring Tenacity"))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its opponent gains life")
+    void opponentLifeGainDoesNotTrigger() {
+        harness.addToBattlefield(player1, new EnduringTenacity());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new AngelOfMercy()));
+        harness.addMana(player2, ManaColor.WHITE, 5);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 23);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not return again when its returned enchantment is destroyed")
+    void returnedEnchantmentDoesNotReturnAgain() {
+        Permanent enduring = harness.addToBattlefieldAndReturn(player1, new EnduringTenacity());
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, enduring.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Enduring Tenacity");
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, returned.getId());
+
+        harness.assertInGraveyard(player1, "Enduring Tenacity");
+        harness.assertNotOnBattlefield(player1, "Enduring Tenacity");
+        assertThat(gd.stack).isEmpty();
     }
 }
