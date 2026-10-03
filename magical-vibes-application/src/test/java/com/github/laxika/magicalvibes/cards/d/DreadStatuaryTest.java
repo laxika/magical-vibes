@@ -6,18 +6,20 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreadStatuary.class})
 class DreadStatuaryTest extends BaseCardTest {
 
     @Test
     void tappingProducesColorlessMana() {
-        Permanent statuary = addStatuaryReady(player1);
-        int index = gd.playerBattlefields.get(player1.getId()).indexOf(statuary);
+        addStatuaryReady(player1);
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
@@ -66,9 +68,75 @@ class DreadStatuaryTest extends BaseCardTest {
     }
 
     private Permanent addStatuaryReady(Player player) {
-        Permanent permanent = new Permanent(new DreadStatuary());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DreadStatuary());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void tappedLandCanAnimateAndStaysTapped() {
+        Permanent statuary = addStatuaryReady(player1);
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gqs.isCreature(gd, statuary)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, statuary)).isTrue();
+        assertThat(statuary.isTapped()).isTrue();
+    }
+
+    @Test
+    void animatedLandRetainsItsManaAbility() {
+        Permanent statuary = addStatuaryReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(statuary.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, statuary)).isTrue();
+    }
+
+    @Test
+    void newlyControlledLandCanAnimateButCannotTapForManaAsACreature() {
+        Permanent statuary = harness.addToBattlefieldAndReturn(player1, new DreadStatuary());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, statuary)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(statuary.isTapped()).isFalse();
+    }
+
+    @Test
+    void newlyControlledUnanimatedLandCanTapForMana() {
+        harness.addToBattlefield(player1, new DreadStatuary());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedAnimationDoesNotIncreasePowerOrToughness() {
+        Permanent statuary = addStatuaryReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, statuary)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, statuary)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
