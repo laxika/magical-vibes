@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GoldenHind;
+import com.github.laxika.magicalvibes.cards.g.GuardianBeast;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.t.TreeOfTales;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DaringThief.class, GloriousAnthem.class, GrizzlyBears.class, Millstone.class, TreeOfTales.class})
+@CardUsed({DaringThief.class, GloriousAnthem.class, GoldenHind.class, GrizzlyBears.class, GuardianBeast.class, Millstone.class, TreeOfTales.class})
 class DaringThiefTest extends BaseCardTest {
 
     @Test
@@ -87,13 +89,81 @@ class DaringThiefTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponent);
     }
 
+    @Test
+    @DisplayName("Daring Thief can exchange itself for a creature with a different mana value")
+    void canExchangeItself() {
+        Permanent thief = harness.addToBattlefieldAndReturn(player1, new DaringThief());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GoldenHind());
+        thief.tap();
+
+        advanceToInspiredTrigger();
+        harness.handlePermanentChosen(player1, thief.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(thief);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponent);
+    }
+
+    @Test
+    @DisplayName("An already untapped thief does not trigger during the untap step")
+    void alreadyUntappedDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DaringThief());
+        harness.addToBattlefield(player2, new GoldenHind());
+
+        advanceToInspiredTrigger();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Neither permanent changes control if the first target leaves before resolution")
+    void missingFirstTargetPreventsEntireExchange() {
+        Permanent thief = harness.addToBattlefieldAndReturn(player1, new DaringThief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GoldenHind());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GoldenHind());
+        thief.tap();
+
+        advanceToInspiredTrigger();
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(own);
+        gd.playerGraveyards.get(player1.getId()).add(own.getCard());
+        harness.passBothPriorities();
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(opponent);
+    }
+
+    @Test
+    @DisplayName("A control restriction on either artifact prevents the entire exchange")
+    void guardianBeastPreventsEntireExchange() {
+        Permanent thief = harness.addToBattlefieldAndReturn(player1, new DaringThief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.addToBattlefield(player2, new GuardianBeast());
+        thief.tap();
+
+        advanceToInspiredTrigger();
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own).doesNotContain(opponent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent).doesNotContain(own);
+    }
+
     private void advanceToInspiredTrigger() {
         harness.forceActivePlayer(player2);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }
