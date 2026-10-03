@@ -91,6 +91,54 @@ class CeaseFireTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Can target its caster and rejects an actual creature cast")
+    void canRestrictItsCaster() {
+        CarefulStudy drawnCard = new CarefulStudy();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new CeaseFire()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+
+        DruidLyrist creature = new DruidLyrist();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not counter a creature spell already on the stack")
+    void doesNotAffectCreatureAlreadyCast() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        DruidLyrist creature = new DruidLyrist();
+        harness.castFromHand(player2, creature, "{G}");
+
+        CarefulStudy drawnCard = new CarefulStudy();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new CeaseFire()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castCeaseFireAtPlayer2() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
