@@ -82,6 +82,65 @@ class DonatellosScienceLessonTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void canChooseOnlyCreaturesWithoutMakingEitherPlayerDraw() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        stockLibraries(1);
+        prepareCard();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void playerTargetsCanPrecedeCreatureTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        stockLibraries(1);
+        prepareCard();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(player1.getId(), player2.getId(), creature.getId()));
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
+    }
+
+    @Test
+    void remainingTargetsResolveWhenOneCreatureLeavesTheBattlefield() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        stockLibraries(1);
+        prepareCard();
+
+        harness.castInstant(player1, 0, List.of(removed.getId(), remaining.getId(), player1.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.setGraveyard(player2, List.of(removed.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetTheSamePlayerTwice() {
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(player1.getId(), player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void prepareCard() {
         harness.setHand(player1, List.of(new DonatellosScienceLesson()));
         harness.addMana(player1, ManaColor.BLUE, 1);
