@@ -142,6 +142,63 @@ class DiscordantDirgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With zero verse counters, the controller still privately looks at the hand")
+    void zeroVerseCountersStillLookAtHand() {
+        harness.addToBattlefield(player1, new DiscordantDirge());
+        harness.setHand(player2, List.of(new Forest(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Forest") && message.contains("Swamp"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("More verse counters than cards allows discarding the entire hand")
+    void moreCountersThanCardsDiscardsEntireHand() {
+        Permanent dirge = harness.addToBattlefieldAndReturn(player1, new DiscordantDirge());
+        dirge.setCounterCount(CounterType.VERSE, 5);
+        harness.setHand(player2, List.of(new Forest(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Discordant Dirge");
+        harness.assertInGraveyard(player1, "Discordant Dirge");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName).containsExactlyInAnyOrder("Forest", "Swamp");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty opponent hand does not prevent activation or leave a pending choice")
+    void emptyHandCompletesWithoutChoice() {
+        Permanent dirge = harness.addToBattlefieldAndReturn(player1, new DiscordantDirge());
+        dirge.setCounterCount(CounterType.VERSE, 2);
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Discordant Dirge");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("The ability cannot target its controller")
     void cannotTargetController() {
         harness.addToBattlefield(player1, new DiscordantDirge());
