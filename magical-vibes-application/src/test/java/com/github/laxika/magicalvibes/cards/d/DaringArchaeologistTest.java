@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,15 +19,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DaringArchaeologist.class, AdelizTheCinderWind.class, GrizzlyBears.class, Spellbook.class, HistoryOfBenalia.class})
 class DaringArchaeologistTest extends BaseCardTest {
-
-    // ===== ETB: return artifact from graveyard =====
 
     @Test
     @DisplayName("ETB triggers may ability prompt when artifact is in graveyard")
     void etbTriggersMayPrompt() {
         harness.setGraveyard(player1, List.of(new Spellbook()));
         castAndResolve();
+        chooseArtifactTarget();
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -38,10 +39,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Spellbook()));
         castAndAcceptMay();
 
-        // Graveyard choice should be prompted
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         harness.assertInHand(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Spellbook");
@@ -52,6 +50,7 @@ class DaringArchaeologistTest extends BaseCardTest {
     void decliningMayDoesNotReturnArtifact() {
         harness.setGraveyard(player1, List.of(new Spellbook()));
         castAndResolve();
+        chooseArtifactTarget();
         harness.passBothPriorities(); // resolve MayEffect
         harness.handleMayAbilityChosen(player1, false);
 
@@ -63,21 +62,21 @@ class DaringArchaeologistTest extends BaseCardTest {
     @DisplayName("ETB does not offer non-artifact cards from graveyard")
     void etbDoesNotOfferNonArtifact() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        castAndAcceptMay();
+        castAndResolve();
 
         // No artifact in graveyard — no graveyard choice
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("ETB resolves with no effect if graveyard is empty")
     void etbNoEffectEmptyGraveyard() {
-        castAndAcceptMay();
+        castAndResolve();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Historic trigger: +1/+1 counter =====
 
     @Test
     @DisplayName("Casting an artifact puts a +1/+1 counter on Daring Archaeologist")
@@ -103,12 +102,7 @@ class DaringArchaeologistTest extends BaseCardTest {
     @DisplayName("Casting a legendary creature puts a +1/+1 counter on Daring Archaeologist")
     void legendarySpellPutsCounter() {
         harness.addToBattlefield(player1, new DaringArchaeologist());
-        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AdelizTheCinderWind(), "{1}{U}{R}");
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Daring Archaeologist"));
@@ -124,10 +118,7 @@ class DaringArchaeologistTest extends BaseCardTest {
     @DisplayName("Casting a non-historic spell does not put a counter")
     void nonHistoricDoesNotPutCounter() {
         harness.addToBattlefield(player1, new DaringArchaeologist());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         // Only the creature spell on the stack, no triggered ability
         assertThat(gd.stack).hasSize(1);
@@ -174,21 +165,84 @@ class DaringArchaeologistTest extends BaseCardTest {
         assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Casting a Saga puts a counter on Daring Archaeologist before the Saga resolves")
+    void sagaSpellPutsCounter() {
+        Permanent archaeologist = harness.addToBattlefieldAndReturn(player1, new DaringArchaeologist());
+        harness.castFromHand(player1, new HistoryOfBenalia(), "{1}{W}{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "History of Benalia");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot supply the ETB target")
+    void opponentGraveyardCannotSupplyTarget() {
+        harness.setGraveyard(player2, List.of(new Spellbook()));
+        castAndResolve();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertNotInHand(player1, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("An artifact put in the graveyard after entry cannot become the ETB target")
+    void artifactArrivingAfterEntryCannotBeReturned() {
+        castAndResolve();
+        harness.setGraveyard(player1, List.of(new Spellbook()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotInHand(player1, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not replaced by another artifact")
+    void missingTargetDoesNotReturnAnotherArtifact() {
+        Spellbook target = new Spellbook();
+        Spellbook other = new Spellbook();
+        harness.setGraveyard(player1, List.of(target, other));
+        castAndResolve();
+        chooseArtifactTarget();
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("Putting an artifact onto the battlefield without casting does not trigger")
+    void artifactEnteringWithoutCastDoesNotTrigger() {
+        Permanent archaeologist = harness.addToBattlefieldAndReturn(player1, new DaringArchaeologist());
+        harness.enterBattlefieldAndReturn(player1, new Spellbook());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private void chooseArtifactTarget() {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
+    }
 
     private void castAndResolve() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new DaringArchaeologist()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DaringArchaeologist(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell
     }
 
     private void castAndAcceptMay() {
         castAndResolve();
+        chooseArtifactTarget();
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
     }
