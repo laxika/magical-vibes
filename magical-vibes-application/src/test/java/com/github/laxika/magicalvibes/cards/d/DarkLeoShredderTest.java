@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.n.NinjaOfTheDeepHours;
+import com.github.laxika.magicalvibes.cards.f.FootNinjas;
+import com.github.laxika.magicalvibes.cards.f.FugitiveDroid;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarkLeoShredder.class, NinjaOfTheDeepHours.class, GrizzlyBears.class})
+@CardUsed({DarkLeoShredder.class, FootNinjas.class, FugitiveDroid.class})
 class DarkLeoShredderTest extends BaseCardTest {
 
     @org.junit.jupiter.api.BeforeEach
@@ -27,9 +27,9 @@ class DarkLeoShredderTest extends BaseCardTest {
     @DisplayName("Attacking Ninjas you control have deathtouch")
     void attackingNinjasYouControlHaveDeathtouch() {
         Permanent darkLeoShredder = addCreatureReady(player1, new DarkLeoShredder());
-        Permanent ownNinja = addCreatureReady(player1, new NinjaOfTheDeepHours());
-        Permanent ownNonNinja = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentNinja = addCreatureReady(player2, new NinjaOfTheDeepHours());
+        Permanent ownNinja = addCreatureReady(player1, new FootNinjas());
+        Permanent ownNonNinja = addCreatureReady(player1, new FugitiveDroid());
+        Permanent opponentNinja = addCreatureReady(player2, new FootNinjas());
 
         darkLeoShredder.setAttacking(true);
         ownNinja.setAttacking(true);
@@ -60,9 +60,9 @@ class DarkLeoShredderTest extends BaseCardTest {
     @DisplayName("The created Ninja counts toward the five-Ninja life-loss condition")
     void createdNinjaCountsTowardLifeLoss() {
         harness.setLife(player2, 22);
-        addCreatureReady(player1, new NinjaOfTheDeepHours());
-        addCreatureReady(player1, new NinjaOfTheDeepHours());
-        addCreatureReady(player1, new NinjaOfTheDeepHours());
+        addCreatureReady(player1, new FootNinjas());
+        addCreatureReady(player1, new FootNinjas());
+        addCreatureReady(player1, new FootNinjas());
         Permanent darkLeoShredder = addCreatureReady(player1, new DarkLeoShredder());
         darkLeoShredder.setAttacking(true);
 
@@ -74,9 +74,97 @@ class DarkLeoShredderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nonattacking Ninjas do not gain deathtouch")
+    void nonattackingNinjasDoNotGainDeathtouch() {
+        Permanent source = addCreatureReady(player1, new DarkLeoShredder());
+        Permanent ninja = addCreatureReady(player1, new FootNinjas());
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ninja, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("More than five Ninjas halves an even life total without affecting the controller")
+    void moreThanFiveNinjasHalvesEvenLifeTotal() {
+        harness.setLife(player1, 23);
+        harness.setLife(player2, 21);
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new FootNinjas());
+        }
+        Permanent source = addCreatureReady(player1, new DarkLeoShredder());
+        source.setAttacking(true);
+        source.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 10);
+        harness.assertLife(player1, 23);
+        assertThat(findPermanents(player1, "Ninja")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's Ninjas do not count toward the life-loss condition")
+    void opposingNinjasDoNotCount() {
+        harness.setLife(player2, 22);
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player2, new FootNinjas());
+        }
+        Permanent source = addCreatureReady(player1, new DarkLeoShredder());
+        source.setAttacking(true);
+        source.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 21);
+        assertThat(findPermanents(player1, "Ninja")).hasSize(1);
+        assertThat(findPermanents(player2, "Ninja")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Ninja count and life total are checked when the trigger resolves")
+    void checksCurrentNinjaCountAndLifeAtResolution() {
+        harness.setLife(player2, 22);
+        Permanent source = addCreatureReady(player1, new DarkLeoShredder());
+        source.setAttacking(true);
+        source.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1, new FootNinjas());
+        }
+        harness.setLife(player2, 17);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 8);
+        assertThat(findPermanents(player1, "Ninja")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The trigger creates its token after the source leaves but recounts remaining Ninjas")
+    void sourceLeavingDoesNotStopTokenCreation() {
+        harness.setLife(player2, 22);
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1, new FootNinjas());
+        }
+        Permanent source = addCreatureReady(player1, new DarkLeoShredder());
+        source.setAttacking(true);
+        source.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 21);
+        assertThat(findPermanents(player1, "Ninja")).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Sneak returns an unblocked attacker and puts Dark Leo & Shredder tapped and attacking")
     void sneakSwapsTheUnblockedAttacker() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new FugitiveDroid());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
         harness.setHand(player1, List.of(new DarkLeoShredder()));
@@ -89,7 +177,7 @@ class DarkLeoShredderTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Fugitive Droid");
         Permanent darkLeoShredder = findPermanent(player1, "Dark Leo & Shredder");
         assertThat(darkLeoShredder.isTapped()).isTrue();
         assertThat(darkLeoShredder.isAttacking()).isTrue();
