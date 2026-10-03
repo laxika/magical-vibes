@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.p.PlatedWurm;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.event.GameEventFact.GameResult;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +29,8 @@ class DakmorPlagueTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -63,7 +64,41 @@ class DakmorPlagueTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
+
+    @Test
+    @DisplayName("Dakmor Plague marks 3 damage on surviving creatures on both sides")
+    void marksDamageOnSurvivingCreaturesOnBothSides() {
+        harness.addToBattlefield(player1, new PlatedWurm());
+        harness.addToBattlefield(player2, new PlatedWurm());
+
+        castDakmorPlague();
+
+        harness.assertOnBattlefield(player1, "Plated Wurm");
+        harness.assertOnBattlefield(player2, "Plated Wurm");
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Dakmor Plague draws the game when its damage is lethal to both players")
+    void drawsWhenBothPlayersTakeLethalDamage() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 3);
+
+        castDakmorPlague();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        GameData gd = harness.getGameData();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameResult.DRAW);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
 }
