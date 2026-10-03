@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "FCA", collectorNumber = "56")
+@CardRegistration(set = "C16", collectorNumber = "34")
 public class KraumLudevicsOpus extends Card {
 
     public KraumLudevicsOpus() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import java.util.List;
 
 @CardRegistration(set = "EOC", collectorNumber = "133")
+@CardRegistration(set = "C16", collectorNumber = "54")
 public class CrystallineCrawler extends Card {
 
     public CrystallineCrawler() {

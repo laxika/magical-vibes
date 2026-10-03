@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "151")
+@CardRegistration(set = "C16", collectorNumber = "187")
 public class ClanDefiance extends Card {
 
     public ClanDefiance() {

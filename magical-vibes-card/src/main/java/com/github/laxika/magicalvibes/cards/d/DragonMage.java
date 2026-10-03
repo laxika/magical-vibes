@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "SCG", collectorNumber = "87")
 @CardRegistration(set = "GN3", collectorNumber = "73")
 @CardRegistration(set = "C15", collectorNumber = "151")
+@CardRegistration(set = "C16", collectorNumber = "124")
 public class DragonMage extends Card {
 
     public DragonMage() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "194")
+@CardRegistration(set = "C16", collectorNumber = "204")
 public class HorizonChimera extends Card {
 
     public HorizonChimera() {

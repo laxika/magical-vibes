@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "64")
+@CardRegistration(set = "C16", collectorNumber = "108")
 public class BrutalHordechief extends Card {
 
     public BrutalHordechief() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
+@CardRegistration(set = "C16", collectorNumber = "43")
 @CardRegistration(set = "BRC", collectorNumber = "129")
 public class SilasRennSeekerAdept extends Card {
 

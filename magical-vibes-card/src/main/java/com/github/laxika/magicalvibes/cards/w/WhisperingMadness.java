@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDra
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "207")
+@CardRegistration(set = "C16", collectorNumber = "229")
 public class WhisperingMadness extends Card {
 
     public WhisperingMadness() {

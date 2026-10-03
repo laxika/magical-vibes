@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "110")
+@CardRegistration(set = "C16", collectorNumber = "202")
 public class GwafaHazidProfiteer extends Card {
 
     public GwafaHazidProfiteer() {

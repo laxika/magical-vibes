@@ -19,6 +19,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "158")
+@CardRegistration(set = "C16", collectorNumber = "239")
 public class TrialError extends Card {
 
     public TrialError() {

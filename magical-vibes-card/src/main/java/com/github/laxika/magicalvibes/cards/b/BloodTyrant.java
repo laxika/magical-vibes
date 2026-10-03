@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeAndPutCoun
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "CON", collectorNumber = "99")
+@CardRegistration(set = "C16", collectorNumber = "183")
 public class BloodTyrant extends Card {
 
     public BloodTyrant() {

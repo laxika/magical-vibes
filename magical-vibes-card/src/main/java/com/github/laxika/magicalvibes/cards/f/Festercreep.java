@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "62")
+@CardRegistration(set = "C16", collectorNumber = "110")
 public class Festercreep extends Card {
 
     public Festercreep() {

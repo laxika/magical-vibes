@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "68")
 @CardRegistration(set = "DDM", collectorNumber = "34")
+@CardRegistration(set = "C16", collectorNumber = "97")
 public class Spelltwine extends Card {
 
     public Spelltwine() {

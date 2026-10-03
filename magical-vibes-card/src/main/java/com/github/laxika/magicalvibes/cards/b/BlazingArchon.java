@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "RVR", collectorNumber = "8")
 @CardRegistration(set = "RVR", collectorNumber = "302")
 @CardRegistration(set = "AA4", collectorNumber = "1")
+@CardRegistration(set = "C16", collectorNumber = "58")
 public class BlazingArchon extends Card {
 
     public BlazingArchon() {

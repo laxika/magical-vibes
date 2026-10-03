@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryFor
 @CardRegistration(set = "2XM", collectorNumber = "186")
 @CardRegistration(set = "CMD", collectorNumber = "177")
 @CardRegistration(set = "MB2", collectorNumber = "76")
+@CardRegistration(set = "C16", collectorNumber = "174")
 public class VeteranExplorer extends Card {
 
     public VeteranExplorer() {

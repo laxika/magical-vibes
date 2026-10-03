@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "GTC", collectorNumber = "177")
 @CardRegistration(set = "2XM", collectorNumber = "211")
 @CardRegistration(set = "DMC", collectorNumber = "160")
+@CardRegistration(set = "C16", collectorNumber = "211")
 @CardRegistration(set = "ONC", collectorNumber = "120")
 public class MercilessEviction extends Card {
 

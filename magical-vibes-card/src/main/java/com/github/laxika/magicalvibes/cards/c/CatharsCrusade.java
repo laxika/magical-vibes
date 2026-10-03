@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "AVR", collectorNumber = "10")
 @CardRegistration(set = "MB2", collectorNumber = "6")
 @CardRegistration(set = "C14", collectorNumber = "67")
+@CardRegistration(set = "C16", collectorNumber = "61")
 public class CatharsCrusade extends Card {
 
     public CatharsCrusade() {

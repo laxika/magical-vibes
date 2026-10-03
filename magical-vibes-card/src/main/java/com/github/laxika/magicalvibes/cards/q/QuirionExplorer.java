@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "PLS", collectorNumber = "90")
+@CardRegistration(set = "C16", collectorNumber = "160")
 public class QuirionExplorer extends Card {
 
     public QuirionExplorer() {

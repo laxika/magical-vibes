@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "181")
 @CardRegistration(set = "C21", collectorNumber = "91")
 @CardRegistration(set = "MIC", collectorNumber = "85")
+@CardRegistration(set = "C16", collectorNumber = "65")
 public class EliteScaleguard extends Card {
 
     public EliteScaleguard() {

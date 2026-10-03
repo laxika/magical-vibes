@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "134")
+@CardRegistration(set = "C16", collectorNumber = "230")
 public class WildernessElemental extends Card {
 
     public WildernessElemental() {

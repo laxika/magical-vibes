@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "250")
+@CardRegistration(set = "C16", collectorNumber = "213")
 public class NathOfTheGiltLeaf extends Card {
 
     public NathOfTheGiltLeaf() {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "216")
 @CardRegistration(set = "CMM", collectorNumber = "534")
+@CardRegistration(set = "C16", collectorNumber = "17")
 public class DivergentTransformations extends Card {
 
     public DivergentTransformations() {

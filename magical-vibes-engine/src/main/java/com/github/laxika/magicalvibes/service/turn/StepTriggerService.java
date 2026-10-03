@@ -5682,7 +5682,7 @@ public class StepTriggerService {
                             log.info("Game {} - {} end-step morbid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.wrapped() instanceof MayEffect) {
+                            && conditional.wrapped() instanceof MayEffect may) {
                         // Intervening-if "you may" (CR 603.4), e.g. Sygg, River Cutthroat: only
                         // trigger if the condition holds at the beginning of the end step. The
                         // ConditionalEffect wrapper is pushed intact so resolution re-checks the
@@ -5693,13 +5693,15 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                             continue;
                         }
+                        UUID endStepTargetId = may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
+                                ? activePlayerId : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                null,
+                                endStepTargetId,
                                 perm.getId()
                         ));
                         gameLogService.append(gameData,

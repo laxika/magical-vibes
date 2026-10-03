@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "C13", collectorNumber = "220")
+@CardRegistration(set = "C16", collectorNumber = "224")
 public class SydriGalvanicGenius extends Card {
 
     public SydriGalvanicGenius() {

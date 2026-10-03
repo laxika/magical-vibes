@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerAndP
 @CardRegistration(set = "C21", collectorNumber = "103")
 @CardRegistration(set = "LTC", collectorNumber = "176")
 @CardRegistration(set = "MKC", collectorNumber = "82")
+@CardRegistration(set = "C16", collectorNumber = "4")
 public class SelflessSquire extends Card {
 
     public SelflessSquire() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "ARB", collectorNumber = "6")
 @CardRegistration(set = "C13", collectorNumber = "189")
+@CardRegistration(set = "C16", collectorNumber = "199")
 public class FiligreeAngel extends Card {
 
     public FiligreeAngel() {

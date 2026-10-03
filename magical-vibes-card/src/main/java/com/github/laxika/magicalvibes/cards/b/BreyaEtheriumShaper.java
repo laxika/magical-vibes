@@ -27,6 +27,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "454")
 @CardRegistration(set = "2XM", collectorNumber = "192")
+@CardRegistration(set = "C16", collectorNumber = "29")
 public class BreyaEtheriumShaper extends Card {
 
     public BreyaEtheriumShaper() {

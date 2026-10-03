@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "TOR", collectorNumber = "125")
 @CardRegistration(set = "C18", collectorNumber = "145")
+@CardRegistration(set = "C16", collectorNumber = "148")
 public class FarWanderings extends Card {
 
     public FarWanderings() {

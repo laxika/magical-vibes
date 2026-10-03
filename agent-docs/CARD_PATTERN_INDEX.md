@@ -400,6 +400,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | each opponent chooses a creature from their graveyard and the chosen cards enter under your control | `d/DredgeTheMire.java` + `EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffect` |
+| reveal the top ten, each opponent chooses a different nonland card to hand, and the rest bottom randomly | `m/ManifoldInsights.java` + `ManifoldInsightsEffect` |
 | targeted opponent-graveyard reanimation followed by exiling that player's graveyard | `n/NurglesConscription.java` + `ExileGraveyardOfTargetCardOwnerEffect` |
 | exile any number of graveyard cards with a collective card-type threshold, then return a permanent from among them with a counter | `w/WinterCynicalOpportunist.java` + `ExileAnyNumberOfOwnGraveyardCardsWithFourCardTypesThenPutPermanentOntoBattlefieldEffect` |
 | target player's graveyard to bottom in random order | CARD_PATTERNS_CREATURES_ETB.md |
@@ -448,6 +449,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | ETB goads up to one creature per opponent and adds their total power as +1/+1 counters | `h/HavocEater.java` + `targetUpTo(PlayersInGame - 1, creatureAnOpponentControls)` + `AT_MOST_ONE_PER_CONTROLLER` + `TotalPowerOfTargetGroup` |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | ally permanent death trigger snapshots total counters and optionally places +1/+1 counters on a creature | `y/YunaGrandSummoner.java` + `PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect` |
+| creature-death and commander-zone trigger transfer only +1/+1 counters to a target creature | `r/ReyhanLastOfTheAbzan.java` + `TriggeringPermanentConditionalEffect(PermanentHasAtLeastCountersPredicate(PLUS_ONE_PLUS_ONE, 1), MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect(PLUS_ONE_PLUS_ONE)))` |
 | counters placed on a creature you don't control | `ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL` plus `TapPermanentsEffect(TRIGGERING)`, `GoadTriggeringCreatureUntilNextTurnEffect`, and `GrantKeywordEffect(TRAMPLE, TRIGGERING_PERMANENT, UNTIL_YOUR_NEXT_TURN)`; see `k/KrosDefenseContractor.java` |
 | counter placement followed by goad of exactly the affected creatures, including an overload branch | `PutCountersOnTargetPermanentThenReflexiveEffect` with `GoadTriggeringCreatureUntilNextTurnEffect` for the targeted branch; `PutCounterOnEachMatchingPermanentThenGoadEffect` for the overloaded branch; see `s/SpectacularShowdown.java` |
 | end-step goad of creatures enchanted by your Auras, then counters on the source for each creature goaded this way | `GoadCreaturesAndPutCountersOnSourceEffect` with `PermanentIsEnchantedBySourceControllerAuraPredicate`; see `k/KaimaTheFracturedCalm.java` |

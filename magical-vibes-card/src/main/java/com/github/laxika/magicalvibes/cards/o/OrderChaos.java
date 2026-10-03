@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "APC", collectorNumber = "132")
 @CardRegistration(set = "HOP", collectorNumber = "104")
 @CardRegistration(set = "DMR", collectorNumber = "212")
+@CardRegistration(set = "C16", collectorNumber = "240")
 public class OrderChaos extends Card {
 
     public OrderChaos() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SHM", collectorNumber = "186")
 @CardRegistration(set = "ECC", collectorNumber = "121")
+@CardRegistration(set = "C16", collectorNumber = "233")
 public class EverlastingTorment extends Card {
 
     public EverlastingTorment() {

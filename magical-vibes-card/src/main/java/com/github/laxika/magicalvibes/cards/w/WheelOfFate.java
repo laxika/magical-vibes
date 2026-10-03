@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "187")
 @CardRegistration(set = "TSR", collectorNumber = "198")
+@CardRegistration(set = "C16", collectorNumber = "138")
 public class WheelOfFate extends Card {
 
     public WheelOfFate() {

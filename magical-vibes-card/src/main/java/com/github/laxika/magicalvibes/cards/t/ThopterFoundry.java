@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "2XM", collectorNumber = "222")
 @CardRegistration(set = "C13", collectorNumber = "234")
 @CardRegistration(set = "MB2", collectorNumber = "92")
+@CardRegistration(set = "C16", collectorNumber = "237")
 public class ThopterFoundry extends Card {
 
     public ThopterFoundry() {

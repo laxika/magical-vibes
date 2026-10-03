@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "204")
 @CardRegistration(set = "DDS", collectorNumber = "25")
+@CardRegistration(set = "C16", collectorNumber = "222")
 public class SpellheartChimera extends Card {
 
     public SpellheartChimera() {

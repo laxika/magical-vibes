@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "143")
+@CardRegistration(set = "C16", collectorNumber = "234")
 public class Mirrorweave extends Card {
 
     public Mirrorweave() {

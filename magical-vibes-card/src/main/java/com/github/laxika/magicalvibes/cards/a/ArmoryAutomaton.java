@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "FIC", collectorNumber = "336")
+@CardRegistration(set = "C16", collectorNumber = "51")
 public class ArmoryAutomaton extends Card {
 
     public ArmoryAutomaton() {

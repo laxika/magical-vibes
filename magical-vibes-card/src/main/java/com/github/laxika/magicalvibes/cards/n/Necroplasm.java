@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourc
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "98")
+@CardRegistration(set = "C16", collectorNumber = "115")
 public class Necroplasm extends Card {
 
     public Necroplasm() {
