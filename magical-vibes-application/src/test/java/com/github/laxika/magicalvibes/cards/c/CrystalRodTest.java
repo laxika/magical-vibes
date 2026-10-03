@@ -7,17 +7,18 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.ManaShort;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrystalRod.class, AirElemental.class, Concentrate.class, GrizzlyBears.class})
+@CardUsed({CrystalRod.class, AirElemental.class, ManaShort.class, GrizzlyBears.class})
 class CrystalRodTest extends BaseCardTest {
-
-    // ===== Triggered ability: controller casts blue spell =====
 
     @Test
     @DisplayName("Controller casts blue spell, accepts may ability, gains 1 life")
@@ -110,7 +111,10 @@ class CrystalRodTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castFromHand(player1, new Concentrate(), "{2}{U}{U}");
+        harness.setHand(player1, List.of(new ManaShort()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -123,8 +127,6 @@ class CrystalRodTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
-
-    // ===== Triggered ability: opponent casts blue spell =====
 
     @Test
     @DisplayName("Opponent casts blue spell, controller accepts may ability, gains 1 life")
@@ -174,8 +176,6 @@ class CrystalRodTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Non-blue spell does NOT trigger =====
-
     @Test
     @DisplayName("Non-blue spell does not trigger Crystal Rod")
     void nonBlueSpellDoesNotTrigger() {
@@ -187,5 +187,45 @@ class CrystalRodTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic life-gain cost")
+    void coloredManaPaysForLifeGain() {
+        harness.addToBattlefield(player1, new CrystalRod());
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting a colorless artifact does not trigger Crystal Rod")
+    void colorlessSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new CrystalRod());
+
+        harness.castFromHand(player1, new CrystalRod(), "{1}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A blue creature entering without being cast does not trigger Crystal Rod")
+    void blueCreatureEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new CrystalRod());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new AirElemental());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }
