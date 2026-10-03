@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "18")
 @CardRegistration(set = "MH2", collectorNumber = "256")
+@CardRegistration(set = "DRC", collectorNumber = "171")
 public class SlagwoodsBridge extends Card {
 
     public SlagwoodsBridge() {

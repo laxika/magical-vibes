@@ -25,7 +25,7 @@ class CragplateBalothTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent baloth = findBaloth(player1);
+        Permanent baloth = findPermanent(player1, "Cragplate Baloth");
         assertThat(baloth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -38,7 +38,7 @@ class CragplateBalothTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent baloth = findBaloth(player1);
+        Permanent baloth = findPermanent(player1, "Cragplate Baloth");
         assertThat(baloth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
@@ -59,14 +59,14 @@ class CragplateBalothTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(findBaloth(player1)).isNotNull();
+        harness.assertOnBattlefield(player1, "Cragplate Baloth");
         harness.assertInGraveyard(player2, "Cancel");
     }
 
     @Test
     void hexproofPreventsOpponentFromTargetingIt() {
         harness.addToBattlefield(player1, new CragplateBaloth());
-        Permanent baloth = findBaloth(player1);
+        Permanent baloth = findPermanent(player1, "Cragplate Baloth");
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -75,10 +75,52 @@ class CragplateBalothTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent findBaloth(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Cragplate Baloth"))
-                .findFirst()
-                .orElse(null);
+    @Test
+    void kickedSpellCannotBeCounteredAndEntersWithCountersWithoutATrigger() {
+        CragplateBaloth baloth = new CragplateBaloth();
+        harness.setHand(player1, List.of(baloth));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, baloth.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Cragplate Baloth")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Cancel");
+    }
+
+    @Test
+    void hasteAllowsAttackingOnTheTurnItIsCast() {
+        harness.setHand(player1, List.of(new CragplateBaloth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent baloth = findPermanent(player1, "Cragplate Baloth");
+        assertThat(baloth.isSummoningSick()).isTrue();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(baloth.isAttacking()).isTrue();
+    }
+
+    @Test
+    void hexproofAllowsItsControllerToTargetIt() {
+        harness.addToBattlefield(player1, new CragplateBaloth());
+        Permanent baloth = findPermanent(player1, "Cragplate Baloth");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, baloth.getId());
+
+        assertThat(baloth.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Cragplate Baloth");
+        harness.assertInGraveyard(player1, "Shock");
     }
 }

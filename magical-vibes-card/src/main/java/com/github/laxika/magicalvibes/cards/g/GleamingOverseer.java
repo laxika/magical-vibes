@@ -29,6 +29,7 @@ import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "198")
 @CardRegistration(set = "MIC", collectorNumber = "151")
+@CardRegistration(set = "DRC", collectorNumber = "116")
 public class GleamingOverseer extends Card {
 
     public GleamingOverseer() {

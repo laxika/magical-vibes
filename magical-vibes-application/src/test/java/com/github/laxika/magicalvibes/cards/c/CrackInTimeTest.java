@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -78,6 +79,123 @@ class CrackInTimeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void entersWithThreeTimeCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crack = castAndResolve(target.getId());
+
+        assertThat(crack.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    void controllerUpkeepRemovesATimeCounter() {
+        Permanent crack = harness.addToBattlefieldAndReturn(player1, new CrackInTime());
+        crack.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(crack.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Crack in Time");
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveATimeCounter() {
+        Permanent crack = harness.addToBattlefieldAndReturn(player1, new CrackInTime());
+        crack.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(crack.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Crack in Time");
+    }
+
+    @Test
+    void lastTimeCounterSacrificesSourceAndReturnsExiledCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crack = castAndResolve(target.getId());
+        crack.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Crack in Time");
+        harness.assertInGraveyard(player1, "Crack in Time");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void returnsEveryCreatureExiledByTheSameSource() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crack = castAndResolve(firstTarget.getId());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        advanceToPrecombatMain(player1);
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        resolveAllTriggers();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crack));
+
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void sourceLeavingBeforeMainPhaseTriggerResolvesDoesNotExileTarget() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crack = castAndResolve(firstTarget.getId());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        advanceToPrecombatMain(player1);
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crack));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondTarget);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void canEnterWithoutAnOpposingCreature() {
+        harness.setHand(player1, List.of(new CrackInTime()));
+        addMana();
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Crack in Time");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void sourceLeavingBeforeEntryTriggerResolvesDoesNotExileTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CrackInTime()));
+        addMana();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent crack = findPermanent(player1, "Crack in Time");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, crack));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void upkeepWithoutTimeCountersDoesNotSacrificeSource() {
+        harness.addToBattlefield(player1, new CrackInTime());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Crack in Time");
+    }
     private Permanent castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new CrackInTime()));
         addMana();
@@ -96,6 +214,6 @@ class CrackInTimeTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
     }
 }
