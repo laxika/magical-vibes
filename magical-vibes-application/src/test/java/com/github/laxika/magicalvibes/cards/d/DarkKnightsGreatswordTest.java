@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -60,17 +61,84 @@ class DarkKnightsGreatswordTest extends BaseCardTest {
                 .hasMessageContaining("only once each turn");
     }
 
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent greatsword = addGreatswordReady(player1);
+        Permanent opponentCreature = addCreatureReady(player2);
+        harness.forceActivePlayer(player1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(greatsword.getAttachedTo()).isNull();
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipCannotBeActivatedOutsideMainPhase() {
+        Permanent greatsword = addGreatswordReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(greatsword.getAttachedTo()).isNull();
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void insufficientLifeDoesNotConsumeEquipActivation() {
+        Permanent greatsword = addGreatswordReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.setLife(player1, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        harness.assertLife(player1, 2);
+        assertThat(greatsword.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+
+        harness.setLife(player1, 10);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 7);
+        assertThat(greatsword.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void movingEquipmentRemovesKnightSubtypeButPreservesOriginalTypes() {
+        Permanent greatsword = addGreatswordReady(player1);
+        Permanent first = addCreatureReady(player1);
+        Permanent second = addCreatureReady(player1);
+        greatsword.setAttachedTo(first.getId());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, first)).contains(CardSubtype.BEAR, CardSubtype.KNIGHT);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, first)).contains(CardSubtype.BEAR)
+                .doesNotContain(CardSubtype.KNIGHT);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.BEAR, CardSubtype.KNIGHT);
+    }
+
     private Permanent addGreatswordReady(Player player) {
-        Permanent permanent = new Permanent(new DarkKnightsGreatsword());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new DarkKnightsGreatsword());
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 }
