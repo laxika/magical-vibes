@@ -59,10 +59,97 @@ class DiplomaticRelationsTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    @DisplayName("Damage uses the power after the boost and is not a fight")
+    void damageUsesBoostedPowerWithoutRetaliation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castDiplomaticRelations(source, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The surviving first target is boosted when the second target leaves")
+    void boostsFirstTargetWhenSecondTargetLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new DiplomaticRelations()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isTrue();
+        harness.assertInGraveyard(player1, "Diplomatic Relations");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the first target leaves before resolution")
+    void dealsNoDamageWhenFirstTargetLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new DiplomaticRelations()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A first target that changes to an opponent's control is not boosted and deals no damage")
+    void firstTargetMustRemainUnderYourControl() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new DiplomaticRelations()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isFalse();
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A second target that changes to your control takes no damage while the first target is boosted")
+    void secondTargetMustRemainUnderOpponentControl() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new DiplomaticRelations()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerBattlefields.get(player1.getId()).add(victim);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.VIGILANCE)).isTrue();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(victim.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, victim, Keyword.VIGILANCE)).isFalse();
+    }
+
     private void castDiplomaticRelations(Permanent source, java.util.UUID victimId) {
         harness.setHand(player1, List.of(new DiplomaticRelations()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, List.of(source.getId(), victimId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), victimId));
     }
 }
