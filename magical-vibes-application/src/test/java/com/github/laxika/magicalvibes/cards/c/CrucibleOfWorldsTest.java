@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CrucibleOfWorlds.class, Forest.class, GrizzlyBears.class, Plains.class})
 class CrucibleOfWorldsTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Crucible of Worlds can be cast as an artifact")
     void canBeCast() {
@@ -42,8 +40,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Crucible of Worlds");
     }
-
-    // ===== Playing lands from graveyard =====
 
     @Test
     @DisplayName("Can play a land from graveyard with Crucible on battlefield")
@@ -95,7 +91,7 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Play a land from hand first
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
         // Graveyard land should not be playable
         assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
@@ -118,12 +114,10 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         // Hand land should not be playable
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Crucible must be on battlefield =====
 
     @Test
     @DisplayName("Cannot play land from graveyard without Crucible on battlefield")
@@ -177,8 +171,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
                 .hasMessageContaining("not playable from graveyard");
     }
 
-    // ===== Only lands are playable =====
-
     @Test
     @DisplayName("Creatures in graveyard are not playable via Crucible")
     void creaturesInGraveyardNotPlayable() {
@@ -194,8 +186,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable from graveyard");
     }
-
-    // ===== Timing restrictions =====
 
     @Test
     @DisplayName("Cannot play land from graveyard during opponent's turn")
@@ -229,8 +219,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
                 .hasMessageContaining("not playable from graveyard");
     }
 
-    // ===== Only affects controller =====
-
     @Test
     @DisplayName("Crucible only allows its controller to play lands from graveyard")
     void onlyAffectsController() {
@@ -248,8 +236,6 @@ class CrucibleOfWorldsTest extends BaseCardTest {
                 .hasMessageContaining("not playable from graveyard");
     }
 
-    // ===== Can still play lands from hand normally =====
-
     @Test
     @DisplayName("Can still play lands from hand normally with Crucible on battlefield")
     void canStillPlayFromHand() {
@@ -261,12 +247,10 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
 
         harness.assertOnBattlefield(player1, "Plains");
     }
-
-    // ===== Postcombat main phase =====
 
     @Test
     @DisplayName("Can play land from graveyard during postcombat main phase")
@@ -285,7 +269,67 @@ class CrucibleOfWorldsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
     }
 
-    // ===== Plays the correct card from graveyard =====
+    @Test
+    @DisplayName("Cannot play a graveyard land while a spell is on the stack")
+    void cannotPlayWithNonemptyStack() {
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable from graveyard");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Forest");
+
+        harness.passBothPriorities();
+        harness.playGraveyardLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Crucibles do not grant additional land plays")
+    void multipleCruciblesDoNotGrantExtraLandPlays() {
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        harness.setGraveyard(player1, List.of(new Forest(), new Plains()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playGraveyardLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable from graveyard");
+        harness.assertInGraveyard(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("Crucible cannot play lands from an opponent's graveyard by card ID")
+    void cannotPlayOpponentGraveyardLand() {
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        Forest forest = new Forest();
+        harness.setGraveyard(player2, List.of(forest));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable from graveyard");
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
 
     @Test
     @DisplayName("Plays the correct land when multiple cards are in graveyard")
