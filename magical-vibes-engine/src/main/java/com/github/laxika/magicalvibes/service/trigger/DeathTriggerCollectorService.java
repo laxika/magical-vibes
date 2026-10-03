@@ -4003,7 +4003,8 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(match.permanent().getId())))
+                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(
+                        match.permanent().getId(), effect.atNextEndStep())))
         ));
         logSelfLeaves(match);
         return true;

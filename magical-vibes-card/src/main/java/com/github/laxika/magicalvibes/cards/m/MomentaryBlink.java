@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "DMR", collectorNumber = "15")
 @CardRegistration(set = "DMR", collectorNumber = "268")
 @CardRegistration(set = "2X2", collectorNumber = "20")
+@CardRegistration(set = "KHC", collectorNumber = "30")
 public class MomentaryBlink extends Card {
 
     public MomentaryBlink() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "11")
 @CardRegistration(set = "PIO", collectorNumber = "280")
+@CardRegistration(set = "KHC", collectorNumber = "23")
 public class EvangelOfHeliod extends Card {
 
     public EvangelOfHeliod() {

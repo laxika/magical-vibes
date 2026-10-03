@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "OGW", collectorNumber = "173")
 @CardRegistration(set = "GS1", collectorNumber = "19")
 @CardRegistration(set = "C18", collectorNumber = "265")
+@CardRegistration(set = "KHC", collectorNumber = "114")
 public class MeanderingRiver extends Card {
 
     public MeanderingRiver() {

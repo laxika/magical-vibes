@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "175")
 @CardRegistration(set = "RVR", collectorNumber = "187")
+@CardRegistration(set = "KHC", collectorNumber = "86")
 public class GolgariFindbroker extends Card {
 
     public GolgariFindbroker() {

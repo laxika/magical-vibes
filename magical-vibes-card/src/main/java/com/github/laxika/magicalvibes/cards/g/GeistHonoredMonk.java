@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "17")
 @CardRegistration(set = "C14", collectorNumber = "72")
+@CardRegistration(set = "KHC", collectorNumber = "25")
 public class GeistHonoredMonk extends Card {
 
     public GeistHonoredMonk() {

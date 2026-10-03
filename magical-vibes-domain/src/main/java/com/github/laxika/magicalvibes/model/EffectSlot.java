@@ -94,6 +94,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a Case is solved by the controller. */
     ON_ALLY_CASE_SOLVES,
     ON_CONTROLLER_FORETELLS,
+    /** Triggers whenever one or more cards are exiled from this permanent's controller's hand. */
+    ON_CONTROLLER_CARDS_EXILED_FROM_HAND,
+    /** Triggers whenever this permanent's controller's spell or ability exiles a battlefield permanent. */
+    ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT,
     /** Triggers when the controller copies an instant or sorcery spell. */
     ON_CONTROLLER_COPIES_SPELL,
     /** Triggers when an opponent copies an instant or sorcery spell. */

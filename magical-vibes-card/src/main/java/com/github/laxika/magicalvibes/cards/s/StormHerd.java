@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "GPT", collectorNumber = "19")
 @CardRegistration(set = "CMD", collectorNumber = "34")
 @CardRegistration(set = "C19", collectorNumber = "75")
+@CardRegistration(set = "KHC", collectorNumber = "33")
 public class StormHerd extends Card {
 
     public StormHerd() {

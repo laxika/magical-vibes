@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "136")
+@CardRegistration(set = "KHC", collectorNumber = "53")
 public class ProwessOfTheFair extends Card {
 
     public ProwessOfTheFair() {

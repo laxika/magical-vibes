@@ -4721,7 +4721,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean faceDown, boolean returnOnSourceLeave,
                                UUID untapPermanentId, boolean playPermissionToChooser,
                                UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
-                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect)
+                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect,
+                               int exiledCount)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4729,7 +4730,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, java.util.List.of(), 0, false, false, null,
-                    false, null, 0, false, null);
+                    false, null, 0, false, null, 0);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4738,7 +4739,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null,
-                    false, null, 0, false, null);
+                    false, null, 0, false, null, 0);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4748,7 +4749,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
-                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null);
+                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null, 0);
+        }
+
+        public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                   UUID sourcePermanentId, UUID playPermissionControllerId,
+                                   int remainingCount, String prompt,
+                                   java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
+                                   boolean faceDown, boolean returnOnSourceLeave,
+                                   UUID untapPermanentId, boolean playPermissionToChooser,
+                                   UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
+                                   boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect) {
+            this(playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
+                    prompt, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                    untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                    exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
         }
 
         @Override

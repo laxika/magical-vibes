@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "MOC", collectorNumber = "169")
 @CardRegistration(set = "AFC", collectorNumber = "63")
 @CardRegistration(set = "C20", collectorNumber = "75")
+@CardRegistration(set = "KHC", collectorNumber = "17")
 public class AngelOfFinality extends Card {
 
     public AngelOfFinality() {

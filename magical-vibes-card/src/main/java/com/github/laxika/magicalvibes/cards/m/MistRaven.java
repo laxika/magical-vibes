@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDQ", collectorNumber = "26")
 @CardRegistration(set = "MM3", collectorNumber = "43")
 @CardRegistration(set = "SIS", collectorNumber = "18")
+@CardRegistration(set = "KHC", collectorNumber = "41")
 public class MistRaven extends Card {
 
     public MistRaven() {
