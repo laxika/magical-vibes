@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DapperShieldmate.class, Shock.class})
+@CardUsed({DapperShieldmate.class, Shock.class, Murder.class})
 class DapperShieldmateTest extends BaseCardTest {
 
     @Test
@@ -23,6 +23,15 @@ class DapperShieldmateTest extends BaseCardTest {
         Permanent shieldmate = castShieldmate();
 
         assertThat(shieldmate.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Enters with its shield immediately even when not cast")
+    void entersWithoutCastingWithShieldAndNoTrigger() {
+        Permanent shieldmate = harness.enterBattlefieldAndReturn(player1, new DapperShieldmate());
+
+        assertThat(shieldmate.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -54,19 +63,73 @@ class DapperShieldmateTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, shieldmate.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shieldmate.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shieldmate);
         assertThat(shieldmate.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(shieldmate.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("A second damage event kills it after its shield is consumed")
+    void secondDamageEventKillsAfterShieldIsConsumed() {
+        Permanent shieldmate = castShieldmate();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, shieldmate.getId());
+
+        assertThat(shieldmate.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(shieldmate.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Dapper Shieldmate");
+
+        harness.castAndResolveInstant(player1, 0, shieldmate.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dapper Shieldmate");
+        harness.assertInGraveyard(player1, "Dapper Shieldmate");
+    }
+
+    @Test
+    @DisplayName("A shield prevents destruction only once and does not tap the creature")
+    void shieldCounterReplacesDestructionOnlyOnce() {
+        Permanent shieldmate = castShieldmate();
+
+        harness.setHand(player1, List.of(new Murder(), new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, shieldmate.getId());
+
+        harness.assertOnBattlefield(player1, "Dapper Shieldmate");
+        assertThat(shieldmate.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(shieldmate.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, shieldmate.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dapper Shieldmate");
+        harness.assertInGraveyard(player1, "Dapper Shieldmate");
+    }
+
+    @Test
+    @DisplayName("The power bonus follows each Shieldmate's controller as the turn changes")
+    void powerBonusUpdatesForBothControllersWhenTurnChanges() {
+        Permanent ownShieldmate = harness.addToBattlefieldAndReturn(player1, new DapperShieldmate());
+        Permanent opposingShieldmate = harness.addToBattlefieldAndReturn(player2, new DapperShieldmate());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, ownShieldmate)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingShieldmate)).isEqualTo(2);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, ownShieldmate)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingShieldmate)).isEqualTo(4);
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, ownShieldmate)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingShieldmate)).isEqualTo(2);
+    }
+
     private Permanent castShieldmate() {
-        harness.setHand(player1, List.of(new DapperShieldmate()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DapperShieldmate(), "{3}{W}");
         harness.passBothPriorities();
         return findPermanent(player1, "Dapper Shieldmate");
     }
