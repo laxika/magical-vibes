@@ -81,6 +81,52 @@ class ElvenFortressTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Repeated activations stack on a blocking creature you control")
+    void repeatedActivationsBoostOwnBlocker() {
+        addFortress();
+        Permanent blocker = addBlockingCreature(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(0);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("A resolved boost remains after the creature stops blocking")
+    void resolvedBoostDoesNotDependOnRemainingBlocking() {
+        addFortress();
+        Permanent blocker = addBlockingCreature(player2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setBlocking(false);
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(0);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the green activation cost")
+    void cannotActivateWithoutGreenMana() {
+        addFortress();
+        Permanent blocker = addBlockingCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
+    }
+
     private void addFortress() {
         harness.addToBattlefield(player1, new ElvenFortress());
     }
