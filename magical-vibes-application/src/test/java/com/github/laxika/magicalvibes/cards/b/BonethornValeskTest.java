@@ -55,4 +55,51 @@ class BonethornValeskTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Fyndhorn Elves");
     }
+
+    @Test
+    void canTargetItsOwnControllerWhenAnAlliedPermanentTurnsFaceUp() {
+        harness.addToBattlefield(player1, new BonethornValesk());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setFaceDownAsCloaked();
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, forest);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void opponentControlsTheTriggerWhenTheirBonethornTurnsFaceUp() {
+        Permanent bonethorn = harness.addToBattlefieldAndReturn(player2, new BonethornValesk());
+        bonethorn.setFaceDownAsCloaked();
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, bonethorn);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void faceDownBonethornDoesNotTriggerWhenAnotherPermanentTurnsFaceUp() {
+        Permanent bonethorn = harness.addToBattlefieldAndReturn(player1, new BonethornValesk());
+        bonethorn.setFaceDownAsCloaked();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setFaceDownAsCloaked();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, forest);
+
+        assertThat(forest.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
