@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.Allay;
 import com.github.laxika.magicalvibes.cards.c.CinderCrawler;
 import com.github.laxika.magicalvibes.cards.s.SabertoothWyvern;
+import com.github.laxika.magicalvibes.cards.s.Slaughter;
 import com.github.laxika.magicalvibes.cards.t.TyphoidRats;
 import com.github.laxika.magicalvibes.cards.w.WelkinHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DizzyingGaze.class, CinderCrawler.class, SabertoothWyvern.class, TyphoidRats.class, WelkinHawk.class})
+@CardUsed({DizzyingGaze.class, Allay.class, CinderCrawler.class, SabertoothWyvern.class,
+        Slaughter.class, TyphoidRats.class, WelkinHawk.class})
 class DizzyingGazeTest extends BaseCardTest {
 
     private Permanent addAuraToCreature(Card creatureCard) {
@@ -100,5 +103,83 @@ class DizzyingGazeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Welkin Hawk");
         harness.assertNotInGraveyard(player2, "Welkin Hawk");
+    }
+
+    @Test
+    void abilityStillDealsDamageAfterAuraIsDestroyed() {
+        Permanent aura = addAuraToCreature(new CinderCrawler());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SabertoothWyvern());
+        harness.setHand(player2, List.of(new Allay()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dizzying Gaze");
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void abilityStillDealsDamageAfterEnchantedCreatureDies() {
+        Permanent aura = addAuraToCreature(new CinderCrawler());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SabertoothWyvern());
+        harness.setHand(player2, List.of(new Slaughter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.castInstant(player2, 0, aura.getAttachedTo());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Cinder Crawler");
+        harness.assertInGraveyard(player1, "Dizzying Gaze");
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void damageUsesEnchantedCreaturesDeathtouch() {
+        addAuraToCreature(new TyphoidRats());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SabertoothWyvern());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sabertooth Wyvern");
+    }
+
+    @Test
+    void canTargetOwnFlyingCreature() {
+        addAuraToCreature(new CinderCrawler());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SabertoothWyvern());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateRepeatedlyWithoutTappingEnchantedCreature() {
+        Permanent aura = addAuraToCreature(new CinderCrawler());
+        Permanent creature = findPermanent(player1, "Cinder Crawler");
+        creature.setTapped(true);
+        creature.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SabertoothWyvern());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sabertooth Wyvern");
+        assertThat(aura.isTapped()).isFalse();
     }
 }
