@@ -20,16 +20,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DecreeOfPainTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Draws no cards when no creatures are destroyed")
+    void drawsNothingWhenOnlyIndestructibleCreatureRemains() {
+        harness.addToBattlefield(player2, new ManorGargoyle());
+        harness.setLibrary(player1, List.of(new DawnElemental()));
+        harness.castFromHand(player1, new DecreeOfPain(), "{6}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Manor Gargoyle");
+        harness.assertInGraveyard(player1, "Decree of Pain");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cycling kills small creatures before its draw resolves, despite regeneration shields")
+    void cyclingTriggerResolvesBeforeDraw() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new TreetopScout());
+        scout.setRegenerationShield(1);
+        harness.addToBattlefield(player2, new TreetopScout());
+        harness.setHand(player1, List.of(new DecreeOfPain()));
+        harness.setLibrary(player1, List.of(new DawnElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Decree of Pain");
+        harness.assertOnBattlefield(player1, "Treetop Scout");
+        harness.assertOnBattlefield(player2, "Treetop Scout");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Treetop Scout");
+        harness.assertNotOnBattlefield(player2, "Treetop Scout");
+        harness.assertInGraveyard(player1, "Treetop Scout");
+        harness.assertInGraveyard(player2, "Treetop Scout");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Dawn Elemental");
+    }
+
+    @Test
     @DisplayName("Destroys all creatures and draws one card for each creature actually destroyed")
     void destroysAllCreaturesAndDrawsForEachDestroyed() {
         harness.addToBattlefield(player1, new TreetopScout());
         harness.addToBattlefield(player2, new TreetopScout());
         harness.addToBattlefield(player2, new ManorGargoyle());
         harness.setLibrary(player1, List.of(new DawnElemental(), new DawnElemental()));
-        harness.setHand(player1, List.of(new DecreeOfPain()));
-        harness.addMana(player1, ManaColor.BLACK, 8);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DecreeOfPain(), "{6}{B}{B}");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Treetop Scout");
         harness.assertNotOnBattlefield(player2, "Treetop Scout");
@@ -46,10 +90,8 @@ class DecreeOfPainTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ManorGargoyle());
         harness.addToBattlefield(player1, new TempleOfTheFalseGod());
         harness.setLibrary(player1, List.of(new DawnElemental(), new DawnElemental(), new DawnElemental()));
-        harness.setHand(player1, List.of(new DecreeOfPain()));
-        harness.addMana(player1, ManaColor.BLACK, 8);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DecreeOfPain(), "{6}{B}{B}");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Treetop Scout");
         harness.assertNotOnBattlefield(player2, "Treetop Scout");
