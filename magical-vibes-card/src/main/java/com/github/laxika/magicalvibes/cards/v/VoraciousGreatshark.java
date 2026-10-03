@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "70")
+@CardRegistration(set = "HBG", collectorNumber = "916")
 public class VoraciousGreatshark extends Card {
 
     public VoraciousGreatshark() {

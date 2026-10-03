@@ -43,9 +43,7 @@ class CrashingBoarsTest extends BaseCardTest {
 
         assertThat(chosenBlocker.getMustBlockIds()).containsExactly(boars.getId());
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -99,5 +97,45 @@ class CrashingBoarsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Eligible creatures are determined when the attack trigger resolves")
+    void eligibilityIsDeterminedAtResolution() {
+        Permanent boars = addCreatureReady(player1, new CrashingBoars());
+        Permanent attackingPlayersCreature = addCreatureReady(player1, new RagingGoblin());
+        Permanent initiallyUntapped = addCreatureReady(player2, new RagingGoblin());
+        Permanent initiallyTapped = addCreatureReady(player2, new RagingGoblin());
+        initiallyTapped.tap();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        initiallyUntapped.tap();
+        initiallyTapped.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(initiallyTapped.getMustBlockIds()).containsExactly(boars.getId());
+        assertThat(initiallyUntapped.getMustBlockIds()).isEmpty();
+        assertThat(attackingPlayersCreature.getMustBlockIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The chosen creature must block Crashing Boars rather than another attacker")
+    void chosenCreatureCannotBlockAnotherAttackerInstead() {
+        addCreatureReady(player1, new CrashingBoars());
+        addCreatureReady(player1, new RagingGoblin());
+        Permanent blocker = addCreatureReady(player2, new RagingGoblin());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

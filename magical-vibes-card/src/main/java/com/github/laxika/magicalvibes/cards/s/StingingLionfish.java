@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "69")
+@CardRegistration(set = "HBG", collectorNumber = "915")
 public class StingingLionfish extends Card {
 
     public StingingLionfish() {

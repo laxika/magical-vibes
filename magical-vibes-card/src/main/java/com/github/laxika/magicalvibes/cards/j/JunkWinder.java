@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MOC", collectorNumber = "225")
 @CardRegistration(set = "MKC", collectorNumber = "107")
 @CardRegistration(set = "BLC", collectorNumber = "169")
+@CardRegistration(set = "HBG", collectorNumber = "903")
 public class JunkWinder extends Card {
 
     public JunkWinder() {

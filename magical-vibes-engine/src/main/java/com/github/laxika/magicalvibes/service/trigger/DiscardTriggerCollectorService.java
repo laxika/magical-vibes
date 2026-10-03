@@ -826,19 +826,25 @@ public class DiscardTriggerCollectorService {
     private boolean handleMayPayManaOnDiscard(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId());
+        if (ctx instanceof TriggerContext.Discard discard && discard.discardedCard() != null) {
+            UUID triggeringCardId = discard.discardedCard().getId();
+            entry.setTriggeringCardId(triggeringCardId);
+            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(triggeringCardId));
+        }
         if (trigger.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || trigger.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DiscardControllerTriggerTarget(
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), match.permanent().getId()));
         } else {
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger)),
-                    null,
-                    match.permanent().getId()));
+            gameData.enqueueTrigger(entry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on discard/cycle (may pay {})",

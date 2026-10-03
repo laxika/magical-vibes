@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.l.LightningStorm;
+import com.github.laxika.magicalvibes.cards.p.PanglacialWurm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoverOfWinter.class, KjeldoranOutrider.class, LightningStorm.class})
+@CardUsed({CoverOfWinter.class, KjeldoranOutrider.class, LightningStorm.class, PanglacialWurm.class})
 class CoverOfWinterTest extends BaseCardTest {
 
     @Test
@@ -112,6 +113,70 @@ class CoverOfWinterTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Cover of Winter");
         harness.assertInGraveyard(player1, "Cover of Winter");
+    }
+
+    @Test
+    @DisplayName("A trampling creature shares one prevention amount across its recipients")
+    void sharesPreventionBetweenBlockerAndController() {
+        Permanent cover = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
+        cover.setCounterCount(CounterType.AGE, 1);
+        Permanent blocker = addReadyCreature(player1);
+        Permanent attacker = addCreatureReady(player2, new PanglacialWurm());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+
+        resolveCombat(player2);
+
+        // The controller can divide prevention, but only one of the nine damage is prevented.
+        int damageToPlayer = 20 - gd.getLife(player1.getId());
+        assertThat(damageToPlayer + blocker.getMarkedDamage()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Zero age counters prevent no combat damage")
+    void zeroAgeCountersPreventNothing() {
+        harness.addToBattlefield(player1, new CoverOfWinter());
+        addAttacker(player2);
+        harness.setLife(player1, 20);
+
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep charges for existing age counters as well as the new counter")
+    void cumulativeUpkeepIncludesExistingAgeCounters() {
+        Permanent cover = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
+        cover.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(cover.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cover);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat prevention also protects your attacking creatures")
+    void protectsAttackingCreaturesButNotOpposingBlockers() {
+        Permanent cover = harness.addToBattlefieldAndReturn(player1, new CoverOfWinter());
+        cover.setCounterCount(CounterType.AGE, 1);
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addReadyCreature(player2);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(1);
+
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
 
     private Permanent addReadyCreature(Player player) {

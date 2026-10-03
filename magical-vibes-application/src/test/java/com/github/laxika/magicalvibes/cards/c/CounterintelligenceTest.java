@@ -76,4 +76,90 @@ class CounterintelligenceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(mountainId)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot cast without a target")
+    void cannotChooseZeroTargets() {
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two targets")
+    void cannotChooseThreeTargets() {
+        Permanent a = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent b = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent c = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(a.getId(), b.getId(), c.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent soldiers = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(soldiers.getId(), soldiers.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns creatures controlled by different players")
+    void bouncesCreaturesOnBothSides() {
+        Permanent yours = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(yours.getId(), theirs.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInHand(player1, "Shu Foot Soldiers");
+        harness.assertInHand(player2, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player1, "Counterintelligence");
+    }
+
+    @Test
+    @DisplayName("Still returns the remaining legal target when another leaves the battlefield")
+    void resolvesWithOneRemainingTarget() {
+        Permanent a = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent b = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        harness.castSorcery(player1, 0, List.of(a.getId(), b.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(a);
+        gd.playerGraveyards.get(player2.getId()).add(a.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(b.getCard()).doesNotContain(a.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(a.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Counterintelligence");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        Permanent soldiers = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        gd.stolenCreatures.put(soldiers.getId(), player2.getId());
+        soldiers.getCard().setOwnerId(player2.getId());
+        harness.setHand(player1, List.of(new Counterintelligence()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(soldiers.getId()));
+
+        harness.assertNotInHand(player1, "Shu Foot Soldiers");
+        harness.assertInHand(player2, "Shu Foot Soldiers");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
 }

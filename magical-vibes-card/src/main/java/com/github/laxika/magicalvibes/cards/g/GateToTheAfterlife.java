@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "228")
 @CardRegistration(set = "AKR", collectorNumber = "271")
+@CardRegistration(set = "DRC", collectorNumber = "130")
 public class GateToTheAfterlife extends Card {
 
     public GateToTheAfterlife() {

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "KLD", collectorNumber = "193")
 @CardRegistration(set = "KLR", collectorNumber = "219")
 @CardRegistration(set = "M3C", collectorNumber = "281")
+@CardRegistration(set = "DRC", collectorNumber = "123")
 public class AetherworksMarvel extends Card {
 
     public AetherworksMarvel() {
