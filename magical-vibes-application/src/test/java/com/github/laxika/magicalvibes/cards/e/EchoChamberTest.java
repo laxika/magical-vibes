@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.r.RootwaterHunter;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoChamber.class, LowlandGiant.class, RootwaterHunter.class})
+@CardUsed({EchoChamber.class, LowlandGiant.class, RootwaterHunter.class, Clone.class})
 class EchoChamberTest extends BaseCardTest {
 
     @Test
@@ -90,9 +91,9 @@ class EchoChamberTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(tokenCopy()).isNotNull();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tokenCopy());
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -109,6 +110,50 @@ class EchoChamberTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @CardUsed({EchoChamber.class, RootwaterHunter.class, Clone.class})
+    @DisplayName("Copying the token does not copy Echo Chamber's temporary haste grant")
+    void temporaryHasteIsNotCopiable() {
+        setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent hunter = harness.addToBattlefieldAndReturn(player2, new RootwaterHunter());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player2, hunter.getId());
+        harness.passBothPriorities();
+        Permanent token = tokenCopy();
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(clone), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("The ability creates no token if its chosen target dies before resolution")
+    void targetDiesBeforeResolution() {
+        setupEchoChamberOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent hunter = harness.addToBattlefieldAndReturn(player2, new RootwaterHunter());
+        hunter.setSummoningSick(false);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player2, hunter.getId());
+
+        harness.activateAbility(player2, 0, null, hunter.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Rootwater Hunter");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(findPermanent(player1, "Echo Chamber").isTapped()).isTrue();
     }
 
     private Permanent tokenCopy() {
