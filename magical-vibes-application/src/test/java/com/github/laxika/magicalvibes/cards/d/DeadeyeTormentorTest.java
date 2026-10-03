@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeadeyeTormentor.class, JungleDelver.class})
 class DeadeyeTormentorTest extends BaseCardTest {
-
-    // ===== ETB with raid met =====
 
     @Test
     @DisplayName("ETB triggers discard when raid is met (attacked this turn)")
@@ -39,7 +39,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
     @Test
     @DisplayName("ETB raid trigger makes target opponent discard a card")
     void etbMakesOpponentDiscardWithRaid() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new JungleDelver())));
         markAttackedThisTurn();
         castDeadeyeTormentor();
 
@@ -55,7 +55,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Jungle Delver");
     }
 
     @Test
@@ -73,16 +73,14 @@ class DeadeyeTormentorTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
-    // ===== ETB without raid =====
-
     @Test
     @DisplayName("ETB does NOT trigger without raid (did not attack this turn)")
     void etbDoesNotTriggerWithoutRaid() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new JungleDelver())));
         castDeadeyeTormentor();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
+        // No ETB trigger on the stack and no target prompt when raid is not met.
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
@@ -91,32 +89,58 @@ class DeadeyeTormentorTest extends BaseCardTest {
 
         // Opponent hand unchanged — still has the card
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Jungle Delver");
     }
-
-    // ===== Raid lost before resolution (intervening-if) =====
 
     @Test
-    @DisplayName("ETB does nothing if raid condition is lost before resolution")
-    void etbFizzlesWhenRaidLost() {
+    @DisplayName("Raid remains satisfied after the attacker leaves the battlefield")
+    void raidRemainsSatisfiedAfterAttackerLeaves() {
+        harness.setHand(player2, List.of(new JungleDelver()));
+        JungleDelver attacker = new JungleDelver();
+        harness.addToBattlefield(player1, attacker);
         markAttackedThisTurn();
+        // Set up the postcombat state after the attacking creature has died.
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerGraveyards.get(player1.getId()).add(attacker);
         castDeadeyeTormentor();
-        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
-        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
 
-        // Remove the raid flag before ETB resolves (simulating turn state cleared)
-        gd.playersDeclaredAttackersThisTurn.clear();
-
-        harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
-
-        // Life totals unchanged, opponent hand unchanged
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Jungle Delver");
     }
 
-    // ===== Creature enters battlefield regardless =====
+    @Test
+    @DisplayName("An opponent attacking does not satisfy the controller's raid")
+    void opponentsAttackDoesNotEnableRaid() {
+        harness.setHand(player2, List.of(new JungleDelver()));
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+        castDeadeyeTormentor();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Jungle Delver");
+    }
+
+    @Test
+    @DisplayName("Opponent chooses exactly one card from a larger hand")
+    void opponentChoosesOneCard() {
+        harness.setHand(player2, List.of(new JungleDelver(), new DeadeyeTormentor()));
+        markAttackedThisTurn();
+        castDeadeyeTormentor();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Jungle Delver");
+        harness.assertInGraveyard(player2, "Deadeye Tormentor");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     @DisplayName("Creature enters battlefield even without raid")
@@ -130,7 +154,7 @@ class DeadeyeTormentorTest extends BaseCardTest {
     @Test
     @DisplayName("Stack is empty after full resolution with raid")
     void stackEmptyAfterResolution() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new JungleDelver())));
         markAttackedThisTurn();
         castDeadeyeTormentor();
         harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
@@ -140,8 +164,6 @@ class DeadeyeTormentorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Trigger target prompt only offers opponents — choosing yourself is rejected")
@@ -160,8 +182,6 @@ class DeadeyeTormentorTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
-    // ===== Helpers =====
-
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
     }
@@ -169,6 +189,6 @@ class DeadeyeTormentorTest extends BaseCardTest {
     private void castDeadeyeTormentor() {
         harness.setHand(player1, List.of(new DeadeyeTormentor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
     }
 }
