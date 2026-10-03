@@ -25,8 +25,7 @@ class BothersomeNoisemakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         Permanent army = findPermanent(player1, "Goblin Army");
@@ -56,12 +55,81 @@ class BothersomeNoisemakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(army.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("The amass trigger resolves before the noncreature spell")
+    void amassResolvesBeforeSpell() {
+        harness.addToBattlefield(player1, new BothersomeNoisemaker());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger amass")
+    void opponentSpellDoesNotAmass() {
+        harness.addToBattlefield(player1, new BothersomeNoisemaker());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+        assertThat(findPermanents(player2, "Goblin Army")).isEmpty();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell grows the same Army")
+    void repeatedSpellsGrowSameArmy() {
+        harness.addToBattlefield(player1, new BothersomeNoisemaker());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        Permanent army = findPermanent(player1, "Goblin Army");
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin Army")).containsExactly(army);
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Amass lets its controller choose one of multiple Armies")
+    void choosesOneArmy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        harness.addToBattlefield(player1, new BothersomeNoisemaker());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.GOBLIN);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ARMY, CardSubtype.GOBLIN);
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
     }
 }
