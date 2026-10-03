@@ -70,6 +70,66 @@ class DragonFangsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dragon Fangs");
     }
 
+    @Test
+    void returningAuraCanEnchantItsControllersCreature() {
+        harness.setGraveyard(player1, List.of(new DragonFangs()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new TwistedAbomination());
+
+        resolveMayAbility(true);
+
+        assertThat(findPermanent(player1, "Dragon Fangs").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Dragon Fangs");
+    }
+
+    @Test
+    void returnDoesNotTargetTheEnteringCreature() {
+        harness.setGraveyard(player1, List.of(new DragonFangs()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new TwistedAbomination());
+        creature.getGrantedKeywords().add(Keyword.SHROUD);
+
+        resolveMayAbility(true);
+
+        assertThat(findPermanent(player1, "Dragon Fangs").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Dragon Fangs");
+    }
+
+    @Test
+    void auraNeverLeavesGraveyardIfEnteringCreatureDiesBeforeReturn() {
+        harness.setGraveyard(player1, List.of(new DragonFangs()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new TwistedAbomination());
+        creature.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Twisted Abomination");
+        int deathsBeforeReturn = gd.permanentsPutIntoGraveyardFromBattlefieldThisTurn;
+
+        resolveMayAbility(true);
+
+        harness.assertInGraveyard(player1, "Dragon Fangs");
+        harness.assertNotOnBattlefield(player1, "Dragon Fangs");
+        assertThat(gd.playersWhoseCardsLeftGraveyardThisTurn).doesNotContain(player1.getId());
+        assertThat(gd.permanentsPutIntoGraveyardFromBattlefieldThisTurn).isEqualTo(deathsBeforeReturn);
+    }
+
+    @Test
+    void auraExiledBeforeReturnIsNotReturned() {
+        DragonFangs fangs = new DragonFangs();
+        harness.setGraveyard(player1, List.of(fangs));
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new TwistedAbomination());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(fangs));
+
+        resolveMayAbility(true);
+
+        harness.assertNotOnBattlefield(player1, "Dragon Fangs");
+        harness.assertNotInGraveyard(player1, "Dragon Fangs");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(fangs);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
     private void resolveMayAbility(boolean accepted) {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
