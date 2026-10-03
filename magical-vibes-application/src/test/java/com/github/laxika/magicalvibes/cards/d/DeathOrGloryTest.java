@@ -103,4 +103,55 @@ class DeathOrGloryTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Drake-Skull Cameo");
     }
+
+    @Test
+    @DisplayName("The opponent can exile all creatures by choosing the nonempty pile")
+    void allCreaturesCanBeExiled() {
+        Card soldier = new ArdentSoldier();
+        Card acolyte = new CrimsonAcolyte();
+        harness.setGraveyard(player1, List.of(soldier, acolyte));
+        harness.setHand(player1, List.of(new DeathOrGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(soldier.getId(), acolyte.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(soldier, acolyte);
+        harness.assertNotOnBattlefield(player1, "Ardent Soldier");
+        harness.assertNotOnBattlefield(player1, "Crimson Acolyte");
+        harness.assertNotInGraveyard(player1, "Ardent Soldier");
+        harness.assertNotInGraveyard(player1, "Crimson Acolyte");
+        harness.assertInGraveyard(player1, "Death or Glory");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A single creature returns without affecting the opponent's graveyard")
+    void onlyControllersGraveyardIsSeparated() {
+        Card soldier = new ArdentSoldier();
+        Card opposingAcolyte = new CrimsonAcolyte();
+        harness.setGraveyard(player1, List.of(soldier));
+        harness.setGraveyard(player2, List.of(opposingAcolyte));
+        harness.setHand(player1, List.of(new DeathOrGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        PendingInteraction.MultiGraveyardChoice separation =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(separation.validCardIds()).containsExactly(soldier.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(soldier.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertOnBattlefield(player1, "Ardent Soldier");
+        harness.assertNotInGraveyard(player1, "Ardent Soldier");
+        harness.assertInGraveyard(player2, "Crimson Acolyte");
+        harness.assertNotOnBattlefield(player1, "Crimson Acolyte");
+        harness.assertNotOnBattlefield(player2, "Crimson Acolyte");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+    }
 }
