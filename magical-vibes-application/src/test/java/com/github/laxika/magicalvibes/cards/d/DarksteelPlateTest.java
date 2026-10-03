@@ -1,47 +1,30 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianRager;
+import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DarksteelPlate.class, PhyrexianRager.class, DivineOffering.class, GoForTheThroat.class})
 class DarksteelPlateTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
-
-    @Test
-    @DisplayName("Darksteel Plate has equip {2} ability with sorcery-speed restriction")
-    void hasEquipAbility() {
-        DarksteelPlate card = new DarksteelPlate();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(EquipEffect.class);
-    }
-
-    // ===== Equip =====
 
     @Test
     @DisplayName("Resolving equip attaches Darksteel Plate to target creature")
     void resolvingEquipAttaches() {
         Permanent plate = addReadyPlate(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -51,12 +34,10 @@ class DarksteelPlateTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Indestructible granted to equipped creature =====
-
     @Test
     @DisplayName("Equipped creature has indestructible keyword")
     void equippedCreatureHasIndestructible() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature.getId());
 
@@ -66,7 +47,7 @@ class DarksteelPlateTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses indestructible when Darksteel Plate is removed")
     void creatureLosesIndestructibleWhenPlateRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature.getId());
 
@@ -80,8 +61,8 @@ class DarksteelPlateTest extends BaseCardTest {
     @Test
     @DisplayName("Unequipped creatures do not get indestructible")
     void unequippedCreatureDoesNotGetIndestructible() {
-        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature1 = addCreatureReady(player1, new PhyrexianRager());
+        Permanent creature2 = addCreatureReady(player1, new PhyrexianRager());
         Permanent plate = addReadyPlate(player1);
         plate.setAttachedTo(creature1.getId());
 
@@ -89,14 +70,12 @@ class DarksteelPlateTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature2, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Moving Darksteel Plate transfers indestructible to new creature")
     void reEquipTransfersIndestructible() {
         Permanent plate = addReadyPlate(player1);
-        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature1 = addCreatureReady(player1, new PhyrexianRager());
+        Permanent creature2 = addCreatureReady(player1, new PhyrexianRager());
         plate.setAttachedTo(creature1.getId());
 
         assertThat(gqs.hasKeyword(gd, creature1, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -110,12 +89,86 @@ class DarksteelPlateTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature2, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    void equipRequiresTwoMana() {
+        Permanent plate = addReadyPlate(player1);
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(plate.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent plate = addReadyPlate(player1);
+        Permanent creature = addCreatureReady(player2, new PhyrexianRager());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(plate.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equipCannotBeActivatedOutsideMainPhase() {
+        Permanent plate = addReadyPlate(player1);
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(plate.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void plateSurvivesArtifactDestruction() {
+        addReadyPlate(player1);
+        harness.setHand(player2, List.of(new DivineOffering()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player2, 0, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+
+        harness.assertOnBattlefield(player1, "Darksteel Plate");
+        harness.assertNotInGraveyard(player1, "Darksteel Plate");
+    }
+
+    @Test
+    void equippedCreatureSurvivesDestruction() {
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
+        addReadyPlate(player1).setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new GoForTheThroat()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Phyrexian Rager");
+        harness.assertNotInGraveyard(player1, "Phyrexian Rager");
+    }
+
+    @Test
+    void lethalDamageKillsCreatureOncePlateIsDetached() {
+        Permanent creature = addCreatureReady(player1, new PhyrexianRager());
+        Permanent plate = addReadyPlate(player1);
+        plate.setAttachedTo(creature.getId());
+        creature.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Phyrexian Rager");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+
+        plate.setAttachedTo(null);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Rager");
+        harness.assertInGraveyard(player1, "Phyrexian Rager");
+        harness.assertOnBattlefield(player1, "Darksteel Plate");
+    }
     private Permanent addReadyPlate(Player player) {
-        Permanent perm = new Permanent(new DarksteelPlate());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new DarksteelPlate());
     }
 }
