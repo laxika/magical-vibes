@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CapashenTemplar.class)
+@CardUsed({CapashenTemplar.class})
 class CapashenTemplarTest extends BaseCardTest {
 
     @Test
@@ -90,8 +90,8 @@ class CapashenTemplarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ability fizzles if Capashen Templar leaves before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("The ability resolves without effect if Capashen Templar leaves before resolution")
+    void abilityResolvesWithoutEffectIfSourceRemoved() {
         addCreatureReady(player1, new CapashenTemplar());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -111,6 +111,56 @@ class CapashenTemplarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped Capashen Templar can activate its ability")
+    void canActivateWhileTapped() {
+        Permanent templar = addCreatureReady(player1, new CapashenTemplar());
+        templar.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(templar.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, templar)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("White mana is paid on activation and the boost waits for resolution")
+    void activationPaysManaBeforeBoostResolves() {
+        Permanent templar = addCreatureReady(player1, new CapashenTemplar());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectiveToughness(gd, templar)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, templar)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A pending activation does not boost a replacement Capashen Templar")
+    void pendingAbilityDoesNotBoostReplacementCreature() {
+        Permanent original = addCreatureReady(player1, new CapashenTemplar());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new CapashenTemplar());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
 }

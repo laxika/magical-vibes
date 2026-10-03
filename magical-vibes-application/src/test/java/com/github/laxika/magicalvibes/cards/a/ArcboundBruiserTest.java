@@ -92,6 +92,53 @@ class ArcboundBruiserTest extends BaseCardTest {
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void deathTriggerUsesAllCountersAtDeathAndAddsToExistingCounters() {
+        Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        destroyBruiser(player2, bruiser.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(gargoyle.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void deathWithNoLegalTargetDoesNotRequestAChoice() {
+        Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        harness.addToBattlefield(player1, new DarksteelPendant());
+
+        destroyBruiser(player2, bruiser.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof ArcboundBruiser);
+    }
+
+    @Test
+    void deathAbilityChoiceDescribesPlusOnePlusOneCounters() {
+        Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyBruiser(player2, bruiser.getId());
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+    }
     private void destroyBruiser(com.github.laxika.magicalvibes.model.Player destroyer, UUID bruiserId) {
         harness.forceActivePlayer(destroyer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -78,6 +78,26 @@ class BloodstokeHowlerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(6);
     }
 
+    @Test
+    @DisplayName("The face-up trigger boosts Beasts present when it resolves")
+    void faceUpBoostIncludesBeastsEnteringBeforeResolution() {
+        Permanent howler = castFaceDown();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(howler));
+
+        assertThat(howler.isFaceDown()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, howler)).isEqualTo(3);
+        Permanent beast = harness.addToBattlefieldAndReturn(player1, new NeedleshotGourna());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, howler)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, beast)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, beast)).isEqualTo(6);
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new BloodstokeHowler()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

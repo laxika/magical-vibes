@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CoalitionRelic;
 import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -86,8 +85,7 @@ class BoundInSilenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -103,6 +101,48 @@ class BoundInSilenceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Bound in Silence can enchant its controller's creature")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1);
+
+        castAuraOn(creature);
+
+        assertThat(findPermanent(player1, "Bound in Silence").getAttachedTo())
+                .isEqualTo(creature.getId());
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Bound in Silence does not restrict other creatures")
+    void otherCreatureCanAttack() {
+        Permanent enchanted = addCreatureReady(player1);
+        addCreatureReady(player1);
+        attachAura(player2, enchanted);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(player1, List.of(1));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("An already attacking creature still deals damage after becoming enchanted")
+    void alreadyAttackingCreatureStillDealsCombatDamage() {
+        Permanent attacker = addCreatureReady(player1);
+        attacker.setAttacking(true);
+        attachAura(player2, attacker);
+        harness.forceActivePlayer(player1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
+    }
+
     private void castAuraOn(Permanent target) {
         harness.setHand(player1, List.of(new BoundInSilence()));
         addMana();
@@ -111,9 +151,8 @@ class BoundInSilenceTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Player controller, Permanent target) {
-        Permanent aura = new Permanent(new BoundInSilence());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new BoundInSilence());
         aura.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 

@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.n.NightscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.t.ThornscapeFamiliar;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -19,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AmphibiousKavu.class, SeaSnidd.class, NightscapeFamiliar.class, ThornscapeFamiliar.class})
+@CardUsed({AmphibiousKavu.class, SeaSnidd.class, NightscapeFamiliar.class, ThornscapeFamiliar.class, Terminate.class})
 class AmphibiousKavuTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         Permanent kavu = addKavu(player1);
         addCreatureReady(player2, new SeaSnidd());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -43,8 +44,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         addCreatureReady(player1, new NightscapeFamiliar());
         Permanent kavu = addKavu(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -58,8 +58,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         Permanent kavu = addKavu(player1);
         addCreatureReady(player2, new ThornscapeFamiliar());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -74,8 +73,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         addCreatureReady(player2, new SeaSnidd());
         addCreatureReady(player2, new NightscapeFamiliar());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -94,8 +92,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
         Permanent nightscapeFamiliar = addCreatureReady(player1, new NightscapeFamiliar());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(0, 1)));
@@ -115,8 +112,7 @@ class AmphibiousKavuTest extends BaseCardTest {
         Permanent kavu = addKavu(player1);
         addCreatureReady(player2, new SeaSnidd());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -129,6 +125,43 @@ class AmphibiousKavuTest extends BaseCardTest {
 
         assertThat(kavu.getPowerModifier()).isZero();
         assertThat(kavu.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A matching blocker among nonmatching blockers gives exactly one boost")
+    void mixedColorBlockersBoostOnce() {
+        Permanent kavu = addKavu(player1);
+        addCreatureReady(player2, new ThornscapeFamiliar());
+        addCreatureReady(player2, new NightscapeFamiliar());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(kavu.getPowerModifier()).isEqualTo(3);
+        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost still resolves after the matching blocker is destroyed")
+    void matchingBlockerLeavingDoesNotPreventBoost() {
+        Permanent kavu = addKavu(player1);
+        Permanent blocker = addCreatureReady(player2, new SeaSnidd());
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.assertNotOnBattlefield(player2, "Sea Snidd");
+        resolveAllTriggers();
+
+        assertThat(kavu.getPowerModifier()).isEqualTo(3);
+        assertThat(kavu.getToughnessModifier()).isEqualTo(3);
     }
 
     private Permanent addKavu(Player player) {

@@ -27,8 +27,7 @@ class AnguishedRecollectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
         harness.handleCardChosen(player1, 0);
@@ -51,8 +50,7 @@ class AnguishedRecollectionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -61,5 +59,60 @@ class AnguishedRecollectionTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Island");
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Seeking finishes during the same spell resolution")
+    void seekingFinishesDuringSpellResolution() {
+        harness.setHand(player1, List.of(new AnguishedRecollection(), new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Grizzly Bears", "Shock");
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Anguished Recollection");
+    }
+
+    @Test
+    @DisplayName("Does not seek if there is no card to discard")
+    void doesNotSeekWithoutDiscard() {
+        harness.setHand(player1, List.of(new AnguishedRecollection()));
+        Card bear = new GrizzlyBears();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(bear, shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bear, shock);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Seeks the only eligible card when fewer than two are available")
+    void seeksOnlyEligibleCard() {
+        harness.setHand(player1, List.of(new AnguishedRecollection(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Shock");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

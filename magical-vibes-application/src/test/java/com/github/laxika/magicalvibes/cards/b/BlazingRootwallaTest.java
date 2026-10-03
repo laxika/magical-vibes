@@ -55,11 +55,63 @@ class BlazingRootwallaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A pending pump activation already consumes the turn's activation")
+    void pendingActivationConsumesLimit() {
+        Permanent rootwalla = addCreatureReady(player1, new BlazingRootwalla());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Blazing Rootwalla has its own activation limit and pump")
+    void separateCopiesCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new BlazingRootwalla());
+        Permanent second = addCreatureReady(player1, new BlazingRootwalla());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The pump can be activated again during the opponent's next turn")
+    void activationLimitResetsOnNextTurn() {
+        Permanent rootwalla = addCreatureReady(player1, new BlazingRootwalla());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
         assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
     }
 

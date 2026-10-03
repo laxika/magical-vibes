@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.d.DeathcultRogue;
+import com.github.laxika.magicalvibes.cards.c.CivilServant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GirderGoons;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -19,28 +19,27 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BodyLaunderer.class, DeathcultRogue.class, Forest.class, GrizzlyBears.class, Shock.class, WrathOfGod.class})
+@CardUsed({BodyLaunderer.class, BackstreetBruiser.class, Forest.class, CivilServant.class, GirderGoons.class, Murder.class, WrathOfGod.class})
 class BodyLaundererTest extends BaseCardTest {
 
     @Test
     void anotherNontokenCreatureYouControlDiesAndBodyLaundererConnives() {
         Permanent bodyLaunderer = addCreatureReady(player1, new BodyLaunderer());
-        Permanent grizzlyBears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        Permanent civilServant = addCreatureReady(player1, new CivilServant());
+        harness.setLibrary(player1, List.of(new CivilServant()));
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
 
-        harness.castInstant(player2, 0, grizzlyBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, civilServant.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        int grizzlyBearsIndex = gd.playerHands.get(player1.getId()).indexOf(
+        int civilServantIndex = gd.playerHands.get(player1.getId()).indexOf(
                 gd.playerHands.get(player1.getId()).stream()
-                        .filter(card -> card.getName().equals("Grizzly Bears"))
+                        .filter(card -> card.getName().equals("Civil Servant"))
                         .findFirst()
                         .orElseThrow());
-        harness.handleCardChosen(player1, grizzlyBearsIndex);
+        harness.handleCardChosen(player1, civilServantIndex);
 
         assertThat(bodyLaunderer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -48,8 +47,8 @@ class BodyLaundererTest extends BaseCardTest {
     @Test
     void deathTriggerReturnsAnotherNonRogueCreatureWithPowerAtMostBodyLaunderersPower() {
         BodyLaunderer bodyLaunderer = new BodyLaunderer();
-        Card creature = new GrizzlyBears();
-        Card rogue = new DeathcultRogue();
+        Card creature = new CivilServant();
+        Card rogue = new BackstreetBruiser();
         Card nonCreature = new Forest();
         addCreatureReady(player1, bodyLaunderer);
         harness.setGraveyard(player1, List.of(creature, rogue, nonCreature));
@@ -62,7 +61,7 @@ class BodyLaundererTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        harness.assertOnBattlefield(player1, "Civil Servant");
         harness.assertInGraveyard(player1, "Body Launderer");
         harness.assertInGraveyard(player1, "Forest");
     }
@@ -73,9 +72,7 @@ class BodyLaundererTest extends BaseCardTest {
         Permanent bodyPermanent = addCreatureReady(player1, bodyLaunderer);
         bodyPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        GrizzlyBears creature = new GrizzlyBears();
-        creature.setPower(4);
-        creature.setToughness(4);
+        GirderGoons creature = new GirderGoons();
         harness.setGraveyard(player1, List.of(creature));
         destroyBodyLaunderer();
 
@@ -86,7 +83,144 @@ class BodyLaundererTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        harness.assertOnBattlefield(player1, "Girder Goons");
+    }
+
+    @Test
+    void discardingALandDoesNotAddACounter() {
+        Permanent body = addCreatureReady(player1, new BodyLaunderer());
+        Permanent ally = addCreatureReady(player1, new CivilServant());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        destroyWithMurder(ally);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(body.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opposingCreatureDeathDoesNotCauseConnive() {
+        Permanent body = addCreatureReady(player1, new BodyLaunderer());
+        Permanent opponent = addCreatureReady(player2, new CivilServant());
+        CivilServant libraryCard = new CivilServant();
+        harness.setLibrary(player1, List.of(libraryCard));
+        destroyWithMurder(opponent);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(body.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void deathOfARealRogueTokenDoesNotCauseConnive() {
+        Permanent body = addCreatureReady(player1, new BodyLaunderer());
+        Permanent goons = addCreatureReady(player1, new GirderGoons());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new CivilServant()));
+        destroyWithMurder(goons);
+        harness.passBothPriorities();
+        if (!(gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice)) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        Permanent token = findPermanent(player1, "Rogue");
+        destroyWithMurder(token);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(body.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Rogue");
+    }
+
+    @Test
+    void deathTriggerExcludesCreaturesWithGreaterPowerAndOpponentsGraveyard() {
+        addCreatureReady(player1, new BodyLaunderer());
+        CivilServant eligible = new CivilServant();
+        GirderGoons tooLarge = new GirderGoons();
+        CivilServant opponentsCard = new CivilServant();
+        harness.setGraveyard(player1, List.of(eligible, tooLarge));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        destroyBodyLaunderer();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Civil Servant");
+        harness.assertInGraveyard(player1, "Girder Goons");
+        harness.assertInGraveyard(player2, "Civil Servant");
+    }
+
+    @Test
+    void ownDeathDoesNotConniveWhenThereAreNoLegalReturnTargets() {
+        addCreatureReady(player1, new BodyLaunderer());
+        CivilServant libraryCard = new CivilServant();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(new BackstreetBruiser(), new GirderGoons(), new Forest()));
+        destroyBodyLaunderer();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Body Launderer");
+    }
+
+    @Test
+    void conniveStillDrawsAndDiscardsAfterBodyLaundererLeavesTheBattlefield() {
+        Permanent body = addCreatureReady(player1, new BodyLaunderer());
+        Permanent ally = addCreatureReady(player1, new CivilServant());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        destroyWithMurder(ally);
+        destroyWithMurder(body);
+
+        harness.handleMultipleCardsChosen(player1, List.of(ally.getCard().getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Body Launderer");
+        harness.assertOnBattlefield(player1, "Civil Servant");
+    }
+
+    @Test
+    void simultaneousDeathOfBodyLaundererAndAnotherCreatureStillCausesConnive() {
+        addCreatureReady(player1, new BodyLaunderer());
+        Permanent ally = addCreatureReady(player1, new CivilServant());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        destroyBodyLaunderer();
+
+        harness.handleMultipleCardsChosen(player1, List.of(ally.getCard().getId()));
+        harness.passBothPriorities();
+        if (!(gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice)) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Body Launderer");
+    }
+
+    private void destroyWithMurder(Permanent target) {
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 
     private void destroyBodyLaunderer() {
@@ -95,7 +229,6 @@ class BodyLaundererTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
     }
 }

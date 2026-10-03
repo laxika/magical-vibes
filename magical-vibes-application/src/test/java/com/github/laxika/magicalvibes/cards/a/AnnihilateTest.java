@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.ShivanZombie;
 import com.github.laxika.magicalvibes.cards.y.YavimayaBarbarian;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,8 +27,7 @@ class AnnihilateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Annihilate()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castInstant(player1, 0, barbarian.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, barbarian.getId());
 
         harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");
         harness.assertInGraveyard(player2, "Yavimaya Barbarian");
@@ -43,8 +43,7 @@ class AnnihilateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Annihilate()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castInstant(player1, 0, barbarian.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, barbarian.getId());
 
         harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");
         harness.assertInGraveyard(player2, "Yavimaya Barbarian");
@@ -90,6 +89,38 @@ class AnnihilateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Annihilate");
+    }
+
+    @Test
+    @DisplayName("Annihilate can destroy its controller's nonblack creature and still draws")
+    void canDestroyOwnCreatureAndDraw() {
+        Permanent barbarian = harness.addToBattlefieldAndReturn(player1, new YavimayaBarbarian());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Annihilate()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, barbarian.getId());
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Yavimaya Barbarian");
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Annihilate draws even when indestructibility prevents destruction")
+    void drawsWhenTargetIsIndestructible() {
+        Permanent barbarian = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        barbarian.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Annihilate()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, barbarian.getId());
+
+        harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
+        harness.assertNotInGraveyard(player2, "Yavimaya Barbarian");
+        harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Annihilate");
     }
 }

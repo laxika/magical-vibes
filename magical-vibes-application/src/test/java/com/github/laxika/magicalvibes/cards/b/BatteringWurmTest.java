@@ -88,6 +88,53 @@ class BatteringWurmTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isFalse();
     }
 
+    @Test
+    @DisplayName("Bloodthirst still adds only one counter after multiple points of damage")
+    void bloodthirstDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 5);
+
+        Permanent wurm = castWurm();
+
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bloodthirst applies when Battering Wurm enters without being cast")
+    void bloodthirstAppliesWithoutCasting() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        Permanent wurm = harness.enterBattlefieldAndReturn(player1, new BatteringWurm());
+
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A blocker boosted above Battering Wurm's power can block it")
+    void greaterEffectivePowerCreatureCanBlock() {
+        addCreatureReady(player1, new BatteringWurm());
+        Permanent blocker = addCreatureReady(player2, new GruulScrapper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reducing Battering Wurm's power before blocks lowers its blocking threshold")
+    void reducedEffectivePowerLowersBlockingThreshold() {
+        Permanent wurm = addCreatureReady(player1, new BatteringWurm());
+        Permanent blocker = addCreatureReady(player2, new GruulScrapper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        wurm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent castWurm() {
         harness.castFromHand(player1, new BatteringWurm(), "{6}{G}");
         resolveAllTriggers();

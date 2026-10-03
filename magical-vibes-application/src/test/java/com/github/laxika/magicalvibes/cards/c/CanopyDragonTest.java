@@ -16,9 +16,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CanopyDragonTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Canopy Dragon has trample and no flying by default")
-    void tramplerByDefault() {
+    @DisplayName("The keyword swap waits for the ability to resolve")
+    void keywordSwapWaitsForResolution() {
         Permanent dragon = addCreatureReady(player1, new CanopyDragon());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
@@ -88,10 +91,51 @@ class CanopyDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while its source is tapped")
+    void activationWorksWhileTapped() {
+        Permanent dragon = addCreatureReady(player1, new CanopyDragon());
+        dragon.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dragon.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activation does not restore trample")
+    void repeatedActivationKeepsFlyingWithoutTrample() {
+        Permanent dragon = addCreatureReady(player1, new CanopyDragon());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the green requirement")
+    void activationRequiresGreenMana() {
+        addCreatureReady(player1, new CanopyDragon());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 }

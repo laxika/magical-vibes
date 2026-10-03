@@ -39,8 +39,7 @@ class CarnassidTest extends BaseCardTest {
         carnassid.setRegenerationShield(1);
         Permanent attacker = addCreatureReady(player2, new SpinedWurm());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -58,8 +57,7 @@ class CarnassidTest extends BaseCardTest {
         Permanent carnassid = addCreatureReady(player1, new Carnassid());
         Permanent attacker = addCreatureReady(player2, new SpinedWurm());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -74,8 +72,7 @@ class CarnassidTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new Carnassid());
         Permanent blocker = addCreatureReady(player2, new SpinedWurm());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -89,5 +86,58 @@ class CarnassidTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent carnassid = harness.addToBattlefieldAndReturn(player1, new Carnassid());
+        carnassid.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(carnassid.getRegenerationShield()).isEqualTo(1);
+        assertThat(carnassid.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activation creates separate shields without tapping the creature")
+    void repeatedActivationCreatesSeparateShields() {
+        Permanent carnassid = addCreatureReady(player1, new Carnassid());
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(carnassid.getRegenerationShield()).isEqualTo(2);
+        assertThat(carnassid.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A shield created by activating the ability saves Carnassid in combat")
+    void activatedShieldSavesFromLethalCombatDamage() {
+        Permanent carnassid = addCreatureReady(player1, new Carnassid());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player2, new SpinedWurm());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(carnassid);
+        assertThat(carnassid.isTapped()).isTrue();
+        assertThat(carnassid.getRegenerationShield()).isZero();
+        assertThat(carnassid.getMarkedDamage()).isZero();
+        assertThat(carnassid.isBlocking()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
     }
 }

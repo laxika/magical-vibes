@@ -28,7 +28,13 @@ class CalderaPyremawTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(pyremaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player2, 20);
+
         harness.passBothPriorities();
+        assertThat(pyremaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player2, 16);
         harness.passBothPriorities();
 
         assertThat(pyremaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -67,5 +73,40 @@ class CalderaPyremawTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    void opponentsInstantDoesNotTrigger() {
+        Permanent pyremaw = addCreatureReady(player1, new CalderaPyremaw());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(pyremaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggerStillDealsLastKnownPowerDamageAfterSourceDies() {
+        Permanent pyremaw = addCreatureReady(player1, new CalderaPyremaw());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, pyremaw.getId());
+
+        harness.assertNotOnBattlefield(player1, "Caldera Pyremaw");
+        harness.assertInGraveyard(player1, "Caldera Pyremaw");
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
     }
 }

@@ -1241,13 +1241,6 @@ public class EnterTriggerCollectorService {
             TriggerMatchContext match, MoveChosenCounterFromSourceToEnteringCreatureEffect effect,
             TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        List<CounterType> availableCounterTypes = effect.counterTypes().stream()
-                .filter(counterType -> match.permanent().getCounterCount(counterType) > 0)
-                .toList();
-        if (availableCounterTypes.isEmpty()) {
-            return false;
-        }
-
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         if (enteringPermanentId == null) {
             return true;

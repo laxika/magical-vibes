@@ -19,6 +19,6 @@ public class AbbyMercilessSoldier extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CreateTokenEffect(
                 new ManaSpentToCast(), "Cordyceps Infected", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.FUNGUS, CardSubtype.ZOMBIE), Set.of(), Set.of()));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentGainsControlOfSourceEffect());
+        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
     }
 }

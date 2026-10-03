@@ -82,6 +82,47 @@ class BurgeoningTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Accepting with no land in hand resolves without putting a nonland onto the battlefield")
+    void resolvesWithNoLandInHand() {
+        harness.addToBattlefield(player1, new Burgeoning());
+        harness.setHand(player1, List.of(new MoggFlunkies()));
+
+        prepareOpponentLandPlay();
+        harness.setHand(player2, List.of(new VolrathsStronghold()));
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mogg Flunkies");
+        harness.assertNotOnBattlefield(player1, "Mogg Flunkies");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A land put onto the battlefield by Burgeoning does not trigger an opposing Burgeoning")
+    void opposingBurgeoningsDoNotChain() {
+        harness.addToBattlefield(player1, new Burgeoning());
+        harness.addToBattlefield(player2, new Burgeoning());
+        harness.setHand(player1, List.of(new VolrathsStronghold()));
+
+        prepareOpponentLandPlay();
+        harness.setHand(player2, List.of(new VolrathsStronghold()));
+        harness.playLand(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Volrath's Stronghold");
+        harness.assertOnBattlefield(player2, "Volrath's Stronghold");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void prepareOpponentLandPlay() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

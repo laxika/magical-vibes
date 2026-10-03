@@ -25,8 +25,7 @@ class AncestralCommunionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AncestralCommunion()));
         addMana();
 
-        harness.castSorcery(player1, 0, permanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, permanent.getId());
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -49,14 +48,14 @@ class AncestralCommunionTest extends BaseCardTest {
         Card secondPermanent = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(firstPermanent, secondPermanent));
         harness.setHand(player1, List.of(new AncestralCommunion()));
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
-        addCreatureReady(player1, new EdgarMarkov());
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        addCreatureReady(player1, commander);
         addMana();
 
         harness.castSorcery(player1, 0, firstPermanent.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, secondPermanent.getId());
         harness.passBothPriorities();
@@ -65,6 +64,75 @@ class AncestralCommunionTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(firstPermanent, secondPermanent);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotTargetOpponentsPermanentCard() {
+        Card permanent = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(permanent));
+        harness.setHand(player1, List.of(new AncestralCommunion()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeftGraveyardBeforeResolution() {
+        Card permanent = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(permanent));
+        harness.setHand(player1, List.of(new AncestralCommunion()));
+        addMana();
+        harness.castSorcery(player1, 0, permanent.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(permanent));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(permanent);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void decliningNewTargetStillCreatesMandatoryCopy() {
+        Card permanent = new GrizzlyBears();
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        addCreatureReady(player1, commander);
+        harness.setGraveyard(player1, List.of(permanent));
+        harness.setHand(player1, List.of(new AncestralCommunion()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, permanent.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(permanent);
+        harness.assertInGraveyard(player1, "Ancestral Communion");
+    }
+
+    @Test
+    void sameNamedPermanentIsNotTheCommander() {
+        Card commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        Card otherEdgar = new EdgarMarkov();
+        otherEdgar.setOwnerId(player2.getId());
+        addCreatureReady(player1, otherEdgar);
+        Card permanent = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(permanent));
+        harness.setHand(player1, List.of(new AncestralCommunion()));
+        addMana();
+
+        harness.castSorcery(player1, 0, permanent.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     private void addMana() {

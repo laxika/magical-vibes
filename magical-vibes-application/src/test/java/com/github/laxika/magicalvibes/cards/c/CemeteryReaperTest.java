@@ -1,26 +1,24 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CemeteryReaper.class, Gravedigger.class, RuneclawBear.class, Cancel.class})
 class CemeteryReaperTest extends BaseCardTest {
-
-    // ===== Static effect: buffs own Zombies =====
 
     @Test
     @DisplayName("Other Zombie creatures you control get +1/+1")
@@ -48,10 +46,10 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Zombie creatures")
     void doesNotBuffNonZombies() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
         harness.addToBattlefield(player1, new CemeteryReaper());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Runeclaw Bear");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -101,14 +99,12 @@ class CemeteryReaperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, gravedigger)).isEqualTo(2);
     }
 
-    // ===== Activated ability: exile creature card from graveyard + create token =====
-
     @Test
     @DisplayName("Exiles creature card from controller's graveyard and creates 2/2 Zombie token")
     void exilesCreatureAndCreatesToken() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -116,9 +112,9 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature card exiled from graveyard
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Runeclaw Bear");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Runeclaw Bear"));
 
         // 2/2 black Zombie token created
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -131,10 +127,10 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Can exile creature card from opponent's graveyard")
     void exilesFromOpponentGraveyard() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>());
-        harness.setGraveyard(player2, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -142,9 +138,9 @@ class CemeteryReaperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Card exiled from opponent's graveyard
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Runeclaw Bear"));
 
         // Token created for controller (player1)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -156,9 +152,9 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects non-creature card as target")
     void rejectsNonCreatureTarget() {
-        Permanent reaper = addReadyReaper(player1);
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
         Card cancel = new Cancel();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(cancel)));
+        harness.setGraveyard(player1, List.of(cancel));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -170,9 +166,9 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps Cemetery Reaper")
     void activatingTapsReaper() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThat(reaper.isTapped()).isFalse();
@@ -186,9 +182,9 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -200,10 +196,10 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent reaper = addReadyReaper(player1);
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
         reaper.tap();
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -215,13 +211,11 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        CemeteryReaper card = new CemeteryReaper();
-        Permanent reaper = new Permanent(card);
+        Permanent reaper = harness.addToBattlefieldAndReturn(player1, new CemeteryReaper());
         reaper.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(reaper);
 
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -233,9 +227,9 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target removed from graveyard before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -253,9 +247,9 @@ class CemeteryReaperTest extends BaseCardTest {
     @Test
     @DisplayName("Created Zombie token gets buffed by Cemetery Reaper's static ability")
     void createdTokenGetsBuffed() {
-        Permanent reaper = addReadyReaper(player1);
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bears = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int reaperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(reaper);
@@ -269,14 +263,69 @@ class CemeteryReaperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, zombieToken)).isEqualTo(3);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Ability resolves after Cemetery Reaper leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bear = new RuneclawBear();
+        harness.setGraveyard(player2, List.of(bear));
+        harness.addMana(player1, ManaColor.BLACK, 3);
 
-    private Permanent addReadyReaper(Player player) {
-        CemeteryReaper card = new CemeteryReaper();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, 0, null, bear.getId(), Zone.GRAVEYARD);
+        gd.playerBattlefields.get(player1.getId()).remove(reaper);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bear);
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Zombie");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Zombie");
+    }
+
+    @Test
+    @DisplayName("Competing activations targeting the same card create only one token")
+    void competingActivationsCreateOnlyOneToken() {
+        addCreatureReady(player1, new CemeteryReaper());
+        addCreatureReady(player1, new CemeteryReaper());
+        Card bear = new RuneclawBear();
+        harness.setGraveyard(player2, List.of(bear));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, 1, 0, null, bear.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(bear);
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Zombie");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Exile and token creation wait for ability resolution")
+    void effectsWaitForResolution() {
+        Permanent reaper = addCreatureReady(player1, new CemeteryReaper());
+        Card bear = new RuneclawBear();
+        harness.setGraveyard(player1, List.of(bear));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId(), Zone.GRAVEYARD);
+
+        assertThat(reaper.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Zombie");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bear);
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
     }
 
 }

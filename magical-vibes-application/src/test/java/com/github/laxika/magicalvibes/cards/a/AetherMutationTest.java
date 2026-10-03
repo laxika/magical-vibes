@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.cards.j.Jilt;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherMutation.class, Dodecapod.class, GaeasSkyfolk.class, PhyrexianArena.class})
+@CardUsed({AetherMutation.class, Dodecapod.class, GaeasSkyfolk.class, Jilt.class, PhyrexianArena.class})
 class AetherMutationTest extends BaseCardTest {
 
     @Test
@@ -64,6 +65,46 @@ class AetherMutationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void canReturnYourOwnCreatureAndCreatesTokensForYou() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Dodecapod());
+        cast(target);
+
+        harness.assertNotOnBattlefield(player1, "Dodecapod");
+        harness.assertInHand(player1, "Dodecapod");
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    void returningSaprolingTokenCreatesNoTokensAndDoesNotPutTokenInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GaeasSkyfolk());
+        cast(target);
+        Permanent saproling = findPermanents(player1, "Saproling").getFirst();
+
+        cast(saproling);
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        harness.assertNotInHand(player1, "Saproling");
+    }
+
+    @Test
+    void createsNoTokensWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        harness.setHand(player1, List.of(new AetherMutation(), new Jilt()));
+        addMana();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Dodecapod");
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        harness.assertInGraveyard(player1, "Aether Mutation");
     }
 
     private void cast(Permanent target) {

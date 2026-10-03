@@ -67,6 +67,53 @@ class BreakAsunderTest extends BaseCardTest {
         harness.assertInHand(player1, "Goblin Brigand");
     }
 
+    @Test
+    @DisplayName("Can destroy an artifact its caster controls")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new ArkOfBlight());
+
+        castBreakAsunder(harness.getPermanentId(player1, "Ark of Blight"));
+
+        harness.assertNotOnBattlefield(player1, "Ark of Blight");
+        harness.assertInGraveyard(player1, "Ark of Blight");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new BreakAsunder()));
+        harness.setLibrary(player1, List.of(new GoblinBrigand()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Break Asunder");
+        harness.assertInGraveyard(player1, "Break Asunder");
+        harness.assertNotInHand(player1, "Goblin Brigand");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goblin Brigand");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new BreakAsunder()));
+        harness.setLibrary(player1, List.of(new GoblinBrigand()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Break Asunder");
+        harness.assertNotInGraveyard(player1, "Break Asunder");
+        harness.assertNotInHand(player1, "Goblin Brigand");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castBreakAsunder(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new BreakAsunder()));
         addBreakAsunderMana();

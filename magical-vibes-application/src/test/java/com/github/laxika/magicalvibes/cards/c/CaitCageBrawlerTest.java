@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,18 +14,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CaitCageBrawler.class, GrizzlyBears.class, Forest.class})
+@CardUsed({CaitCageBrawler.class, Forest.class})
 class CaitCageBrawlerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking draws for both players and puts counters on Cait when the discards tie")
     void tiedDiscardManaValuesPutCountersOnCait() {
         Permanent cait = attackWith(
-                List.of(new GrizzlyBears()), new Forest(),
-                List.of(new GrizzlyBears()), new Forest());
+                List.of(new CaitCageBrawler()), new Forest(),
+                List.of(new CaitCageBrawler()), new Forest());
 
-        discardByName(player1, "Grizzly Bears");
-        discardByName(player2, "Grizzly Bears");
+        discardByName(player1, "Cait, Cage Brawler");
+        discardByName(player2, "Cait, Cage Brawler");
 
         assertThat(gqs.getEffectivePower(gd, cait)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cait)).isEqualTo(3);
@@ -36,15 +36,63 @@ class CaitCageBrawlerTest extends BaseCardTest {
     void higherDefendingDiscardDoesNotPutCountersOnCait() {
         Permanent cait = attackWith(
                 List.of(new Forest()), new Forest(),
-                List.of(new GrizzlyBears()), new Forest());
+                List.of(new CaitCageBrawler()), new Forest());
 
         discardByName(player1, "Forest");
-        discardByName(player2, "Grizzly Bears");
+        discardByName(player2, "Cait, Cage Brawler");
 
         assertThat(gqs.getEffectivePower(gd, cait)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, cait)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Cait has indestructible only during its controller's turn")
+    void indestructibleDependsOnControllerTurn() {
+        Permanent cait = addCreatureReady(player1, new CaitCageBrawler());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, cait, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, cait, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A strictly higher controller discard puts two counters on Cait")
+    void higherControllerDiscardPutsCountersOnCait() {
+        Permanent cait = attackWith(
+                List.of(new CaitCageBrawler()), new Forest(),
+                List.of(new Forest()), new Forest());
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        discardByName(player1, "Cait, Cage Brawler");
+        discardByName(player2, "Forest");
+
+        assertThat(gqs.getEffectivePower(gd, cait)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cait)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Cait, Cage Brawler");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Neither discard is revealed before the defending player chooses")
+    void discardsWaitUntilBothPlayersHaveChosen() {
+        attackWith(
+                List.of(new CaitCageBrawler()), new Forest(),
+                List.of(new CaitCageBrawler()), new Forest());
+
+        discardByName(player1, "Cait, Cage Brawler");
+
+        harness.assertNotInGraveyard(player1, "Cait, Cage Brawler");
+        harness.assertInHand(player1, "Cait, Cage Brawler");
+
+        discardByName(player2, "Cait, Cage Brawler");
+        harness.assertInGraveyard(player1, "Cait, Cage Brawler");
+        harness.assertInGraveyard(player2, "Cait, Cage Brawler");
+    }
     private Permanent attackWith(List<Card> controllerHand, Card controllerDraw,
             List<Card> defendingHand, Card defendingDraw) {
         Permanent cait = addCreatureReady(player1, new CaitCageBrawler());

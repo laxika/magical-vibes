@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BottleOfSuleiman.class)
+@CardUsed({BottleOfSuleiman.class, EdgarKingOfFigaro.class})
 class BottleOfSuleimanTest extends BaseCardTest {
 
     @Test
@@ -40,7 +40,7 @@ class BottleOfSuleimanTest extends BaseCardTest {
 
         if (hasDjinn) {
             assertThat(gameLogContains("wins the coin flip for Bottle of Suleiman")).isTrue();
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+            harness.assertLife(player1, lifeBefore);
         } else {
             assertThat(gameLogContains("loses the coin flip for Bottle of Suleiman")).isTrue();
         }
@@ -108,5 +108,46 @@ class BottleOfSuleimanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gameLogContains("coin flip for Bottle of Suleiman")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately before the coin flip resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new BottleOfSuleiman());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Bottle of Suleiman");
+        harness.assertInGraveyard(player1, "Bottle of Suleiman");
+        harness.assertNotOnBattlefield(player1, "Djinn");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gameLogContains("coin flip for Bottle of Suleiman")).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gameLogContains("coin flip for Bottle of Suleiman")).isTrue();
+    }
+
+    @Test
+    @CardUsed(EdgarKingOfFigaro.class)
+    @DisplayName("A tapped Bottle can be activated by the nonactive player and creates their token")
+    void tappedBottleCanBeActivatedByNonactivePlayer() {
+        harness.addToBattlefield(player2, new EdgarKingOfFigaro());
+        Permanent bottle = harness.addToBattlefieldAndReturn(player2, new BottleOfSuleiman());
+        bottle.setTapped(true);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int life1 = gd.playerLifeTotals.get(player1.getId());
+        int life2 = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Bottle of Suleiman");
+        harness.assertInGraveyard(player2, "Bottle of Suleiman");
+        assertThat(countPermanents(player2, "Djinn")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Djinn");
+        harness.assertLife(player1, life1);
+        harness.assertLife(player2, life2);
     }
 }

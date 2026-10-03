@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
+import com.github.laxika.magicalvibes.cards.d.DuskborneSkymarcher;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnointedDeacon.class, DuskborneSkymarcher.class, ColossalDreadmaw.class})
 class AnointedDeaconTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
@@ -22,14 +25,12 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
     }
 
-    // ===== Accepting the may ability and targeting a Vampire =====
-
     @Test
     @DisplayName("Accepting the may ability and targeting a Vampire gives it +2/+0")
     void acceptAndTargetVampireGivesBoost() {
         harness.addToBattlefield(player1, new AnointedDeacon());
-        harness.addToBattlefield(player1, new ChildOfNight());
-        UUID vampireId = harness.getPermanentId(player1, "Child of Night");
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
+        UUID vampireId = harness.getPermanentId(player1, "Duskborne Skymarcher");
 
         advanceToCombat(player1);
 
@@ -40,14 +41,10 @@ class AnointedDeaconTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(vampireId))
-                .findFirst().orElseThrow();
+        Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Can target itself (Anointed Deacon is a Vampire) =====
 
     @Test
     @DisplayName("Can target itself since it is a Vampire")
@@ -60,41 +57,33 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent deacon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(deaconId))
-                .findFirst().orElseThrow();
+        Permanent deacon = findPermanent(player1, "Anointed Deacon");
         assertThat(deacon.getPowerModifier()).isEqualTo(2);
         assertThat(deacon.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Declining the may ability =====
 
     @Test
     @DisplayName("Declining the may ability does not boost any creature")
     void declineMayAbilityNoBoost() {
         harness.addToBattlefield(player1, new AnointedDeacon());
-        harness.addToBattlefield(player1, new ChildOfNight());
-        UUID vampireId = harness.getPermanentId(player1, "Child of Night");
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
+        UUID vampireId = harness.getPermanentId(player1, "Duskborne Skymarcher");
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, vampireId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(vampireId))
-                .findFirst().orElseThrow();
+        Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
         assertThat(vampire.getPowerModifier()).isEqualTo(0);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Does not trigger during opponent's combat =====
 
     @Test
     @DisplayName("Does not trigger during opponent's combat")
     void doesNotTriggerDuringOpponentCombat() {
         harness.addToBattlefield(player1, new AnointedDeacon());
-        harness.addToBattlefield(player1, new ChildOfNight());
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
 
         advanceToCombat(player2); // opponent's combat
         harness.passBothPriorities();
@@ -103,44 +92,36 @@ class AnointedDeaconTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Can target opponent's Vampire =====
-
     @Test
     @DisplayName("Can target opponent's Vampire")
     void canTargetOpponentVampire() {
         harness.addToBattlefield(player1, new AnointedDeacon());
-        harness.addToBattlefield(player2, new ChildOfNight());
-        UUID vampireId = harness.getPermanentId(player2, "Child of Night");
+        harness.addToBattlefield(player2, new DuskborneSkymarcher());
+        UUID vampireId = harness.getPermanentId(player2, "Duskborne Skymarcher");
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, vampireId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent vampire = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(vampireId))
-                .findFirst().orElseThrow();
+        Permanent vampire = findPermanent(player2, "Duskborne Skymarcher");
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
     }
-
-    // ===== Boost wears off at end of turn =====
 
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new AnointedDeacon());
-        harness.addToBattlefield(player1, new ChildOfNight());
-        UUID vampireId = harness.getPermanentId(player1, "Child of Night");
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
+        UUID vampireId = harness.getPermanentId(player1, "Duskborne Skymarcher");
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, vampireId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(vampireId))
-                .findFirst().orElseThrow();
+        Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
         assertThat(vampire.getPowerModifier()).isEqualTo(2);
 
         // Advance to end step — modifiers reset
@@ -151,5 +132,60 @@ class AnointedDeaconTest extends BaseCardTest {
 
         assertThat(vampire.getPowerModifier()).isEqualTo(0);
         assertThat(vampire.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Only Vampires are offered as targets")
+    void nonVampireIsNotALegalTarget() {
+        harness.addToBattlefield(player1, new AnointedDeacon());
+        harness.addToBattlefield(player2, new ColossalDreadmaw());
+        UUID deaconId = harness.getPermanentId(player1, "Anointed Deacon");
+
+        advanceToCombat(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactly(deaconId);
+        harness.handlePermanentChosen(player1, deaconId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("The boost resolves even if Anointed Deacon leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        harness.addToBattlefield(player1, new AnointedDeacon());
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
+        Permanent deacon = findPermanent(player1, "Anointed Deacon");
+        Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, vampire.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(deacon);
+        gd.playerGraveyards.get(player1.getId()).add(deacon.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vampire.getPowerModifier()).isEqualTo(2);
+        assertThat(vampire.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A removed target prevents resolution and the optional boost choice")
+    void removedTargetPreventsResolution() {
+        harness.addToBattlefield(player1, new AnointedDeacon());
+        harness.addToBattlefield(player1, new DuskborneSkymarcher());
+        Permanent vampire = findPermanent(player1, "Duskborne Skymarcher");
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, vampire.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(vampire);
+        gd.playerGraveyards.get(player1.getId()).add(vampire.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(vampire.getPowerModifier()).isZero();
+        assertThat(findPermanent(player1, "Anointed Deacon").getPowerModifier()).isZero();
     }
 }

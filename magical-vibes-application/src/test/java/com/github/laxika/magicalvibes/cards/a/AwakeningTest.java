@@ -69,4 +69,41 @@ class AwakeningTest extends BaseCardTest {
         assertThat(player1Creature.isTapped()).isFalse();
         assertThat(player1Land.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Untaps creatures present at resolution even after Awakening leaves")
+    void resolvesAfterSourceLeavesAndIncludesNewCreatures() {
+        Permanent awakening = harness.addToBattlefieldAndReturn(player1, new Awakening());
+        Permanent originalCreature = addCreatureReady(player1, new Carnassid());
+        originalCreature.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(originalCreature.isTapped()).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(awakening);
+        gd.playerGraveyards.get(player1.getId()).add(awakening.getCard());
+        Permanent newCreature = addCreatureReady(player2, new Carnassid());
+        newCreature.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(originalCreature.isTapped()).isFalse();
+        assertThat(newCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not untap a noncreature nonland enchantment")
+    void doesNotUntapAwakeningItself() {
+        Permanent awakening = harness.addToBattlefieldAndReturn(player1, new Awakening());
+        Permanent creature = addCreatureReady(player1, new Carnassid());
+        awakening.tap();
+        creature.tap();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(awakening.isTapped()).isTrue();
+    }
 }

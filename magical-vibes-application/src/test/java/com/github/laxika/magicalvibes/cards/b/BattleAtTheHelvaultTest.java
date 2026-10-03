@@ -77,8 +77,7 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castInstant(player2, 0, saga.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, saga.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == ownBear.getCard());
@@ -103,6 +102,89 @@ class BattleAtTheHelvaultTest extends BaseCardTest {
                 .contains(Keyword.FLYING, Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE);
         assertThat(avacyn.getCard().getSubtypes())
                 .containsExactly(CardSubtype.ANGEL);
+    }
+
+    @Test
+    @DisplayName("A chapter can exile no permanents even when valid targets exist")
+    void mayChooseNoTargets() {
+        Permanent saga = addSaga(0);
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBear = addCreatureReady(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga, ownBear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentBear);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing one permanent excludes other permanents controlled by that player")
+    void onlyOneTargetPerController() {
+        addSaga(0);
+        Permanent firstBear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, firstBear.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(ownBear.getId())
+                .doesNotContain(firstBear.getId(), secondBear.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondBear).doesNotContain(firstBear);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBear);
+    }
+
+    @Test
+    @DisplayName("The final chapter creates Avacyn and sacrificing the Saga returns cards from both chapters")
+    void finalChapterReturnsCardsFromBothChapters() {
+        Permanent saga = addSaga(0);
+        Permanent firstBear = addCreatureReady(player2, new GrizzlyBears());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, firstBear.getId());
+        harness.passBothPriorities();
+
+        Permanent secondBear = addCreatureReady(player2, new GrizzlyBears());
+        triggerChapter();
+        harness.handlePermanentChosen(player1, secondBear.getId());
+        harness.passBothPriorities();
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Avacyn")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        harness.assertInGraveyard(player1, "Battle at the Helvault");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard() == firstBear.getCard())
+                .anyMatch(p -> p.getCard() == secondBear.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield triggers chapter I immediately")
+    void enteringTriggersFirstChapter() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new BattleAtTheHelvault(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Battle at the Helvault")
+                .getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bear.getCard());
     }
 
     private Permanent addSaga(int loreCounters) {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({CarrionRats.class, CabalSurgeon.class})
+@CardUsed({CarrionRats.class, CabalSurgeon.class, FlaringPain.class})
 class CarrionRatsTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class CarrionRatsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.assertLife(player2, 20);
     }
 
@@ -87,8 +87,7 @@ class CarrionRatsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(rats.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
         harness.assertLife(player2, 18);
     }
 
@@ -122,6 +121,85 @@ class CarrionRatsTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(rats.getId());
+    }
+
+    @Test
+    @CardUsed({FlaringPain.class})
+    @DisplayName("Unpreventable damage does not override assigning no combat damage")
+    void unpreventableDamageDoesNotOverrideNoAssignment() {
+        harness.castFromHand(player1, new FlaringPain(), "{1}{R}");
+        harness.passBothPriorities();
+        Permanent rats = addCreatureReady(player1, new CarrionRats());
+        Card card = new CabalSurgeon();
+        harness.setGraveyard(player2, List.of(card));
+
+        attackUnblocked(rats);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveCombat();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Both players may exile a card from the same attack trigger")
+    void bothPlayersMayExileFromSameTrigger() {
+        Permanent rats = addCreatureReady(player1, new CarrionRats());
+        Card ownCard = new CabalSurgeon();
+        Card opponentCard = new CabalSurgeon();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        attackUnblocked(rats);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveCombat();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCard);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Exiling for a block suppresses only the Rats' combat damage")
+    void exilingForBlockLeavesAttackerDamageIntact() {
+        Permanent attacker = addCreatureReady(player1, new CabalSurgeon());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new CarrionRats());
+        Card card = new CabalSurgeon();
+        harness.setGraveyard(player2, List.of(card));
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.assertInGraveyard(player2, "Carrion Rats");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Declining the block trigger allows both creatures to deal damage")
+    void decliningForBlockAllowsBothCreaturesToDealDamage() {
+        Permanent attacker = addCreatureReady(player1, new CabalSurgeon());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new CarrionRats());
+        harness.setGraveyard(player2, List.of(new CabalSurgeon()));
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Cabal Surgeon");
+        harness.assertInGraveyard(player2, "Carrion Rats");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertLife(player2, 20);
     }
 
     private void attackUnblocked(Permanent rats) {

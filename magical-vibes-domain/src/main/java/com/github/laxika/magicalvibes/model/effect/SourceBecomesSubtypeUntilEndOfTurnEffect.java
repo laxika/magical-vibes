@@ -14,7 +14,11 @@ import java.util.Objects;
  *
  * @param subtypes the creature types the source becomes
  */
-public record SourceBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes) implements CardEffect {
+public record SourceBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes, boolean overriding) implements CardEffect {
+
+    public SourceBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes) {
+        this(subtypes, true);
+    }
 
     public SourceBecomesSubtypeUntilEndOfTurnEffect {
         Objects.requireNonNull(subtypes, "subtypes");
@@ -26,6 +30,10 @@ public record SourceBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtype
 
     public SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype) {
         this(List.of(Objects.requireNonNull(subtype, "subtype")));
+    }
+
+    public SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype, boolean overriding) {
+        this(List.of(Objects.requireNonNull(subtype, "subtype")), overriding);
     }
 
     public CardSubtype subtype() {

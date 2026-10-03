@@ -76,6 +76,7 @@ class BaboonSpiritTest extends BaseCardTest {
                 .anyMatch(action -> action.card().getName().equals("Grizzly Bears"));
 
         advanceToNextEndStep();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -93,16 +94,147 @@ class BaboonSpiritTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void enteringBaboonDoesNotTriggerForItself() {
+        harness.castFromHand(player1, new BaboonSpirit(), "{2}{U}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void nonSpiritAndOpponentsSpiritDoNotTrigger() {
+        addReadyBaboon(player1);
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new BaboonSpirit());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void createdTokenDoesNotTriggerAnotherToken() {
+        addReadyBaboon(player1);
+        harness.enterBattlefieldAndReturn(player1, new BaboonSpirit());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    void createdSpiritCanBeBlockedBySpirit() {
+        addReadyBaboon(player1);
+        castDreamcatcher();
+        Permanent token = findToken(player1);
+        token.setSummoningSick(false);
+        token.setAttacking(true);
+        Permanent blocker = addReadyBaboon(player2);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(token))));
+
+        assertThat(blocker.getBlockingTargetIds()).contains(token.getId());
+    }
+
+    @Test
+    void createdSpiritCanBlockSpirit() {
+        addReadyBaboon(player1);
+        castDreamcatcher();
+        Permanent token = findToken(player1);
+        Permanent attacker = addReadyBaboon(player2);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(token),
+                gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+
+        assertThat(token.getBlockingTargetIds()).contains(attacker.getId());
+    }
+
+    @Test
+    void returnUsesDelayedTriggerOnStack() {
+        addReadyBaboon(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addActivationMana(player1);
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        advanceToNextEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void returningNontokenSpiritTriggersTokenCreationAgain() {
+        addReadyBaboon(player1);
+        Permanent spirit = addReadyBaboon(player1);
+        addActivationMana(player1);
+        harness.activateAbility(player1, 0, 0, null, spirit.getId());
+        harness.passBothPriorities();
+
+        advanceToNextEndStep();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Baboon Spirit")).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    void exiledSpiritTokenDoesNotReturn() {
+        addReadyBaboon(player1);
+        castDreamcatcher();
+        Permanent token = findToken(player1);
+        addActivationMana(player1);
+        harness.activateAbility(player1, 0, 0, null, token.getId());
+        harness.passBothPriorities();
+
+        advanceToNextEndStep();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void stolenCreatureReturnsToOwnerEvenAfterBaboonLeaves() {
+        Permanent baboon = addReadyBaboon(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        addActivationMana(player1);
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, baboon));
+
+        advanceToNextEndStep();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private Permanent addReadyBaboon(Player player) {
         return addCreatureReady(player, new BaboonSpirit());
     }
 
     private void castDreamcatcher() {
-        harness.setHand(player1, List.of(new Dreamcatcher()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Dreamcatcher(), "{U}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent findToken(Player player) {

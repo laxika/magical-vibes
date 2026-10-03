@@ -55,12 +55,51 @@ class AinokSurvivalistTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void payingMegamorphCostAddsCounterEvenWithoutLegalTargets() {
+        Permanent survivalist = castFaceDown();
+
+        turnFaceUp(survivalist);
+
+        assertThat(survivalist.isFaceDown()).isFalse();
+        assertThat(survivalist.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void megamorphCounterIsPlacedBeforeEnchantmentDestructionResolves() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent survivalist = castFaceDown();
+
+        turnFaceUp(survivalist);
+
+        assertThat(survivalist.getPlusOnePlusOneCounters()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void castingFaceUpNeitherAddsCounterNorTriggersDestruction() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.castFromHand(player1, new AinokSurvivalist(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent survivalist = findPermanent(player1, "Ainok Survivalist");
+        assertThat(survivalist.getPlusOnePlusOneCounters()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new AinokSurvivalist()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         return findPermanent(player1, "Ainok Survivalist");
     }

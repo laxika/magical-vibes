@@ -56,6 +56,29 @@ class CallerOfTheHuntTest extends BaseCardTest {
     }
 
     @Test
+    void diesWhenNoCreaturesOfTheChosenTypeExist() {
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new CallerOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreatureWithChosenType(player1, 0, CardSubtype.INSECT);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Caller of the Hunt");
+        harness.assertInGraveyard(player1, "Caller of the Hunt");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotChooseAType() {
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.enterBattlefieldAndReturn(player1, new CallerOfTheHunt());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Caller of the Hunt");
+        harness.assertInGraveyard(player1, "Caller of the Hunt");
+    }
+
+    @Test
     void cannotBeCastWithoutChoosingAType() {
         harness.setHand(player1, List.of(new CallerOfTheHunt()));
         harness.addMana(player1, ManaColor.GREEN, 3);

@@ -2731,9 +2731,7 @@ public class CombatBlockService {
                             gameData, blocker, requirement.blockerFilter())) {
                         continue;
                     }
-                    int usage = blockerUsage.getOrDefault(blockerIdx, 0);
-                    if (usage >= getMaxBlocksForCreature(gameData, blocker, defenderBattlefield)
-                            || !canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                    if (!canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
                             defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                         continue;
                     }

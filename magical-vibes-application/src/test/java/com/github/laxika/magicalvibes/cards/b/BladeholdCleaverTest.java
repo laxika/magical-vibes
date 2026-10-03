@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.j.JorKadeenThePrevailer;
 import com.github.laxika.magicalvibes.cards.m.MirranCrusader;
 import com.github.laxika.magicalvibes.cards.o.OxiddaFinisher;
 import com.github.laxika.magicalvibes.cards.o.OxiddaScrapmelter;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.s.SunspearShikari;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -34,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         HeroOfBladehold.class, HeroOfOxidRidge.class, JorKadeenThePrevailer.class,
         MirranCrusader.class, OxiddaScrapmelter.class, SunspearShikari.class,
         OxiddaFinisher.class, BarbedBatterfist.class, BladeholdWarWhip.class,
-        DragonwingGlider.class, GrizzlyBears.class, DoomBlade.class})
+        DragonwingGlider.class, GrizzlyBears.class, DoomBlade.class, PlanarCleansing.class})
 class BladeholdCleaverTest extends BaseCardTest {
 
     @Test
@@ -49,11 +50,7 @@ class BladeholdCleaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent cleaver = findPermanent(player1, "Bladehold Cleaver");
-        Permanent rebel = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Rebel"))
-                .findFirst()
-                .orElseThrow();
+        Permanent rebel = findPermanent(player1, "Rebel");
 
         assertThat(cleaver.getAttachedTo()).isEqualTo(rebel.getId());
         assertThat(gqs.getEffectivePower(gd, rebel)).isEqualTo(4);
@@ -69,8 +66,7 @@ class BladeholdCleaverTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
 
         PendingInteraction.SpellbookDraftChoice choice =
@@ -83,5 +79,86 @@ class BladeholdCleaverTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void equipMovesTheBoostWithoutCreatingAnotherRebel() {
+        harness.setHand(player1, List.of(new BladeholdCleaver()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent cleaver = findPermanent(player1, "Bladehold Cleaver");
+        Permanent rebel = findPermanent(player1, "Rebel");
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new ArdentRecruit());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, recruit.getId());
+        harness.passBothPriorities();
+
+        assertThat(cleaver.getAttachedTo()).isEqualTo(recruit.getId());
+        assertThat(gqs.getEffectivePower(gd, recruit)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, recruit)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, rebel)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, rebel)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void equippedRebelTokenDeathAlsoDraftsACard() {
+        harness.setHand(player1, List.of(new BladeholdCleaver()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent cleaver = findPermanent(player1, "Bladehold Cleaver");
+        Permanent rebel = findPermanent(player1, "Rebel");
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, rebel.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards()).extracting(Card::getName).doesNotHaveDuplicates();
+        Card drafted = choice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
+        assertThat(cleaver.getAttachedTo()).isNull();
+        harness.assertNotOnBattlefield(player1, "Rebel");
+        harness.assertOnBattlefield(player1, "Bladehold Cleaver");
+    }
+
+    @Test
+    void draftsWhenEquipmentAndEquippedCreatureAreDestroyedSimultaneously() {
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new BladeholdCleaver());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new ArdentRecruit());
+        cleaver.setAttachedTo(recruit.getId());
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bladehold Cleaver");
+        harness.assertInGraveyard(player1, "Ardent Recruit");
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(3);
+        Card drafted = choice.cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drafted);
     }
 }

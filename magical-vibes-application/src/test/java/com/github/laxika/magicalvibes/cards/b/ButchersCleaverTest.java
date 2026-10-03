@@ -3,25 +3,24 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DaybreakRanger;
+import com.github.laxika.magicalvibes.cards.h.HamletCaptain;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ButchersCleaver.class, HamletCaptain.class, WalkingCorpse.class, DaybreakRanger.class})
 class ButchersCleaverTest extends BaseCardTest {
-
-    // ===== Static effects: power/toughness boost =====
 
     @Test
     @DisplayName("Equipped creature gets +3/+0 regardless of creature type")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);   // 2 + 3
@@ -31,21 +30,19 @@ class ButchersCleaverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped Human creature gets +3/+0")
     void equippedHumanGetsBoost() {
-        Permanent human = addReadyHuman(player1);
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(human.getId());
 
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5);   // 2 + 3
-        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1); // 1 + 0
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2); // 2 + 0
     }
-
-    // ===== Static effects: conditional lifelink =====
 
     @Test
     @DisplayName("Equipped Human creature has lifelink")
     void equippedHumanHasLifelink() {
-        Permanent human = addReadyHuman(player1);
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(human.getId());
 
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
@@ -54,14 +51,12 @@ class ButchersCleaverTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped non-Human creature does not have lifelink")
     void equippedNonHumanDoesNotHaveLifelink() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
     }
-
-    // ===== Lifelink in combat =====
 
     @Test
     @DisplayName("Controller gains life when equipped Human deals combat damage")
@@ -69,8 +64,8 @@ class ButchersCleaverTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent human = addReadyHuman(player1);
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(human.getId());
         human.setAttacking(true);
 
@@ -88,8 +83,8 @@ class ButchersCleaverTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent cleaver = addCleaverReady(player1);
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
         cleaver.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
@@ -101,14 +96,12 @@ class ButchersCleaverTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Moving Cleaver from Human to non-Human removes lifelink")
     void movingFromHumanToNonHumanRemovesLifelink() {
-        Permanent cleaver = addCleaverReady(player1);
-        Permanent human = addReadyHuman(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         cleaver.setAttachedTo(human.getId());
 
         assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
@@ -126,9 +119,9 @@ class ButchersCleaverTest extends BaseCardTest {
     @Test
     @DisplayName("Moving Cleaver from non-Human to Human grants lifelink")
     void movingFromNonHumanToHumanGrantsLifelink() {
-        Permanent cleaver = addCleaverReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent human = addReadyHuman(player1);
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
         cleaver.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
@@ -142,19 +135,93 @@ class ButchersCleaverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Transforming an equipped Human into a non-Human removes lifelink but retains the boost")
+    void transformingHumanRemovesLifelink() {
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        cleaver.setAttachedTo(ranger.getId());
 
-    private Permanent addCleaverReady(Player player) {
-        Permanent perm = new Permanent(new ButchersCleaver());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.LIFELINK)).isTrue();
+
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(ranger.isTransformed()).isTrue();
+        assertThat(cleaver.getAttachedTo()).isEqualTo(ranger.getId());
+        assertThat(gqs.getEffectivePower(gd, ranger)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, ranger)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, ranger, Keyword.LIFELINK)).isFalse();
     }
 
-    private Permanent addReadyHuman(Player player) {
-        Permanent perm = new Permanent(new EliteVanguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Unattached Cleaver grants neither a boost nor lifelink")
+    void unattachedCleaverDoesNotAffectCreatures() {
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent zombie = addCreatureReady(player1, new WalkingCorpse());
+        harness.addToBattlefield(player1, new ButchersCleaver());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, zombie, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Unattaching Cleaver immediately removes both benefits")
+    void unattachingCleaverRemovesBenefits() {
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        cleaver.setAttachedTo(human.getId());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
+
+        cleaver.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Cleavers stack their boosts but do not multiply lifelink life gain")
+    void multipleCleaversDoNotMultiplyLifelink() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent human = addCreatureReady(player1, new HamletCaptain());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        first.setAttachedTo(human.getId());
+        second.setAttachedTo(human.getId());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+        human.setAttacking(true);
+        resolveCombat();
+
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Lifelink benefits the equipped creature's controller, even across battlefields")
+    void opponentControlledHumanGetsBenefits() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent human = addCreatureReady(player2, new HamletCaptain());
+        Permanent cleaver = harness.addToBattlefieldAndReturn(player1, new ButchersCleaver());
+        cleaver.setAttachedTo(human.getId());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.LIFELINK)).isTrue();
+        human.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 25);
     }
 }

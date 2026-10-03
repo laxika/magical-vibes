@@ -205,6 +205,11 @@ public final class TextChangeTransformer {
         return BASIC_LAND_WORDS.get(word);
     }
 
+    /** The creature type denoted by a text-change word, or null for other words. */
+    public static CardSubtype creatureTypeForWord(String word) {
+        return CREATURE_TYPE_WORDS.get(word);
+    }
+
     private static Substitution resolve(TextReplacement replacement) {
         CardColor fromColor = COLOR_WORDS.get(replacement.fromWord());
         CardColor toColor = COLOR_WORDS.get(replacement.toWord());

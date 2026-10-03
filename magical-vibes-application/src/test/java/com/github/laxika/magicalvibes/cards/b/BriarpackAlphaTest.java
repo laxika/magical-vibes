@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BriarpackAlpha.class, DawntreaderElk.class})
 class BriarpackAlphaTest extends BaseCardTest {
-
-    // ===== Flash — casting at instant speed =====
 
     @Test
     @DisplayName("Can cast during opponent's turn thanks to Flash")
@@ -54,34 +54,30 @@ class BriarpackAlphaTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Briarpack Alpha");
     }
 
-    // ===== ETB targeting and resolution =====
-
     @Test
-    @DisplayName("Casting with a target puts it on the stack")
-    void castingWithTargetPutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+    @DisplayName("Creature spell can be cast without selecting its ETB target")
+    void castingDoesNotRequireEtbTarget() {
+        harness.addToBattlefield(player2, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Briarpack Alpha");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack")
     void resolvingPutsEtbOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Dawntreader Elk");
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities();
 
@@ -97,91 +93,79 @@ class BriarpackAlphaTest extends BaseCardTest {
     @Test
     @DisplayName("ETB resolves and gives target creature +2/+2")
     void etbBoostsTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Dawntreader Elk");
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB
 
         assertThat(gd.stack).isEmpty();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        Permanent elk = findPermanent(player2, "Dawntreader Elk");
+        assertThat(elk.getPowerModifier()).isEqualTo(2);
+        assertThat(elk.getToughnessModifier()).isEqualTo(2);
+        assertThat(elk.getEffectivePower()).isEqualTo(4);
+        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
     }
-
-    // ===== Boost wears off =====
 
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Dawntreader Elk");
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getPowerModifier()).isEqualTo(2);
-        assertThat(bears.getToughnessModifier()).isEqualTo(2);
+        Permanent elk = findPermanent(player2, "Dawntreader Elk");
+        assertThat(elk.getPowerModifier()).isEqualTo(2);
+        assertThat(elk.getToughnessModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.getPowerModifier()).isEqualTo(0);
-        assertThat(bears.getToughnessModifier()).isEqualTo(0);
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(elk.getPowerModifier()).isEqualTo(0);
+        assertThat(elk.getToughnessModifier()).isEqualTo(0);
+        assertThat(elk.getEffectivePower()).isEqualTo(2);
+        assertThat(elk.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Can target own creature =====
 
     @Test
     @DisplayName("Can target own creature")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player1, "Dawntreader Elk");
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
-        assertThat(bears.getEffectivePower()).isEqualTo(4);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(4);
+        Permanent elk = findPermanent(player1, "Dawntreader Elk");
+        assertThat(elk.getEffectivePower()).isEqualTo(4);
+        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DawntreaderElk());
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Dawntreader Elk");
+        harness.castCreature(player1, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature — ETB on stack
 
@@ -192,8 +176,6 @@ class BriarpackAlphaTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
-
-    // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no creatures on battlefield")
@@ -208,8 +190,8 @@ class BriarpackAlphaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("Must target itself when it enters an otherwise empty battlefield")
+    void targetsItselfWhenOnlyCreature() {
         harness.setHand(player1, List.of(new BriarpackAlpha()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
@@ -217,6 +199,51 @@ class BriarpackAlphaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Briarpack Alpha");
+        UUID alphaId = harness.getPermanentId(player1, "Briarpack Alpha");
+        harness.handlePermanentChosen(player1, alphaId);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(alphaId);
+        harness.passBothPriorities();
+
+        Permanent alpha = findPermanent(player1, "Briarpack Alpha");
+        assertThat(alpha.getEffectivePower()).isEqualTo(5);
+        assertThat(alpha.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can choose itself after entering even with another creature present")
+    void canChooseItselfWithAnotherCreaturePresent() {
+        harness.addToBattlefield(player2, new DawntreaderElk());
+        harness.setHand(player1, List.of(new BriarpackAlpha()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Briarpack Alpha"));
+        harness.passBothPriorities();
+
+        Permanent alpha = findPermanent(player1, "Briarpack Alpha");
+        assertThat(alpha.getEffectivePower()).isEqualTo(5);
+        assertThat(alpha.getEffectiveToughness()).isEqualTo(5);
+        assertThat(findPermanent(player2, "Dawntreader Elk").getPowerModifier()).isZero();
+        assertThat(findPermanent(player2, "Dawntreader Elk").getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("ETB boost resolves independently of its source")
+    void boostResolvesAfterAlphaLeaves() {
+        harness.addToBattlefield(player2, new DawntreaderElk());
+        harness.setHand(player1, List.of(new BriarpackAlpha()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Dawntreader Elk"));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        Permanent elk = findPermanent(player2, "Dawntreader Elk");
+        assertThat(elk.getEffectivePower()).isEqualTo(4);
+        assertThat(elk.getEffectiveToughness()).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }
 }

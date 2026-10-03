@@ -6,12 +6,55 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(BloodCelebrant.class)
 class BloodCelebrantTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Can produce each of the five colors")
+    void canProduceEachColor(ManaColor color) {
+        var celebrant = harness.addToBattlefieldAndReturn(player1, new BloodCelebrant());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+        }
+        harness.assertLife(player1, 19);
+        assertThat(celebrant.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can repeatedly activate while tapped and summoning sick")
+    void canRepeatedlyActivateWhileTappedAndSummoningSick() {
+        var celebrant = harness.addToBattlefieldAndReturn(player1, new BloodCelebrant());
+        celebrant.tap();
+        celebrant.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(celebrant.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Paying black mana and 1 life adds one mana of the chosen color")

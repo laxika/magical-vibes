@@ -55,12 +55,69 @@ class AvengerOfTheFallenTest extends BaseCardTest {
                 .count()).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mobilize ignores creature cards in the opponent's graveyard")
+    void ignoresOpponentsGraveyard() {
+        addCreatureReady(player1, new AvengerOfTheFallen());
+        harness.setGraveyard(player1, List.of(new LightningBolt()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mobilize counts creature cards added before its ability resolves")
+    void countsGraveyardAtResolution() {
+        addCreatureReady(player1, new AvengerOfTheFallen());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mobilize creates no tokens if the graveyard is emptied before resolution")
+    void createsNoTokensWhenGraveyardEmptiedBeforeResolution() {
+        addCreatureReady(player1, new AvengerOfTheFallen());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One mobilize resolution creates one delayed sacrifice trigger for all its tokens")
+    void sacrificesAllTokensWithOneDelayedTrigger() {
+        addCreatureReady(player1, new AvengerOfTheFallen());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
     }
 }

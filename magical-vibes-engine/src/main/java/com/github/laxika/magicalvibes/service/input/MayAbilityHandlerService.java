@@ -181,6 +181,22 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
 
+        boolean exertChoice = !gameData.resolvingMayEffectFromStack && ability.effects().stream().anyMatch(effect ->
+                effect instanceof SequenceEffect sequence && sequence.steps().stream().anyMatch(step ->
+                        step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
+                                && skip.controllerStepOnly()));
+        if (exertChoice) {
+            if (accepted) {
+                StackEntry exert = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
+                        new ArrayList<>(ability.effects()), null, ability.sourcePermanentId());
+                exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                effectResolutionService.resolveEffects(gameData, exert);
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (ability.effects().stream().anyMatch(PlayCardFromHandByWordOfCommandEffect.class::isInstance)) {
             mayCastHandlerService.handleWordOfCommandPlay(gameData, player, accepted, ability);
             return;

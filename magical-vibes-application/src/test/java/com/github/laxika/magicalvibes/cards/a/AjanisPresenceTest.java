@@ -8,15 +8,18 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AjanisPresence.class, GrizzlyBears.class, DoomBlade.class, Forest.class})
 class AjanisPresenceTest extends BaseCardTest {
 
     @Test
@@ -28,8 +31,7 @@ class AjanisPresenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(ownBear.getId(), opposingBear.getId()));
 
         for (Permanent bear : List.of(ownBear, opposingBear)) {
             assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
@@ -44,8 +46,7 @@ class AjanisPresenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AjanisPresence()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof AjanisPresence);
@@ -73,11 +74,9 @@ class AjanisPresenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
 
@@ -101,5 +100,74 @@ class AjanisPresenceTest extends BaseCardTest {
         UUID forestId = harness.getPermanentId(player1, "Forest");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void resolvesForRemainingTargetWhenAnotherIsDestroyedInResponse() {
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, List.of(firstBear.getId(), secondBear.getId()));
+        harness.castAndResolveInstant(player2, 0, firstBear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstBear).contains(secondBear);
+        assertThat(gqs.getEffectivePower(gd, secondBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondBear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, secondBear, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void chargesStriveForBothAdditionalTargets() {
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent thirdBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(firstBear.getId(), secondBear.getId(), thirdBear.getId()));
+
+        for (Permanent bear : List.of(firstBear, secondBear, thirdBear)) {
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotChooseSameCreatureTwice() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bear.getId(), bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetMoreThanNinetyNineCreatures() {
+        List<Permanent> bears = IntStream.range(0, 100)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()))
+                .toList();
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 100);
+        harness.addMana(player1, ManaColor.COLORLESS, 198);
+
+        harness.castAndResolveInstant(player1, 0, bears.stream().map(Permanent::getId).toList());
+
+        for (Permanent bear : bears) {
+            assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+        }
     }
 }

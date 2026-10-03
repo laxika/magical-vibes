@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,19 @@ class AlabasterPotionTest extends BaseCardTest {
     @Nested
     @DisplayName("Mode 0: Target player gains X life")
     class GainLifeMode {
+
+        @Test
+        void zeroXGainsNoLife() {
+            harness.setLife(player1, 12);
+            harness.setHand(player1, List.of(new AlabasterPotion()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castModalInstantForX(player1, 0, 0, 0, player1.getId());
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, 12);
+            harness.assertInGraveyard(player1, "Alabaster Potion");
+        }
 
         @Test
         @DisplayName("Target player gains X life for X paid")
@@ -52,6 +66,72 @@ class AlabasterPotionTest extends BaseCardTest {
     @Nested
     @DisplayName("Mode 1: Prevent the next X damage to any target")
     class PreventDamageMode {
+
+        @Test
+        void unusedPreventionCarriesOverToTheNextDamageEvent() {
+            harness.setLife(player2, 20);
+            harness.setHand(player1, List.of(new AlabasterPotion(), new LightningBolt(), new LightningBolt()));
+            harness.addMana(player1, ManaColor.WHITE, 6);
+            harness.addMana(player1, ManaColor.RED, 2);
+
+            harness.castModalInstantForX(player1, 0, 1, 4, player2.getId());
+            harness.passBothPriorities();
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player2, 20);
+
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player2, 18);
+        }
+
+        @Test
+        void creatureSurvivesWhenOnlyOneDamageGetsThrough() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new AlabasterPotion(), new LightningBolt()));
+            harness.addMana(player1, ManaColor.WHITE, 4);
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castModalInstantForX(player1, 0, 1, 2, bears.getId());
+            harness.passBothPriorities();
+            harness.castInstant(player1, 0, bears.getId());
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player2, "Grizzly Bears");
+            assertThat(bears.getDamagePreventionShield()).isZero();
+        }
+
+        @Test
+        void zeroXPreventsNoDamage() {
+            harness.setLife(player2, 20);
+            harness.setHand(player1, List.of(new AlabasterPotion(), new LightningBolt()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castModalInstantForX(player1, 0, 1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+
+            harness.assertLife(player2, 17);
+        }
+
+        @Test
+        void unusedShieldExpiresAtEndOfTurn() {
+            harness.setLife(player2, 20);
+            harness.setHand(player1, List.of(new AlabasterPotion()));
+            harness.addMana(player1, ManaColor.WHITE, 5);
+            harness.castModalInstantForX(player1, 0, 1, 3, player2.getId());
+            harness.passBothPriorities();
+
+            harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+            harness.setHand(player2, List.of(new LightningBolt()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castInstant(player2, 0, player2.getId());
+            harness.passBothPriorities();
+
+            harness.assertLife(player2, 17);
+        }
 
         @Test
         @DisplayName("Adds an X-damage prevention shield to a target creature")

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InnerDemonsGangsters;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeetleLegacyCriminal.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({BeetleLegacyCriminal.class, InnerDemonsGangsters.class, Mountain.class})
 class BeetleLegacyCriminalTest extends BaseCardTest {
 
     @Test
@@ -81,11 +81,7 @@ class BeetleLegacyCriminalTest extends BaseCardTest {
     @DisplayName("The ability requires a creature target and sorcery speed")
     void requiresCreatureTargetAndSorcerySpeed() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        harness.setGraveyard(player1, List.of(new BeetleLegacyCriminal()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        readyAbility();
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -94,6 +90,90 @@ class BeetleLegacyCriminalTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Beetle is exiled immediately while its effects wait for resolution")
+    void exileCostIsPaidBeforeResolution() {
+        Permanent target = addCreatureReady(player1);
+        readyAbility();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        harness.assertNotInGraveyard(player1, "Beetle, Legacy Criminal");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Beetle, Legacy Criminal"));
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during combat")
+    void rejectsCombatActivation() {
+        Permanent target = addCreatureReady(player1);
+        readyAbility();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Beetle, Legacy Criminal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A second copy cannot be activated while the first ability is on the stack")
+    void rejectsActivationWithNonemptyStack() {
+        Permanent target = addCreatureReady(player1);
+        readyAbility();
+        harness.setGraveyard(player1, List.of(new BeetleLegacyCriminal(), new BeetleLegacyCriminal()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Beetle, Legacy Criminal");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal target at resolution receives neither a counter nor flying")
+    void targetLeavingBattlefieldDoesNotRefundExileCost() {
+        Permanent target = addCreatureReady(player1);
+        readyAbility();
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.assertNotInGraveyard(player1, "Beetle, Legacy Criminal");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Beetle, Legacy Criminal"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activation needs both generic and blue mana before Beetle is exiled")
+    void insufficientManaDoesNotExileSource() {
+        Permanent target = addCreatureReady(player1);
+        harness.setGraveyard(player1, List.of(new BeetleLegacyCriminal()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Beetle, Legacy Criminal");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void readyAbility() {
@@ -105,9 +185,6 @@ class BeetleLegacyCriminalTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+        return addCreatureReady(player, new InnerDemonsGangsters());
     }
 }

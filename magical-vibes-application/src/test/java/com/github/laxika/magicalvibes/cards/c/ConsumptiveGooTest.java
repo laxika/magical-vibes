@@ -52,9 +52,7 @@ class ConsumptiveGooTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new SilverKnight());
 
         activateGoo(goo, bears);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -77,7 +75,62 @@ class ConsumptiveGooTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Self-targeting Goo survives because its counter is placed before state-based actions")
+    void canTargetItselfAndSurvive() {
+        Permanent goo = harness.addToBattlefieldAndReturn(player1, new ConsumptiveGoo());
+        goo.setTapped(true);
+
+        activateGoo(goo, goo);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(goo);
+        assertThat(goo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(1);
+        harness.passUntil(TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, goo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goo)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An ability with a removed target does not put a counter on Goo")
+    void illegalTargetPreventsCounter() {
+        Permanent goo = addCreatureReady(player1, new ConsumptiveGoo());
+        Permanent target = addCreatureReady(player2, new ConsumptiveGoo());
+
+        queueGooAbility(goo, target);
+        queueGooAbility(goo, target);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The target still shrinks when Goo leaves the battlefield before resolution")
+    void abilityResolvesWithoutSource() {
+        Permanent goo = addCreatureReady(player1, new ConsumptiveGoo());
+        Permanent otherGoo = addCreatureReady(player1, new ConsumptiveGoo());
+        Permanent target = addCreatureReady(player2, new SilverKnight());
+
+        queueGooAbility(goo, target);
+        queueGooAbility(otherGoo, goo);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goo);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(otherGoo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void activateGoo(Permanent goo, Permanent target) {
+        queueGooAbility(goo, target);
+        harness.passBothPriorities();
+    }
+
+    private void queueGooAbility(Permanent goo, Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -88,6 +141,5 @@ class ConsumptiveGooTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(goo),
                 null,
                 target.getId());
-        harness.passBothPriorities();
     }
 }

@@ -17,6 +17,18 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** Chooses between the printed creature mana cost and its morph cost for a manifested or cloaked card. */
+    record TurnFaceUpCostChoice(UUID permanentId) implements ChoiceContext {}
+
+    /** The controller chooses a dungeon or an outgoing room while resolving venture. */
+    record VentureChoice(StackEntry sourceEntry, Dungeon dungeon, Map<String, Integer> rooms)
+            implements ChoiceContext {
+        public VentureChoice {
+            sourceEntry = new StackEntry(sourceEntry);
+            rooms = Map.copyOf(rooms);
+        }
+    }
+
     /** Chooses the regeneration replacement before the destruction event is completed. */
     record RegenerationShieldChoice(UUID permanentId, Map<String, String> shields,
                                     boolean stateBasedDestruction) implements ChoiceContext {
@@ -1413,8 +1425,18 @@ public sealed interface ChoiceContext {
      * {@code GameData.opponentsCantCastNamedSpellsUntilControllerNextTurn}.
      */
     record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
-                                                           boolean restrictToAllowedNames)
+                                                           boolean restrictToAllowedNames,
+                                                           List<CardType> excludedTypes)
             implements ChoiceContext {
+
+        public OpponentsCantCastNamedSpellsUntilNextTurnChoice {
+            excludedTypes = List.copyOf(excludedTypes);
+        }
+
+        public OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
+                                                              boolean restrictToAllowedNames) {
+            this(controllerId, restrictToAllowedNames, List.of());
+        }
 
         public OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId) {
             this(controllerId, false);

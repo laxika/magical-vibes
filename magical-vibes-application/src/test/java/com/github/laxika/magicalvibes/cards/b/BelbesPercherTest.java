@@ -45,4 +45,33 @@ class BelbesPercherTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
         assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
+
+    @Test
+    @DisplayName("An attacking Belbe's Percher cannot be blocked by a ground creature")
+    void cannotBeBlockedByGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new BelbesPercher());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RathiFiend());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attacking Belbe's Percher can be blocked by a flying creature")
+    void canBeBlockedByFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new BelbesPercher());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Cloudskate());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
 }

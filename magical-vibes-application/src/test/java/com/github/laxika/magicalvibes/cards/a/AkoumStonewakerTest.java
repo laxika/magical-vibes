@@ -67,8 +67,8 @@ class AkoumStonewakerTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
     }
@@ -84,6 +84,48 @@ class AkoumStonewakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("The Elemental remains until its delayed exile trigger resolves")
+    void elementalExileUsesTheStack() {
+        addStonewaker();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment is consumed even if Stonewaker leaves before the trigger resolves")
+    void landfallResolvesWithoutItsSourceAndConsumesPayment() {
+        Permanent stonewaker = addStonewaker();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.playLand(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(stonewaker);
+        harness.setGraveyard(player1, List.of(stonewaker.getCard()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private Permanent addStonewaker() {

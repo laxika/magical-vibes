@@ -57,4 +57,48 @@ class BlizzardElementalTest extends BaseCardTest {
         assertThat(source.isTapped()).isFalse();
         assertThat(other.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Untap ability works while the creature is summoning sick")
+    void untapAbilityWorksWhileSummoningSick() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new BlizzardElemental());
+        elemental.setSummoningSick(true);
+        elemental.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(elemental.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(elemental.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while untapped and untaps at resolution")
+    void canActivateWhileUntapped() {
+        Permanent elemental = addCreatureReady(player1, new BlizzardElemental());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(elemental.isTapped()).isFalse();
+        elemental.tap();
+        harness.passBothPriorities();
+
+        assertThat(elemental.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Four colorless mana cannot pay the blue component of the ability")
+    void requiresBlueMana() {
+        Permanent elemental = addCreatureReady(player1, new BlizzardElemental());
+        elemental.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(elemental.isTapped()).isTrue();
+    }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -29,10 +28,7 @@ class CommanderEeshaTest extends BaseCardTest {
         eesha.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, eesha)))))
@@ -46,8 +42,7 @@ class CommanderEeshaTest extends BaseCardTest {
         Permanent eesha = addCreatureReady(player1, new CommanderEesha());
         Permanent attacker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, eesha), indexOf(player2, attacker))));
         resolveCombat(player2);
@@ -93,8 +88,7 @@ class CommanderEeshaTest extends BaseCardTest {
         Permanent eesha = addCreatureReady(player1, new CommanderEesha());
         Permanent attacker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, eesha), indexOf(player2, attacker))));
         assertThat(eesha.isBlocking()).isTrue();
@@ -114,5 +108,37 @@ class CommanderEeshaTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, eesha.getId());
 
         assertThat(eesha.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection also prevents abilities of your own creatures from targeting Eesha")
+    void ownCreatureAbilityCannotTargetEesha() {
+        Permanent jeska = addCreatureReady(player1, new JeskaWarriorAdept());
+        Permanent eesha = addCreatureReady(player1, new CommanderEesha());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, jeska), null, eesha.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+
+        assertThat(jeska.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eesha deals combat damage while preventing damage from the creature she blocks")
+    void blockingDoesNotPreventEeshasOwnCombatDamage() {
+        Permanent eesha = addCreatureReady(player1, new CommanderEesha());
+        Permanent attacker = addCreatureReady(player2, new SuntailHawk());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, eesha), indexOf(player2, attacker))));
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Commander Eesha");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(eesha.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
     }
 }

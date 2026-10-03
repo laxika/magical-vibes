@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AcererakTheArchlich.class, GrizzlyBears.class})
+@CardUsed({AcererakTheArchlich.class, DireWolfProwler.class, Stifle.class})
 class AcererakTheArchlichTest extends BaseCardTest {
 
     @Test
@@ -23,20 +25,17 @@ class AcererakTheArchlichTest extends BaseCardTest {
     void returnsAndVenturesBeforeDungeonCompletion() {
         castAcererak(player1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof AcererakTheArchlich);
-        assertThat(gd.playerDungeonProgress.get(player1.getId()))
-                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        assertThat(gd.playersWhoVenturedIntoDungeonThisTurn).contains(player1.getId());
     }
 
     @Test
-    @DisplayName("Does not trigger when its controller has completed a dungeon")
+    @DisplayName("Does not trigger when its controller has completed Tomb of Annihilation")
     void doesNotTriggerAfterDungeonCompletion() {
-        gd.playersWhoCompletedDungeon.add(player1.getId());
+        gd.recordCompletedDungeon(player1.getId(), Dungeon.TOMB_OF_ANNIHILATION);
         castAcererak(player1);
 
         harness.passBothPriorities();
@@ -51,20 +50,20 @@ class AcererakTheArchlichTest extends BaseCardTest {
     @DisplayName("Creates a Zombie when the opponent declines to sacrifice a creature")
     void opponentDeclinesSacrifice() {
         addAttackingAcererak();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DireWolfProwler());
 
         resolveAttackTrigger();
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
-        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Dire Wolf Prowler")).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Sacrificing the opponent's only creature prevents the Zombie")
     void opponentSacrificesOnlyCreature() {
         addAttackingAcererak();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DireWolfProwler());
 
         resolveAttackTrigger();
         harness.handleMayAbilityChosen(player2, true);
@@ -77,8 +76,8 @@ class AcererakTheArchlichTest extends BaseCardTest {
     @DisplayName("Lets the opponent choose which creature to sacrifice")
     void opponentChoosesCreatureToSacrifice() {
         addAttackingAcererak();
-        addCreatureReady(player2, new GrizzlyBears());
-        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DireWolfProwler());
+        Permanent otherCreature = addCreatureReady(player2, new DireWolfProwler());
 
         resolveAttackTrigger();
         harness.handleMayAbilityChosen(player2, true);
@@ -88,20 +87,118 @@ class AcererakTheArchlichTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
     }
 
-    private void castAcererak(Player player) {
-        harness.setHand(player, List.of(new AcererakTheArchlich()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 2);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("Completing Lost Mine does not prevent Acererak from returning and venturing")
+    void completingAnotherDungeonDoesNotSatisfyTombCondition() {
+        gd.recordCompletedDungeon(player1.getId(), Dungeon.LOST_MINE_OF_PHANDELVER);
+        castAcererak(player1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof AcererakTheArchlich);
+        assertThat(gd.playersWhoVenturedIntoDungeonThisTurn).contains(player1.getId());
     }
 
-    private Permanent addAttackingAcererak() {
-        return addCreatureReady(player1, new AcererakTheArchlich());
+    @Test
+    @DisplayName("Venture asks the controller to choose a dungeon instead of forcing Lost Mine")
+    void controllerChoosesDungeonWhenNotInOne() {
+        castAcererak(player1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof AcererakTheArchlich);
+        assertThat(gd.playerDungeonProgress).doesNotContainKey(player1.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Venture asks for a room choice at the Lost Mine entrance")
+    void controllerChoosesNextRoomAtBranch() {
+        gd.playerDungeonProgress.put(player1.getId(), new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        castAcererak(player1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDungeonProgress.get(player1.getId()))
+                .isEqualTo(new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 0));
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("Creates a Zombie automatically when the opponent controls no creatures")
+    void createsZombieWhenOpponentHasNoCreature() {
+        addAttackingAcererak();
+
+        resolveAttackTrigger();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Zombie")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Completing Tomb before the enter trigger resolves prevents both return and venture")
+    void rechecksTombCompletionOnResolution() {
+        castAcererak(player1);
+        harness.passBothPriorities();
+        gd.recordCompletedDungeon(player1.getId(), Dungeon.TOMB_OF_ANNIHILATION);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof AcererakTheArchlich);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playersWhoVenturedIntoDungeonThisTurn).doesNotContain(player1.getId());
+    }
+
+    private void castAcererak(Player player) {
+        harness.castFromHand(player, new AcererakTheArchlich(), "{2}{B}");
+    }
+
+    @Test
+    void counteringBottomRoomAbilityStillCompletesDungeon() {
+        gd.playerDungeonProgress.put(player1.getId(), new DungeonProgress(Dungeon.TOMB_OF_ANNIHILATION, 3));
+        castAcererak(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playersWhoCompletedDungeon).doesNotContain(player1.getId());
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getTargetableId());
+        harness.passBothPriorities();
+
+        assertThat(gd.completedDungeonsByPlayer.get(player1.getId())).contains(Dungeon.TOMB_OF_ANNIHILATION);
+        assertThat(countPermanents(player1, "The Atropal")).isZero();
+    }
+
+    private void addAttackingAcererak() {
+        addCreatureReady(player1, new AcererakTheArchlich());
+    }
+
+    @Test
+    void fungiCavernWeakensCreatureUntilVenturingPlayersNextTurn() {
+        Permanent target = addCreatureReady(player2, new DireWolfProwler());
+        int originalPower = gqs.getEffectivePower(gd, target);
+        gd.playerDungeonProgress.put(player1.getId(), new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 2));
+        castAcererak(player1);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Fungi Cavern");
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 4);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower - 4);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
     }
 
     private void resolveAttackTrigger() {
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

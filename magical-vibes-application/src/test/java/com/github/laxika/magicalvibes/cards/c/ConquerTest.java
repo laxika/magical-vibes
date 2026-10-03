@@ -116,8 +116,7 @@ class ConquerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, conquerPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, conquerPerm.getId());
 
         // Land should return to player2's battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -140,5 +139,53 @@ class ConquerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("A stolen noncreature land can tap for mana immediately")
+    void stolenLandCanTapForManaImmediately() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Conquer()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        int landIndex = gd.playerBattlefields.get(player1.getId()).indexOf(land);
+        harness.tapPermanent(player1, landIndex);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("Removing the newest Conquer restores the older Aura's control effect")
+    void removingNewestConquerRestoresOlderControlEffect() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Conquer()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        Permanent olderAura = findPermanent(player1, "Conquer");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Conquer()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castEnchantment(player2, 0, land.getId());
+        harness.passBothPriorities();
+        Permanent newerAura = findPermanent(player2, "Conquer");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(olderAura).doesNotContain(land);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, newerAura.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land, olderAura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land, newerAura);
+        harness.assertInGraveyard(player2, "Conquer");
     }
 }

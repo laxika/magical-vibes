@@ -19,6 +19,94 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ArniMetalbrowTest extends BaseCardTest {
 
     @Test
+    void decliningPaymentLeavesCreatureInHand() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void equalManaValueCreatureCannotBePutOntoBattlefield() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void paymentDoesNotRequirePuttingACreatureOntoBattlefield() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void manaValueUsesCurrentCharacteristicsAfterAttackerBecomesACopy() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(1));
+        attacker.setCard(new GrizzlyBears());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void enteringAttackingTriggerHasDefendingPlayerWhenArniIsNotAttacking() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        addCreatureReady(player1, new IlhargTheRazeBoar());
+        harness.setHand(player1, List.of(new HillGiant(), new GrizzlyBears()));
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("Paying for the attack trigger puts a lower-mana-value creature onto the battlefield tapped and attacking")
     void attackTriggerPutsLowerManaValueCreatureTappedAndAttacking() {
         addCreatureReady(player1, new ArniMetalbrow());

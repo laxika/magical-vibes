@@ -16,8 +16,21 @@ package com.github.laxika.magicalvibes.model.effect;
 public record SearchZonesForCardNamedToBattlefieldEffect(
         String cardName,
         boolean includeHand,
-        boolean attachToTarget
+        boolean attachToTarget,
+        java.util.List<String> additionalCardNames
 ) implements CardEffect {
+
+    public SearchZonesForCardNamedToBattlefieldEffect {
+        additionalCardNames = java.util.List.copyOf(additionalCardNames);
+    }
+
+    public SearchZonesForCardNamedToBattlefieldEffect(String cardName, boolean includeHand, boolean attachToTarget) {
+        this(cardName, includeHand, attachToTarget, java.util.List.of());
+    }
+
+    public SearchZonesForCardNamedToBattlefieldEffect(java.util.List<String> cardNames) {
+        this(cardNames.getFirst(), true, false, java.util.List.copyOf(cardNames.subList(1, cardNames.size())));
+    }
 
     public SearchZonesForCardNamedToBattlefieldEffect(String cardName) {
         this(cardName, true, false);

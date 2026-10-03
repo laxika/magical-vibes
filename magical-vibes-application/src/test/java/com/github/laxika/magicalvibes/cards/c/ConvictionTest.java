@@ -31,7 +31,7 @@ class ConvictionTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Conviction");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Conviction.class);
     }
 
     @Test
@@ -124,5 +124,61 @@ class ConvictionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Conviction resolves attached to an opponent's creature and boosts only that creature")
+    void resolvesOnOpponentsCreature() {
+        Permanent ownWurm = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        Permanent opposingWurm = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        harness.setHand(player1, List.of(new Conviction()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, opposingWurm.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Conviction"));
+        assertThat(aura.getAttachedTo()).isEqualTo(opposingWurm.getId());
+        assertThat(gqs.getEffectivePower(gd, opposingWurm)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWurm)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, ownWurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownWurm)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A controller who does not own Conviction returns it to its owner's hand")
+    void borrowedAuraReturnsToOwner() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        Conviction card = new Conviction();
+        card.setOwnerId(player2.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, card);
+        aura.setAttachedTo(wurm.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Conviction");
+        harness.assertNotInHand(player1, "Conviction");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wurm);
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Conviction's return ability requires white mana")
+    void returnAbilityCannotBePaidWithColorlessMana() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Conviction());
+        aura.setAttachedTo(wurm.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(wurm, aura);
+        harness.assertNotInHand(player1, "Conviction");
     }
 }

@@ -26,7 +26,7 @@ class BlitzLeechTest extends BaseCardTest {
         target.setCounterCount(CounterType.CHARGE, 3);
 
         castBlitzLeech(target);
-        resolveBlitzLeech();
+        resolveAllTriggers();
 
         assertThat(target.getPowerModifier()).isEqualTo(-2);
         assertThat(target.getToughnessModifier()).isEqualTo(-2);
@@ -40,7 +40,7 @@ class BlitzLeechTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         castBlitzLeech(target);
-        resolveBlitzLeech();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -63,6 +63,68 @@ class BlitzLeechTest extends BaseCardTest {
                 .hasMessageContaining("creature an opponent controls");
     }
 
+    @Test
+    @DisplayName("Removing +1/+1 counters can make the weakened creature die")
+    void counterRemovalCanKillTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlitzLeech());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        castBlitzLeech(target);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Blitz Leech");
+        harness.assertInGraveyard(player2, "Blitz Leech");
+        harness.assertOnBattlefield(player1, "Blitz Leech");
+    }
+
+    @Test
+    @DisplayName("Counter removal finishes before checking whether the weakened creature dies")
+    void removingNegativeCountersSavesTargetDuringResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        castBlitzLeech(target);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("A creature that leaves before the trigger resolves is not affected")
+    void missingTargetMakesTriggerFizzle() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setCounterCount(CounterType.CHARGE, 3);
+
+        castBlitzLeech(target);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Blitz Leech");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's turn with no legal ETB target")
+    void flashWithNoOpponentCreature() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new BlitzLeech()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Blitz Leech");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castBlitzLeech(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -71,8 +133,4 @@ class BlitzLeechTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, target.getId());
     }
 
-    private void resolveBlitzLeech() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }

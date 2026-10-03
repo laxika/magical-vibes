@@ -26,6 +26,16 @@ class ChangelingSentinelTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Changeling does not get the Archer boost from an opponent's Greatbow Doyen")
+    void changelingDoesNotGetOpponentsSubtypeBoost() {
+        harness.addToBattlefield(player2, new GreatbowDoyen());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new ChangelingSentinel());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Vigilance: Changeling Sentinel does not tap when declared as attacker")
     void vigilancePreventsTapWhenAttacking() {
         Permanent sentinel = addCreatureReady(player1, new ChangelingSentinel());

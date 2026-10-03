@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CarnageGladiator.class, HillGiant.class, GrizzlyBears.class})
 class CarnageGladiatorTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,7 @@ class CarnageGladiatorTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveStack();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 19);
         harness.assertLife(player1, 20);
@@ -47,7 +49,7 @@ class CarnageGladiatorTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
-        resolveStack();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
     }
@@ -62,7 +64,7 @@ class CarnageGladiatorTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveStack();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 19);
     }
@@ -96,16 +98,83 @@ class CarnageGladiatorTest extends BaseCardTest {
         assertThat(gladiator.getRegenerationShield()).isEqualTo(1);
     }
 
-    private void resolveStack() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("Carnage Gladiator triggers when it blocks")
+    void triggersForItsOwnBlock() {
+        Permanent attacker = addReady(player1, new HillGiant());
+        attacker.setAttacking(true);
+        addReady(player2, new CarnageGladiator());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Each Gladiator triggers independently for the same blocker")
+    void multipleGladiatorsTriggerIndependently() {
+        Permanent attacker = addReady(player1, new HillGiant());
+        attacker.setAttacking(true);
+        addReady(player2, new GrizzlyBears());
+        addReady(player1, new CarnageGladiator());
+        addReady(player2, new CarnageGladiator());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Life loss still resolves after the blocker dies")
+    void triggerUsesLastKnownControllerOfDeadBlocker() {
+        Permanent attacker = addReady(player1, new HillGiant());
+        attacker.setAttacking(true);
+        Permanent blocker = addReady(player2, new GrizzlyBears());
+        addReady(player1, new CarnageGladiator());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        blocker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Regeneration replaces lethal damage destruction and taps the Gladiator")
+    void regenerationPreventsLethalDamageDestruction() {
+        Permanent gladiator = addReady(player1, new CarnageGladiator());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        gladiator.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(gladiator);
+        assertThat(gladiator.isTapped()).isTrue();
+        assertThat(gladiator.getMarkedDamage()).isZero();
+        assertThat(gladiator.getRegenerationShield()).isZero();
+
+        gladiator.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(gladiator);
     }
 
     private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

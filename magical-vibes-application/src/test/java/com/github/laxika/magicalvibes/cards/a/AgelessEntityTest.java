@@ -57,4 +57,38 @@ class AgelessEntityTest extends BaseCardTest {
 
         assertThat(entity.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
     }
+
+    @Test
+    @DisplayName("Life gain puts a separate ability on the stack before counters are added")
+    void countersWaitForTriggeredAbilityToResolve() {
+        Permanent entity = harness.addToBattlefieldAndReturn(player1, new AgelessEntity());
+
+        harness.castFromHand(player1, new PulseOfTheFields(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        assertThat(entity.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(entity.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each controlled Entity gets the full life-gain amount even above starting life")
+    void eachEntityGetsCountersIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AgelessEntity());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AgelessEntity());
+        Permanent opponentEntity = harness.addToBattlefieldAndReturn(player2, new AgelessEntity());
+        harness.setLife(player1, 30);
+
+        harness.castFromHand(player1, new PulseOfTheFields(), "{1}{W}{W}");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 34);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(opponentEntity.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,6 +20,19 @@ class BetrothedOfFireTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new BetrothedOfFire());
         aura.setAttachedTo(host.getId());
         return aura;
+    }
+
+    @Test
+    void auraCanBeCastOnOpponentsCreature() {
+        Permanent host = addCreatureReady(player2, new BenalishKnight());
+        harness.setHand(player1, List.of(new BetrothedOfFire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Betrothed of Fire").getAttachedTo())
+                .isEqualTo(host.getId());
     }
 
     @Test
@@ -95,5 +111,70 @@ class BetrothedOfFireTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
 
         harness.assertInGraveyard(player1, "Benalish Knight");
+    }
+
+    @Test
+    void firstAbilityCanBoostOpponentsEnchantedCreature() {
+        Permanent host = addCreatureReady(player2, new BenalishKnight());
+        attach(host);
+        harness.addToBattlefield(player1, new BenalishInfantry());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Benalish Infantry");
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsEnchantedCreature() {
+        Permanent host = addCreatureReady(player2, new BenalishKnight());
+        attach(host);
+        harness.addToBattlefield(player1, new BenalishInfantry());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Benalish Knight");
+        harness.assertOnBattlefield(player1, "Benalish Infantry");
+        harness.assertOnBattlefield(player1, "Betrothed of Fire");
+    }
+
+    @Test
+    void firstAbilityCanSacrificeItsOwnUntappedHost() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        attach(host);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Benalish Knight");
+        harness.assertInGraveyard(player1, "Betrothed of Fire");
+    }
+
+    @Test
+    void teamBoostAllowsTappedHostAndDoesNotAffectLaterCreatures() {
+        Permanent host = addCreatureReady(player1, new BenalishKnight());
+        host.tap();
+        attach(host);
+        Permanent recipient = addCreatureReady(player1, new BenalishInfantry());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Benalish Knight");
+        assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, recipient)).isEqualTo(3);
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, recipient)).isEqualTo(1);
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -61,5 +62,55 @@ class CharTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertOnBattlefield(player2, "Chandra Nalaar");
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void targetingCasterDealsSixDamageToCaster() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Char()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotDamageCasterWhenOnlyTargetBecomesIllegal() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        var target = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.setHand(player1, List.of(new Char(), new Char()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Boros Recruit");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Char).hasSize(2);
+    }
+
+    @Test
+    void lethalDamageToBothPlayersDrawsAfterEntireSpellResolves() {
+        harness.setLife(player1, 2);
+        harness.setLife(player2, 4);
+        harness.setHand(player1, List.of(new Char()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
     }
 }

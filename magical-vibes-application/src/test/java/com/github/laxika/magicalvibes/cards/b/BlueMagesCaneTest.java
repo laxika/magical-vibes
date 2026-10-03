@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -42,8 +41,8 @@ class BlueMagesCaneTest extends BaseCardTest {
 
     @Test
     void equippedCreatureAttacksToCopyAndCastDefendingGraveyardSpellForThree() {
-        Permanent cane = addReadyPermanent(player1, new BlueMagesCane());
-        Permanent attacker = addReadyPermanent(player1, new GrizzlyBears());
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         cane.setAttachedTo(attacker.getId());
 
         Divination opponentDivination = new Divination();
@@ -74,21 +73,108 @@ class BlueMagesCaneTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(ownDivination);
     }
 
-    private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void mayChooseNoGraveyardTargetEvenWhenOneIsAvailable() {
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        cane.setAttachedTo(attacker.getId());
+        Divination spell = new Divination();
+        harness.setGraveyard(player2, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        attackWith(player1, attacker);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(spell);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void decliningCopyLeavesOriginalExiledAndRemovesCopy() {
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        cane.setAttachedTo(attacker.getId());
+        Divination spell = new Divination();
+        harness.setGraveyard(player2, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        attackWith(player1, attacker);
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void equipMovesBonusesAndWizardTypeToNewCreature() {
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        cane.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(cane.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, first)).doesNotContain(CardSubtype.WIZARD);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, second))
+                .contains(CardSubtype.BEAR, CardSubtype.WIZARD);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void attackAbilityStillCopiesAfterEquipmentLeavesBattlefield() {
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        cane.setAttachedTo(attacker.getId());
+        Divination spell = new Divination();
+        harness.setGraveyard(player2, List.of(spell));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        attackWith(player1, attacker);
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(cane);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void removedGraveyardTargetIsNotCopied() {
+        Permanent cane = harness.addToBattlefieldAndReturn(player1, new BlueMagesCane());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        cane.setAttachedTo(attacker.getId());
+        Divination spell = new Divination();
+        harness.setGraveyard(player2, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        attackWith(player1, attacker);
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void attackWith(Player player, Permanent attacker) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int attackerIndex = gd.playerBattlefields.get(player.getId()).indexOf(attacker);
-        gs.declareAttackers(gd, player, List.of(attackerIndex));
+        declareAttackers(player, List.of(gd.playerBattlefields.get(player.getId()).indexOf(attacker)));
         harness.passBothPriorities();
     }
 }

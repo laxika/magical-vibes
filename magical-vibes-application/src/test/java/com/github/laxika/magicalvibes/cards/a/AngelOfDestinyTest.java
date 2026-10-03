@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,11 +72,106 @@ class AngelOfDestinyTest extends BaseCardTest {
         addCreatureReady(player2, new PlatinumAngel());
         harness.setLife(player1, 35);
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void anotherCreatureTriggersEachAngelsLifeGain() {
+        addCreatureReady(player1, new AngelOfDestiny());
+        addCreatureReady(player1, new AngelOfDestiny());
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(28);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+    }
+
+    @Test
+    void blockedAngelStillCausesAttackedPlayerToLose() {
+        addCreatureReady(player1, new AngelOfDestiny());
+        addCreatureReady(player2, new AngelOfDestiny());
+        harness.setLife(player1, 35);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(35);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void nonattackingAngelDoesNotCausePlayerToLose() {
+        addCreatureReady(player1, new AngelOfDestiny());
+        harness.setLife(player1, 35);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void lifeThresholdIsRecheckedWhenEndStepAbilityResolves() {
+        addCreatureReady(player1, new AngelOfDestiny());
+        harness.setLife(player1, 35);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntil(TurnStep.END_STEP));
+        assertThat(gd.stack).isNotEmpty();
+        harness.setLife(player1, 34);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void gainingLifeAfterEndStepBeginsDoesNotCreateLossTrigger() {
+        addCreatureReady(player1, new AngelOfDestiny());
+        harness.setLife(player1, 30);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntil(TurnStep.END_STEP));
+        assertThat(gd.stack).isEmpty();
+        harness.setLife(player1, 35);
+        resolveAllTriggers();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void commanderRequiresFifteenLifeAboveForty() {
+        gd.format = DeckFormat.COMMANDER;
+        addCreatureReady(player1, new AngelOfDestiny());
+        harness.setLife(player1, 40);
+        harness.setLife(player2, 40);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 

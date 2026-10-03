@@ -74,20 +74,53 @@ class BlockadeRunnerTest extends BaseCardTest {
     @Test
     @DisplayName("An unblockable Blockade Runner cannot be assigned a blocker")
     void cannotBeBlockedInCombat() {
-        Permanent runner = addCreatureReady(player1, new BlockadeRunner());
+        addCreatureReady(player1, new BlockadeRunner());
         Permanent blocker = addCreatureReady(player2, new BlockadeRunner());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        runner.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(blockerIndex, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("The ability uses the stack and affects only its source")
+    void abilityAffectsOnlyItsSourceAfterResolution() {
+        Permanent otherRunner = addCreatureReady(player1, new BlockadeRunner());
+        Permanent runner = addCreatureReady(player1, new BlockadeRunner());
+        Permanent opposingRunner = addCreatureReady(player2, new BlockadeRunner());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(runner.isCantBeBlocked()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(otherRunner.isCantBeBlocked()).isFalse();
+        assertThat(opposingRunner.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Blockade Runner can activate its ability")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent runner = addCreatureReady(player1, new BlockadeRunner());
+        runner.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(runner.isCantBeBlocked()).isTrue();
+        assertThat(runner.isTapped()).isTrue();
     }
 }

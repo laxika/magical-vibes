@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
 @CardRegistration(set = "SOM", collectorNumber = "67")
+@CardRegistration(set = "ONC", collectorNumber = "93")
 public class IchorRats extends Card {
 
     public IchorRats() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshenPowder.class, GrizzlyBears.class, Pacifism.class, Shock.class})
+@CardUsed({AshenPowder.class, GrizzlyBears.class, Pacifism.class, Shock.class, VenerableMonk.class})
 class AshenPowderTest extends BaseCardTest {
 
     @Test
@@ -126,5 +127,30 @@ class AshenPowderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returned creature's enters ability belongs to the caster, not its owner")
+    void returnedCreatureTriggersForCaster() {
+        Card target = new VenerableMonk();
+        Card otherCreature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target, otherCreature));
+        harness.setHand(player1, List.of(new AshenPowder()));
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 13);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Venerable Monk");
+        harness.assertNotOnBattlefield(player2, "Venerable Monk");
+        harness.assertNotInGraveyard(player2, "Venerable Monk");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 13);
+        harness.assertInGraveyard(player1, "Ashen Powder");
+        assertThat(gd.stack).isEmpty();
     }
 }

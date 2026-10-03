@@ -36,14 +36,56 @@ class CinderconeSmiteTest extends BaseCardTest {
     }
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster, Permanent target) {
+        prepareCast(caster);
+        harness.castAndResolveSorcery(caster, 0, target.getId());
+    }
+
+    @Test
+    void missingTargetPreventsTreasureCreation() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        prepareCast(player2);
+        harness.castSorcery(player2, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        harness.assertInGraveyard(player2, "Cindercone Smite");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lethalDamageStillCreatesTreasure() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        target.setMarkedDamage(1);
+
+        cast(player2, target);
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void createdTreasureCanBeSacrificedForManaImmediately() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        cast(player2, target);
+        Permanent treasure = findPermanents(player2, "Treasure").getFirst();
+        assertThat(treasure.isTapped()).isFalse();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(treasure), null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        harness.assertNotOnBattlefield(player2, "Treasure");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    private void prepareCast(com.github.laxika.magicalvibes.model.Player caster) {
         harness.forceActivePlayer(caster);
         gd.startingPlayerId = player1.getId();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new CinderconeSmite()));
         harness.addMana(caster, ManaColor.RED, 1);
-
-        harness.castSorcery(caster, 0, target.getId());
-        harness.passBothPriorities();
     }
 }

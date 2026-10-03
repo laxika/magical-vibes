@@ -87,4 +87,54 @@ class AdvancedHoverguardTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, hoverguard, Keyword.SHROUD)).isTrue();
     }
+
+    @Test
+    @DisplayName("Gaining shroud in response makes a targeted spell fail to resolve")
+    void shroudInResponseStopsSpell() {
+        Permanent hoverguard = addCreatureReady(player1, new AdvancedHoverguard());
+        harness.setHand(player2, List.of(new MagmaJet()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, hoverguard.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Advanced Hoverguard");
+        harness.assertInGraveyard(player2, "Magma Jet");
+        assertThat(hoverguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents its controller from targeting this creature")
+    void shroudPreventsControllerTargeting() {
+        Permanent hoverguard = addCreatureReady(player1, new AdvancedHoverguard());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new MagmaJet()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, hoverguard.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent hoverguard = harness.addToBattlefieldAndReturn(player1, new AdvancedHoverguard());
+        hoverguard.setSummoningSick(true);
+        hoverguard.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hoverguard, Keyword.SHROUD)).isTrue();
+        assertThat(hoverguard.isTapped()).isTrue();
+    }
 }

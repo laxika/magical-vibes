@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnointerPriest.class, BladeSplicer.class, GrizzlyBears.class})
 class AnointerPriestTest extends BaseCardTest {
-
-    // ===== Creature-token ETB life gain =====
 
     @Test
     @DisplayName("Gain 1 life when a creature token you control enters")
@@ -28,9 +28,7 @@ class AnointerPriestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve Blade Splicer spell -> enters, ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger -> Golem token enters, life trigger on stack
-        harness.passBothPriorities(); // resolve life trigger
+        resolveAllTriggers();
 
         // Blade Splicer (nontoken) grants no life; only the Golem token does.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
@@ -60,13 +58,10 @@ class AnointerPriestTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);
-        harness.passBothPriorities(); // resolve Blade Splicer spell
-        harness.passBothPriorities(); // resolve ETB trigger -> opponent's Golem token enters
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
-    // ===== Embalm =====
 
     private void setUpEmbalm() {
         harness.forceActivePlayer(player1);
@@ -115,6 +110,44 @@ class AnointerPriestTest extends BaseCardTest {
         // Opponent's turn — not sorcery speed for player1.
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Anointer Priest");
+    }
+
+    @Test
+    @DisplayName("An embalmed Priest gains life for its own entry")
+    void embalmedPriestTriggersForItself() {
+        setUpEmbalm();
+        harness.setLife(player1, 20);
+
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Anointer Priest");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Both the existing Priest and the embalmed Priest trigger for the token")
+    void existingAndEmbalmedPriestBothTrigger() {
+        setUpEmbalm();
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new AnointerPriest());
+
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated during combat")
+    void embalmCannotBeActivatedDuringCombat() {
+        setUpEmbalm();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);

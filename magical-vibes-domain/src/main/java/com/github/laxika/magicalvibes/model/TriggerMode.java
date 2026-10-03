@@ -13,5 +13,7 @@ public enum TriggerMode {
     NORMAL,
     PER_BLOCKER,
     ONCE_PER_BLOCK,
-    ONCE_PER_BATCH
+    ONCE_PER_BATCH,
+    /** This registration is its own triggered ability instead of another instruction in a shared ability. */
+    INDEPENDENT
 }

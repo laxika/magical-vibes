@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ChronatogTotem.class)
+@CardUsed({ChronatogTotem.class})
 class ChronatogTotemTest extends BaseCardTest {
 
     @Test
@@ -95,10 +95,84 @@ class ChronatogTotemTest extends BaseCardTest {
         assertThat(totem.getTransientSubtypes()).doesNotContain(CardSubtype.ATOG);
     }
 
+    @Test
+    @DisplayName("Reanimating the Totem preserves its pump bonus")
+    void reanimationPreservesPump() {
+        Permanent totem = addReadyTotem();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, totem)).isEqualTo(5);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The next controller turn is skipped and the animation expires")
+    void actuallySkipsNextTurn() {
+        Permanent totem = addReadyTotem();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gqs.isCreature(gd, totem)).isFalse();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("The pump activation limit applies before the ability resolves")
+    void pumpCannotBeActivatedTwiceOnStack() {
+        Permanent totem = addReadyTotem();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, totem)).isEqualTo(4);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The controller still skips a turn if the Totem leaves before its pump resolves")
+    void skipStillResolvesWithoutSource() {
+        Permanent totem = addReadyTotem();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(totem);
+        gd.playerGraveyards.get(player1.getId()).add(totem.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
     private Permanent addReadyTotem() {
-        Permanent totem = new Permanent(new ChronatogTotem());
+        Permanent totem = harness.addToBattlefieldAndReturn(player1, new ChronatogTotem());
         totem.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(totem);
         return totem;
     }
 }

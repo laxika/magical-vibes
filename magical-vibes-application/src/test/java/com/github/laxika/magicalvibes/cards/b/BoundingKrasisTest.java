@@ -2,29 +2,23 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BoundingKrasis.class, GrizzlyBears.class, Forest.class})
 class BoundingKrasisTest extends BaseCardTest {
 
     private void cast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new BoundingKrasis()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BoundingKrasis(), "{1}{G}{U}");
         harness.passBothPriorities();
     }
 
@@ -99,10 +93,73 @@ class BoundingKrasisTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(krasisId))
-                .findFirst()
-                .orElseThrow()
-                .isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Bounding Krasis").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's combat")
+    void canCastDuringOpponentsCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.castFromHand(player1, new BoundingKrasis(), "{1}{G}{U}");
+        harness.passBothPriorities();
+
+        var krasisId = harness.getPermanentId(player1, "Bounding Krasis");
+        harness.handlePermanentChosen(player1, krasisId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Bounding Krasis");
+        assertThat(findPermanent(player1, "Bounding Krasis").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB can untap another creature controlled by the Krasis controller")
+    void canUntapOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BoundingKrasis());
+        creature.tap();
+
+        cast();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BoundingKrasis());
+
+        cast();
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still resolves after Bounding Krasis leaves")
+    void triggerResolvesWithoutSource() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BoundingKrasis());
+
+        cast();
+        harness.handlePermanentChosen(player1, creature.getId());
+        Permanent source = findPermanent(player1, "Bounding Krasis");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Bounding Krasis");
+        assertThat(gd.stack).isEmpty();
     }
 }

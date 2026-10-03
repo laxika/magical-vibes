@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
+    private final TokenCopySupport tokenCopySupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
@@ -57,56 +57,12 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
             sourceCards.add(permanent.getCard());
         }
 
-        for (Card sourceCard : sourceCards) {
-            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, entry.getControllerId(), 1, sourceCard.getSubtypes(), sourceCard.hasType(CardType.CREATURE));
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
-                createTokenCopy(gameData, entry, sourceCard);
-            }
-        }
+        tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null,
+                new com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect());
     }
 
     void createTokenCopy(GameData gameData, StackEntry entry, Card sourceCard) {
-        Card tokenCard = new Card();
-        tokenCard.setName(sourceCard.getName());
-        tokenCard.setType(sourceCard.getType());
-        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-        tokenCard.setToken(true);
-        tokenCard.setColor(sourceCard.getColor());
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
-        tokenCard.setPower(sourceCard.getPower());
-        tokenCard.setToughness(sourceCard.getToughness());
-        tokenCard.setSubtypes(sourceCard.getSubtypes() != null ? new ArrayList<>(sourceCard.getSubtypes()) : null);
-        tokenCard.setCardText(sourceCard.getCardText());
-        tokenCard.setSetCode(sourceCard.getSetCode());
-        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
-
-        if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
-            tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
-        }
-
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-            }
-        }
-        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-            tokenCard.addActivatedAbility(ability);
-        }
-        tokenCard.copyTargetingFrom(sourceCard);
-        tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                gameData, entry.getControllerId(), tokenCard);
-
-        Permanent tokenPermanent = new Permanent(tokenCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-
-        gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-        log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
-                entry.getCard() != null ? entry.getCard().getName() : "ability");
-
-        // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
-        // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(sourceCard), null,
+                new com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect());
     }
 }

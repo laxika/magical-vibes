@@ -31,7 +31,8 @@ public class AgentsToolkit extends Card {
         }
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new MoveChosenCounterFromSourceToEnteringCreatureEffect(COUNTER_TYPES));
+                new MoveChosenCounterFromSourceToEnteringCreatureEffect(java.util.Arrays.stream(CounterType.values())
+                        .filter(type -> type != CounterType.ANY && type != CounterType.SILVER).toList()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

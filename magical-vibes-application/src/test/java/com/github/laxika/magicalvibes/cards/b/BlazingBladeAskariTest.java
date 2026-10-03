@@ -20,6 +20,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BlazingBladeAskariTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Askari can activate, and only its source becomes colorless on resolution")
+    void tappedSourceBecomesColorlessOnlyOnResolution() {
+        Permanent askari = harness.addToBattlefieldAndReturn(player1, new BlazingBladeAskari());
+        Permanent otherAskari = harness.addToBattlefieldAndReturn(player1, new BlazingBladeAskari());
+        askari.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectiveColors(gd, askari)).containsExactly(CardColor.RED);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, askari)).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, otherAskari)).containsExactly(CardColor.RED);
+        assertThat(askari.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mixed blockers receive flanking penalties only when they lack flanking")
+    void mixedBlockersOnlyPenalizeBlockerWithoutFlanking() {
+        Permanent askari = addCreatureReady(player1, new BlazingBladeAskari());
+        askari.setAttacking(true);
+        Permanent flankingBlocker = addCreatureReady(player2, new BlazingBladeAskari());
+        Permanent otherBlocker = addCreatureReady(player2, new AshcoatBear());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(otherBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(2);
+        resolveAllTriggers();
+
+        assertThat(flankingBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(flankingBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(otherBlocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Activating {2} makes it colorless until end of turn")
     void activatingMakesItColorless() {
         Permanent askari = harness.addToBattlefieldAndReturn(player1, new BlazingBladeAskari());

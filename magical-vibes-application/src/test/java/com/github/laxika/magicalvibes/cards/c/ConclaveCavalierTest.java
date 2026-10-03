@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ConclaveCavalier.class, WrathOfGod.class})
 class ConclaveCavalierTest extends BaseCardTest {
 
     @Test
@@ -22,10 +23,7 @@ class ConclaveCavalierTest extends BaseCardTest {
     void deathTriggerCreatesElfKnightTokens() {
         harness.addToBattlefield(player1, new ConclaveCavalier());
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,5 +39,44 @@ class ConclaveCavalierTest extends BaseCardTest {
             assertThat(token.getCard().getKeywords()).contains(Keyword.VIGILANCE);
             assertThat(token.getCard().isToken()).isTrue();
         }
+    }
+
+    @Test
+    @DisplayName("Each Cavalier dying simultaneously creates its own pair of tokens")
+    void simultaneousDeathsCreateFourTokens() {
+        harness.addToBattlefield(player1, new ConclaveCavalier());
+        harness.addToBattlefield(player1, new ConclaveCavalier());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Elf Knight")).isEmpty();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Elf Knight")).hasSize(4);
+        assertThat(findPermanents(player1, "Conclave Cavalier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's dying Cavalier creates tokens for that opponent")
+    void opponentReceivesTheirDeathTriggerTokens() {
+        harness.addToBattlefield(player2, new ConclaveCavalier());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Elf Knight")).isEmpty();
+        assertThat(findPermanents(player2, "Elf Knight")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Conclave Cavalier attacks without tapping or creating tokens")
+    void vigilanceAllowsAttackingWithoutTapping() {
+        Permanent cavalier = addCreatureReady(player1, new ConclaveCavalier());
+
+        declareAttackers(List.of(0));
+
+        assertThat(cavalier.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Elf Knight")).isEmpty();
     }
 }

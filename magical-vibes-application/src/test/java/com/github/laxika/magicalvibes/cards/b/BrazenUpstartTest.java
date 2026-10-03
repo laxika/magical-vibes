@@ -55,11 +55,74 @@ class BrazenUpstartTest extends BaseCardTest {
                 .containsExactlyInAnyOrderElementsOf(topCards);
     }
 
+    @Test
+    void mayDeclineCreatureAndBottomOnlyTheTopFive() {
+        BrazenUpstart creature = new BrazenUpstart();
+        List<Card> topCards = List.of(creature, new Shock(), new Shock(), new Shock(), new Shock());
+        Shock untouched = new Shock();
+        Permanent upstart = harness.addToBattlefieldAndReturn(player1, new BrazenUpstart());
+        harness.setLibrary(player1, List.of(topCards.get(0), topCards.get(1), topCards.get(2),
+                topCards.get(3), topCards.get(4), untouched));
+
+        destroyWithShock(upstart);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(topCards);
+    }
+
+    @Test
+    void looksAtAllCardsWhenLibraryHasFewerThanFive() {
+        BrazenUpstart creature = new BrazenUpstart();
+        Shock remaining = new Shock();
+        Permanent upstart = harness.addToBattlefieldAndReturn(player1, new BrazenUpstart());
+        harness.setLibrary(player1, List.of(creature, remaining));
+
+        destroyWithShock(upstart);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    void creatureBelowTopFiveIsNotAvailableAndStaysOnTop() {
+        List<Card> topCards = List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock());
+        BrazenUpstart untouched = new BrazenUpstart();
+        Permanent upstart = harness.addToBattlefieldAndReturn(player1, new BrazenUpstart());
+        harness.setLibrary(player1, List.of(topCards.get(0), topCards.get(1), topCards.get(2),
+                topCards.get(3), topCards.get(4), untouched));
+
+        destroyWithShock(upstart);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(topCards);
+    }
+
+    @Test
+    void deathTriggerResolvesWithAnEmptyLibrary() {
+        Permanent upstart = harness.addToBattlefieldAndReturn(player1, new BrazenUpstart());
+        harness.setLibrary(player1, List.of());
+
+        destroyWithShock(upstart);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void destroyWithShock(Permanent upstart) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, upstart.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, upstart.getId());
         harness.passBothPriorities();
     }
 }

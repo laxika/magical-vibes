@@ -42,9 +42,7 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castMotorcycle(bears);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getPowerModifier()).isZero();
     }
@@ -54,6 +52,7 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new CaptainAmericasMotorcycle()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -82,5 +81,54 @@ class CaptainAmericasMotorcycleTest extends BaseCardTest {
         harness.castArtifact(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void canFlashInDuringOpponentsCombatAndBoostTheirCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.ensurePriority(player1);
+
+        castMotorcycle(bears);
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Captain America's Motorcycle");
+    }
+
+    @Test
+    void canTargetItselfWhenItEntersWithoutBeingCrewed() {
+        harness.setHand(player1, List.of(new CaptainAmericasMotorcycle()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent motorcycle = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, motorcycle.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, motorcycle)).isFalse();
+        assertThat(motorcycle.getPowerModifier()).isEqualTo(2);
+        assertThat(motorcycle.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void summoningSickCreatureCanCrewAndAnimationExpires() {
+        Permanent motorcycle = harness.addToBattlefieldAndReturn(player1,
+                new CaptainAmericasMotorcycle());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, motorcycle)).isTrue();
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(motorcycle.isTapped()).isFalse();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, motorcycle)).isFalse();
     }
 }

@@ -1,30 +1,33 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
+import com.github.laxika.magicalvibes.cards.s.SparringDummy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BendersWaterskin.class, AngelsFeather.class})
+@CardUsed({BendersWaterskin.class, SparringDummy.class, SongOfTheDryads.class})
 class BendersWaterskinTest extends BaseCardTest {
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
     @DisplayName("Tapping Bender's Waterskin adds one mana of the chosen color")
-    void tapsForAnyColor() {
+    void tapsForAnyColor(ManaColor color) {
         Permanent waterskin = harness.addToBattlefieldAndReturn(player1, new BendersWaterskin());
-        waterskin.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, color.name());
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
         assertThat(waterskin.isTapped()).isTrue();
     }
 
@@ -34,7 +37,7 @@ class BendersWaterskinTest extends BaseCardTest {
         Permanent waterskin = harness.addToBattlefieldAndReturn(player1, new BendersWaterskin());
         waterskin.tap();
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(waterskin.isTapped()).isFalse();
     }
@@ -43,22 +46,40 @@ class BendersWaterskinTest extends BaseCardTest {
     @DisplayName("Bender's Waterskin does not untap other artifacts it controls")
     void doesNotUntapOtherArtifacts() {
         Permanent waterskin = harness.addToBattlefieldAndReturn(player1, new BendersWaterskin());
-        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player1, new SparringDummy());
         waterskin.tap();
         otherArtifact.tap();
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(waterskin.isTapped()).isFalse();
         assertThat(otherArtifact.isTapped()).isTrue();
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Waterskin enchanted by Song of the Dryads stays tapped during an opponent's untap step")
+    void doesNotUntapAfterLosingPrintedAbilities() {
+        Permanent waterskin = harness.addToBattlefieldAndReturn(player1, new BendersWaterskin());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, waterskin.getId());
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        waterskin.tap();
+
+        harness.performUntapStep(player2);
+
+        assertThat(waterskin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Waterskin untaps normally during its controller's untap step")
+    void untapsDuringOwnUntapStep() {
+        Permanent waterskin = harness.addToBattlefieldAndReturn(player1, new BendersWaterskin());
+        waterskin.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(waterskin.isTapped()).isFalse();
     }
 }

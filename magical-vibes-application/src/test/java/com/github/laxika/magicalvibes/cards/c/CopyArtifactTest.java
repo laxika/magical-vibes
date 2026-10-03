@@ -110,6 +110,53 @@ class CopyArtifactTest extends BaseCardTest {
                 .hasMessageContaining("must attack");
     }
 
+    @Test
+    @DisplayName("Copying a tapped artifact does not copy its tapped state")
+    void copyingTappedArtifactDoesNotCopyTappedState() {
+        Permanent tome = harness.addToBattlefieldAndReturn(player2, new JayemdaeTome());
+        tome.tap();
+        CopyArtifact source = new CopyArtifact();
+        castCopyArtifact(source);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, tome.getId());
+        Permanent copy = findCopy(source);
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(copy), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(tome.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can copy its controller's existing copy and retain the added enchantment type")
+    void copiesExistingCopyAndRetainsEnchantmentType() {
+        Permanent firstCopy = copyFrom(new CopyArtifact(), new JayemdaeTome());
+        CopyArtifact source = new CopyArtifact();
+        castCopyArtifact(source);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstCopy.getId());
+        Permanent secondCopy = findCopy(source);
+        GrizzlyBears drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(secondCopy), null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+
+        harness.castFromHand(player1, new Tranquility(), "{2}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstCopy, secondCopy);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
     private void castCopyArtifact(CopyArtifact copy) {
         harness.castFromHand(player1, copy, "{1}{U}");
         harness.passBothPriorities();

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ChocoSeekerOfParadise.class, BirdsOfParadise.class, Forest.class,
-        GrizzlyBears.class, Island.class})
+        GrizzlyBears.class, Island.class, Unsummon.class})
 class ChocoSeekerOfParadiseTest extends BaseCardTest {
 
     @Test
@@ -44,7 +46,7 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(handCard);
-        assertThat(permanentFor(forest).isTapped()).isTrue();
+        assertThat(findPermanent(player1, forest.getName()).isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(untouched);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
         assertThat(choco.getEffectivePower()).isEqualTo(4);
@@ -73,7 +75,7 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(handCard);
-        assertThat(permanentFor(forest).isTapped()).isTrue();
+        assertThat(findPermanent(player1, forest.getName()).isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(island);
     }
 
@@ -90,14 +92,126 @@ class ChocoSeekerOfParadiseTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent addReady(Card card) {
-        return addCreatureReady(player1, card);
+    @Test
+    @DisplayName("Uses the number of Birds that attacked even if a Bird leaves before resolution")
+    void preservesAttackEventCountAfterBirdReturnsToHand() {
+        addReady(new ChocoSeekerOfParadise());
+        Permanent bird = addReady(new BirdsOfParadise());
+        Card first = new GrizzlyBears();
+        Card second = new Forest();
+        Card untouched = new Island();
+        harness.setLibrary(player1, List.of(first, second, untouched));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(0, 1));
+        harness.castAndResolveInstant(player2, 0, bird.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.allCards()).containsExactly(first, second);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        resolveAllTriggers();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
     }
 
-    private Permanent permanentFor(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Can decline the hand card and put all looked-at lands onto the battlefield tapped")
+    void declinesHandAndPutsAllLandsOntoBattlefield() {
+        Permanent choco = addReady(new ChocoSeekerOfParadise());
+        addReady(new BirdsOfParadise());
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), island.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest, island);
+        assertThat(findPermanent(player1, forest.getName()).isTapped()).isTrue();
+        assertThat(findPermanent(player1, island.getName()).isTapped()).isTrue();
+        assertThat(choco.getEffectivePower()).isEqualTo(5);
+        assertThat(choco.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Can decline both choices and put all looked-at cards into the graveyard")
+    void declinesBothChoices() {
+        addReady(new ChocoSeekerOfParadise());
+        addReady(new BirdsOfParadise());
+        Card forest = new Forest();
+        Card bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, bear));
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, bear);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest, bear);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looks at the available cards when fewer remain than the number of attacking Birds")
+    void handlesShortLibraryAndLandChosenForHand() {
+        addReady(new ChocoSeekerOfParadise());
+        addReady(new BirdsOfParadise());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, forest.getName())).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when the library is empty")
+    void handlesEmptyLibrary() {
+        addReady(new ChocoSeekerOfParadise());
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggers while Choco is not attacking and ignores opponents' land entries")
+    void triggersForAnotherBirdAndOnlyOwnLands() {
+        Permanent choco = addReady(new ChocoSeekerOfParadise());
+        addReady(new BirdsOfParadise());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.enterBattlefieldAndReturn(player2, new Island());
+        assertThat(gd.stack).isEmpty();
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        resolveAllTriggers();
+
+        assertThat(choco.getEffectivePower()).isEqualTo(4);
+        assertThat(choco.getEffectiveToughness()).isEqualTo(5);
+        assertThat(choco.isAttacking()).isFalse();
+    }
+
+    private Permanent addReady(Card card) {
+        return addCreatureReady(player1, card);
     }
 }

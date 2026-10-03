@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BigBertha.class)
+@CardUsed({BigBertha.class})
 class BigBerthaTest extends BaseCardTest {
 
     @Test
@@ -42,5 +43,44 @@ class BigBerthaTest extends BaseCardTest {
         assertThat(bertha.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(bertha.getEffectivePower()).isEqualTo(2);
         assertThat(bertha.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void canBeCastWithXZeroAndSurvivesWithoutCounters() {
+        harness.setHand(player1, List.of(new BigBertha()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        Permanent bertha = findPermanent(player1, "Big Bertha");
+        assertThat(bertha.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotInGraveyard(player1, "Big Bertha");
+    }
+
+    @Test
+    void vigilanceAllowsAttackingWithoutTapping() {
+        Permanent bertha = addCreatureReady(player1, new BigBertha());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bertha.isTapped()).isFalse();
+        assertThat(bertha.isAttacking()).isTrue();
+    }
+
+    @Test
+    void cannotActivateTapAbilityWhileSummoningSick() {
+        harness.setHand(player1, List.of(new BigBertha()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        Permanent bertha = findPermanent(player1, "Big Bertha");
+        assertThat(bertha.isTapped()).isFalse();
+        assertThat(bertha.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

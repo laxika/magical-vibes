@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BrambleElemental;
 import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
 import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
+import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChordOfCalling.class, ElvesOfDeepShadow.class, DimirInfiltrator.class,
-        BrambleElemental.class, Plains.class})
+        BrambleElemental.class, Plains.class, ElvishMystic.class, Ornithopter.class})
 class ChordOfCallingTest extends BaseCardTest {
 
     @Test
@@ -118,7 +121,7 @@ class ChordOfCallingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Convoke lets tapped creatures pay for the spell")
+    @DisplayName("Convoke taps an untapped creature to pay for the spell")
     void convokePaysForTheSpell() {
         Permanent elves = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
         harness.setHand(player1, List.of(new ChordOfCalling()));
@@ -132,6 +135,72 @@ class ChordOfCallingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chord of Calling");
         assertThat(elves.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("X=0 can put a zero-mana creature onto the battlefield untapped")
+    void xZeroFindsZeroManaCreature() {
+        castChord(0);
+        harness.setLibrary(player1, List.of(new Ornithopter(), new Plains()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Chord of Calling");
+    }
+
+    @Test
+    @DisplayName("Summoning-sick green creatures can pay all three green symbols with convoke")
+    void convokePaysColoredCostWithSummoningSickCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+        third.setSummoningSick(true);
+        harness.setHand(player1, List.of(new ChordOfCalling()));
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+
+        harness.castInstantWithConvoke(player1, 0, List.of(),
+                List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(List.of(first, second, third)).allMatch(Permanent::isTapped);
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Chord of Calling");
+    }
+
+    @Test
+    @DisplayName("A colorless creature cannot convoke a green mana symbol")
+    void colorlessConvokeCannotPayGreenCost() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new ChordOfCalling()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0, List.of(),
+                List.of(thopter.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(thopter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library does not leave a search choice pending")
+    void emptyLibraryResolvesNormally() {
+        castChord(3);
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Chord of Calling");
     }
 
     private void castChord(int xValue) {

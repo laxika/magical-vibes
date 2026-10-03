@@ -21,19 +21,19 @@ class AlleyAssailantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AlleyAssailant()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent assailant = findPermanent(player1, "Alley Assailant");
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, assailant.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(assailant.isFaceDown()).isTrue();
+        harness.assertOnBattlefield(player1, "Alley Assailant");
+        harness.assertNotInGraveyard(player1, "Alley Assailant");
+        harness.assertInGraveyard(player2, "Shock");
     }
 
     @Test
@@ -56,9 +56,7 @@ class AlleyAssailantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AlleyAssailant()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent assailant = findPermanent(player1, "Alley Assailant");
         harness.setLife(player1, 10);
@@ -72,5 +70,42 @@ class AlleyAssailantTest extends BaseCardTest {
         assertThat(assailant.isFaceDown()).isFalse();
         harness.assertLife(player1, 13);
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Disguise enters untapped without triggering the life drain")
+    void disguiseEntersUntappedWithoutDrainingLife() {
+        harness.setHand(player1, List.of(new AlleyAssailant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent assailant = findPermanent(player1, "Alley Assailant");
+        assertThat(assailant.isFaceDown()).isTrue();
+        assertThat(assailant.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The face-up creature has no disguise ward")
+    void faceUpCreatureDoesNotHaveWard() {
+        harness.setHand(player1, List.of(new AlleyAssailant()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent assailant = findPermanent(player1, "Alley Assailant");
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, assailant.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Alley Assailant");
+        assertThat(assailant.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

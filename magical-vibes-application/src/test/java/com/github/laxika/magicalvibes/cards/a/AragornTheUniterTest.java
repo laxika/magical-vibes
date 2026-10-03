@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AragornTheUniter.class, Divination.class, GiantGrowth.class, GrizzlyBears.class,
+@CardUsed({AragornTheUniter.class, ArwenMortalQueen.class, Divination.class, GiantGrowth.class, GrizzlyBears.class,
         SavannahLions.class, Shock.class})
 class AragornTheUniterTest extends BaseCardTest {
 
@@ -91,6 +91,96 @@ class AragornTheUniterTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("A green-white spell triggers both abilities before entering the battlefield")
+    void multicoloredSpellTriggersBothMatchingAbilities() {
+        addReadyAragorn();
+        Permanent aragorn = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of(new ArwenMortalQueen()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, aragorn.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, aragorn)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, aragorn)).isEqualTo(9);
+        harness.assertNotOnBattlefield(player1, "Arwen, Mortal Queen");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's red spell does not trigger Aragorn")
+    void opponentSpellDoesNotTrigger() {
+        addReadyAragorn();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The green trigger can boost an opponent's creature and expires at end of turn")
+    void greenTriggerCanTargetOpponentCreatureAndExpires() {
+        addReadyAragorn();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The red trigger resolves before the triggering spell")
+    void redTriggerResolvesBeforeSpell() {
+        addReadyAragorn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("The controller chooses the order of simultaneous matching color triggers")
+    void controllerChoosesOrderOfMatchingTriggers() {
+        addReadyAragorn();
+        Permanent aragorn = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of(new ArwenMortalQueen()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, aragorn.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     private void addReadyAragorn() {

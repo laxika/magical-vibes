@@ -47,8 +47,7 @@ class CircleOfConfinementTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, circleId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, circleId);
 
         harness.assertOnBattlefield(player2, "Child of Night");
     }
@@ -108,6 +107,86 @@ class CircleOfConfinementTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canExileCreatureWithManaValueExactlyThree() {
+        harness.addToBattlefield(player2, new VampireNighthawk());
+
+        castCircle(harness.getPermanentId(player2, "Vampire Nighthawk"));
+
+        harness.assertNotOnBattlefield(player2, "Vampire Nighthawk");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Vampire Nighthawk"));
+    }
+
+    @Test
+    void cannotTargetOwnCreature() {
+        harness.addToBattlefield(player1, new ChildOfNight());
+        UUID creatureId = harness.getPermanentId(player1, "Child of Night");
+        harness.setHand(player1, List.of(new CircleOfConfinement()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void controllersMatchingVampireDoesNotGainLife() {
+        harness.addToBattlefield(player2, new ChildOfNight());
+        castCircle(harness.getPermanentId(player2, "Child of Night"));
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new ChildOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertOnBattlefield(player1, "Child of Night");
+    }
+
+    @Test
+    void sourceLeavingBeforeEnterTriggerResolvesDoesNotExileCreature() {
+        harness.addToBattlefield(player2, new ChildOfNight());
+        UUID creatureId = harness.getPermanentId(player2, "Child of Night");
+        harness.setHand(player1, List.of(new CircleOfConfinement()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creatureId);
+        harness.passBothPriorities();
+        UUID circleId = harness.getPermanentId(player1, "Circle of Confinement");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player2, 0, circleId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Circle of Confinement");
+        harness.assertOnBattlefield(player2, "Child of Night");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void lifeGainAlreadyTriggeredResolvesAfterCircleLeaves() {
+        harness.addToBattlefield(player2, new ChildOfNight());
+        castCircle(harness.getPermanentId(player2, "Child of Night"));
+        UUID circleId = harness.getPermanentId(player1, "Circle of Confinement");
+        harness.setLife(player1, 10);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ChildOfNight()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castCreature(player2, 0);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, circleId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertOnBattlefield(player2, "Child of Night");
+        harness.passBothPriorities();
     }
 
     private void castCircle(UUID targetId) {

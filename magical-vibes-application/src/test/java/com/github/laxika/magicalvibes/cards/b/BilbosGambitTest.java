@@ -46,6 +46,58 @@ class BilbosGambitTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canReturnOwnCreatureSpellWhileGivingTreasureToOpponent() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        castBilbosGambit(bears.getId(), true);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Treasure");
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void invalidTargetPreventsBothGiftAndCastingRestriction() {
+        UUID targetSpellId = castMightOfOaks();
+        harness.setHand(player1, List.of(new BilbosGambit()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstantWithGift(player1, 0, targetSpellId, true);
+
+        harness.setHand(player2, List.of(new BilbosGambit()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstantWithGift(player2, 0, targetSpellId, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Might of Oaks");
+        harness.assertInGraveyard(player1, "Bilbo's Gambit");
+        harness.assertInGraveyard(player2, "Bilbo's Gambit");
+        harness.assertNotOnBattlefield(player1, "Treasure");
+        harness.assertNotOnBattlefield(player2, "Treasure");
+        assertThat(gd.playersSilencedThisTurn).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void promisedGiftPreventsOpponentFromCastingReturnedSpell() {
+        UUID targetSpellId = castMightOfOaks();
+        castBilbosGambit(targetSpellId, true);
+
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creatureId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Might of Oaks");
+    }
+
     private UUID castMightOfOaks() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         MightOfOaks might = new MightOfOaks();

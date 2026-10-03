@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshnodsBattleGear.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({AshnodsBattleGear.class, GrizzlyBears.class, HillGiant.class, Twiddle.class})
 class AshnodsBattleGearTest extends BaseCardTest {
 
     @Test
@@ -163,12 +166,51 @@ class AshnodsBattleGearTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
     }
 
-    // ===== Helpers =====
+    @Test
+    void boostDoesNotApplyIfArtifactUntapsBeforeResolution() {
+        Permanent gear = addReadyGear(player1);
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new Twiddle()));
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+        harness.castAndResolveInstant(player1, 0, gear.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gear.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+    }
+
+    @Test
+    void retappingBeforeResolutionDoesNotRestartOriginalDuration() {
+        Permanent gear = addReadyGear(player1);
+        Permanent firstGiant = addCreatureReady(player1, new HillGiant());
+        Permanent secondGiant = addCreatureReady(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new Twiddle()));
+
+        harness.activateAbility(player1, 0, null, firstGiant.getId());
+        harness.castAndResolveInstant(player1, 0, gear.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gear.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, secondGiant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gear.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, firstGiant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstGiant)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondGiant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, secondGiant)).isEqualTo(1);
+    }
 
     private Permanent addReadyGear(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new AshnodsBattleGear());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new AshnodsBattleGear());
     }
 
     private void activateNonCreatureTarget() {

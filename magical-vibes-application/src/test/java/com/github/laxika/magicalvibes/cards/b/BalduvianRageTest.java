@@ -101,6 +101,41 @@ class BalduvianRageTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Can boost an attacking creature you control")
+    void boostsOwnAttacker() {
+        Permanent attacker = addCreatureReady(player1, new KjeldoranOutrider());
+        attacker.setAttacking(true);
+        castRage(attacker, 4);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(6);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The delayed draw survives the attacker leaving and happens only once")
+    void delayedDrawSurvivesAttackerLeaving() {
+        Permanent attacker = addCreatureReady(player2, new KjeldoranOutrider());
+        attacker.setAttacking(true);
+        castRage(attacker, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        gd.playerGraveyards.get(player2.getId()).add(attacker.getCard());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
     private void prepareRage(int xValue) {
         harness.setHand(player1, List.of(new BalduvianRage()));
         harness.addMana(player1, ManaColor.RED, 1);

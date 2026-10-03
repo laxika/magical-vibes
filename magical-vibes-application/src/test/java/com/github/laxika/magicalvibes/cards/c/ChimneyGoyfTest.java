@@ -69,6 +69,79 @@ class ChimneyGoyfTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).startsWith(hand.getFirst(), oldTop);
     }
 
+    @Test
+    @DisplayName("Power and toughness update when card types leave graveyards")
+    void updatesWhenGraveyardsChange() {
+        Permanent goyf = addCreatureReady(player1, new ChimneyGoyf());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Ornithopter(), new Forest()));
+
+        assertThat(gqs.getEffectivePower(gd, goyf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goyf)).isEqualTo(4);
+
+        harness.setGraveyard(player2, List.of(new Forest()));
+        assertThat(gqs.getEffectivePower(gd, goyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, goyf)).isEqualTo(2);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.getEffectivePower(gd, goyf)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, goyf)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Characteristic power and toughness apply in hand and graveyard")
+    void definesPowerAndToughnessOutsideBattlefield() {
+        Card goyf = new ChimneyGoyf();
+        harness.setHand(player1, List.of(goyf));
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new Forest(), new Ornithopter()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, goyf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, goyf)).isEqualTo(4);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(goyf));
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, goyf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, goyf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Death trigger resolves without a choice when the opponent has no cards")
+    void deathTriggerWithEmptyHandDoesNothing() {
+        Permanent goyf = harness.addToBattlefieldAndReturn(player1, new ChimneyGoyf());
+        harness.setHand(player2, List.of());
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        killGoyf(goyf);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger puts the opponent's only hand card into an empty library")
+    void deathTriggerWithEmptyLibrary() {
+        Permanent goyf = harness.addToBattlefieldAndReturn(player1, new ChimneyGoyf());
+        Card chosen = new GrizzlyBears();
+        harness.setHand(player2, List.of(chosen));
+        harness.setLibrary(player2, List.of());
+
+        killGoyf(goyf);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void killGoyf(Permanent goyf) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -76,7 +149,6 @@ class ChimneyGoyfTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>(List.of(new Murder())));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, goyf.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, goyf.getId());
     }
 }

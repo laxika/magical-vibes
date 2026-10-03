@@ -59,4 +59,58 @@ class BenalishHeraldsTest extends BaseCardTest {
 
         assertThat(heralds.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Cannot substitute colorless mana for the blue activation cost")
+    void cannotActivateWithoutBlueMana() {
+        Permanent heralds = addCreatureReady(player1, new BenalishHeralds());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(heralds.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate when already tapped")
+    void cannotActivateWhenTapped() {
+        Permanent heralds = addCreatureReady(player1, new BenalishHeralds());
+        heralds.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller draws on resolution even if the source leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        Permanent heralds = addCreatureReady(player1, new BenalishHeralds());
+        BenalishHeralds drawnCard = new BenalishHeralds();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, new BenalishHeralds()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, heralds);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 }

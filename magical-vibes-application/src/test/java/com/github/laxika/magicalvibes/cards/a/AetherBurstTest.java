@@ -30,9 +30,8 @@ class AetherBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0,
+        harness.castAndResolveInstant(player1, 0,
                 List.of(creature1.getId(), creature2.getId(), creature3.getId(), creature4.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
@@ -64,8 +63,7 @@ class AetherBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Aether Burst");
@@ -81,5 +79,72 @@ class AetherBurstTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns one creature with no Aether Burst cards in graveyards")
+    void returnsOneCreatureWithEmptyGraveyards() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RabidElephant());
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Rabid Elephant");
+        harness.assertInHand(player1, "Rabid Elephant");
+        harness.assertInGraveyard(player1, "Aether Burst");
+    }
+
+    @Test
+    @DisplayName("Allows fewer targets than the graveyard count permits")
+    void allowsFewerThanMaximumTargets() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        harness.setGraveyard(player1, List.of(new AetherBurst()));
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(unchosen);
+        harness.assertInHand(player2, "Rabid Elephant");
+    }
+
+    @Test
+    @DisplayName("Graveyard changes after casting do not reduce the chosen targets")
+    void graveyardCountIsFixedAtCasting() {
+        Permanent creature1 = harness.addToBattlefieldAndReturn(player1, new RabidElephant());
+        Permanent creature2 = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        harness.setGraveyard(player2, List.of(new AetherBurst()));
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rabid Elephant");
+        harness.assertNotOnBattlefield(player2, "Rabid Elephant");
+        harness.assertInHand(player1, "Rabid Elephant");
+        harness.assertInHand(player2, "Rabid Elephant");
+    }
+
+    @Test
+    @DisplayName("Still returns a legal target when another target leaves the battlefield")
+    void resolvesRemainingLegalTarget() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        harness.setGraveyard(player1, List.of(new AetherBurst()));
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(departed.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(departed);
+        harness.setGraveyard(player2, List.of(departed.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(departed.getCard());
     }
 }

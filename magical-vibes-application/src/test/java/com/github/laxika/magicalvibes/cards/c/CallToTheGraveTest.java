@@ -125,4 +125,73 @@ class CallToTheGraveTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Call to the Grave");
         harness.assertNotInGraveyard(player1, "Call to the Grave");
     }
+
+    @Test
+    @DisplayName("An upkeep with no creatures does not sacrifice the enchantment or another player's creature")
+    void upkeepWithNoEligibleCreatureDoesNothing() {
+        harness.addToBattlefield(player1, new CallToTheGrave());
+        harness.addToBattlefield(player2, new XantidSwarm());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Call to the Grave");
+        harness.assertOnBattlefield(player2, "Xantid Swarm");
+    }
+
+    @Test
+    @DisplayName("A Zombie on either battlefield prevents the end-step sacrifice")
+    void zombiePreventsEndStepSacrifice() {
+        harness.addToBattlefield(player1, new CallToTheGrave());
+        harness.addToBattlefield(player2, new ZombieCutthroat());
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Call to the Grave");
+        harness.assertOnBattlefield(player2, "Zombie Cutthroat");
+    }
+
+    @Test
+    @DisplayName("The enchantment also sacrifices itself at the opponent's end step with no creatures")
+    void sacrificesSelfAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new CallToTheGrave());
+
+        advanceToUpkeep(player2);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Call to the Grave");
+        harness.assertInGraveyard(player1, "Call to the Grave");
+    }
+
+    @Test
+    @DisplayName("The active opponent chooses their non-Zombie sacrifice, not the enchantment's controller")
+    void opponentChoosesTheirSacrifice() {
+        harness.addToBattlefield(player1, new CallToTheGrave());
+        harness.addToBattlefield(player1, new XantidSwarm());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new XantidSwarm());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new XantidSwarm());
+        harness.addToBattlefield(player2, new ZombieCutthroat());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(chosen.getId()))
+                .anyMatch(p -> p.getId().equals(survivor.getId()));
+        harness.assertInGraveyard(player2, "Xantid Swarm");
+        harness.assertOnBattlefield(player2, "Zombie Cutthroat");
+        harness.assertOnBattlefield(player1, "Xantid Swarm");
+    }
 }

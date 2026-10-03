@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -42,8 +41,8 @@ class AbominationTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 
     @Test
@@ -57,8 +56,8 @@ class AbominationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(lions.getId()));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player2, "Savannah Lions");
     }
 
     @Test
@@ -78,9 +77,12 @@ class AbominationTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
-                .containsExactlyInAnyOrder(spider.getId(), lions.getId());
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
+        harness.handleCombatDamageAssigned(player1, 0, java.util.Map.of(spider.getId(), 2, lions.getId(), 0,
+                gd.playerBattlefields.get(player2.getId()).get(2).getId(), 0));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Savannah Lions");
     }
 
     @Test
@@ -98,6 +100,7 @@ class AbominationTest extends BaseCardTest {
 
         resolveAllTriggers();
         resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -114,7 +117,7 @@ class AbominationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -133,8 +136,8 @@ class AbominationTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInGraveyard(player1, "Giant Spider");
     }
 
     @Test
@@ -148,7 +151,7 @@ class AbominationTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -168,6 +171,7 @@ class AbominationTest extends BaseCardTest {
         harness.castInstant(player2, 0, spider.getId());
         resolveAllTriggers();
         resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -190,6 +194,7 @@ class AbominationTest extends BaseCardTest {
         harness.castInstant(player2, 0, wraith.getId());
         resolveAllTriggers();
         resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertOnBattlefield(player2, "Bog Wraith");
         harness.assertNotInGraveyard(player2, "Bog Wraith");

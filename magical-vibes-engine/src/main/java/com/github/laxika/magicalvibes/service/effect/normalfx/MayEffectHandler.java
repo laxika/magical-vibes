@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -32,6 +33,20 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayEffect) effect;
+        if (e.wrapped() instanceof PutCountersOnSourceEffect counters) {
+            var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (source == null || gameQueryService.cantHaveCounters(gameData, source)
+                    || counters.powerModifier() > 0
+                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)
+                    || counters.powerModifier() < 0
+                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) {
+                if (e.elseEffect() != null) {
+                    EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
+                    if (elseHandler != null) elseHandler.resolve(gameData, entry, e.elseEffect());
+                }
+                return;
+            }
+        }
 
         // CR 702.99a — cipher is "If this spell is represented by a card, you may exile this card
         // encoded on a creature you control". A copy cast off the encoded card is not represented by

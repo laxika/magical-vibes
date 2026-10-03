@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.b.BalefulStrix;
 import com.github.laxika.magicalvibes.cards.e.EdgarMarkov;
 import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.u.UlamogTheCeaselessHunger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CommandTower.class, BalefulStrix.class, EdgarMarkov.class, ExoticOrchard.class})
+@CardUsed({CommandTower.class, EdgarMarkov.class, ExoticOrchard.class, UlamogTheCeaselessHunger.class})
 class CommandTowerTest extends BaseCardTest {
 
     @Test
@@ -62,5 +60,46 @@ class CommandTowerTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLACK", "RED");
+    }
+
+    @Test
+    @DisplayName("Without a commander the ability taps the land but produces no mana")
+    void producesNoManaWithoutCommander() {
+        gd.playerCommanders.put(player1.getId(), java.util.List.of());
+        harness.addToBattlefield(player1, new CommandTower());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A colorless commander does not allow production of colorless mana")
+    void producesNoManaWithColorlessCommander() {
+        gd.playerCommanders.put(player1.getId(), java.util.List.of(new UlamogTheCeaselessHunger()));
+        harness.addToBattlefield(player1, new CommandTower());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The tap cost prevents activating the land again")
+    void cannotActivateAgainWhileTapped() {
+        gd.playerCommanders.put(player1.getId(), java.util.List.of(new EdgarMarkov()));
+        harness.addToBattlefield(player1, new CommandTower());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

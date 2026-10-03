@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AlabasterPotion.class, AvoidFate.class, Boomerang.class, ChainLightning.class,
@@ -33,7 +34,6 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, targetId);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, boomerang.getId());
         harness.passBothPriorities();
 
@@ -55,7 +55,6 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castEnchantment(player1, 0, targetId);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, giantStrength.getId());
         harness.passBothPriorities();
 
@@ -77,7 +76,6 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, targetId);
-        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, boomerang.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -96,7 +94,6 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castSorcery(player1, 0, List.of(opponentTargetId));
-        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, chainLightning.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -113,7 +110,6 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         harness.castModalInstantForX(player1, 0, 0, 0, player2.getId());
-        harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, alabasterPotion.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -132,10 +128,69 @@ class AvoidFateTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, player2.getId());
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, chainLightning.getId());
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, manaDrain.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter your own instant targeting your own permanent")
+    void countersYourOwnInstant() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep()).getId();
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang, new AvoidFate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, boomerang.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertInGraveyard(player1, "Avoid Fate");
+        harness.assertOnBattlefield(player1, "Kobolds of Kher Keep");
+    }
+
+    @Test
+    @DisplayName("Cannot target an Aura targeting an opponent's permanent")
+    void cannotTargetAuraTargetingOpponentsPermanent() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new KoboldsOfKherKeep()).getId();
+        GiantStrength aura = new GiantStrength();
+        harness.setHand(player1, List.of(aura));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new AvoidFate()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, targetId);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, aura.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Avoid Fate");
+    }
+
+    @Test
+    @DisplayName("Does not counter a spell when its targeted permanent has left the battlefield")
+    void targetBecomesIllegalWhenPermanentLeaves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new KoboldsOfKherKeep()).getId();
+        Boomerang original = new Boomerang();
+        harness.setHand(player1, List.of(original));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new AvoidFate(), new Boomerang()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player2, 0, original.getId());
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Kobolds of Kher Keep");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Avoid Fate");
+        harness.assertNotInGraveyard(player1, "Boomerang");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(original.getId());
     }
 }

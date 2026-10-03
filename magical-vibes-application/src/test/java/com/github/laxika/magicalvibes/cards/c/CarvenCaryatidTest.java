@@ -31,11 +31,39 @@ class CarvenCaryatidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Carven Caryatid");
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("ETB draw waits for its trigger to resolve and draws exactly one card for its controller")
+    void etbDrawUsesStackAndOnlyDrawsOneCardForController() {
+        Forest topCard = new Forest();
+        Forest nextCard = new Forest();
+        Forest opponentCard = new Forest();
+        harness.setHand(player1, List.of(new CarvenCaryatid()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Carven Caryatid");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
     }
 }

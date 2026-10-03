@@ -9,9 +9,50 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Blockbuster.class, BorosRecruit.class, BorosSignet.class, SelesnyaSagittars.class})
 class BlockbusterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Blockbuster checks which creatures are tapped when its ability resolves")
+    void checksTappedStatusAtResolution() {
+        harness.addToBattlefield(player1, new Blockbuster());
+        Permanent initiallyTapped = harness.addToBattlefieldAndReturn(player1, new SelesnyaSagittars());
+        Permanent initiallyUntapped = harness.addToBattlefieldAndReturn(player2, new SelesnyaSagittars());
+        initiallyTapped.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        initiallyTapped.untap();
+        initiallyUntapped.tap();
+        harness.passBothPriorities();
+
+        assertThat(initiallyTapped.getMarkedDamage()).isZero();
+        assertThat(initiallyUntapped.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(initiallyTapped);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(initiallyUntapped);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Blockbuster cannot be activated with only colorless mana")
+    void cannotActivateWithoutRedMana() {
+        harness.addToBattlefield(player1, new Blockbuster());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertOnBattlefield(player1, "Blockbuster");
+        harness.assertNotInGraveyard(player1, "Blockbuster");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Sacrificing Blockbuster deals 3 damage to each tapped creature and each player")

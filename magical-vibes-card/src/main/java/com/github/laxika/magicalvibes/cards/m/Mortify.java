@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "40K", collectorNumber = "225")
 @CardRegistration(set = "LTC", collectorNumber = "269")
 @CardRegistration(set = "DMC", collectorNumber = "161")
+@CardRegistration(set = "ONC", collectorNumber = "122")
 @CardRegistration(set = "C18", collectorNumber = "186")
 public class Mortify extends Card {
 

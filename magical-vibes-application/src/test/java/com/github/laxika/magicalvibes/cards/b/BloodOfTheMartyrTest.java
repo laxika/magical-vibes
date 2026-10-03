@@ -71,9 +71,7 @@ class BloodOfTheMartyrTest extends BaseCardTest {
 
         castBloodOfTheMartyr();
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(indexOf(player1, blocker), indexOf(player2, attacker))));
         resolveCombat(player2);
@@ -125,8 +123,7 @@ class BloodOfTheMartyrTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Inferno()));
         harness.addMana(player2, ManaColor.RED, 7);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
         acceptAllRedirectChoices();
 
         assertThat(target.getMarkedDamage()).isZero();
@@ -154,11 +151,59 @@ class BloodOfTheMartyrTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
+    @Test
+    void canDeclineCombatDamageRedirection() {
+        harness.setLife(player1, 20);
+        Permanent blocker = addCreatureReady(player1, new BrothersOfFire());
+        Permanent attacker = addCreatureReady(player2, new BrothersOfFire());
+
+        castBloodOfTheMartyr();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(indexOf(player1, blocker), indexOf(player2, attacker))));
+        resolveCombat(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, "Brothers of Fire");
+        harness.assertInGraveyard(player2, "Brothers of Fire");
+    }
+
+    @Test
+    void eachSpellControllerCanChooseAfterTheOtherDeclines() {
+        Permanent target = addCreatureReady(player2, new FireDrake());
+        Permanent brothers = addCreatureReady(player2, new BrothersOfFire());
+        castBloodOfTheMartyr();
+        harness.setHand(player2, List.of(new BloodOfTheMartyr()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0);
+
+        activateBrothersOfFire(brothers, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        PendingInteraction.MayAbilityChoice firstChoice =
+                (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+        Player firstPlayer = firstChoice.playerId().equals(player1.getId()) ? player1 : player2;
+        Player otherPlayer = firstPlayer == player1 ? player2 : player1;
+        harness.handleMayAbilityChosen(firstPlayer, false);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        PendingInteraction.MayAbilityChoice secondChoice =
+                (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+        assertThat(secondChoice.playerId()).isEqualTo(otherPlayer.getId());
+        harness.handleMayAbilityChosen(otherPlayer, true);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
     private void castBloodOfTheMartyr() {
         harness.setHand(player1, List.of(new BloodOfTheMartyr()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void activateBrothersOfFire(Permanent brothers, UUID targetId) {

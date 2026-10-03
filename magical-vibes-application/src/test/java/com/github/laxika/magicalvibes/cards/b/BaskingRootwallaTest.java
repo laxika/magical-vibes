@@ -56,8 +56,6 @@ class BaskingRootwallaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -80,9 +78,7 @@ class BaskingRootwallaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
         assertThat(rootwalla.getEffectiveToughness()).isEqualTo(1);
@@ -128,6 +124,84 @@ class BaskingRootwallaTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("The pump can be activated while tapped and summoning sick")
+    void pumpDoesNotRequireTappingOrHaste() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player1, new BaskingRootwalla());
+        rootwalla.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(rootwalla.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activation limit applies before the first pump resolves")
+    void cannotActivateAgainInResponseToOwnPump() {
+        Permanent rootwalla = addCreatureReady(player1, new BaskingRootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Basking Rootwalla has its own once-per-turn activation limit")
+    void differentRootwallasCanEachPump() {
+        Permanent first = addCreatureReady(player1, new BaskingRootwalla());
+        Permanent second = addCreatureReady(player1, new BaskingRootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Madness casts a creature spell on the opponent's turn before it enters")
+    void madnessUsesStackOnOpponentsTurn() {
+        BaskingRootwalla rootwalla = discardViaUnhinge();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(rootwalla.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(rootwalla.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(rootwalla.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(rootwalla.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(rootwalla.getId()));
+    }
     private BaskingRootwalla discardViaUnhinge() {
         BaskingRootwalla rootwalla = new BaskingRootwalla();
         harness.setHand(player1, List.of(rootwalla));

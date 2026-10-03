@@ -147,10 +147,8 @@ class ClockworkSteedTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked by an artifact creature")
     void cannotBeBlockedByArtifactCreature() {
-        Permanent steed = new Permanent(new ClockworkSteed());
-        steed.setSummoningSick(false);
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
         steed.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(steed);
 
         addCreatureReady(player2, new ClockworkGnomes());
 
@@ -164,10 +162,8 @@ class ClockworkSteedTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked by a non-artifact creature")
     void canBeBlockedByNonArtifactCreature() {
-        Permanent steed = new Permanent(new ClockworkSteed());
-        steed.setSummoningSick(false);
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
         steed.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(steed);
 
         Permanent blocker = addCreatureReady(player2, new AnabaBodyguard());
 
@@ -178,7 +174,73 @@ class ClockworkSteedTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Declaring an attacker does not trigger counter removal")
+    void declaringAttackerDoesNotCreateTrigger() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counter removal waits for the end-of-combat trigger to resolve")
+    void endOfCombatCounterRemovalUsesStack() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The controller may choose zero counters even when X is positive")
+    void upkeepAbilityMayDeclineCounters() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        activateUpkeepAbility(3, "0");
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        assertThat(steed.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller may choose fewer counters than X")
+    void upkeepAbilityMayChooseFewerCounters() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        activateUpkeepAbility(3, "2");
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability does not remove counters already above the cap")
+    void upkeepAbilityPreservesCountersAboveCap() {
+        Permanent steed = addCreatureReady(player1, new ClockworkSteed());
+        steed.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 5);
+
+        activateUpkeepAbility(3);
+
+        assertThat(steed.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(5);
+        assertThat(steed.isTapped()).isTrue();
+    }
+
     private void activateUpkeepAbility(int x) {
+        activateUpkeepAbility(x, null);
+    }
+
+    private void activateUpkeepAbility(int x, String counterAmount) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
@@ -188,7 +250,7 @@ class ClockworkSteedTest extends BaseCardTest {
         harness.passBothPriorities();
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (choice != null) {
-            harness.handleListChoice(player1, choice.options().getLast());
+            harness.handleListChoice(player1, counterAmount == null ? choice.options().getLast() : counterAmount);
         }
     }
 

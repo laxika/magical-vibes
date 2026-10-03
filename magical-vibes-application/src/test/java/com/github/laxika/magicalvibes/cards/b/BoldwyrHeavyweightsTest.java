@@ -62,7 +62,7 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent may decline the search (fail to find)")
+    @DisplayName("Opponent may decline without searching their library")
     void opponentCanDecline() {
         castHeavyweights();
         setupOpponentLibrary(player2);
@@ -75,17 +75,60 @@ class BoldwyrHeavyweightsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
     }
 
     @Test
-    @DisplayName("No prompt when opponent has no creature cards in library")
-    void noCreaturesNoPrompt() {
+    @DisplayName("A library with no creatures still offers an optional search")
+    void noCreaturesStillOffersOptionalSearch() {
         castHeavyweights();
         harness.setLibrary(player2, List.of(new Plains(), new Forest()));
         resolveEtb();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Offering a search does not count as searching before the opponent chooses")
+    void offeringSearchDoesNotCountAsSearching() {
+        castHeavyweights();
+        setupOpponentLibrary(player2);
+        resolveEtb();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+    }
+
+    @Test
+    @DisplayName("An empty library does not automatically count as an accepted search")
+    void emptyLibraryDoesNotAutomaticallySearch() {
+        castHeavyweights();
+        harness.setLibrary(player2, List.of());
+        resolveEtb();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A selected creature leaves the library and only the opponent searches")
+    void selectedCreatureLeavesLibrary() {
+        castHeavyweights();
+        setupOpponentLibrary(player2);
+        resolveEtb();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player2, indexOfCreature(search));
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Forest");
+        assertThat(gd.playersWhoSearchedLibraryThisTurn)
+                .contains(player2.getId()).doesNotContain(player1.getId());
     }
 
     private void castHeavyweights() {

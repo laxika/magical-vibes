@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.Ghostfire;
+import com.github.laxika.magicalvibes.cards.n.NoxiousRevival;
+import com.github.laxika.magicalvibes.cards.t.ThoughtScour;
 import com.github.laxika.magicalvibes.cards.s.SproutSwarm;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BridgeFromBelow.class, BladeOfTheSixthPride.class, Ghostfire.class, SproutSwarm.class})
+@CardUsed({BridgeFromBelow.class, BladeOfTheSixthPride.class, Ghostfire.class, SproutSwarm.class,
+        NoxiousRevival.class, ThoughtScour.class})
 class BridgeFromBelowTest extends BaseCardTest {
 
     @Test
@@ -112,6 +115,74 @@ class BridgeFromBelowTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bridge);
     }
 
+    @Test
+    void multipleBridgesEachCreateZombie() {
+        harness.setGraveyard(player1, List.of(new BridgeFromBelow(), new BridgeFromBelow()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BladeOfTheSixthPride());
+
+        destroyCreature(player1, creature.getId());
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+    }
+
+    @Test
+    void exileResolvingBeforeZombieTriggerPreventsToken() {
+        BridgeFromBelow bridge = new BridgeFromBelow();
+        harness.setGraveyard(player1, List.of(bridge));
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BladeOfTheSixthPride());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
+        harness.setHand(player1, List.of(new Ghostfire(), new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, ownCreature.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, opponentCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bridge);
+    }
+
+    @Test
+    void returnedBridgeDoesNotSatisfyOldZombieTrigger() {
+        BridgeFromBelow bridge = triggerThenReturnBridgeToGraveyard(false);
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bridge);
+    }
+
+    @Test
+    void returnedBridgeIsNotExiledByOldTrigger() {
+        BridgeFromBelow bridge = triggerThenReturnBridgeToGraveyard(true);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bridge);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bridge);
+    }
+
+    private BridgeFromBelow triggerThenReturnBridgeToGraveyard(boolean opponentDeath) {
+        BridgeFromBelow bridge = new BridgeFromBelow();
+        harness.setGraveyard(player1, List.of(bridge));
+        harness.setLibrary(player1, List.of(new BladeOfTheSixthPride(), new BladeOfTheSixthPride()));
+        Permanent creature = harness.addToBattlefieldAndReturn(
+                opponentDeath ? player2 : player1, new BladeOfTheSixthPride());
+        harness.setHand(player1, List.of(new Ghostfire(), new NoxiousRevival(), new ThoughtScour()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, bridge.getId());
+        harness.assertNotInGraveyard(player1, "Bridge from Below");
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertInGraveyard(player1, "Bridge from Below");
+        assertThat(gd.stack).hasSize(1);
+        return bridge;
+    }
     private Permanent createSaproling(com.github.laxika.magicalvibes.model.Player player) {
         harness.setHand(player, List.of(new SproutSwarm()));
         harness.addMana(player, ManaColor.GREEN, 1);

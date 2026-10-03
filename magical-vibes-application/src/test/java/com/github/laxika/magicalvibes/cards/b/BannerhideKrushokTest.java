@@ -20,6 +20,85 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BannerhideKrushokTest extends BaseCardTest {
 
     @Test
+    void reinforceCanTargetOpponentsCreatureDuringTheirTurn() {
+        harness.setHand(player1, List.of(new BannerhideKrushok()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void reinforceRejectsLandWithoutDiscardingSource() {
+        harness.setHand(player1, List.of(new BannerhideKrushok()));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Bannerhide Krushok");
+        harness.assertNotInGraveyard(player1, "Bannerhide Krushok");
+    }
+
+    @Test
+    void scavengeExilesSourceBeforeResolvingAndCanTargetOpponentsCreature() {
+        BannerhideKrushok krushok = new BannerhideKrushok();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(krushok));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateGraveyardAbility(player1, 0, bears.getId());
+
+        harness.assertNotInGraveyard(player1, "Bannerhide Krushok");
+        assertThat(gd.exiledCards).anySatisfy(entry ->
+                assertThat(entry.card().getId()).isEqualTo(krushok.getId()));
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void scavengeRejectsActivationDuringUpkeep() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new BannerhideKrushok()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Bannerhide Krushok");
+    }
+
+    @Test
+    void scavengeRejectsActivationWithAnAbilityOnTheStack() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BannerhideKrushok()));
+        harness.setGraveyard(player1, List.of(new BannerhideKrushok()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateHandAbility(player1, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Bannerhide Krushok");
+    }
+
+    @Test
     @DisplayName("Reinforce puts two +1/+1 counters on target creature")
     void reinforceBoostsTargetCreature() {
         harness.setHand(player1, List.of(new BannerhideKrushok()));

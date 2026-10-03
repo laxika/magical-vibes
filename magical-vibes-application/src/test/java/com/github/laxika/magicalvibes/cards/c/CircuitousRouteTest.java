@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GolgariGuildgate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SteamVents;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CircuitousRoute.class, Forest.class, GolgariGuildgate.class,
+        CentaurPeacemaker.class, SteamVents.class})
 class CircuitousRouteTest extends BaseCardTest {
 
     @Test
@@ -39,7 +40,8 @@ class CircuitousRouteTest extends BaseCardTest {
                 .allMatch(card -> card.hasType(CardType.LAND)
                         && (card.getSupertypes().contains(CardSupertype.BASIC)
                         || card.getSubtypes().contains(CardSubtype.GATE)))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+                .extracting(card -> card.getName())
+                .containsExactly("Forest", "Golgari Guildgate");
     }
 
     @Test
@@ -49,8 +51,8 @@ class CircuitousRouteTest extends BaseCardTest {
         setupLibrary();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -68,8 +70,108 @@ class CircuitousRouteTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new GolgariGuildgate(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new GolgariGuildgate(), new CentaurPeacemaker()));
+    }
+
+    @Test
+    void mayChooseNoCardsEvenWhenBothAreAvailable() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Circuitous Route");
+    }
+
+    @Test
+    void mayStopAfterOneCardWithAnotherEligibleCardRemaining() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.isTapped());
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Golgari Guildgate");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void mayChooseTwoGatesWithTheSameNameButNoThirdCard() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new GolgariGuildgate(), new GolgariGuildgate(), new Forest()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allMatch(permanent -> permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Forest");
+    }
+
+    @Test
+    void finishesWhenOnlyOneEligibleCardExists() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest(), new SteamVents(), new CentaurPeacemaker()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Steam Vents", "Centaur Peacemaker");
+    }
+
+    @Test
+    void nonbasicLandWithBasicLandTypesIsNotEligible() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new SteamVents(), new CentaurPeacemaker()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Circuitous Route");
+    }
+
+    @Test
+    void twoBasicLandsEnterTogetherAfterTheSearchChoices() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new CentaurPeacemaker()));
+        harness.setLibrary(player2, List.of(new GolgariGuildgate()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allMatch(permanent -> permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Centaur Peacemaker");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(card -> card.getName())
+                .containsExactly("Golgari Guildgate");
+    }
+
+    @Test
+    void emptyLibraryDoesNotPreventResolution() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Circuitous Route");
     }
 }

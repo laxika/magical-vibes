@@ -18,6 +18,55 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BrandedBrawlersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("One untapped land prevents attacking even among tapped lands")
+    void cannotAttackWithMixedDefendingLandStates() {
+        addCreatureReady(player1, new BrandedBrawlers());
+        harness.addToBattlefieldAndReturn(player2, new RhysticCave()).tap();
+        harness.addToBattlefield(player2, new RhysticCave());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Untapped nonland permanents do not prevent attacking")
+    void canAttackWithUntappedDefendingNonland() {
+        addCreatureReady(player1, new BrandedBrawlers());
+        harness.addToBattlefield(player2, new PygmyRazorback());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(0).isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One untapped land prevents blocking even among tapped lands")
+    void cannotBlockWithMixedControllerLandStates() {
+        addCreatureReady(player1, new PygmyRazorback()).setAttacking(true);
+        addCreatureReady(player2, new BrandedBrawlers());
+        harness.addToBattlefieldAndReturn(player2, new RhysticCave()).tap();
+        harness.addToBattlefield(player2, new RhysticCave());
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Untapped nonland permanents do not prevent blocking")
+    void canBlockWithUntappedControllerNonland() {
+        addCreatureReady(player1, new PygmyRazorback()).setAttacking(true);
+        addCreatureReady(player2, new BrandedBrawlers());
+        harness.addToBattlefield(player2, new PygmyRazorback());
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Cannot attack while defending player controls an untapped land")
     void cannotAttackWhileDefendingPlayerControlsUntappedLand() {
         addCreatureReady(player1, new BrandedBrawlers());

@@ -128,4 +128,41 @@ class BloodLustTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Repeated Blood Lust adds power without reducing toughness below one")
+    void repeatedCastsKeepToughnessAtOne() {
+        harness.addToBattlefield(player1, new BarbaryApes());
+        harness.setHand(player1, List.of(new BloodLust(), new BloodLust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Barbary Apes");
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        Permanent creature = findPermanent(player1, "Barbary Apes");
+        assertThat(creature.getEffectivePower()).isEqualTo(10);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The toughness branch is evaluated at resolution after a response")
+    void usesToughnessAtResolution() {
+        harness.addToBattlefield(player1, new WallOfEarth());
+        harness.setHand(player1, List.of(new BloodLust(), new BloodLust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Wall of Earth");
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent wall = findPermanent(player1, "Wall of Earth");
+        assertThat(wall.getEffectivePower()).isEqualTo(4);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(wall.getEffectivePower()).isEqualTo(8);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
+    }
+
 }

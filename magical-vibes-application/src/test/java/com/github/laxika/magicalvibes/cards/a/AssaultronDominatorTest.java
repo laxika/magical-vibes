@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.d.DogmeatEverLoyal;
+import com.github.laxika.magicalvibes.cards.s.SecuritronSquadron;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AssaultronDominator.class, Memnite.class, GrizzlyBears.class})
+@CardUsed({AssaultronDominator.class, SecuritronSquadron.class, DogmeatEverLoyal.class})
 class AssaultronDominatorTest extends BaseCardTest {
 
     @Test
@@ -36,7 +36,7 @@ class AssaultronDominatorTest extends BaseCardTest {
     void paysEnergyAndPutsTheChosenCounterOnTheAttackingArtifactCreature(
             String choice, CounterType counterType) {
         addCreatureReady(player1, new AssaultronDominator());
-        Permanent attacker = addCreatureReady(player1, new Memnite());
+        Permanent attacker = addCreatureReady(player1, new SecuritronSquadron());
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         declareAttackers(List.of(1));
@@ -56,7 +56,7 @@ class AssaultronDominatorTest extends BaseCardTest {
     @Test
     void doesNotTriggerForNonartifactCreature() {
         addCreatureReady(player1, new AssaultronDominator());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new DogmeatEverLoyal());
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         declareAttackers(List.of(1));
@@ -66,6 +66,87 @@ class AssaultronDominatorTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(attacker.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
         assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isZero();
+    }
+
+    @Test
+    void canDeclineToPayEnergy() {
+        addCreatureReady(player1, new AssaultronDominator());
+        Permanent attacker = addCreatureReady(player1, new SecuritronSquadron());
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isZero();
+    }
+
+    @Test
+    void cannotPutACounterWithoutEnergy() {
+        addCreatureReady(player1, new AssaultronDominator());
+        Permanent attacker = addCreatureReady(player1, new SecuritronSquadron());
+        gd.playerEnergyCounters.put(player1.getId(), 0);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void triggersForItsOwnAttack() {
+        Permanent dominator = addCreatureReady(player1, new AssaultronDominator());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Put a +1/+1 counter on that creature");
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(dominator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void attackTriggerStillResolvesAfterDominatorLeaves() {
+        Permanent dominator = addCreatureReady(player1, new AssaultronDominator());
+        Permanent attacker = addCreatureReady(player1, new SecuritronSquadron());
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+
+        declareAttackers(List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(dominator);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Put a trample counter on that creature");
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsArtifactCreature() {
+        addCreatureReady(player1, new AssaultronDominator());
+        Permanent attacker = addCreatureReady(player2, new SecuritronSquadron());
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
 }

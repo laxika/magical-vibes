@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.CourserOfKruphix;
+import com.github.laxika.magicalvibes.cards.e.Erase;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
 import com.github.laxika.magicalvibes.cards.p.PlagueBeetle;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -155,5 +160,81 @@ class AuraFluxTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(firstAuraFlux, secondAuraFlux, knighthood);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @CardUsed({AuraFlux.class, CourserOfKruphix.class, Humility.class})
+    @DisplayName("Later Humility removes the upkeep ability from an enchantment creature")
+    void laterHumilityRemovesGrantedUpkeepAbility() {
+        harness.enterBattlefieldAndReturn(player2, new AuraFlux());
+        Permanent courser = harness.enterBattlefieldAndReturn(player1, new CourserOfKruphix());
+        harness.enterBattlefieldAndReturn(player1, new Humility());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Humility");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(courser);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({AuraFlux.class, CourserOfKruphix.class, Humility.class})
+    @DisplayName("Later Aura Flux grants its upkeep ability after Humility removes abilities")
+    void laterAuraFluxGrantsAbilityAfterHumility() {
+        Permanent courser = harness.enterBattlefieldAndReturn(player1, new CourserOfKruphix());
+        Permanent humility = harness.enterBattlefieldAndReturn(player1, new Humility());
+        harness.enterBattlefieldAndReturn(player2, new AuraFlux());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(courser, humility);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({AuraFlux.class, Knighthood.class, Erase.class})
+    @DisplayName("Removing Aura Flux does not remove an already triggered upkeep ability")
+    void upkeepAbilitySurvivesAuraFluxLeavingBattlefield() {
+        Permanent auraFlux = addAuraFlux(player1);
+        addKnighthood(player1);
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Erase()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, auraFlux.getId());
+
+        harness.assertNotOnBattlefield(player1, "Aura Flux");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Knighthood");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An enchantment is not taxed during another player's upkeep")
+    void onlyActivePlayersEnchantmentsAreTaxed() {
+        addAuraFlux(player1);
+        Permanent knighthood = addKnighthood(player2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(knighthood);
     }
 }

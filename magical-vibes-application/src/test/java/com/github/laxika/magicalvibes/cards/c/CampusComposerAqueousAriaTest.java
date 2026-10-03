@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,19 +15,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CampusComposerAqueousAria.class, Shock.class})
 class CampusComposerAqueousAriaTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Aqueous Aria back face")
-    void hasCorrectStructure() {
-        CampusComposerAqueousAria card = new CampusComposerAqueousAria();
+    @DisplayName("Campus Composer is prepared immediately on entry without a triggered ability")
+    void entersAlreadyPrepared() {
+        harness.setHand(player1, List.of(new CampusComposerAqueousAria()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("AqueousAria");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Aqueous Aria");
+        assertThat(findPermanent(player1, "Campus Composer").isPrepared()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -58,13 +59,12 @@ class CampusComposerAqueousAriaTest extends BaseCardTest {
         assertThat(gd.findExiledCard(copyId)).isNull();
         assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Elemental"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Elemental");
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(3);
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+        assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
     }
 
     @Test
@@ -86,12 +86,60 @@ class CampusComposerAqueousAriaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CampusComposerAqueousAria()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
+        resolveAllTriggers();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Campus Composer"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Campus Composer");
+    }
+
+    @Test
+    @DisplayName("Casting Aqueous Aria unprepares its source before the spell resolves")
+    void unpreparesDuringCasting() {
+        Permanent composer = castCampusComposer();
+        UUID copyId = composer.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castFromExile(player1, copyId);
+
+        assertThat(composer.isPrepared()).isFalse();
+        assertThat(composer.getPreparedSpellCardId()).isNull();
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Aqueous Aria");
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's spell when they cannot pay two mana")
+    void wardCountersUnpaidSpell() {
+        Permanent composer = castCampusComposer();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, composer.getId());
+        resolveAllTriggers();
+
+        assertThat(composer.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying ward's two mana lets the opponent's spell resolve")
+    void wardCanBePaid() {
+        Permanent composer = castCampusComposer();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, composer.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(composer.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Shock");
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CatharticAdept.class})
 class CatharticAdeptTest extends BaseCardTest {
 
     @Test
@@ -29,7 +31,7 @@ class CatharticAdeptTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Cathartic Adept");
+        assertThat(entry.getCard()).isSameAs(adept.getCard());
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -86,8 +88,7 @@ class CatharticAdeptTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent adept = new Permanent(new CatharticAdept());
-        gd.playerBattlefields.get(player1.getId()).add(adept);
+        harness.addToBattlefield(player1, new CatharticAdept());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -105,10 +106,27 @@ class CatharticAdeptTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("The activated ability resolves after Cathartic Adept leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent adept = addReadyAdept(player1);
+        Card topCard = new CatharticAdept();
+        Card nextCard = new CatharticAdept();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(adept);
+        harness.setGraveyard(player1, List.of(adept.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(adept.getCard());
+    }
+
     private Permanent addReadyAdept(Player player) {
-        Permanent perm = new Permanent(new CatharticAdept());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CatharticAdept());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

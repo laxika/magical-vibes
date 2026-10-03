@@ -178,11 +178,113 @@ class BarrelingAttackTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The delayed trigger belongs to the spell's controller and has the spell as its source")
+    void targetingOpponentsCreaturePreservesSpellControllerAndSource() {
+        Permanent target = addCreatureReady(player2, new ViashinoWarrior());
+        addCreatureReady(player1, new ViashinoWarrior());
+        castBarrelingAttack(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BarrelingAttack.class);
+        resolveAllTriggers();
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two castings create separate delayed triggers that resolve independently")
+    void repeatedCastingsCreateSeparateTriggers() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
+        castBarrelingAttack(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        resolveAllTriggers();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Only the remaining blocker is counted when one of two blockers is destroyed")
+    void countsRemainingBlockerAtResolution() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing the only target before resolution prevents all spell effects")
+    void removedTargetMakesSpellFailToResolve() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        harness.setHand(player1, List.of(new BarrelingAttack()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        gs.passPriority(gd, player1);
+        harness.castInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The delayed blocking bonus expires even if the creature never became blocked that turn")
+    void unusedBlockingBonusExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player1, new ViashinoWarrior());
+        addCreatureReady(player2, new ViashinoWarrior());
+        castBarrelingAttack(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
     private void castBarrelingAttack(Permanent target) {

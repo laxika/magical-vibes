@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +28,6 @@ class BorosGarrisonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(garrison.getId(), mountain.getId());
@@ -79,5 +77,39 @@ class BorosGarrisonTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(garrison.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot choose an opponent's land for the return ability")
+    void cannotReturnOpponentsLand() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new BorosGarrison()));
+        harness.playLand(player1, 0);
+        Permanent garrison = findPermanent(player1, "Boros Garrison");
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(garrison.getId());
+        harness.handlePermanentChosen(player1, garrison.getId());
+
+        harness.assertInHand(player1, "Boros Garrison");
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Can return itself even when another land is available")
+    void canReturnItselfWithAnotherLandAvailable() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new BorosGarrison()));
+        harness.playLand(player1, 0);
+        Permanent garrison = findPermanent(player1, "Boros Garrison");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, garrison.getId());
+
+        harness.assertInHand(player1, "Boros Garrison");
+        harness.assertNotOnBattlefield(player1, "Boros Garrison");
+        harness.assertOnBattlefield(player1, "Mountain");
     }
 }

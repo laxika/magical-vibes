@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.ConsignToDream;
 import com.github.laxika.magicalvibes.cards.d.DuskUrchins;
 import com.github.laxika.magicalvibes.cards.i.IlluminatedFolio;
 import com.github.laxika.magicalvibes.cards.i.IslebackSpawn;
@@ -16,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BitingTether.class, DuskUrchins.class, IlluminatedFolio.class, IslebackSpawn.class})
+@CardUsed({BitingTether.class, DuskUrchins.class, IlluminatedFolio.class, IslebackSpawn.class, ConsignToDream.class})
 class BitingTetherTest extends BaseCardTest {
-
-    // ===== Control =====
 
     @Test
     @DisplayName("Resolving Biting Tether steals the enchanted creature")
@@ -38,8 +37,6 @@ class BitingTetherTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
     }
-
-    // ===== Upkeep -1/-1 counter =====
 
     @Test
     @DisplayName("At controller's upkeep, enchanted creature gets a -1/-1 counter")
@@ -99,16 +96,12 @@ class BitingTetherTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent with Biting Tether")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new IlluminatedFolio());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IlluminatedFolio());
         harness.setHand(player1, List.of(new BitingTether()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-
-        Permanent artifact = findPermanent(player1, "Illuminated Folio");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -128,5 +121,29 @@ class BitingTetherTest extends BaseCardTest {
                 .hasMessageContaining("shroud");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Removing the Aura returns control but does not stop its pending upkeep counter")
+    void pendingCounterResolvesAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new DuskUrchins());
+        harness.setHand(player1, List.of(new BitingTether(), new ConsignToDream()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Biting Tether");
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Biting Tether");
+        harness.assertOnBattlefield(player2, "Dusk Urchins");
+        harness.assertNotOnBattlefield(player1, "Dusk Urchins");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
 }

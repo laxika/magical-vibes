@@ -90,4 +90,32 @@ class BlastodermTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, blastoderm.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Shroud prevents its controller's spell from targeting Blastoderm")
+    void shroudPreventsControllerTargeting() {
+        Permanent blastoderm = addCreatureReady(player1, new Blastoderm());
+
+        harness.setHand(player1, List.of(new FlowstoneStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, blastoderm.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Fading puts Blastoderm into its owner's graveyard when no counter can be removed")
+    void fadingSacrificePutsCardInGraveyard() {
+        harness.castFromHand(player1, new Blastoderm(), "{2}{G}{G}");
+        harness.passBothPriorities();
+        Permanent blastoderm = findPermanent(player1, "Blastoderm");
+        blastoderm.setCounterCount(CounterType.FADE, 0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blastoderm");
+        harness.assertInGraveyard(player1, "Blastoderm");
+    }
 }

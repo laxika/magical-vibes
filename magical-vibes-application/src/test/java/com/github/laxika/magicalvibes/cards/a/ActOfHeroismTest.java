@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.h.HarrierNaga;
+import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ActOfHeroism.class, HarrierNaga.class, Manalith.class})
 class ActOfHeroismTest extends BaseCardTest {
 
     @Test
@@ -40,10 +42,7 @@ class ActOfHeroismTest extends BaseCardTest {
         addAttacker();
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIdx, 0),
@@ -65,10 +64,7 @@ class ActOfHeroismTest extends BaseCardTest {
         addAttacker();
         addAttacker();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(blockerIdx, 0),
@@ -101,35 +97,85 @@ class ActOfHeroismTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addTappedCreature(player1); // a legal creature target must exist for the spell to be castable
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Manalith());
         harness.setHand(player1, List.of(new ActOfHeroism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("An already untapped creature still gets the boost and additional block")
+    void alreadyUntappedCreatureGetsAllBenefits() {
+        Permanent target = addCreatureReady(player1, new HarrierNaga());
+
+        castActOfHeroism(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(target.getAdditionalBlocksUntilEndOfTurn()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Acts of Heroism let the same creature block three attackers")
+    void repeatedCastsStack() {
+        Permanent blocker = addTappedCreature(player2);
+        castActOfHeroism(blocker);
+        castActOfHeroism(blocker);
+        addAttacker();
+        addAttacker();
+        addAttacker();
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        ));
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(7);
+        assertThat(blocker.getBlockingTargets()).containsExactlyInAnyOrder(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("If its target leaves before resolution, no effects apply to another creature")
+    void removedTargetDoesNotTransferEffects() {
+        Permanent target = addTappedCreature(player2);
+        Permanent other = addTappedCreature(player2);
+        harness.setHand(player1, List.of(new ActOfHeroism()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Act of Heroism");
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(other.getAdditionalBlocksUntilEndOfTurn()).isZero();
     }
 
     private void castActOfHeroism(Permanent target) {
         harness.setHand(player1, List.of(new ActOfHeroism()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new HarrierNaga());
         perm.tap();
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void addAttacker() {
-        Permanent atk = new Permanent(new GrizzlyBears());
-        atk.setSummoningSick(false);
+        Permanent atk = addCreatureReady(player1, new HarrierNaga());
         atk.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atk);
     }
 }

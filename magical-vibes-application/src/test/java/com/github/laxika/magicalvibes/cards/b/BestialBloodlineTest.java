@@ -88,10 +88,8 @@ class BestialBloodlineTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof BestialBloodline);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card instanceof BestialBloodline);
+        harness.assertInHand(player1, "Bestial Bloodline");
+        harness.assertNotInGraveyard(player1, "Bestial Bloodline");
     }
 
     @Test
@@ -102,5 +100,49 @@ class BestialBloodlineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Bestial Bloodline can enchant and boost an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BestialBloodline()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bestial Bloodline").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The graveyard ability returns only the copy that was activated")
+    void returnsOnlyActivatedCopy() {
+        BestialBloodline activated = new BestialBloodline();
+        BestialBloodline other = new BestialBloodline();
+        harness.setGraveyard(player1, List.of(other, activated));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(activated).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be paid with only colorless mana")
+    void graveyardAbilityRequiresGreenMana() {
+        harness.setGraveyard(player1, List.of(new BestialBloodline()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Bestial Bloodline");
     }
 }

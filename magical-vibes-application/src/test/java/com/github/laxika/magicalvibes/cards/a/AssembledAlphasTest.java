@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GavonyUnhallowed;
+import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AssembledAlphas.class, GrizzlyBears.class, GavonyUnhallowed.class, Murder.class})
 class AssembledAlphasTest extends BaseCardTest {
 
     @Test
@@ -75,10 +80,62 @@ class AssembledAlphasTest extends BaseCardTest {
     }
 
     private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    void removedBlockerStillHasItsControllerDamaged() {
+        addReady(player1).setAttacking(true);
+        Permanent blocker = addReady(player2, new GavonyUnhallowed());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareBlock(List.of(new BlockerAssignment(0, 0)));
+        destroyInResponse(blocker);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    void removedAttackerStillHasItsControllerDamaged() {
+        addReady(player2);
+        Permanent attacker = addReady(player1, new GavonyUnhallowed());
+        attacker.setAttacking(true);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        declareBlock(List.of(new BlockerAssignment(0, 0)));
+        destroyInResponse(attacker);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    void removedAlphasStillDealsBothKindsOfDamage() {
+        Permanent alphas = addReady(player1);
+        alphas.setAttacking(true);
+        Permanent blocker = addReady(player2, new GavonyUnhallowed());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareBlock(List.of(new BlockerAssignment(0, 0)));
+        destroyInResponse(alphas);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(alphas);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    private void destroyInResponse(Permanent creature) {
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
     }
 
     private void declareBlock(List<BlockerAssignment> assignments) {

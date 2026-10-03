@@ -41,7 +41,7 @@ class CelestialSwordTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.addToBattlefieldAndReturn(player1, new CelestialSword());
+        harness.addToBattlefield(player1, new CelestialSword());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -50,10 +50,85 @@ class CelestialSwordTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Balduvian Bears");
 
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Balduvian Bears");
         harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice uses the stack and allows responses")
+    void delayedSacrificeAllowsResponses() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new CelestialSword());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits until the following end step")
+    void activationDuringEndStepWaitsUntilNextEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new CelestialSword());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        int basePower = gqs.getEffectivePower(gd, bears);
+        int baseToughness = gqs.getEffectiveToughness(gd, bears);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying three mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new CelestialSword());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sword.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Sword")
+    void cannotActivateTappedSword() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new CelestialSword());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        sword.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

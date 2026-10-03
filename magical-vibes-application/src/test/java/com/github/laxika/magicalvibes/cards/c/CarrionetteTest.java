@@ -129,4 +129,91 @@ class CarrionetteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Multiple activations can exile multiple creatures with one Carrionette")
+    void multipleActivationsExileBothTargets() {
+        Permanent first = addCreatureReady(player2, new HornedTurtle());
+        Permanent second = addCreatureReady(player2, new HornedTurtle());
+        harness.setGraveyard(player1, List.of(new Carrionette()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0, first.getId());
+        harness.activateGraveyardAbility(player1, 0, second.getId());
+        harness.assertInGraveyard(player1, "Carrionette");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Horned Turtle");
+        harness.assertNotInGraveyard(player1, "Carrionette");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactlyInAnyOrder("Horned Turtle", "Horned Turtle", "Carrionette");
+    }
+
+    @Test
+    @DisplayName("The target is still exiled if Carrionette leaves the graveyard before resolution")
+    void sourceLeavingGraveyardDoesNotStopExilingTarget() {
+        Permanent turtle = addCreatureReady(player2, new HornedTurtle());
+        Carrionette carrionette = new Carrionette();
+        harness.setGraveyard(player1, List.of(carrionette));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0, turtle.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(carrionette));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Horned Turtle");
+        harness.assertInHand(player1, "Carrionette");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactly("Horned Turtle");
+    }
+
+    @Test
+    @DisplayName("The controller can target their own creature and pay to prevent both exiles")
+    void canTargetOwnCreatureAndPay() {
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+        harness.setGraveyard(player1, List.of(new Carrionette()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateGraveyardAbility(player1, 0, turtle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Horned Turtle");
+        harness.assertInGraveyard(player1, "Carrionette");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the two black mana in the activation cost")
+    void requiresTwoBlackMana() {
+        Permanent turtle = addCreatureReady(player2, new HornedTurtle());
+        harness.setGraveyard(player1, List.of(new Carrionette()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, turtle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Carrionette");
+        harness.assertOnBattlefield(player2, "Horned Turtle");
+    }
 }

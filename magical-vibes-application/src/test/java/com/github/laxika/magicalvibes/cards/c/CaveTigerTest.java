@@ -52,8 +52,8 @@ class CaveTigerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Blocked by two creatures still only gets +1/+1")
-    void multipleBlockersStillOneBoost() {
+    @DisplayName("Blocked by two creatures gets two separate +1/+1 triggers")
+    void multipleBlockersGiveSeparateBoosts() {
         Permanent tiger = addCreatureReady(player1, new CaveTiger());
         tiger.setAttacking(true);
         addCreatureReady(player2, new GorillaWarrior());
@@ -64,10 +64,33 @@ class CaveTigerTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
         ));
+
+        assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
 
         assertThat(tiger.getPowerModifier()).isEqualTo(1);
         assertThat(tiger.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(tiger.getPowerModifier()).isEqualTo(2);
+        assertThat(tiger.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cave Tiger does not get a boost when it blocks")
+    void blockingDoesNotCreateTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        attacker.setAttacking(true);
+        Permanent tiger = addCreatureReady(player2, new CaveTiger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(tiger.getPowerModifier()).isZero();
+        assertThat(tiger.getToughnessModifier()).isZero();
     }
 
     @Test

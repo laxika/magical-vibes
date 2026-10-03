@@ -84,4 +84,42 @@ class BalshanCollaboratorTest extends BaseCardTest {
         assertThat(collaborator.getPowerModifier()).isZero();
         assertThat(collaborator.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Balshan Collaborator can activate its ability while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent collaborator = harness.addToBattlefieldAndReturn(player1, new BalshanCollaborator());
+        collaborator.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
+        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(collaborator.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The boost applies only to its source and only when the ability resolves")
+    void boostsOnlySourceOnResolution() {
+        Permanent collaborator = addCreatureReady(player1, new BalshanCollaborator());
+        Permanent otherCollaborator = addCreatureReady(player1, new BalshanCollaborator());
+        Permanent opposingCollaborator = addCreatureReady(player2, new BalshanCollaborator());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(collaborator.getPowerModifier()).isZero();
+        assertThat(collaborator.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(collaborator.getPowerModifier()).isEqualTo(1);
+        assertThat(collaborator.getToughnessModifier()).isEqualTo(1);
+        assertThat(otherCollaborator.getPowerModifier()).isZero();
+        assertThat(otherCollaborator.getToughnessModifier()).isZero();
+        assertThat(opposingCollaborator.getPowerModifier()).isZero();
+        assertThat(opposingCollaborator.getToughnessModifier()).isZero();
+    }
 }

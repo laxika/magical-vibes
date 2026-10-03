@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChainsOfCustody.class, GrizzlyBears.class, FountainOfYouth.class,
-        Naturalize.class, Shock.class})
+        Naturalize.class, Shock.class, ProdigalPyromancer.class})
 class ChainsOfCustodyTest extends BaseCardTest {
 
     @Test
@@ -51,8 +52,7 @@ class ChainsOfCustodyTest extends BaseCardTest {
         UUID auraId = harness.getPermanentId(player1, "Chains of Custody");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraId);
 
         harness.assertOnBattlefield(player2, "Fountain of Youth");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -76,6 +76,116 @@ class ChainsOfCustodyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Chains of Custody");
+    }
+
+    @Test
+    @DisplayName("Paying ward allows the opponent's spell to resolve")
+    void payingWardAllowsSpellToResolve() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        castAndResolve(creature.getId(), target.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Chains of Custody");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Ward does not counter the creature controller's own spell")
+    void ownSpellDoesNotTriggerWard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        castAndResolve(creature.getId(), target.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Chains of Custody");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Nothing is exiled if the Aura leaves before its enter trigger resolves")
+    void auraLeavesBeforeExileTriggerResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new ChainsOfCustody()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, List.of(creature.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Chains of Custody"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chains of Custody");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Aura can resolve when the opponent has no nonland permanents")
+    void auraResolvesWithoutExileTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ChainsOfCustody()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chains of Custody");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's activated ability when its cost cannot be paid")
+    void wardCountersActivatedAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        castAndResolve(creature.getId(), target.getId());
+        addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Prodigal Pyromancer");
+        harness.assertOnBattlefield(player1, "Chains of Custody");
+    }
+
+    @Test
+    @DisplayName("Cannot enchant an opponent's creature")
+    void cannotEnchantOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ChainsOfCustody()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Chains of Custody");
     }
 
     @Test

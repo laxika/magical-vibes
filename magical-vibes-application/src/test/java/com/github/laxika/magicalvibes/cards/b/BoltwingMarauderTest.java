@@ -25,8 +25,7 @@ class BoltwingMarauderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -43,8 +42,7 @@ class BoltwingMarauderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -87,8 +85,73 @@ class BoltwingMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        Permanent marauder = findPermanent(player1, "Boltwing Marauder");
-        assertThat(gqs.getEffectivePower(gd, marauder)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, marauder)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Boltwing Marauder");
+    }
+
+    @Test
+    @CardUsed({BoltwingMarauder.class})
+    @DisplayName("The trigger can target the Marauder itself")
+    void canTargetItself() {
+        Permanent marauder = harness.addToBattlefieldAndReturn(player1, new BoltwingMarauder());
+        int initialPower = gqs.getEffectivePower(gd, marauder);
+        int initialToughness = gqs.getEffectiveToughness(gd, marauder);
+
+        harness.setHand(player1, List.of(new BoltwingMarauder()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, marauder.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, marauder)).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, marauder)).isEqualTo(initialToughness);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({BoltwingMarauder.class})
+    @DisplayName("The trigger can target the creature that just entered")
+    void canTargetEnteringCreature() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new BoltwingMarauder());
+        harness.setHand(player1, List.of(new BoltwingMarauder()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent entering = findPermanents(player1, "Boltwing Marauder").stream()
+                .filter(permanent -> !permanent.getId().equals(original.getId()))
+                .findFirst().orElseThrow();
+        int initialPower = gqs.getEffectivePower(gd, entering);
+        int initialToughness = gqs.getEffectiveToughness(gd, entering);
+        harness.handlePermanentChosen(player1, entering.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(initialPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(initialToughness);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Separate creature entries give cumulative boosts to the same target")
+    void repeatedEntriesStackBoosts() {
+        Permanent marauder = harness.addToBattlefieldAndReturn(player1, new BoltwingMarauder());
+        int initialPower = gqs.getEffectivePower(gd, marauder);
+        int initialToughness = gqs.getEffectiveToughness(gd, marauder);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+            harness.handlePermanentChosen(player1, marauder.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, marauder)).isEqualTo(initialPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, marauder)).isEqualTo(initialToughness);
     }
 }

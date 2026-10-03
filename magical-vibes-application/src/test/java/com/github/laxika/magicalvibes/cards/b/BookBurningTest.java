@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.p.PrismaticStrands;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BookBurning.class, BorderPatrol.class, SuntailHawk.class})
+@CardUsed({BookBurning.class, BorderPatrol.class, SuntailHawk.class, PrismaticStrands.class})
 class BookBurningTest extends BaseCardTest {
 
     @Test
@@ -77,8 +78,7 @@ class BookBurningTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BookBurning()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     @Test
@@ -124,5 +124,60 @@ class BookBurningTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Accepting prevented damage still prevents milling")
+    void preventedDamageStillPreventsMill() {
+        harness.castFromHand(player1, new PrismaticStrands(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.setLibrary(player2, List.of(new SuntailHawk(), new SuntailHawk()));
+        int lifeBefore = gd.getLife(player2.getId());
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster may target themselves and mills exactly the top six cards")
+    void selfTargetMillsTopSixCards() {
+        List<SuntailHawk> milled = List.of(new SuntailHawk(), new SuntailHawk(),
+                new SuntailHawk(), new SuntailHawk(), new SuntailHawk(), new SuntailHawk());
+        BorderPatrol remaining = new BorderPatrol();
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2),
+                milled.get(3), milled.get(4), milled.get(5), remaining));
+        int lifeBefore = gd.getLife(player1.getId());
+        castBookBurning(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(milled);
+        harness.assertInGraveyard(player1, "Book Burning");
+    }
+
+    @Test
+    @DisplayName("An empty target library does not skip the damage choices")
+    void emptyLibraryStillAllowsDamageChoice() {
+        harness.setLibrary(player2, List.of());
+        int lifeBefore = gd.getLife(player1.getId());
+        castBookBurning(player2.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 6);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

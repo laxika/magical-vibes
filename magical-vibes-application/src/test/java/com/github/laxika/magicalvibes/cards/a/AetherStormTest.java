@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
 import com.github.laxika.magicalvibes.cards.w.WinterSky;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -161,5 +162,65 @@ class AetherStormTest extends BaseCardTest {
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
         harness.assertNotOnBattlefield(player1, "Aether Storm");
+    }
+
+    @Test
+    @DisplayName("Paying life does not remove the restriction before the ability resolves")
+    void restrictionRemainsUntilDestructionResolves() {
+        harness.addToBattlefield(player1, new AetherStorm());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 16);
+        harness.assertOnBattlefield(player1, "Aether Storm");
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.castFromHand(player1, new DwarvenTrader(), "{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Aether Storm");
+        harness.castFromHand(player1, new DwarvenTrader(), "{R}");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Destroying one Aether Storm leaves another copy's restriction active")
+    void anotherStormContinuesToPreventCreatureCasting() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AetherStorm());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AetherStorm());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first).contains(second);
+        harness.assertLife(player1, 16);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromHand(player1, new DwarvenTrader(), "{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Aether Storm does not prevent creatures' activated abilities")
+    void creatureActivatedAbilitiesRemainUsable() {
+        harness.addToBattlefield(player1, new AetherStorm());
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Roterothopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thopter.getEffectivePower()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Aether Storm");
     }
 }

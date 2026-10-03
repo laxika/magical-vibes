@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,24 +12,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodPrice.class, GrizzlyBears.class})
+@CardUsed({BloodPrice.class})
 class BloodPriceTest extends BaseCardTest {
 
     @Test
     void keepsTwoCardsAndReordersTheRestOnTheBottomThenLosesLife() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card third = new GrizzlyBears();
-        Card fourth = new GrizzlyBears();
-        Card untouched = new GrizzlyBears();
+        Card first = new BloodPrice();
+        Card second = new BloodPrice();
+        Card third = new BloodPrice();
+        Card fourth = new BloodPrice();
+        Card untouched = new BloodPrice();
         BloodPrice spell = new BloodPrice();
         harness.setLibrary(player1, List.of(first, second, third, fourth, untouched));
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -55,17 +53,70 @@ class BloodPriceTest extends BaseCardTest {
 
     @Test
     void withFewerThanTwoCardsAllAvailableCardsGoToHandAndLifeIsStillLost() {
-        Card only = new GrizzlyBears();
+        Card only = new BloodPrice();
         harness.setLibrary(player1, List.of(only));
         harness.setHand(player1, List.of(new BloodPrice()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(only);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryStillLosesLifeWithoutDrawing() {
+        BloodPrice spell = new BloodPrice();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void exactlyTwoCardsBothGoToHandWithoutAChoice() {
+        Card first = new BloodPrice();
+        Card second = new BloodPrice();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new BloodPrice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void threeCardLibraryKeepsTwoAndBottomsTheSingleRemainingCard() {
+        Card first = new BloodPrice();
+        Card second = new BloodPrice();
+        Card third = new BloodPrice();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new BloodPrice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId(), third.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

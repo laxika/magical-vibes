@@ -8,11 +8,15 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +25,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CallToTheKindred.class, GrizzlyBears.class, LlanowarElves.class, Shock.class,
+        AirElemental.class, Plains.class, FountainOfYouth.class, Naturalize.class, AmoeboidChangeling.class})
 class CallToTheKindredTest extends BaseCardTest {
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Can target a creature with Call to the Kindred")
@@ -42,7 +46,7 @@ class CallToTheKindredTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         harness.setHand(player1, List.of(new CallToTheKindred()));
@@ -52,8 +56,6 @@ class CallToTheKindredTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
-
-    // ===== Resolving aura =====
 
     @Test
     @DisplayName("Resolving Call to the Kindred attaches it to target creature")
@@ -72,8 +74,6 @@ class CallToTheKindredTest extends BaseCardTest {
                         && p.getAttachedTo().equals(creature.getId()));
     }
 
-    // ===== Upkeep trigger — may prompt =====
-
     @Test
     @DisplayName("Upkeep prompts controller with may ability to look")
     void upkeepPromptsMayAbility() {
@@ -89,15 +89,12 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
-    // ===== Declining to look =====
-
     @Test
     @DisplayName("Declining to look does nothing")
     void decliningDoesNothing() {
         setupAuraOnBears();
         GrizzlyBears topBear = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 topBear, new LlanowarElves(), new Shock(), new Plains(), new Plains()
         ));
 
@@ -108,8 +105,6 @@ class CallToTheKindredTest extends BaseCardTest {
         // Library is unchanged — top card is still the bear
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topBear);
     }
-
-    // ===== Accepting — with matching creature =====
 
     @Test
     @DisplayName("Accepting look offers creature cards sharing a type with enchanted creature")
@@ -134,8 +129,6 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Grizzly Bears");
     }
 
-    // ===== Choosing a creature puts it onto the battlefield =====
-
     @Test
     @DisplayName("Choosing a matching creature puts it onto the battlefield")
     void choosingPutsOnBattlefield() {
@@ -151,7 +144,7 @@ class CallToTheKindredTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Choose the Bear
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Bear should be on the battlefield
         long bearsOnBattlefield = countPermanents(player1, "Grizzly Bears");
@@ -161,8 +154,6 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
-
-    // ===== May decline to put creature =====
 
     @Test
     @DisplayName("May decline to put a creature onto the battlefield")
@@ -180,7 +171,7 @@ class CallToTheKindredTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Decline to choose (index -1)
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // No new permanent on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -188,8 +179,6 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
-
-    // ===== No matching creatures =====
 
     @Test
     @DisplayName("No matching creatures means all cards go to bottom")
@@ -209,8 +198,6 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
-
-    // ===== Multiple matching creatures =====
 
     @Test
     @DisplayName("Multiple matching creatures are all offered for selection")
@@ -233,8 +220,6 @@ class CallToTheKindredTest extends BaseCardTest {
                 .containsOnly("Grizzly Bears");
     }
 
-    // ===== Empty library =====
-
     @Test
     @DisplayName("Empty library does nothing")
     void emptyLibraryDoesNothing() {
@@ -248,8 +233,6 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
-
-    // ===== Trigger fires only during controller's upkeep =====
 
     @Test
     @DisplayName("Trigger does NOT fire during opponent's upkeep")
@@ -266,24 +249,135 @@ class CallToTheKindredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Removing the Aura in response does not stop its upkeep ability")
+    void destroyedAuraUsesLastKnownAttachment() {
+        setupAuraOnBears();
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear, new Plains()));
+        harness.setHand(player1, List.of(new Naturalize()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Call to the Kindred").getId());
+        harness.assertNotOnBattlefield(player1, "Call to the Kindred");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(bear);
+        harness.handleCardChosen(player1, 0);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing the enchanted creature in response uses its last known creature types")
+    void destroyedCreatureUsesLastKnownTypes() {
+        setupAuraOnBears();
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear, new Plains()));
+        harness.setHand(player1, List.of(new Shock()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Grizzly Bears").getId());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(bear);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature that loses all creature types cannot match a creature card")
+    void losingCreatureTypesPreventsMatching() {
+        setupAuraOnBears();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Plains()));
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 2, 1, null, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A creature granted all creature types can match a different printed creature type")
+    void gainingAllCreatureTypesAllowsDifferentCreature() {
+        setupAuraOnBears();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        LlanowarElves elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(elves, new Plains()));
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 2, 0, null, findPermanent(player1, "Grizzly Bears").getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(elves);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Only the top five cards are examined and the remainder goes below untouched cards in chosen order")
+    void remainingCardsGoToBottomInChosenOrder() {
+        setupAuraOnBears();
+        GrizzlyBears bear = new GrizzlyBears();
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        Plains plains1 = new Plains();
+        Plains plains2 = new Plains();
+        GrizzlyBears untouched = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear, elves, shock, plains1, plains2, untouched));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(bear);
+        harness.handleCardChosen(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, plains2, plains1, shock, elves);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library shorter than five cards is processed without drawing or losing cards")
+    void shortLibraryProcessesAvailableCards() {
+        setupAuraOnBears();
+        GrizzlyBears bear = new GrizzlyBears();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(bear, plains));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     /**
      * Sets up Call to the Kindred attached to a Grizzly Bears on player1's battlefield.
      */
     private void setupAuraOnBears() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-
-        Permanent auraPerm = new Permanent(new CallToTheKindred());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CallToTheKindred());
         auraPerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
     }
 
     private void setupLibraryTopFive(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }

@@ -52,4 +52,36 @@ class ConcordantCrossroadsTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, apes, Keyword.HASTE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Resolving Concordant Crossroads grants haste to creatures already on the battlefield")
+    void grantsHasteToExistingCreaturesOnResolution() {
+        Permanent ownApes = harness.addToBattlefieldAndReturn(player1, new BarbaryApes());
+        Permanent opponentApes = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+
+        harness.castFromHand(player1, new ConcordantCrossroads(), "{G}");
+
+        assertThat(gqs.hasKeyword(gd, ownApes, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentApes, Keyword.HASTE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, ownApes, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentApes, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newer Concordant Crossroads replaces the opponent's older world enchantment")
+    void newerWorldReplacesOlderWorldAcrossControllers() {
+        harness.addToBattlefield(player2, new ConcordantCrossroads());
+        Permanent apes = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+
+        harness.castFromHand(player1, new ConcordantCrossroads(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Concordant Crossroads");
+        harness.assertInGraveyard(player2, "Concordant Crossroads");
+        harness.assertOnBattlefield(player1, "Concordant Crossroads");
+        assertThat(gqs.hasKeyword(gd, apes, Keyword.HASTE)).isTrue();
+    }
 }

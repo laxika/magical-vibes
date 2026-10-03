@@ -95,4 +95,49 @@ class ArcticWolvesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wolves);
         harness.assertInGraveyard(player1, "Arctic Wolves");
     }
+
+    @Test
+    @DisplayName("Entering without being cast draws only for its controller")
+    void enteringWithoutBeingCastDrawsForController() {
+        ArcticWolves drawnCard = new ArcticWolves();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard, new ArcticWolves()));
+
+        harness.enterBattlefieldAndReturn(player2, new ArcticWolves());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player2, "Arctic Wolves");
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot pay cumulative upkeep")
+    void insufficientManaSacrifices() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new ArcticWolves());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wolves);
+        harness.assertInGraveyard(player1, "Arctic Wolves");
+    }
+
+    @Test
+    @DisplayName("Generic cumulative upkeep can be paid with colorless mana")
+    void cumulativeUpkeepCanBePaidWithColorlessMana() {
+        Permanent wolves = harness.addToBattlefieldAndReturn(player1, new ArcticWolves());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolves);
+        assertThat(wolves.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
 }

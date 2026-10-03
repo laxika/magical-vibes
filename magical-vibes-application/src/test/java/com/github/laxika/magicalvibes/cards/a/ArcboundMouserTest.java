@@ -51,6 +51,72 @@ class ArcboundMouserTest extends BaseCardTest {
         assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void modularCanBeDeclinedAfterChoosingATarget() {
+        Permanent mouser = addCreatureReady(player1, new ArcboundMouser());
+        mouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        mouser.tap();
+        Permanent recipient = addCreatureReady(player1, new ArcboundMouser());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyMouser(mouser);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void modularTransfersAllCountersToAnOpponentsArtifactCreature() {
+        Permanent mouser = addCreatureReady(player1, new ArcboundMouser());
+        mouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        mouser.tap();
+        Permanent recipient = addCreatureReady(player2, new ArcboundMouser());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyMouser(mouser);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(recipient.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void lifelinkGainsLifeForCombatDamageDealt() {
+        Permanent mouser = addCreatureReady(player1, new ArcboundMouser());
+        mouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void modularChoiceDescribesPlusOneCounters() {
+        Permanent mouser = addCreatureReady(player1, new ArcboundMouser());
+        mouser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        mouser.tap();
+        Permanent recipient = addCreatureReady(player1, new ArcboundMouser());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyMouser(mouser);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+    }
+
     private void destroyMouser(Permanent mouser) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -58,7 +124,6 @@ class ArcboundMouserTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, mouser.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, mouser.getId());
     }
 }

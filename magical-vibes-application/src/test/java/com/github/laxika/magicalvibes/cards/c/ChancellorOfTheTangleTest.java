@@ -3,30 +3,32 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.CardUsedExtension;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("scryfall")
+@CardUsed({ChancellorOfTheTangle.class})
+@ExtendWith(CardUsedExtension.class)
 class ChancellorOfTheTangleTest {
 
     protected GameTestHarness harness;
     protected Player player1;
     protected Player player2;
-    protected GameService gs;
-    protected GameQueryService gqs;
     protected GameData gd;
 
     @BeforeEach
@@ -34,24 +36,19 @@ class ChancellorOfTheTangleTest {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
     }
 
-    // ===== Opening hand trigger =====
-
     @Test
-    @DisplayName("Chancellor in opening hand prompts may ability at the first upkeep")
+    @DisplayName("Chancellor reveal is offered before the first turn begins")
     void openingHandTriggerPromptsMayAbility() {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
-        harness.passBothPriorities();
-
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -60,7 +57,6 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
 
         // Accept reveal — auto-pass advances through UPKEEP → DRAW → PRECOMBAT_MAIN,
@@ -70,7 +66,6 @@ class ChancellorOfTheTangleTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chancellor of the Tangle");
-        assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(AwardManaEffect.class);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Chancellor of the Tangle"));
     }
 
@@ -80,7 +75,6 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
@@ -94,7 +88,6 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
 
         // Accept reveal — registers delayed trigger, auto-advances to PRECOMBAT_MAIN
@@ -112,7 +105,6 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle(), new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: Both MayEffects go on the stack, resolve each one
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -134,7 +126,6 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: MayEffect goes on the stack, resolve it to get the may prompt
         harness.passBothPriorities();
 
         // Accept reveal — registers delayed trigger
@@ -143,8 +134,7 @@ class ChancellorOfTheTangleTest {
         // Resolve the AwardMana trigger at PRECOMBAT_MAIN
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Chancellor of the Tangle"));
+        harness.assertInHand(player1, "Chancellor of the Tangle");
     }
 
     @Test
@@ -153,6 +143,9 @@ class ChancellorOfTheTangleTest {
         harness.skipMulligan();
         // Set hand with Chancellor after the mulligan (so it wasn't in opening hand during first upkeep)
         harness.setHand(player1, List.of(new ChancellorOfTheTangle()));
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.openingHandManaTriggers).isEmpty();
@@ -165,11 +158,10 @@ class ChancellorOfTheTangleTest {
         harness.setHand(player2, List.of(new ChancellorOfTheTangle()));
         harness.skipMulligan();
 
-        // CR 603.5: Both MayEffects go on the stack (player2's on top, resolved first)
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         // Player 1's trigger fired at their first PRECOMBAT_MAIN (active player is player1 on turn 1)
         assertThat(gd.stack).hasSize(1);
@@ -180,7 +172,43 @@ class ChancellorOfTheTangleTest {
         assertThat(gd.openingHandManaTriggers.getFirst().revealingPlayerId()).isEqualTo(player2.getId());
     }
 
-    // ===== Casting =====
+    @Test
+    @DisplayName("Each opening-hand Chancellor can be revealed or declined independently")
+    void revealOneAndDeclineAnother() {
+        harness.setHand(player1, List.of(new ChancellorOfTheTangle(), new ChancellorOfTheTangle()));
+        harness.skipMulligan();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.openingHandManaTriggers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Revealed Chancellor still adds mana after leaving the hand")
+    void delayedTriggerSurvivesSourceLeavingHand() {
+        harness.setHand(player2, List.of(new ChancellorOfTheTangle()));
+        harness.skipMulligan();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.openingHandManaTriggers).isEmpty();
+    }
 
     @Test
     @DisplayName("Casting Chancellor of the Tangle puts it on the battlefield")
@@ -193,7 +221,6 @@ class ChancellorOfTheTangleTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Chancellor of the Tangle"));
+        harness.assertOnBattlefield(player1, "Chancellor of the Tangle");
     }
 }

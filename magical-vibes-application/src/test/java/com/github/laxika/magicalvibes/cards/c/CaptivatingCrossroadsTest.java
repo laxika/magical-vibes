@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -65,5 +68,43 @@ class CaptivatingCrossroadsTest extends BaseCardTest {
         harness.setHand(player, List.of(new CaptivatingCrossroads()));
         harness.playLand(player, 0);
         harness.handleListChoice(player, ManaColor.GREEN.name());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    void entersTappedDuringStartingPlayersEarlierTurns(int turn) {
+        gd.turnsTakenByPlayer.put(player1.getId(), turn);
+        playCrossroads(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void producesOnlyTheChosenColorImmediately(ManaColor color) {
+        gd.turnsTakenByPlayer.put(player1.getId(), 4);
+        harness.setHand(player1, List.of(new CaptivatingCrossroads()));
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, color.name());
+        harness.tapPermanent(player1, 0);
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+        }
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedDuringOpponentsTurnEvenBeforeStartingPlayersFourthTurn() {
+        gd.activePlayerId = player2.getId();
+        gd.turnsTakenByPlayer.put(player1.getId(), 1);
+        Permanent crossroads = harness.enterBattlefieldAndReturn(player1, new CaptivatingCrossroads());
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(crossroads.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

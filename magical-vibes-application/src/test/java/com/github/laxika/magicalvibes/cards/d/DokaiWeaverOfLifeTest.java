@@ -77,4 +77,23 @@ class DokaiWeaverOfLifeTest extends BaseCardTest {
             harness.addToBattlefield(player, new Forest());
         }
     }
+
+    @Test
+    @DisplayName("Counts lands when the ability resolves and fixes the token's size")
+    void countsLandsAtResolution() {
+        addTransformedGardener(player1);
+        addForests(player1, 3);
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        addForests(player1, 1);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Elemental");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        addForests(player1, 1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+    }
 }

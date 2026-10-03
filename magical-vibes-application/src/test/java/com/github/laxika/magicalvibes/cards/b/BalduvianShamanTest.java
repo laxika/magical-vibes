@@ -21,6 +21,97 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BalduvianShamanTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The ability still changes text and grants upkeep after the Shaman dies")
+    void abilityResolvesAfterShamanDies() {
+        Permanent shaman = addCreatureReady(player1, new BalduvianShaman());
+        Permanent cop = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionBlack());
+        Permanent spellcaster = addCreatureReady(player2, new ZuranSpellcaster());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaman), null, cop.getId());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(spellcaster),
+                null, shaman.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Balduvian Shaman");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(cop.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Circle of Protection: Black");
+    }
+
+    @Test
+    @DisplayName("A pending activation cannot change an enchantment that has since gained cumulative upkeep")
+    void pendingActivationChecksCumulativeUpkeepAtResolution() {
+        Permanent first = addCreatureReady(player1, new BalduvianShaman());
+        Permanent second = addCreatureReady(player1, new BalduvianShaman());
+        Permanent cop = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionBlack());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(first), null, cop.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(second), null, cop.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "BLUE");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(cop.getTextReplacements()).containsExactly(new TextReplacement("black", "blue"));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(cop.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Circle of Protection: Black");
+    }
+
+    @Test
+    @DisplayName("Granted cumulative upkeep costs one mana for each age counter")
+    void grantedUpkeepCostIncreasesWithAgeCounters() {
+        Permanent shaman = addCreatureReady(player1, new BalduvianShaman());
+        Permanent cop = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionBlack());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaman), null, cop.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "BLUE");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(cop.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Circle of Protection: Black");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(cop.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertOnBattlefield(player1, "Circle of Protection: Black");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Shaman cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new BalduvianShaman());
+        shaman.setSummoningSick(true);
+        Permanent cop = harness.addToBattlefieldAndReturn(player1, new CircleOfProtectionBlack());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(shaman), null, cop.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(cop.hasCumulativeUpkeep()).isFalse();
+    }
+
+    @Test
     @DisplayName("Changes color word and grants cumulative upkeep {1}")
     void changesTextAndGrantsCumulativeUpkeep() {
         Permanent shaman = addCreatureReady(player1, new BalduvianShaman());

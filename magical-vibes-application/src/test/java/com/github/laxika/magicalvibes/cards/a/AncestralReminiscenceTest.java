@@ -37,4 +37,33 @@ class AncestralReminiscenceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Ancestral Reminiscence");
     }
+
+    @Test
+    @DisplayName("With no other cards in hand, can discard a card just drawn")
+    void discardsNewlyDrawnCardFromInitiallyEmptyHand() {
+        Island discardedCard = new Island();
+        Island keptCardOne = new Island();
+        Island keptCardTwo = new Island();
+        harness.setLibrary(player1, List.of(discardedCard, keptCardOne, keptCardTwo));
+        harness.setHand(player1, List.of(new AncestralReminiscence()));
+        harness.setHand(player2, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(discardedCard, keptCardOne, keptCardTwo);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCardOne, keptCardTwo);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Ancestral Reminiscence");
+    }
 }

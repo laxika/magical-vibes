@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
 import com.github.laxika.magicalvibes.cards.p.Pongify;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BodyDouble.class, GossamerPhantasm.class, Pongify.class})
+@CardUsed({BodyDouble.class, GossamerPhantasm.class, Pongify.class, AvenRiftwatcher.class})
 class BodyDoubleTest extends BaseCardTest {
 
     @Test
@@ -22,8 +25,7 @@ class BodyDoubleTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(creature));
         castBodyDouble();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -48,8 +50,7 @@ class BodyDoubleTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(nonCreature, creature));
         castBodyDouble();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
@@ -83,11 +84,79 @@ class BodyDoubleTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GossamerPhantasm()));
         castBodyDouble();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Body Double");
+    }
+
+    @Test
+    void canChooseItsControllersGraveyardWhenBothGraveyardsContainCreatures() {
+        Card ownCreature = new AvenRiftwatcher();
+        Card opposingCreature = new GossamerPhantasm();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        castBodyDouble();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(ownCreature.getId(), opposingCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aven Riftwatcher");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    void copiesEntryReplacementAndEnterAndLeaveTriggersButReturnsToGraveyardAsBodyDouble() {
+        Card creature = new AvenRiftwatcher();
+        harness.setGraveyard(player2, List.of(creature));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        castBodyDouble();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+
+        Permanent copy = findBodyDouble();
+        assertThat(copy).isNotNull();
+        assertThat(copy.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        harness.assertLife(player1, lifeBefore + 2);
+
+        harness.setHand(player1, List.of(new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, copy.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 4);
+        harness.assertInGraveyard(player1, "Body Double");
+        harness.assertNotInGraveyard(player1, "Aven Riftwatcher");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void copiesTriggeredAbilityThatSacrificesItWhenTargeted() {
+        Card creature = new GossamerPhantasm();
+        harness.setGraveyard(player2, List.of(creature));
+        castBodyDouble();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        Permanent copy = findBodyDouble();
+        harness.setHand(player1, List.of(new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, copy.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Gossamer Phantasm");
+        harness.assertNotOnBattlefield(player1, "Ape");
+        harness.assertInGraveyard(player1, "Body Double");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
     }
 
     private void castBodyDouble() {

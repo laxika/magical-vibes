@@ -9,15 +9,18 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CauldronHaze.class, GrizzlyBears.class, DoomBlade.class, Mountain.class})
 class CauldronHazeTest extends BaseCardTest {
 
     /** Resolves the stack until the game pauses for input or the stack empties. */
@@ -49,8 +52,7 @@ class CauldronHazeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CauldronHaze()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
         assertThat(gqs.hasKeyword(gd, bears, Keyword.PERSIST)).isTrue();
 
         harness.setHand(player1, List.of(new DoomBlade()));
@@ -61,6 +63,8 @@ class CauldronHazeTest extends BaseCardTest {
         Permanent returned = findOnBattlefield("Grizzly Bears");
         assertThat(returned).isNotNull();
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(returned.getId()).isNotEqualTo(bears.getId());
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.PERSIST)).isFalse();
     }
 
     @Test
@@ -71,8 +75,7 @@ class CauldronHazeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CauldronHaze()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(bears1.getId(), bears2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bears1.getId(), bears2.getId()));
 
         assertThat(gqs.hasKeyword(gd, bears1, Keyword.PERSIST)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears2, Keyword.PERSIST)).isTrue();
@@ -85,8 +88,7 @@ class CauldronHazeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CauldronHaze()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
         assertThat(gqs.hasKeyword(gd, bears, Keyword.PERSIST)).isTrue();
 
         // Simulate end-of-turn cleanup (CR 514.2 / floating-effect expiry).
@@ -107,5 +109,85 @@ class CauldronHazeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(mountainId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canChooseZeroTargets() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CauldronHaze()));
+        giveMana();
+
+        harness.castAndResolveInstant(player1, 0, List.<UUID>of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cauldron Haze");
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.PERSIST)).isFalse();
+    }
+
+    @Test
+    void creatureWithMinusOneCounterDoesNotReturn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new CauldronHaze(), new DoomBlade()));
+        giveMana();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void remainingLegalTargetStillGainsPersist() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CauldronHaze(), new DoomBlade()));
+        giveMana();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, first.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, second, Keyword.PERSIST)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eachGrantedInstanceOfPersistTriggersSeparately() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CauldronHaze(), new CauldronHaze(), new DoomBlade()));
+        giveMana();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
+        giveMana();
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveUntilInputOrEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(findOnBattlefield("Grizzly Bears").getCounterCount(CounterType.MINUS_ONE_MINUS_ONE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void anyNumberOfTargetsIncludesMoreThanNinetyNine() {
+        List<UUID> targets = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            targets.add(harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId());
+        }
+        harness.setHand(player1, List.of(new CauldronHaze()));
+        giveMana();
+
+        harness.castAndResolveInstant(player1, 0, targets);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(gqs.hasKeyword(gd, permanent, Keyword.PERSIST)).isTrue());
     }
 }

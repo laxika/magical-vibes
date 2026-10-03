@@ -20,6 +20,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AzulaRuthlessFirebenderTest extends BaseCardTest {
 
     @Test
+    void attackCreatesTwoIndependentTriggeredAbilities() {
+        addReadyAzula();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void decliningDiscardWithNoPriorDiscardersAwardsNoExperience() {
+        addReadyAzula();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void activatedAbilityWithZeroExperienceStillGrantsMenace() {
+        Permanent azula = addReadyAzula();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, azula)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, azula)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, azula, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    void discardingOnAttackCountsTheControllerWithoutPriorDiscarders() {
+        addReadyAzula();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerExperienceCounters.getOrDefault(player2.getId(), 0)).isZero();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void activatedAbilityCountsExperienceOnResolutionAndLocksItsBonus() {
+        Permanent azula = addReadyAzula();
+        gd.playerExperienceCounters.put(player1.getId(), 1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+
+        harness.passBothPriorities();
+        gd.playerExperienceCounters.put(player1.getId(), 3);
+
+        assertThat(gqs.getEffectivePower(gd, azula)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, azula)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, azula, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
     void firebendingAddsRedManaUntilEndOfCombat() {
         addReadyAzula();
 
@@ -113,8 +182,7 @@ class AzulaRuthlessFirebenderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
     }

@@ -101,4 +101,57 @@ class CoralNetTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Krosan Constrictor");
         harness.assertInGraveyard(player2, "Krosan Constrictor");
     }
+
+    @Test
+    void doesNotTriggerDuringAuraControllersUpkeep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
+        attachTo(creature);
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Krosan Constrictor");
+    }
+
+    @Test
+    void canDiscardCreatureCardToKeepWhiteCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        attachTo(creature);
+        harness.setHand(player2, List.of(new CabalTorturer()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Aven Trooper");
+        harness.assertOnBattlefield(player1, "Coral Net");
+        harness.assertInGraveyard(player2, "Cabal Torturer");
+        harness.assertNotInHand(player2, "Cabal Torturer");
+    }
+
+    @Test
+    void eachNetRequiresASeparateDiscard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KrosanConstrictor());
+        attachTo(creature);
+        attachTo(creature);
+        harness.setHand(player2, List.of(new CabalTorturer()));
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertInGraveyard(player2, "Cabal Torturer");
+        harness.assertInGraveyard(player2, "Krosan Constrictor");
+        harness.assertNotOnBattlefield(player1, "Coral Net");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Coral Net"))
+                .hasSize(2);
+    }
 }

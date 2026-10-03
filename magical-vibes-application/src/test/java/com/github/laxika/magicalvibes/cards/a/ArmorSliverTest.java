@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArmorSliver.class, MuscleSliver.class, MoggConscripts.class, HeartSliver.class})
+@CardUsed({ArmorSliver.class, MuscleSliver.class, MoggConscripts.class, HeartSliver.class,
+        AmoeboidChangeling.class})
 class ArmorSliverTest extends BaseCardTest {
 
     @Test
@@ -76,7 +77,6 @@ class ArmorSliverTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AmoeboidChangeling.class)
     @DisplayName("A Sliver that loses all creature types no longer has the ability")
     void losingSliverTypeRemovesAbility() {
         Permanent armorSliver = addCreatureReady(player1, new ArmorSliver());
@@ -90,5 +90,51 @@ class ArmorSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, armorSliver)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent can repeatedly activate a tapped, summoning-sick Sliver")
+    void opponentCanActivateRepeatedlyWithoutTapping() {
+        Permanent armorSliver = addCreatureReady(player1, new ArmorSliver());
+        Permanent opposingSliver = harness.addToBattlefieldAndReturn(player2, new MuscleSliver());
+        opposingSliver.setSummoningSick(true);
+        opposingSliver.tap();
+        int basePower = gqs.getEffectivePower(gd, opposingSliver);
+        int baseToughness = gqs.getEffectiveToughness(gd, opposingSliver);
+        int armorToughness = gqs.getEffectiveToughness(gd, armorSliver);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.activateAbility(player2, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, opposingSliver)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSliver)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.getEffectiveToughness(gd, armorSliver)).isEqualTo(armorToughness);
+    }
+
+    @Test
+    @DisplayName("An activated toughness ability resolves after its source loses the Sliver type")
+    void activatedAbilitySurvivesLosingSliverType() {
+        Permanent armorSliver = addCreatureReady(player1, new ArmorSliver());
+        addCreatureReady(player1, new AmoeboidChangeling());
+        Permanent heartSliver = addCreatureReady(player1, new HeartSliver());
+        int baseToughness = gqs.getEffectiveToughness(gd, armorSliver);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 1, null, armorSliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, armorSliver)).isEmpty();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, heartSliver)).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveToughness(gd, armorSliver)).isEqualTo(baseToughness + 1);
     }
 }

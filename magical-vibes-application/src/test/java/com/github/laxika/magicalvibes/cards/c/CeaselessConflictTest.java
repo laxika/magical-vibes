@@ -52,6 +52,44 @@ class CeaselessConflictTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An empty battlefield creates no Spirits")
+    void emptyBattlefieldCreatesNoSpirits() {
+        castCeaselessConflict();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Ceaseless Conflict");
+    }
+
+    @Test
+    @DisplayName("Destroying only the caster's tokens and opposing creatures creates no Spirits")
+    void tokensAndOpposingCreaturesDoNotCreateSpirits() {
+        addCreatureReady(player1, spiritToken());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        castCeaselessConflict();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A regenerated creature controlled by the caster does not contribute to the Spirit count")
+    void casterRegenerationDoesNotCountAsDestruction() {
+        Permanent regenerating = addCreatureReady(player1, new GrizzlyBears());
+        regenerating.setRegenerationShield(1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        castCeaselessConflict();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(regenerating).hasSize(2);
+        assertThat(regenerating.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Spirit")).singleElement().satisfies(this::assertSpirit);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
     private void castCeaselessConflict() {
         harness.castFromHand(player1, new CeaselessConflict(), "{3}{W}{W}");
         harness.passBothPriorities();

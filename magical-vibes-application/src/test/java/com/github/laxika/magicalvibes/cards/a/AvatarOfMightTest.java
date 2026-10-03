@@ -76,8 +76,7 @@ class AvatarOfMightTest extends BaseCardTest {
         Permanent avatar = addCreatureReady(player1, new AvatarOfMight());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -103,5 +102,53 @@ class AvatarOfMightTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() == avatar);
+    }
+
+    @Test
+    @DisplayName("Reduction applies with five opposing creatures and one creature of your own")
+    void reductionAppliesWithCreaturesOnBothSides() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+
+        AvatarOfMight avatar = new AvatarOfMight();
+        harness.castFromHand(player1, avatar, "{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == avatar);
+    }
+
+    @Test
+    @DisplayName("Reduction compares creatures relative to the player casting the spell")
+    void reductionAppliesForSecondPlayer() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+        }
+
+        AvatarOfMight avatar = new AvatarOfMight();
+        harness.castFromHand(player2, avatar, "{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard() == avatar);
+    }
+
+    @Test
+    @DisplayName("Having eight more creatures still reduces the cost by only six generic mana")
+    void largerCreatureDifferenceDoesNotIncreaseReduction() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+
+        harness.castFromHand(player1, new AvatarOfMight(), "{6}{G}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
     }
 }

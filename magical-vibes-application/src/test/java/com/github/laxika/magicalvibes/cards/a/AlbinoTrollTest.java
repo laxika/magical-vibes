@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BlanchwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AlbinoTroll.class, BlanchwoodTreefolk.class})
+@CardUsed({AlbinoTroll.class, BlanchwoodTreefolk.class, Humility.class})
 class AlbinoTrollTest extends BaseCardTest {
 
     @Test
@@ -41,10 +41,7 @@ class AlbinoTrollTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new BlanchwoodTreefolk());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Albino Troll");
         assertThat(troll.isTapped()).isTrue();
@@ -93,6 +90,37 @@ class AlbinoTrollTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Albino Troll");
+    }
+
+    @Test
+    @DisplayName("Echo does not trigger when Albino Troll has lost all abilities")
+    void abilityLossSuppressesEcho() {
+        castAndResolveTroll();
+        harness.addToBattlefield(player1, new Humility());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Albino Troll");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot prevent sacrifice for unpaid echo")
+    void regenerationCannotPreventEchoSacrifice() {
+        castAndResolveTroll();
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Albino Troll").getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Albino Troll");
+        harness.assertInGraveyard(player1, "Albino Troll");
     }
 
     private Permanent addTrollReady() {

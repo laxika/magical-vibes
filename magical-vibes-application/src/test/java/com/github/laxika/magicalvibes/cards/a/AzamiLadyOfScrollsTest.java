@@ -16,6 +16,43 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AzamiLadyOfScrollsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Summoning-sick Azami can tap herself, paying the cost before drawing")
+    void summoningSickAzamiCanTapHerself() {
+        Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
+        azami.setSummoningSick(true);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(azami.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Wizard can pay the cost of tapped Azami's ability")
+    void summoningSickWizardCanPayCost() {
+        Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());
+        azami.tap();
+        Permanent wizard = addCreatureReady(player1, new GracefulAdept());
+        wizard.setSummoningSick(true);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
     @DisplayName("Taps itself as the only Wizard and draws a card")
     void tapsItselfAndDraws() {
         Permanent azami = addCreatureReady(player1, new AzamiLadyOfScrolls());

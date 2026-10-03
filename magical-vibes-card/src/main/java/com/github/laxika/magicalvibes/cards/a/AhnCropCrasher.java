@@ -16,20 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class AhnCropCrasher extends Card {
 
     public AhnCropCrasher() {
-        // Exert: "You may exert this creature as it attacks. When you do, target creature can't block
-        // this turn." Modeled as an optional attack trigger (matching Glory-Bound Initiate). The
-        // target is chosen when the trigger is put on the stack; the "you may exert" is confirmed at
-        // resolution. Choosing to exert also keeps the creature tapped through its next untap step.
-        // (Haste is a Scryfall-loaded keyword — no wiring needed.)
-        target(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target creature"
-        )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
-                ),
-                "Exert Ahn-Crop Crasher as it attacks? (Target creature can't block this turn.)"
-        ));
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
+                                new CantBlockThisTurnEffect(TapUntapScope.TARGET))
+                ), "Exert Ahn-Crop Crasher as it attacks?"));
     }
 }

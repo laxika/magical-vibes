@@ -53,9 +53,8 @@ class BriarShieldTest extends BaseCardTest {
     void sacrificeBoostsEnchantedCreature() {
         Permanent knight = addCreatureReady(player1, new BenalishKnight());
 
-        Permanent shield = new Permanent(new BriarShield());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new BriarShield());
         shield.setAttachedTo(knight.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
@@ -72,13 +71,11 @@ class BriarShieldTest extends BaseCardTest {
     void sacrificeAbilityIsNotTargeted() {
         Permanent knight = addCreatureReady(player1, new BenalishKnight());
 
-        Permanent shield = new Permanent(new BriarShield());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new BriarShield());
         shield.setAttachedTo(knight.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
-        Permanent robe = new Permanent(new RobeOfMirrors());
+        Permanent robe = harness.addToBattlefieldAndReturn(player1, new RobeOfMirrors());
         robe.setAttachedTo(knight.getId());
-        gd.playerBattlefields.get(player1.getId()).add(robe);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
@@ -92,9 +89,8 @@ class BriarShieldTest extends BaseCardTest {
     void boostWearsOff() {
         Permanent knight = addCreatureReady(player1, new BenalishKnight());
 
-        Permanent shield = new Permanent(new BriarShield());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new BriarShield());
         shield.setAttachedTo(knight.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
@@ -105,6 +101,41 @@ class BriarShieldTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before the temporary boost resolves")
+    void sacrificeRemovesStaticBoostBeforeResolution() {
+        Permanent knight = addCreatureReady(player1, new BenalishKnight());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new BriarShield());
+        shield.setAttachedTo(knight.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Briar Shield");
+        harness.assertNotOnBattlefield(player1, "Briar Shield");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The Aura controller can sacrifice it to boost an opponent's creature")
+    void sacrificeBoostsOpponentsCreature() {
+        Permanent knight = addCreatureReady(player2, new BenalishKnight());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new BriarShield());
+        shield.setAttachedTo(knight.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Briar Shield");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,19 +18,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CatharsCall.class, GrizzlyBears.class, FountainOfYouth.class})
 class CatharsCallTest extends BaseCardTest {
 
     private Permanent attach(Player auraController, Permanent host) {
-        Permanent aura = new Permanent(new CatharsCall());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new CatharsCall());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return aura;
     }
 
     private Permanent addCreature(Player owner) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, new GrizzlyBears());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
@@ -38,9 +38,8 @@ class CatharsCallTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 
     @Test
@@ -103,5 +102,55 @@ class CatharsCallTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Casting the Aura attaches it and grants vigilance only to its target")
+    void resolvesOntoTargetCreature() {
+        Permanent host = addCreature(player1);
+        Permanent other = addCreature(player1);
+        harness.setHand(player1, List.of(new CatharsCall()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Cathar's Call").getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.hasKeyword(gd, host, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura removes vigilance and prevents subsequent token triggers")
+    void losesAbilitiesWhenAuraLeaves() {
+        Permanent host = addCreature(player1);
+        Permanent aura = attach(player1, host);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+
+        assertThat(gqs.hasKeyword(gd, host, Keyword.VIGILANCE)).isFalse();
+        runEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("A token trigger still resolves after the enchanted creature leaves")
+    void triggerSurvivesCreatureLeaving() {
+        Permanent host = addCreature(player1);
+        attach(player1, host);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        gd.playerBattlefields.get(player1.getId()).remove(host);
+        gd.playerGraveyards.get(player1.getId()).add(host.getCard());
+        harness.runStateBasedActions();
+
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
     }
 }

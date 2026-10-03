@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.OblivionRing;
 import com.github.laxika.magicalvibes.cards.w.Wispmare;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Aethersnipe.class, Island.class, Wispmare.class})
+@CardUsed({Aethersnipe.class, Island.class, OblivionRing.class, Wispmare.class})
 class AethersnipeTest extends BaseCardTest {
 
     // ===== Hardcast =====
@@ -100,6 +101,41 @@ class AethersnipeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        harness.assertOnBattlefield(player1, "Aethersnipe");
+    }
+
+    @Test
+    @DisplayName("Evoke sacrifice still resolves when the bounce target leaves")
+    void evokeSacrificesEvenIfBounceTargetLeaves() {
+        var target = harness.addToBattlefieldAndReturn(player2, new Wispmare());
+        harness.setHand(player1, List.of(new Aethersnipe()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreatureWithEvoke(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Wispmare");
+        harness.assertNotOnBattlefield(player1, "Aethersnipe");
+        harness.assertInGraveyard(player1, "Aethersnipe");
+    }
+
+    @Test
+    @DisplayName("ETB can return an enchantment controlled by its controller")
+    void bouncesOwnNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new OblivionRing());
+        UUID targetId = harness.getPermanentId(player1, "Oblivion Ring");
+        harness.setHand(player1, List.of(new Aethersnipe()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Oblivion Ring");
+        harness.assertInHand(player1, "Oblivion Ring");
         harness.assertOnBattlefield(player1, "Aethersnipe");
     }
 }

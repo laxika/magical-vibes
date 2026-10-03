@@ -62,8 +62,8 @@ class CallForBloodTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Toughness dropped to 0 destroys the target")
-    void lethalDebuffDestroysTarget() {
+    @DisplayName("Toughness dropped to 0 puts the target into its graveyard")
+    void lethalDebuffPutsTargetIntoGraveyard() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new FrostOgre()); // 5/3
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort()); // 2/2
 
@@ -157,5 +157,55 @@ class CallForBloodTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("you control");
+    }
+
+    @Test
+    @DisplayName("Negative sacrificed power gives no bonus or penalty")
+    void negativeSacrificedPowerIsTreatedAsZero() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        sacrifice.setPowerModifier(-4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FrostOgre());
+
+        prepare();
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Zero sacrificed power leaves the target unchanged")
+    void zeroSacrificedPowerLeavesTargetUnchanged() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        sacrifice.setPowerModifier(-3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FrostOgre());
+
+        prepare();
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The targeted creature can be sacrificed to pay the cost")
+    void canSacrificeTargetedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player2, new FrostOgre());
+
+        prepare();
+        harness.castInstantWithSacrifice(player1, 0, target.getId(), target.getId());
+        harness.assertInGraveyard(player1, "Gnarled Mass");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Call for Blood");
+        assertThat(bystander.getPowerModifier()).isZero();
+        assertThat(bystander.getToughnessModifier()).isZero();
     }
 }

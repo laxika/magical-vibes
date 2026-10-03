@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AllSeeingArbiter.class, Censor.class, Forest.class, GrizzlyBears.class, Shock.class})
 class AllSeeingArbiterTest extends BaseCardTest {
@@ -92,19 +93,98 @@ class AllSeeingArbiterTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
 
-        endTurn(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
-        endTurn(player2);
+        harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
-    private void endTurn(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.setHand(activePlayer, List.of());
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && activePlayer.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+
+    @Test
+    @CardUsed({AllSeeingArbiter.class, Forest.class})
+    @DisplayName("The attack discard counts lands as one mana value and ignores the opponent's graveyard")
+    void attackDiscardCountsLandManaValue() {
+        addCreatureReady(player1, new AllSeeingArbiter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AllSeeingArbiter());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new AllSeeingArbiter()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({AllSeeingArbiter.class, Forest.class})
+    @DisplayName("X is evaluated at resolution and stays fixed afterward")
+    void manaValuesAreCountedAtResolution() {
+        addCreatureReady(player1, new AllSeeingArbiter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AllSeeingArbiter());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setGraveyard(player1, List.of(new Forest(), new AllSeeingArbiter()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({AllSeeingArbiter.class, Forest.class})
+    @DisplayName("The discard trigger cannot target the controller's own creature")
+    void discardCannotTargetOwnCreature() {
+        Permanent source = addCreatureReady(player1, new AllSeeingArbiter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AllSeeingArbiter());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({AllSeeingArbiter.class, Forest.class})
+    @DisplayName("A target that changes to the ability controller is illegal at resolution")
+    void targetMustRemainUnderOpponentControl() {
+        addCreatureReady(player1, new AllSeeingArbiter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AllSeeingArbiter());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 }

@@ -10,6 +10,11 @@ public record DelayedEndOfCombatTrigger(
         UUID controllerId,
         Card sourceCard,
         UUID sourcePermanentId,
+        UUID affectedPermanentId,
         CardEffect effect
 ) implements DelayedAction {
+    public DelayedEndOfCombatTrigger(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                     CardEffect effect) {
+        this(controllerId, sourceCard, sourcePermanentId, null, effect);
+    }
 }

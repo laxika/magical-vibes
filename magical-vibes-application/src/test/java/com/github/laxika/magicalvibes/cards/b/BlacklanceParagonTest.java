@@ -34,9 +34,7 @@ class BlacklanceParagonTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.LIFELINK)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gqs.hasKeyword(gd, knight, Keyword.LIFELINK)).isFalse();
@@ -53,5 +51,62 @@ class BlacklanceParagonTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bears.getId(), null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Knight");
+    }
+
+    @Test
+    @DisplayName("Can flash in during the end step and target itself")
+    void flashesInAndTargetsItself() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new BlacklanceParagon()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent paragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Blacklance Paragon"));
+        harness.handlePermanentChosen(player1, paragon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, paragon, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, paragon, Keyword.LIFELINK)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger still grants both keywords if Blacklance Paragon leaves before resolution")
+    void triggerResolvesWithoutItsSource() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
+        harness.setHand(player1, List.of(new BlacklanceParagon()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0, knight.getId());
+        harness.passBothPriorities();
+        Permanent paragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Blacklance Paragon"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, paragon));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.LIFELINK)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A removed target does not cause the trigger to grant keywords to a different Knight")
+    void removedTargetDoesNotRedirectGrant() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
+        harness.setHand(player1, List.of(new BlacklanceParagon()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0, knight.getId());
+        harness.passBothPriorities();
+        Permanent paragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Blacklance Paragon"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, knight));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, paragon, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, paragon, Keyword.LIFELINK)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

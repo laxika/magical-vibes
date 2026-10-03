@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -32,19 +33,23 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
     }
 
     @Test
-    void minusTwoGrantsRedInstantOrSorceryCastFromGraveyardAndExilesIt() {
+    void minusTwoCastsDuringResolutionAndExilesTheSpell() {
         Permanent chandra = addReadyChandra(4);
         Shock shock = new Shock();
         harness.setGraveyard(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, shock.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
-        harness.castFlashback(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 18);
+        harness.assertNotInGraveyard(player1, "Shock");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId).contains(shock.getId());
     }
 
@@ -60,9 +65,73 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
     }
 
     @Test
+    void decliningMinusTwoDoesNotAllowCastingLaterInTheTurn() {
+        addReadyChandra(4);
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, shock.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void minusTwoRejectsOpponentsGraveyard() {
+        addReadyChandra(4);
+        Shock shock = new Shock();
+        harness.setGraveyard(player2, List.of(shock));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 1, null, shock.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusTwoCannotBeUsedAfterGainingManaLaterInTheTurn() {
+        addReadyChandra(4);
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+
+        harness.activateAbility(player1, 0, 1, null, shock.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusEightWorksWithAnEmptyHandAndPreservesSorceryTiming() {
+        addReadyChandra(8);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
     void minusEightDiscardsDrawsSevenAndMakesHandSpellsFreeUntilEndOfTurn() {
         Permanent chandra = addReadyChandra(8);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
@@ -71,6 +140,7 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).contains(discarded.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
 
         harness.castCreature(player1, 0);
@@ -90,10 +160,9 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
     }
 
     private Permanent addReadyChandra(int loyalty) {
-        Permanent permanent = new Permanent(new ChandraFlamesCatalyst());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new ChandraFlamesCatalyst());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
@@ -101,11 +170,6 @@ class ChandraFlamesCatalystTest extends BaseCardTest {
 
     private void forceEndStepAndAdvanceTurn() {
         harness.setHand(player1, List.of());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && player1.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
     }
 }

@@ -24,9 +24,7 @@ class AngusMackenzieTest extends BaseCardTest {
     @DisplayName("Pays the colored activation cost, taps Angus, and prevents combat damage")
     void activatesAndPreventsCombatDamage() {
         Permanent angus = addCreatureReady(player1, new AngusMackenzie());
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        addAngusActivationMana(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, null);
@@ -53,8 +51,7 @@ class AngusMackenzieTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(blocker), 0)));
 
@@ -99,6 +96,36 @@ class AngusMackenzieTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before the combat damage step");
+    }
+
+    @Test
+    @DisplayName("Cannot activate before damage in an additional combat phase")
+    void cannotActivateInAdditionalCombat() {
+        addCreatureReady(player1, new AngusMackenzie());
+        addAngusActivationMana(player1);
+        gd.combatPhasesThisTurn = 2;
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Combat damage prevention expires at the end of the turn")
+    void preventionExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new AngusMackenzie());
+        addCreatureReady(player2, new BarbaryApes());
+        harness.setLife(player1, 20);
+        addAngusActivationMana(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
     }
 
     private void addAngusActivationMana(Player player) {

@@ -85,9 +85,7 @@ class CheekyHouseMouseTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent blocker = addCreatureReady(player2, new HillGiant());
         target.setAttacking(true);
@@ -97,5 +95,63 @@ class CheekyHouseMouseTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(target))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void creatureCanBeCastFromAdventureExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CheekyHouseMouse());
+        CheekyHouseMouse card = new CheekyHouseMouse();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CheekyHouseMouse());
+        CheekyHouseMouse card = new CheekyHouseMouse();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureBoostExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CheekyHouseMouse());
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
+        harness.setHand(player1, List.of(new CheekyHouseMouse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness + 1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness);
     }
 }

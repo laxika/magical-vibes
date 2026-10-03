@@ -23,9 +23,7 @@ class BogRatsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GlacialWall());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRats());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -40,9 +38,7 @@ class BogRatsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRats());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -50,5 +46,27 @@ class BogRatsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bog Rats does not prevent Walls from blocking other attackers")
+    void wallCanBlockAnotherAttackerAlongsideBogRats() {
+        Permanent wall = addCreatureReady(player2, new GlacialWall());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent rats = addCreatureReady(player1, new BogRats());
+        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        int ratsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(rats);
+        int otherIndex = gd.playerBattlefields.get(player1.getId()).indexOf(otherAttacker);
+        declareAttackersAndPrepareBlockers(List.of(ratsIndex, otherIndex));
+
+        int wallIndex = gd.playerBattlefields.get(player2.getId()).indexOf(wall);
+        int bearsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(bears);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(wallIndex, otherIndex),
+                new BlockerAssignment(bearsIndex, ratsIndex)));
+
+        assertThat(wall.isBlocking()).isTrue();
+        assertThat(bears.isBlocking()).isTrue();
     }
 }

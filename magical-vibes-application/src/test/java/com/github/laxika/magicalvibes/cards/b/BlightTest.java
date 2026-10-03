@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ManaShort;
@@ -18,10 +20,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blight.class, Forest.class, GrizzlyBears.class, ManaShort.class})
+@CardUsed({Blight.class, Forest.class, GrizzlyBears.class, ManaShort.class,
+        Disenchant.class, EnchantmentAlteration.class})
 class BlightTest extends BaseCardTest {
-
-    // ===== Casting and targeting =====
 
     @Test
     @DisplayName("Can cast Blight targeting a land")
@@ -83,8 +84,6 @@ class BlightTest extends BaseCardTest {
                         && land.getId().equals(p.getAttachedTo()));
     }
 
-    // ===== Tap trigger: destroy the enchanted land =====
-
     @Test
     @DisplayName("Tapping the enchanted land triggers the destroy ability (deferred as a mana-ability trigger)")
     void tappingLandTriggersDestroy() {
@@ -133,8 +132,7 @@ class BlightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.forceActivePlayer(player1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -161,6 +159,66 @@ class BlightTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
     }
 
+    @Test
+    @DisplayName("Moving Blight in response still destroys the land that triggered it")
+    void movingAuraDoesNotChangeLandToDestroy() {
+        Permanent land = addLandWithAura(player2);
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof Blight)
+                .findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new ManaShort(), new EnchantmentAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(otherLand.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherLand).contains(aura);
+    }
+
+    @Test
+    @DisplayName("Destroying Blight in response does not prevent destruction of the land")
+    void destroyingAuraDoesNotStopTrigger() {
+        Permanent land = addLandWithAura(player2);
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof Blight)
+                .findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new ManaShort(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertNotOnBattlefield(player1, "Blight");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+    }
+
+    @Test
+    @DisplayName("Attaching Blight to an already tapped land does not trigger destruction")
+    void attachingToTappedLandDoesNotTrigger() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.tap();
+        harness.setHand(player1, List.of(new Blight()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof Blight
+                        && land.getId().equals(permanent.getAttachedTo()));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
+
     /**
      * Places a Forest on {@code landController}'s battlefield with a Blight controlled by player1
      * attached to it.
@@ -174,10 +232,8 @@ class BlightTest extends BaseCardTest {
     private Permanent addLandWithAura(Player landController) {
         Permanent land = harness.addToBattlefieldAndReturn(landController, new Forest());
 
-        Blight auraCard = new Blight();
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Blight());
         aura.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         return land;
     }

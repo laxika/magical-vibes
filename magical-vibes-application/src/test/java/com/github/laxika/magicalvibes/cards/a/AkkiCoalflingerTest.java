@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
+import com.github.laxika.magicalvibes.cards.s.SuddenSpoiling;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AkkiCoalflinger.class, WanderingOnes.class})
+@CardUsed({AkkiCoalflinger.class, WanderingOnes.class, SuddenSpoiling.class})
 class AkkiCoalflingerTest extends BaseCardTest {
 
     @Test
@@ -79,5 +82,56 @@ class AkkiCoalflingerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Attackers are selected when the ability resolves")
+    void selectsAttackersAtResolution() {
+        addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent stoppedAttacker = addCreatureReady(player1, new WanderingOnes());
+        Permanent newAttacker = addCreatureReady(player1, new WanderingOnes());
+        stoppedAttacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        stoppedAttacker.setAttacking(false);
+        newAttacker.setAttacking(true);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, stoppedAttacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newAttacker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike remains after a recipient stops attacking")
+    void grantRemainsAfterCombat() {
+        addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent attacker = addCreatureReady(player1, new WanderingOnes());
+        attacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later first strike grant survives Sudden Spoiling")
+    void grantsFirstStrikeAfterAbilitiesAreRemoved() {
+        addCreatureReady(player1, new AkkiCoalflinger());
+        Permanent attacker = addCreatureReady(player2, new WanderingOnes());
+        declareAttackers(player2, List.of(0));
+        harness.setHand(player1, List.of(new SuddenSpoiling()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

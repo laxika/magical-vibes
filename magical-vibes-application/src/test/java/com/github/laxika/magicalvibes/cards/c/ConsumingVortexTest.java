@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsumingVortex.class, Forest.class, ReachThroughMists.class, WanderingOnes.class})
+@CardUsed({ConsumingVortex.class, Forest.class, ReachThroughMists.class, Shock.class, WanderingOnes.class})
 class ConsumingVortexTest extends BaseCardTest {
 
     @Test
@@ -117,5 +117,55 @@ class ConsumingVortexTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithSplice(player1, 0, bears.getId(), List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot be spliced");
+    }
+
+    @Test
+    @DisplayName("Does not return a creature again after its target leaves the battlefield")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ConsumingVortex()));
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature.getCard());
+        harness.assertInGraveyard(player1, "Consuming Vortex");
+        harness.assertInGraveyard(player2, "Consuming Vortex");
+    }
+
+    @Test
+    @DisplayName("A spliced draw spell does not draw when its only target becomes illegal")
+    void splicedSpellDoesNotDrawWithIllegalTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        ConsumingVortex spliceCard = new ConsumingVortex();
+        Forest undrawnCard = new Forest();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ReachThroughMists(), spliceCard));
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.setLibrary(player1, List.of(undrawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castWithSplice(player1, 0, creature.getId(), List.of(1));
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spliceCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature.getCard());
+        harness.assertInGraveyard(player1, "Reach Through Mists");
+        harness.assertInGraveyard(player2, "Consuming Vortex");
     }
 }

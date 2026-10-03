@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,14 +35,27 @@ class BringerOfTheBlueDawnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be cast for its normal mana cost")
+    void castsForNormalCost() {
+        harness.setHand(player1, List.of(new BringerOfTheBlueDawn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bringer of the Blue Dawn");
+        harness.assertNotInHand(player1, "Bringer of the Blue Dawn");
+    }
+
+    @Test
     @DisplayName("Trample deals excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new BringerOfTheBlueDawn());
         Permanent blocker = addCreatureReady(player2, new DrossCrocodile());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -63,7 +75,6 @@ class BringerOfTheBlueDawnTest extends BaseCardTest {
     @DisplayName("Controller may draw two cards at the beginning of their upkeep")
     void drawsTwoCardsAtControllerUpkeepWhenAccepted() {
         harness.addToBattlefield(player1, new BringerOfTheBlueDawn());
-        GameData gd = harness.getGameData();
         int before = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
@@ -78,7 +89,6 @@ class BringerOfTheBlueDawnTest extends BaseCardTest {
     @DisplayName("Declining the upkeep ability does not draw cards")
     void doesNotDrawWhenDeclined() {
         harness.addToBattlefield(player1, new BringerOfTheBlueDawn());
-        GameData gd = harness.getGameData();
         int before = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
@@ -92,12 +102,32 @@ class BringerOfTheBlueDawnTest extends BaseCardTest {
     @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerAtOpponentUpkeep() {
         harness.addToBattlefield(player1, new BringerOfTheBlueDawn());
-        GameData gd = harness.getGameData();
         int before = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
+    }
+
+    @Test
+    @DisplayName("Upkeep ability still draws two cards after its source leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        Permanent bringer = harness.addToBattlefieldAndReturn(player1, new BringerOfTheBlueDawn());
+        harness.setLibrary(player1, List.of(new DrossCrocodile(), new DrossCrocodile(),
+                new DrossCrocodile()));
+        int before = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, bringer));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bringer of the Blue Dawn");
+        harness.assertInGraveyard(player1, "Bringer of the Blue Dawn");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

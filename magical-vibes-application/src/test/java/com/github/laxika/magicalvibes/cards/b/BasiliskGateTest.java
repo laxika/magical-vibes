@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RakdosGuildgate;
+import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BasiliskGate.class, GrizzlyBears.class, RakdosGuildgate.class})
+@CardUsed({BasiliskGate.class, SolemnSimulacrum.class})
 class BasiliskGateTest extends BaseCardTest {
 
     @Test
     void boostsTargetCreatureByTheNumberOfGatesControlled() {
         Permanent gate = addReadyBasiliskGate(player1);
-        harness.addToBattlefield(player1, new RakdosGuildgate());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BasiliskGate());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SolemnSimulacrum());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -36,7 +35,7 @@ class BasiliskGateTest extends BaseCardTest {
     @Test
     void boostWearsOffAtCleanup() {
         addReadyBasiliskGate(player1);
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SolemnSimulacrum());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, creature.getId());
@@ -44,7 +43,6 @@ class BasiliskGateTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -84,8 +82,8 @@ class BasiliskGateTest extends BaseCardTest {
     @DisplayName("Boosts a target creature by the number of Gates you control")
     void boostsByControlledGateCount() {
         harness.addToBattlefield(player1, new BasiliskGate());
-        harness.addToBattlefield(player1, new RakdosGuildgate());
-        harness.addToBattlefield(player1, new RakdosGuildgate());
+        harness.addToBattlefield(player1, new BasiliskGate());
+        harness.addToBattlefield(player1, new BasiliskGate());
         Permanent target = addCreatureReady(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -100,7 +98,7 @@ class BasiliskGateTest extends BaseCardTest {
     @DisplayName("Opponent-controlled Gates do not increase the boost")
     void countsOnlyGatesYouControl() {
         harness.addToBattlefield(player1, new BasiliskGate());
-        harness.addToBattlefield(player2, new RakdosGuildgate());
+        harness.addToBattlefield(player2, new BasiliskGate());
         Permanent target = addCreatureReady(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -119,14 +117,92 @@ class BasiliskGateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
     }
 
-    private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        return addCreatureReady(player, new GrizzlyBears());
+    @Test
+    void usesGateCountAtResolutionAndDoesNotRecalculateAfterward() {
+        addReadyBasiliskGate(player1);
+        Permanent otherGate = harness.addToBattlefieldAndReturn(player1, new BasiliskGate());
+        Permanent target = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(otherGate);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+
+        harness.addToBattlefield(player1, new BasiliskGate());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void resolvesWithZeroBoostWhenTheOnlyGateLeavesBeforeResolution() {
+        Permanent gate = addReadyBasiliskGate(player1);
+        Permanent target = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(gate);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void stillBoostsUsingRemainingGatesWhenTheSourceLeaves() {
+        Permanent source = addReadyBasiliskGate(player1);
+        harness.addToBattlefield(player1, new BasiliskGate());
+        Permanent target = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void cannotActivateBoostOutsideMainPhase() {
+        Permanent gate = addReadyBasiliskGate(player1);
+        Permanent target = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("main phase");
+        assertThat(gate.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateBoostWhileAnotherAbilityIsOnTheStack() {
+        addReadyBasiliskGate(player1);
+        Permanent secondGate = harness.addToBattlefieldAndReturn(player1, new BasiliskGate());
+        Permanent target = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(secondGate.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    private Permanent addCreatureReady(Player player) {
+        return addCreatureReady(player, new SolemnSimulacrum());
     }
 }

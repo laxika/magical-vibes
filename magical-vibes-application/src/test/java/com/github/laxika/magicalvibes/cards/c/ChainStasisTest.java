@@ -25,8 +25,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
@@ -41,8 +40,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -56,8 +54,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -72,8 +69,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, false);
 
@@ -89,9 +85,10 @@ class ChainStasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.stack).hasSize(1);
@@ -106,8 +103,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
 
@@ -122,8 +118,7 @@ class ChainStasisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -145,9 +140,9 @@ class ChainStasisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, firstTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, secondTarget.getId());
@@ -164,12 +159,46 @@ class ChainStasisTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new EbonyRhino());
-        Permanent nonCreature = new Permanent(new ApocalypseChime());
-        gd.playerBattlefields.get(player2.getId()).add(nonCreature);
+        Permanent nonCreature = harness.addToBattlefieldAndReturn(player2, new ApocalypseChime());
         harness.setHand(player1, List.of(new ChainStasis()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The target controller may pay and then decline to copy the spell")
+    void payingDoesNotRequireCopying() {
+        Permanent target = addCreatureReady(player2, new EbonyRhino());
+        harness.setHand(player1, List.of(new ChainStasis()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Chain Stasis");
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both the tap instruction and the copy payment")
+    void removedTargetPreventsCopyPayment() {
+        Permanent target = addCreatureReady(player2, new EbonyRhino());
+        harness.setHand(player1, List.of(new ChainStasis()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Chain Stasis");
     }
 }

@@ -41,4 +41,58 @@ class BlackWaltzNo3Test extends BaseCardTest {
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Black Waltz No. 3")
+    void opponentSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new BlackWaltzNo3());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        gs.passPriority(gd, player1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell triggers independently")
+    void repeatedSpellsEachTrigger() {
+        harness.addToBattlefield(player1, new BlackWaltzNo3());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after its source is destroyed in response")
+    void triggerSurvivesSourceRemoval() {
+        var source = harness.addToBattlefieldAndReturn(player1, new BlackWaltzNo3());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        gs.passPriority(gd, player1);
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
 }

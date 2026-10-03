@@ -61,6 +61,52 @@ class BorisDevilboonTest extends BaseCardTest {
         assertThat(boris.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent boris = harness.addToBattlefieldAndReturn(player1, new BorisDevilboon());
+        addCostMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(boris.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(countPermanents(player1, "Minor Demon")).isZero();
+    }
+
+    @Test
+    @DisplayName("The token is created on resolution even if Boris leaves the battlefield")
+    void createsTokenAfterSourceLeavesBattlefield() {
+        Permanent boris = addCreatureReady(player1, new BorisDevilboon());
+        addCostMana(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(countPermanents(player1, "Minor Demon")).isZero();
+        harness.getPermanentRemovalService().removePermanentToExile(gd, boris);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Boris Devilboon")).isZero();
+        assertThat(countPermanents(player1, "Minor Demon")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Minor Demon")).isZero();
+        Permanent token = findPermanent(player1, "Minor Demon");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can create a token during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        addCreatureReady(player1, new BorisDevilboon());
+        harness.forceActivePlayer(player2);
+        addCostMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Minor Demon")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Minor Demon")).isZero();
+    }
     private void addCostMana(Player player) {
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.RED, 1);

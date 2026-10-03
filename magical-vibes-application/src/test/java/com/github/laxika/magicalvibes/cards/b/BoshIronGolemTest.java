@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.c.CullingScales;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GreatFurnace;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,20 +14,18 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BoshIronGolem.class, AlphaMyr.class, CullingScales.class, Forest.class})
+@CardUsed({BoshIronGolem.class, AlphaMyr.class, CullingScales.class, Forest.class, GreatFurnace.class})
 class BoshIronGolemTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals damage equal to the sacrificed artifact's mana value")
     void dealsDamageEqualToSacrificedArtifactManaValue() {
-        harness.addToBattlefield(player1, new BoshIronGolem());
-        harness.addToBattlefield(player1, new CullingScales());
+        Permanent bosh = harness.addToBattlefieldAndReturn(player1, new BoshIronGolem());
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        Permanent bosh = findPermanent(player1, "Bosh, Iron Golem");
-        Permanent scales = findPermanent(player1, "Culling Scales");
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.handlePermanentChosen(player1, scales.getId());
         harness.passBothPriorities();
@@ -42,8 +41,7 @@ class BoshIronGolemTest extends BaseCardTest {
     void dealsDamageToCreature() {
         harness.addToBattlefield(player1, new BoshIronGolem());
         Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
-        harness.addToBattlefield(player2, new AlphaMyr());
-        Permanent target = findPermanent(player2, "Alpha Myr");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -103,5 +101,62 @@ class BoshIronGolemTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificingArtifactLandDealsNoDamage() {
+        harness.addToBattlefield(player1, new BoshIronGolem());
+        Permanent furnace = harness.addToBattlefieldAndReturn(player1, new GreatFurnace());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, furnace.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Great Furnace");
+        harness.assertOnBattlefield(player1, "Bosh, Iron Golem");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsArtifact() {
+        harness.addToBattlefield(player1, new BoshIronGolem());
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, scales.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player2, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Culling Scales");
+    }
+
+    @Test
+    void stackedActivationsRetainTheirOwnSacrificedManaValuesAfterBoshLeaves() {
+        harness.addToBattlefield(player1, new BoshIronGolem());
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, scales.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Bosh, Iron Golem");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 12);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 9);
+        harness.assertInGraveyard(player1, "Culling Scales");
     }
 }

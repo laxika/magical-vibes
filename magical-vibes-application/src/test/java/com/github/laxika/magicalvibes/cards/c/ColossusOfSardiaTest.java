@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ColossusOfSardia.class, GrizzlyBears.class})
 class ColossusOfSardiaTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Colossus of Sardia puts it on the stack")
@@ -48,8 +47,6 @@ class ColossusOfSardiaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard())
                 .isInstanceOf(ColossusOfSardia.class);
     }
-
-    // ===== Doesn't untap during untap step =====
 
     @Test
     @DisplayName("Tapped Colossus of Sardia does not untap during controller's untap step")
@@ -99,8 +96,6 @@ class ColossusOfSardiaTest extends BaseCardTest {
         assertThat(colossusPerm.isTapped()).isTrue();
         assertThat(bearsPerm.isTapped()).isFalse();
     }
-
-    // ===== Activated ability: untap during upkeep =====
 
     @Test
     @DisplayName("Activating untap ability during upkeep puts it on the stack")
@@ -199,8 +194,6 @@ class ColossusOfSardiaTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
-    // ===== Trample =====
-
     @Test
     @DisplayName("Unblocked Colossus deals full 9 damage to defending player")
     void unblockedDealsFull9Damage() {
@@ -294,7 +287,51 @@ class ColossusOfSardiaTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Untap ability untaps only its source among multiple Colossi")
+    void untapAbilityOnlyUntapsItsSource() {
+        Permanent first = addColossusReady(player1);
+        Permanent second = addColossusReady(player1);
+        first.tap();
+        second.tap();
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 9);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(second.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untap ability can be activated while Colossus is already untapped")
+    void canActivateWhileAlreadyUntapped() {
+        Permanent colossus = addColossusReady(player1);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 9);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(colossus.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Colossus untaps normally after Humility removes its abilities")
+    void untapsAfterLosingItsAbilities() {
+        Permanent colossus = addColossusReady(player1);
+        colossus.tap();
+        harness.addToBattlefield(player1, new Humility());
+
+        harness.performUntapStep(player1);
+
+        assertThat(colossus.isTapped()).isFalse();
+    }
 
     private Permanent addColossusReady(Player player) {
         return addCreatureReady(player, new ColossusOfSardia());
@@ -307,9 +344,7 @@ class ColossusOfSardiaTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        harness.passUntil(currentActivePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }
 

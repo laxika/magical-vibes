@@ -105,4 +105,42 @@ class CoffinPuppetsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The only Swamp may be sacrificed and the lands are paid before resolution")
+    void canSacrificeOnlySwampAsCost() {
+        CoffinPuppets puppets = new CoffinPuppets();
+        harness.setGraveyard(player1, List.of(puppets));
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        advanceToUpkeep(player1);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(swamp, forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(puppets, swamp.getCard(), forest.getCard());
+        harness.assertNotOnBattlefield(player1, "Coffin Puppets");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Coffin Puppets");
+        harness.assertNotInGraveyard(player1, "Coffin Puppets");
+        assertThat(findPermanent(player1, "Coffin Puppets").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's Swamp does not satisfy the activation requirement")
+    void opponentsSwampDoesNotEnableActivation() {
+        harness.setGraveyard(player1, List.of(new CoffinPuppets()));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Swamp());
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Swamp");
+        harness.assertInGraveyard(player1, "Coffin Puppets");
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+    }
+
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Breathstealer.class)
 class BreathstealerTest extends BaseCardTest {
@@ -27,7 +28,7 @@ class BreathstealerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Repeated activations lower toughness to 0, destroying it")
+    @DisplayName("Repeated activations lower toughness to 0, putting it into the graveyard")
     void repeatedActivationsCanKillIt() {
         Permanent breathstealer = addCreatureReady(player1, new Breathstealer());
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -39,8 +40,7 @@ class BreathstealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(breathstealer);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c instanceof Breathstealer);
+        harness.assertInGraveyard(player1, "Breathstealer");
     }
 
     @Test
@@ -58,6 +58,57 @@ class BreathstealerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gqs.getEffectivePower(gd, breathstealer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, breathstealer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability works while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent breathstealer = addCreatureReady(player1, new Breathstealer());
+        breathstealer.setSummoningSick(true);
+        breathstealer.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, breathstealer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, breathstealer)).isEqualTo(1);
+        assertThat(breathstealer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost applies only when the activated ability resolves")
+    void boostWaitsForResolution() {
+        Permanent breathstealer = addCreatureReady(player1, new Breathstealer());
+        Permanent other = addCreatureReady(player1, new Breathstealer());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, breathstealer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, breathstealer)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, breathstealer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, breathstealer)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability requires black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent breathstealer = addCreatureReady(player1, new Breathstealer());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, breathstealer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, breathstealer)).isEqualTo(2);
     }

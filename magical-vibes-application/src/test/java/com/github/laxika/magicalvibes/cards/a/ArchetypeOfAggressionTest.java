@@ -55,4 +55,44 @@ class ArchetypeOfAggressionTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Opposing Archetypes prevent trample regardless of entry order and grants resume when one leaves")
+    void opposingArchetypesSuppressEachOtherAndRemainingGrantResumes() {
+        Permanent first = addCreatureReady(player1, new ArchetypeOfAggression());
+        Permanent second = addCreatureReady(player2, new ArchetypeOfAggression());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposing Archetypes also suppress trample when the opponent's Archetype enters first")
+    void opposingArchetypesSuppressTrampleInReverseEntryOrder() {
+        Permanent first = addCreatureReady(player2, new ArchetypeOfAggression());
+        Permanent second = addCreatureReady(player1, new ArchetypeOfAggression());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield removes the grant and restores printed opposing trample")
+    void leavingBattlefieldRemovesGrantAndRestoresPrintedTrample() {
+        Permanent ownCreature = addCreatureReady(player1, new BantBattlemage());
+        Permanent opposingCreature = addCreatureReady(player2, new YavimayaAnts());
+        Permanent archetype = addCreatureReady(player1, new ArchetypeOfAggression());
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.TRAMPLE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(archetype);
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.TRAMPLE)).isTrue();
+    }
 }

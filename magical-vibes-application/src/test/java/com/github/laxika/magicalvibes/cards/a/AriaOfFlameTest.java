@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.f.ForceOfVigor;
+import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -17,12 +20,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AriaOfFlame.class, Shock.class, GrizzlyBears.class, LilianaVess.class, Opt.class})
+@CardUsed({AriaOfFlame.class, Shock.class, GrizzlyBears.class, LilianaVess.class, Opt.class,
+        Firebolt.class, ForceOfVigor.class, LavaDart.class})
 class AriaOfFlameTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield gives each opponent 10 life")
     void enteringGivesOpponentLife() {
+        harness.setLife(player1, 20);
         harness.setLife(player2, 5);
         harness.setHand(player1, List.of(new AriaOfFlame()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -33,6 +38,7 @@ class AriaOfFlameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     @Test
@@ -86,7 +92,7 @@ class AriaOfFlameTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
                 PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(player2.getId(), planeswalker.getId())
+        assertThat(choice.validIds()).contains(player1.getId(), player2.getId(), planeswalker.getId())
                 .doesNotContain(creature.getId());
 
         harness.handlePermanentChosen(player1, planeswalker.getId());
@@ -94,5 +100,86 @@ class AriaOfFlameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    void sorceryTriggersBeforeResolvingAndCanTargetController() {
+        Permanent aria = harness.addToBattlefieldAndReturn(player1, new AriaOfFlame());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(aria.getCounterCount(CounterType.VERSE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(aria.getCounterCount(CounterType.VERSE)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void opponentsSpellDoesNotTrigger() {
+        Permanent aria = harness.addToBattlefieldAndReturn(player1, new AriaOfFlame());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new LavaDart()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(aria.getCounterCount(CounterType.VERSE)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void illegalTargetPreventsCounterBeingAdded() {
+        Permanent aria = harness.addToBattlefieldAndReturn(player1, new AriaOfFlame());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 1);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.setHand(player2, List.of(new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+        harness.castAndResolveInstant(player2, 0, planeswalker.getId());
+        harness.assertNotOnBattlefield(player2, "Liliana Vess");
+        harness.passBothPriorities();
+
+        assertThat(aria.getCounterCount(CounterType.VERSE)).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void removedSourceDealsDamageUsingLastKnownCounters() {
+        Permanent aria = harness.addToBattlefieldAndReturn(player1, new AriaOfFlame());
+        aria.setCounterCount(CounterType.VERSE, 3);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LavaDart()));
+        harness.setHand(player2, List.of(new ForceOfVigor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, List.of(aria.getId()));
+        harness.assertNotOnBattlefield(player1, "Aria of Flame");
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(aria.getCounterCount(CounterType.VERSE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 }

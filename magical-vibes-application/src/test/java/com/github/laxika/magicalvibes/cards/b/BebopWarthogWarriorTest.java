@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,11 +72,73 @@ class BebopWarthogWarriorTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(swamp);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Bebop, Warthog Warrior");
         harness.assertInHand(player1, "Swamp");
         assertThat(gd.playerDecks.get(player1.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Swampcycling discards Bebop before the ability resolves, even on an opponent's turn")
+    void swampcyclingPaysDiscardCostImmediatelyOnOpponentsTurn() {
+        BebopWarthogWarrior bebop = new BebopWarthogWarrior();
+        Swamp swamp = new Swamp();
+        harness.setHand(player1, List.of(bebop));
+        harness.setLibrary(player1, List.of(swamp));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bebop);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bebop);
+    }
+
+    @Test
+    @DisplayName("Swampcycling may fail to find even when a Swamp is available")
+    void swampcyclingMayDeclineAvailableSwamp() {
+        Swamp swamp = new Swamp();
+        harness.setHand(player1, List.of(new BebopWarthogWarrior()));
+        harness.setLibrary(player1, List.of(swamp));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+        harness.assertInGraveyard(player1, "Bebop, Warthog Warrior");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Swampcycling resolves without finding a card when the library has no Swamps")
+    void swampcyclingWithNoMatchingCards() {
+        BebopWarthogWarrior otherBebop = new BebopWarthogWarrior();
+        harness.setHand(player1, List.of(new BebopWarthogWarrior()));
+        harness.setLibrary(player1, List.of(otherBebop));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherBebop);
+        harness.assertInGraveyard(player1, "Bebop, Warthog Warrior");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent makeRhino(Player player) {

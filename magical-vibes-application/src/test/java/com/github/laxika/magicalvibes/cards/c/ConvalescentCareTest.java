@@ -80,4 +80,70 @@ class ConvalescentCareTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(6);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore).doesNotContain(libraryCard);
     }
+
+    @Test
+    @DisplayName("Dropping to 5 life after upkeep begins does not create a trigger")
+    void lifeDropsAfterUpkeepDoesNotTrigger() {
+        Card libraryCard = new Plains();
+        harness.addToBattlefield(player1, new ConvalescentCare());
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setLife(player1, 6);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.setLife(player1, 5);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore).doesNotContain(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Each copy rechecks life independently when its trigger resolves")
+    void multipleCopiesRecheckLifeBeforeEachResolution() {
+        Card firstCard = new Plains();
+        Card secondCard = new Plains();
+        harness.addToBattlefield(player1, new ConvalescentCare());
+        harness.addToBattlefield(player1, new ConvalescentCare());
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setLife(player1, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(8);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(firstCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(8);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(handSizeBefore + 1).contains(firstCard).doesNotContain(secondCard);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability still resolves after its source leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Card libraryCard = new Plains();
+        ConvalescentCare care = new ConvalescentCare();
+        harness.addToBattlefield(player1, care);
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setLife(player1, 5);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerGraveyards.get(player1.getId()).add(care);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(8);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1).contains(libraryCard);
+    }
 }

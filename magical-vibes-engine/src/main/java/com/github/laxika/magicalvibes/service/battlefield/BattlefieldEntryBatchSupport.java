@@ -83,9 +83,11 @@ public class BattlefieldEntryBatchSupport {
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (BattlefieldEntryCard candidate : cards) {
-                List<Card> zone = candidate.origin() == Zone.GRAVEYARD
-                        ? gameData.playerGraveyards.get(candidate.zoneOwnerId())
-                        : gameData.playerHands.get(candidate.zoneOwnerId());
+                List<Card> zone = switch (candidate.origin()) {
+                    case GRAVEYARD -> gameData.playerGraveyards.get(candidate.zoneOwnerId());
+                    case LIBRARY -> gameData.playerDecks.get(candidate.zoneOwnerId());
+                    default -> gameData.playerHands.get(candidate.zoneOwnerId());
+                };
                 if (zone == null || !zone.remove(candidate.card())) continue;
                 if (candidate.origin() == Zone.GRAVEYARD) {
                     graveyardService.notifyCardsLeftGraveyard(gameData, candidate.zoneOwnerId(), candidate.card());

@@ -106,4 +106,74 @@ class AphettoGrifterTest extends BaseCardTest {
         assertThat(grifter.isTapped()).isFalse();
         assertThat(wizard.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Summoning-sick Wizards can pay the cost and the Grifter can target itself")
+    void summoningSickWizardsCanPayCostAndTargetSelf() {
+        Permanent grifter = harness.addToBattlefieldAndReturn(player1, new AphettoGrifter());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new AphettoGrifter());
+        grifter.setSummoningSick(true);
+        wizard.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, grifter.getId());
+
+        assertThat(grifter.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(grifter.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Grifter can activate using two other Wizards")
+    void tappedGrifterCanActivateUsingOtherWizards() {
+        Permanent grifter = addCreatureReady(player1, new AphettoGrifter());
+        grifter.tap();
+        Permanent firstWizard = addCreatureReady(player1, new AphettoGrifter());
+        Permanent secondWizard = addCreatureReady(player1, new AphettoGrifter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(firstWizard.isTapped()).isTrue();
+        assertThat(secondWizard.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already tapped permanent is a legal target")
+    void canTargetAlreadyTappedPermanent() {
+        Permanent grifter = addCreatureReady(player1, new AphettoGrifter());
+        Permanent wizard = addCreatureReady(player1, new AphettoGrifter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(grifter.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Costs stay paid when the target leaves before resolution")
+    void costsStayPaidWhenTargetLeavesBeforeResolution() {
+        Permanent grifter = addCreatureReady(player1, new AphettoGrifter());
+        Permanent wizard = addCreatureReady(player1, new AphettoGrifter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(grifter.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

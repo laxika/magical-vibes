@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.i.IntimidatorInitiate;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
+import com.github.laxika.magicalvibes.cards.t.TattermungeManiac;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,10 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodmarkMentor.class, IntimidatorInitiate.class, SafeholdSentry.class})
+@CardUsed({BloodmarkMentor.class, IntimidatorInitiate.class, SafeholdSentry.class, TattermungeManiac.class})
 class BloodmarkMentorTest extends BaseCardTest {
-
-    // ===== Grant: "Red creatures you control have first strike" =====
 
     @Test
     @DisplayName("Bloodmark Mentor grants itself first strike (it is red)")
@@ -55,5 +54,42 @@ class BloodmarkMentorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentRed, Keyword.FIRST_STRIKE)).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Grants first strike to a red and green creature")
+    void grantsFirstStrikeToMulticoloredRedCreature() {
+        addCreatureReady(player1, new BloodmarkMentor());
+        Permanent creature = addCreatureReady(player1, new TattermungeManiac());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature already on the battlefield gains first strike when the Mentor arrives")
+    void grantsFirstStrikeToExistingCreature() {
+        Permanent creature = addCreatureReady(player1, new IntimidatorInitiate());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+
+        addCreatureReady(player1, new BloodmarkMentor());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike remains until the last Mentor leaves the battlefield")
+    void overlappingMentorsGrantFirstStrikeIndependently() {
+        Permanent firstMentor = addCreatureReady(player1, new BloodmarkMentor());
+        Permanent secondMentor = addCreatureReady(player1, new BloodmarkMentor());
+        Permanent creature = addCreatureReady(player1, new IntimidatorInitiate());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstMentor);
+
+        assertThat(gqs.hasKeyword(gd, secondMentor, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondMentor);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.c.CoilingStalker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TamiyosSafekeeping;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,8 +19,53 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakenedAwareness.class, FountainOfYouth.class, GrizzlyBears.class, Plains.class})
+@CardUsed({AwakenedAwareness.class, FountainOfYouth.class, GrizzlyBears.class, Plains.class,
+        CoilingStalker.class, TamiyosSafekeeping.class})
 class AwakenedAwarenessTest extends BaseCardTest {
+
+    @Test
+    void zeroXStillSetsBasePowerAndToughness() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoilingStalker());
+        harness.setHand(player1, List.of(new AwakenedAwareness()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Awakened Awareness");
+    }
+
+    @Test
+    void countersArePlacedDespiteHexproofGainedInResponseToTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoilingStalker());
+        harness.setHand(player1, List.of(new AwakenedAwareness()));
+        harness.setHand(player2, List.of(new TamiyosSafekeeping()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        gs.playCard(gd, player1, 0, 3, creature.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("When Awakened Awareness enters, it puts X counters on the enchanted creature")

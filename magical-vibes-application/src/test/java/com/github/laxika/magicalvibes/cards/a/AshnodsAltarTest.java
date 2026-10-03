@@ -63,4 +63,47 @@ class AshnodsAltarTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A tapped Altar can sacrifice a tapped creature that just entered")
+    void tappedAltarCanSacrificeTappedNewCreature() {
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        altar.tap();
+        bear.tap();
+        bear.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(altar);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear.getCard());
+        assertThat(altar.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Altar can be activated repeatedly, sacrificing a different creature each time")
+    void repeatedActivationsEachRequireCreature() {
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstBear.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(altar);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstBear.getCard(), secondBear.getCard());
+        assertThat(altar.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
 }

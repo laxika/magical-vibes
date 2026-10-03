@@ -4,19 +4,18 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BindingMummy.class, AngelsFeather.class, Forest.class, GrizzlyBears.class, ScatheZombies.class})
 class BindingMummyTest extends BaseCardTest {
 
     @Test
@@ -76,9 +75,7 @@ class BindingMummyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BindingMummy());
         harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities(); // resolve the creature
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -104,8 +101,61 @@ class BindingMummyTest extends BaseCardTest {
     }
 
     private void castScatheZombies(Player player) {
-        harness.setHand(player, List.of(new ScatheZombies()));
-        harness.addMana(player, ManaColor.BLACK, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new ScatheZombies(), "{2}{B}");
+    }
+
+    @Test
+    @DisplayName("Binding Mummy does not trigger for its own entry")
+    void ownEntryDoesNotTrigger() {
+        harness.castFromHand(player1, new BindingMummy(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Zombie entering does not trigger Binding Mummy")
+    void opponentsZombieDoesNotTrigger() {
+        harness.addToBattlefield(player1, new BindingMummy());
+
+        harness.enterBattlefieldAndReturn(player2, new ScatheZombies());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Binding Mummy may target itself")
+    void canTapItself() {
+        Permanent mummy = harness.addToBattlefieldAndReturn(player1, new BindingMummy());
+
+        castScatheZombies(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, mummy.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(mummy.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature remains a legal target")
+    void canTargetTappedCreature() {
+        harness.addToBattlefield(player1, new BindingMummy());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        victim.setTapped(true);
+
+        castScatheZombies(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

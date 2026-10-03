@@ -17,6 +17,43 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CitanulCentaursTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotPutEchoRegistrationOnStack() {
+        harness.castFromHand(player1, new CitanulCentaurs(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Citanul Centaurs");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents an opponent from targeting Citanul Centaurs")
+    void shroudPreventsOpponentsTargeting() {
+        var centaurs = harness.addToBattlefieldAndReturn(player1, new CitanulCentaurs());
+        harness.setHand(player2, List.of(new Humble()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, centaurs.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not consume the pending echo obligation")
+    void echoStillTriggersAfterOpponentsUpkeep() {
+        castAndResolveCentaurs();
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Citanul Centaurs");
+        harness.assertInGraveyard(player1, "Citanul Centaurs");
+    }
+
+    @Test
     @DisplayName("Citanul Centaurs cannot be targeted by spells")
     void shroudPreventsTargeting() {
         var centaurs = harness.addToBattlefieldAndReturn(player1, new CitanulCentaurs());

@@ -24,8 +24,7 @@ class CarefulCultivationTest extends BaseCardTest {
     @Test
     @DisplayName("Careful Cultivation boosts an enchanted creature and grants reach and mana")
     void boostsCreatureAndGrantsAbilities() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new CarefulCultivation()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -94,5 +93,68 @@ class CarefulCultivationTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(monk.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Channel discards as a cost and creates its token only on resolution")
+    void channelDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new CarefulCultivation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Careful Cultivation");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Human Monk")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human Monk")).isEqualTo(1);
+        Permanent monk = findPermanent(player1, "Human Monk");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(monk.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Channel cannot be activated without its green mana cost")
+    void channelRequiresGreenMana() {
+        harness.setHand(player1, List.of(new CarefulCultivation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Human Monk")).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted creature receives the bonuses and produces mana for its controller")
+    void opponentControlsGrantedManaAbility() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CarefulCultivation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.REACH)).isTrue();
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

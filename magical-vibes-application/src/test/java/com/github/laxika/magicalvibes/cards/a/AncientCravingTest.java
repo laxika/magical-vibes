@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,5 +54,49 @@ class AncientCravingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckBefore);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Drawing the last three cards does not cause a library loss")
+    void drawsLastThreeCardsWithoutLosing() {
+        harness.setLibrary(player1, List.of(new AncientCraving(), new AncientCraving(), new AncientCraving()));
+        harness.setLife(player1, 20);
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 17);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Ancient Craving");
+    }
+
+    @Test
+    @DisplayName("A short library still causes life loss before the controller loses the game")
+    void shortLibraryStillLosesLife() {
+        harness.setLibrary(player1, List.of(new AncientCraving(), new AncientCraving()));
+        harness.setLife(player1, 20);
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 17);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Life loss resolves even with fewer than three life")
+    void resolvesWithLessThanThreeLife() {
+        harness.setLibrary(player1, List.of(new AncientCraving(), new AncientCraving(), new AncientCraving()));
+        harness.setLife(player1, 2);
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, -1);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

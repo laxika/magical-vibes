@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,10 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcaneSanctum.class})
 class ArcaneSanctumTest extends BaseCardTest {
-
-    // ===== Enters the battlefield tapped =====
 
     @Test
     @DisplayName("Arcane Sanctum enters the battlefield tapped")
@@ -26,13 +27,11 @@ class ArcaneSanctumTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent sanctum = findPermanent(player1, "Arcane Sanctum");
         assertThat(sanctum.isTapped()).isTrue();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Activating the ability prompts a choice between white, blue, and black")
@@ -70,12 +69,45 @@ class ArcaneSanctumTest extends BaseCardTest {
         }
     }
 
-    // ===== Helper methods =====
-
     private Permanent addSanctumReady(Player player) {
-        Permanent perm = new Permanent(new ArcaneSanctum());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ArcaneSanctum());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A tapped Arcane Sanctum cannot produce mana")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new ArcaneSanctum()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Arcane Sanctum can produce mana after untapping")
+    void producesManaAfterUntapping() {
+        harness.setHand(player1, List.of(new ArcaneSanctum()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Arcane Sanctum").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

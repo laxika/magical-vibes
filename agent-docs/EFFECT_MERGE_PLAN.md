@@ -22,7 +22,7 @@ carries across.
    handlers. The audit was thorough but is not a substitute for looking. If the handlers have
    diverged since the audit, say so and stop rather than forcing the merge.
 3. Read `agent-docs/ARCHITECTURE.md` before any change beyond a card class + its test
-   (per `CLAUDE.md`) — card freezing, CR 613 layers, thread safety, Jackson 3 imports,
+   (per `AGENTS.md`) — card freezing, CR 613 layers, thread safety, Jackson 3 imports,
    view immutability.
 4. **Behavior must stay identical** unless the step explicitly says otherwise. Where a step
    notes a behavior change or a latent bug, make the change deliberately and cover it with a test.
@@ -1002,7 +1002,7 @@ there). Widening any of these means wiring the consumer at the same time.
   `GrantNoMaximumHandSizeEffectHandlerTest.logsRestOfGameGrant` / `logsUntilNextTurnGrant`.
 
 **Tests** — `TrueBelieverTest.grantsControllerShroudOnBattlefield` was a white-box wiring test
-(`getEffects(STATIC)` + `instanceof`) of exactly the kind `CLAUDE.md` forbids; it is deleted rather
+(`getEffects(STATIC)` + `instanceof`) of exactly the kind `AGENTS.md` forbids; it is deleted rather
 than repointed, since the same file already asserts the shroud behaviourally three ways.
 `GameQueryServiceTest` and the hand-size handler test are repointed at the merged records, the latter
 renamed and extended to assert **each duration lands on its own set and not the other**.

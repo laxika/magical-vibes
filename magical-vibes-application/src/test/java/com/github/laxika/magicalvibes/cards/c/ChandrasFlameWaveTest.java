@@ -2,12 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChandrasFlameWave.class, ChandraFlamesFury.class, GiantSpider.class, HillGiant.class})
 class ChandrasFlameWaveTest extends BaseCardTest {
 
     @Test
@@ -28,8 +28,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChandrasFlameWave()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(targetSpider.getMarkedDamage()).isEqualTo(2);
@@ -40,13 +39,12 @@ class ChandrasFlameWaveTest extends BaseCardTest {
     @Test
     @DisplayName("Finds Chandra, Flame's Fury in the graveyard and puts it into hand")
     void findsNamedCardInGraveyard() {
-        Card chandraFlamesFury = namedCard("Chandra, Flame's Fury");
+        ChandraFlamesFury chandraFlamesFury = new ChandraFlamesFury();
         harness.setGraveyard(player1, List.of(chandraFlamesFury));
         harness.setHand(player1, List.of(new ChandrasFlameWave()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertInHand(player1, "Chandra, Flame's Fury");
         harness.assertNotInGraveyard(player1, "Chandra, Flame's Fury");
@@ -55,15 +53,14 @@ class ChandrasFlameWaveTest extends BaseCardTest {
     @Test
     @DisplayName("Finds Chandra, Flame's Fury in the library and puts it into hand")
     void findsNamedCardInLibrary() {
-        harness.setLibrary(player1, List.of(namedCard("Chandra, Flame's Fury")));
+        harness.setLibrary(player1, List.of(new ChandraFlamesFury()));
         harness.setHand(player1, List.of(new ChandrasFlameWave()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Chandra, Flame's Fury");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -80,9 +77,52 @@ class ChandrasFlameWaveTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private static Card namedCard(String name) {
-        Card card = new Card();
-        card.setName(name);
-        return card;
+    @Test
+    @DisplayName("Can target its controller and damage only that player's creatures")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new ChandrasFlameWave()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can fail to find Chandra in the library without undoing damage")
+    void canFailToFindInLibrary() {
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new ChandraFlamesFury()));
+        harness.setHand(player1, List.of(new ChandrasFlameWave()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertLife(player2, 18);
+        harness.assertNotInHand(player1, "Chandra, Flame's Fury");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A graveyard copy does not force retrieval before choosing which zone to search")
+    void offersSearchChoiceWhenBothZonesContainChandra() {
+        ChandraFlamesFury graveyardCopy = new ChandraFlamesFury();
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(new ChandraFlamesFury()));
+        harness.setHand(player1, List.of(new ChandrasFlameWave()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCopy);
+        harness.assertNotInHand(player1, "Chandra, Flame's Fury");
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
     }
 }

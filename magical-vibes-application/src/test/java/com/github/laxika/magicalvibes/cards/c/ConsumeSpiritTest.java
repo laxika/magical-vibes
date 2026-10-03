@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ConsumeSpirit.class, RuneclawBear.class, ChandraNalaar.class, SafePassage.class})
 class ConsumeSpiritTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting Consume Spirit targeting a player puts it on the stack")
     void castingTargetingPlayerPutsOnStack() {
@@ -37,8 +35,6 @@ class ConsumeSpiritTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
-    // ===== Damage to player and life gain =====
-
     @Test
     @DisplayName("Consume Spirit deals X damage to target player and gains X life")
     void dealsXDamageToPlayerAndGainsXLife() {
@@ -47,14 +43,11 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
-
-    // ===== Damage to creature =====
 
     @Test
     @DisplayName("Consume Spirit deals X damage to target creature and gains X life")
@@ -65,16 +58,13 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.setLife(player1, 15);
 
-        harness.castSorcery(player1, 0, 2, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, bear.getId());
 
         // 2 damage kills Runeclaw Bear (2 toughness)
         harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
         // Controller gains 2 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Consume Spirit fizzles when target creature is removed before resolution — no life gain")
@@ -93,8 +83,6 @@ class ConsumeSpiritTest extends BaseCardTest {
         // Spell fizzles — no damage and no life gain
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
-
-    // ===== Mana restriction: spend only black on X =====
 
     @Test
     @DisplayName("Cannot pay X with non-black mana")
@@ -122,8 +110,7 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -139,8 +126,7 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         // X=0: 0 damage and 0 life gain
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -158,8 +144,7 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 2, chandra.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, chandra.getId());
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -175,13 +160,11 @@ class ConsumeSpiritTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SafePassage()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         harness.setHand(player1, List.of(new ConsumeSpirit()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -196,6 +179,33 @@ class ConsumeSpiritTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Self-targeting restores life before checking for a loss")
+    void selfTargetingDoesNotLoseAtZeroLifeDuringResolution() {
+        harness.setHand(player1, List.of(new ConsumeSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 3);
+        assertThat(gd.gameResult).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage exceeding a creature's toughness still gains the full X")
+    void gainsFullXWhenDamageExceedsCreatureToughness() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new ConsumeSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.setLife(player1, 15);
+
+        harness.castAndResolveSorcery(player1, 0, 5, bear.getId());
+
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
 

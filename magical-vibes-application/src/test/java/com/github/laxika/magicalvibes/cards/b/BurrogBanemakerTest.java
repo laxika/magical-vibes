@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurrogBanemaker.class})
 class BurrogBanemakerTest extends BaseCardTest {
 
     @Test
@@ -49,7 +51,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
     void activatingAbilityPutsOnStack() {
-        Permanent banemakerPerm = addBurrogBanemakerReady(player1);
+        Permanent banemakerPerm = addCreatureReady(player1, new BurrogBanemaker());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -65,7 +67,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability gives +1/+1 to Burrog Banemaker")
     void resolvingAbilityBoostsPowerAndToughness() {
-        addBurrogBanemakerReady(player1);
+        addCreatureReady(player1, new BurrogBanemaker());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -83,7 +85,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
-        addBurrogBanemakerReady(player1);
+        addCreatureReady(player1, new BurrogBanemaker());
         harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.activateAbility(player1, 0, null, null);
@@ -103,7 +105,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addBurrogBanemakerReady(player1);
+        addCreatureReady(player1, new BurrogBanemaker());
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -128,7 +130,7 @@ class BurrogBanemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addBurrogBanemakerReady(player1);
+        addCreatureReady(player1, new BurrogBanemaker());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -136,11 +138,71 @@ class BurrogBanemakerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    private Permanent addBurrogBanemakerReady(Player player) {
-        BurrogBanemaker card = new BurrogBanemaker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent banemaker = harness.addToBattlefieldAndReturn(player1, new BurrogBanemaker());
+        banemaker.setSummoningSick(true);
+        banemaker.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(banemaker.getEffectivePower()).isEqualTo(2);
+        assertThat(banemaker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(banemaker.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotPayBlackRequirementWithOnlyColorlessMana() {
+        addCreatureReady(player1, new BurrogBanemaker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stackedActivationsBoostOnlyTheirSource() {
+        Permanent source = addCreatureReady(player1, new BurrogBanemaker());
+        Permanent other = addCreatureReady(player1, new BurrogBanemaker());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(3);
+        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathtouchKillsBlockerWithMoreToughnessThanDamageDealt() {
+        addCreatureReady(player1, new BurrogBanemaker());
+        Permanent blocker = addCreatureReady(player2, new BurrogBanemaker());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Burrog Banemaker");
+        harness.assertNotOnBattlefield(player1, "Burrog Banemaker");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

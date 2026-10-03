@@ -36,7 +36,7 @@ public class EachPlayerGainsControlOfOwnedPermanentsMatchingEffectHandler implem
         List<OwnedPermanent> toReturn = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             UUID ownerId = gameData.defaultControllerOf(permanent.getId());
-            if (ownerId != null && !ownerId.equals(controllerId)
+            if (ownerId != null
                     && predicateEvaluationService.matchesPermanentPredicate(
                     permanent, resolvingEffect.filter(), FilterContext.of(gameData)
                             .withSourceControllerId(entry.getControllerId()))) {

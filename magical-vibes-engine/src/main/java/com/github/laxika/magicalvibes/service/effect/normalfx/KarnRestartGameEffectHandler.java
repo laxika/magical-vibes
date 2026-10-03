@@ -193,6 +193,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.extraTurnDamageCantBePrevented.clear();
         gameData.extraTurnSequences.clear();
         gameData.currentExtraTurnSequence = null;
+        gameData.lastNormalTurnPlayerId = null;
         gameData.pendingLibraryBottomReorders.clear();
         gameData.openingHandRevealTriggers.clear();
         gameData.legacyChosenWordsByCardId.clear();
@@ -221,6 +222,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.permanentsPreventedFromDealingDamageUntilNextTurn.clear();
+        gameData.permanentsCantAttackUntilNextTurn.clear();
         gameData.permanentsProtectedFromDamageUntilNextTurn.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();

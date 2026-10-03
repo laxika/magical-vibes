@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChupacabraEcho.class, GrizzlyBears.class, Shock.class})
+@CardUsed({ChupacabraEcho.class, GrizzlyBears.class, Shock.class, Abrade.class, Swamp.class})
 class ChupacabraEchoTest extends BaseCardTest {
 
     @Test
@@ -52,7 +54,6 @@ class ChupacabraEchoTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
@@ -82,6 +83,75 @@ class ChupacabraEchoTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Chupacabra Echo");
+    }
+
+    @Test
+    @DisplayName("Lands count toward descent but instants do not")
+    void countsNoncreaturePermanentCards() {
+        harness.setGraveyard(player1, List.of(new Swamp(), new Abrade()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChupacabraEcho());
+
+        castChupacabra(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Descent is evaluated at resolution and then remains fixed")
+    void usesGraveyardAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChupacabraEcho());
+        harness.setHand(player1, List.of(new ChupacabraEcho()));
+        addChupacabraMana();
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of(new Swamp()));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        harness.setGraveyard(player1, List.of(new Swamp(), new Swamp()));
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Chupacabra Echo");
+    }
+
+    @Test
+    @DisplayName("A creature with zero toughness is put into its owner's graveyard")
+    void lethalDescentPutsTargetInGraveyard() {
+        harness.setGraveyard(player1, List.of(new Swamp(), new Swamp()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChupacabraEcho());
+
+        castChupacabra(target);
+
+        harness.assertNotOnBattlefield(player2, "Chupacabra Echo");
+        harness.assertInGraveyard(player2, "Chupacabra Echo");
+        harness.assertOnBattlefield(player1, "Chupacabra Echo");
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after its source dies and counts that source")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChupacabraEcho());
+        harness.setHand(player1, List.of(new ChupacabraEcho()));
+        addChupacabraMana();
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Abrade()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Chupacabra Echo"));
+        harness.assertInGraveyard(player1, "Chupacabra Echo");
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Chupacabra Echo");
     }
 
     private void castChupacabra(Permanent target) {

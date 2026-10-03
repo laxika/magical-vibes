@@ -171,6 +171,53 @@ class BrineSeerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Only selected blue cards contribute to the payment and remain in hand")
+    void chargesOnlyForSelectedSubset() {
+        Permanent seer = addReadySeer();
+        Donate selected = new Donate();
+        Donate unselected = new Donate();
+        harness.setHand(player1, List.of(selected, unselected));
+        addAbilityMana();
+        Flicker spell = castFlickerAt(seer, 2);
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected, unselected);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(findPermanent(player1, "Brine Seer").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejects nonblue cards and duplicate reveals without completing the choice")
+    void rejectsInvalidRevealSelections() {
+        Permanent seer = addReadySeer();
+        Donate blueCard = new Donate();
+        BubblingMuck nonBlueCard = new BubblingMuck();
+        harness.setHand(player1, List.of(blueCard, nonBlueCard));
+        addAbilityMana();
+        Flicker spell = castFlickerAt(seer, 1);
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(nonBlueCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(blueCard.getId(), blueCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
+
+        harness.assertInGraveyard(player2, "Flicker");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(blueCard, nonBlueCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadySeer() {
         return addCreatureReady(player1, new BrineSeer());
     }

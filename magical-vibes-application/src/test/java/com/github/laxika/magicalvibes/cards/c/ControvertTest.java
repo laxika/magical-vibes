@@ -97,4 +97,40 @@ class ControvertTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controvert);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(controvert);
     }
+
+    @Test
+    void recoverExilesControvertWhenPaymentLacksSecondBlueMana() {
+        Card controvert = new Controvert();
+        harness.setGraveyard(player1, List.of(controvert));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controvert);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(controvert);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(controvert);
+    }
+
+    @Test
+    void counteringOwnCreatureSpellDoesNotTriggerRecover() {
+        Card recoveringControvert = new Controvert();
+        harness.setGraveyard(player1, List.of(recoveringControvert));
+        BorealDruid druid = new BorealDruid();
+        harness.setHand(player1, List.of(druid, new Controvert()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, druid.getId());
+
+        harness.assertInGraveyard(player1, "Boreal Druid");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(recoveringControvert);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(recoveringControvert);
+    }
 }

@@ -101,4 +101,44 @@ class AuroraEidolonTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player1, "Aurora Eidolon");
     }
+
+    @Test
+    @DisplayName("An opponent's multicolored spell does not trigger the return")
+    void opponentsMulticoloredSpellDoesNotTriggerReturn() {
+        harness.setGraveyard(player1, List.of(new AuroraEidolon()));
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new TransguildCourier(), "{4}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Aurora Eidolon");
+        harness.assertNotInHand(player1, "Aurora Eidolon");
+    }
+
+    @Test
+    @DisplayName("The return ability does not trigger while Aurora Eidolon is on the battlefield")
+    void battlefieldEidolonDoesNotTriggerReturn() {
+        harness.addToBattlefield(player1, new AuroraEidolon());
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Aurora Eidolon");
+        harness.assertNotInHand(player1, "Aurora Eidolon");
+    }
+
+    @Test
+    @DisplayName("The return trigger cannot return an Eidolon that has left the graveyard")
+    void returnDoesNothingIfSourceLeftGraveyard() {
+        harness.setGraveyard(player1, List.of(new AuroraEidolon()));
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotInHand(player1, "Aurora Eidolon");
+        harness.assertNotInGraveyard(player1, "Aurora Eidolon");
+    }
 }

@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
+import com.github.laxika.magicalvibes.cards.d.DustOfMoments;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChronomanticEscape.class, GrizzlyBears.class})
+@CardUsed({ChronomanticEscape.class, BlindPhantasm.class, DustOfMoments.class})
 class ChronomanticEscapeTest extends BaseCardTest {
 
     @Test
@@ -33,7 +36,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
         castNormally();
 
         gd.expireEndOfTurnFloatingEffects();
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BlindPhantasm());
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
@@ -47,7 +50,7 @@ class ChronomanticEscapeTest extends BaseCardTest {
     @DisplayName("The attack restriction still allows creatures to attack the other player")
     void restrictionOnlyProtectsItsController() {
         castNormally();
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BlindPhantasm());
 
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();
@@ -87,6 +90,101 @@ class ChronomanticEscapeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(escape);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(escape.getId());
         assertThat(gd.suspendedSpellExiles).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing two counters after resolution permits a recast at the next upkeep")
+    void dustRemovesCountersFromResolvedEscape() {
+        ChronomanticEscape escape = castNormally();
+        castDustOfMoments(0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(escape);
+        addCreatureReady(player2, new BlindPhantasm());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Adding two counters after resolution delays the recast until the fifth upkeep")
+    void dustAddsCountersToResolvedEscape() {
+        castNormally();
+        castDustOfMoments(1);
+
+        for (int i = 0; i < 4; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        }
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The recurring countdown advances only during its owner's upkeep")
+    void resolvedEscapeRecastsOnlyAfterThreeOwnerUpkeeps() {
+        ChronomanticEscape escape = castNormally();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player2);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            if (i < 2) {
+                assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            }
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(escape);
+        addCreatureReady(player2, new BlindPhantasm());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Removing the last counter creates a separate trigger before offering the free cast")
+    void lastCounterCreatesRespondableCastTrigger() {
+        ChronomanticEscape escape = suspendCard();
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard()).isSameAs(escape);
+        });
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+    }
+
+    private void castDustOfMoments(int mode) {
+        harness.setHand(player1, List.of(new DustOfMoments()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castModalInstant(player1, 0, mode, List.of());
+        harness.passBothPriorities();
     }
 
     private ChronomanticEscape castNormally() {

@@ -78,6 +78,68 @@ class BroodguardEliteTest extends BaseCardTest {
         assertThat(gd.findExiledCard(eliteCard.getId())).isNotNull();
     }
 
+    @Test
+    @DisplayName("Leaving transfers every kind of counter and preserves existing recipient counters")
+    void leavingTransfersAllCounterKinds() {
+        Permanent recipient = addCreatureReady(player1, new BroodguardElite());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        recipient.setCounterCount(CounterType.STUN, 1);
+        Permanent elite = addCreatureReady(player1, new BroodguardElite());
+        elite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        elite.setCounterCount(CounterType.STUN, 2);
+        elite.setCounterCount(CounterType.FLYING, 1);
+
+        removeElite(elite);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(recipient.getCounterCount(CounterType.STUN)).isEqualTo(3);
+        assertThat(recipient.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Warp exile triggers counter transfer")
+    void warpExileTransfersCounters() {
+        Permanent recipient = addCreatureReady(player1, new BroodguardElite());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        BroodguardElite eliteCard = new BroodguardElite();
+        harness.setHand(player1, List.of(eliteCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        gs.playCardWithAlternateCost(gd, player1, 0, 2, null, null, List.of());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(eliteCard.getId())).isNotNull();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Casting with X zero dies and places no counters on the chosen creature")
+    void zeroXDiesWithoutAddingCounters() {
+        Permanent recipient = addCreatureReady(player1, new BroodguardElite());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        BroodguardElite eliteCard = new BroodguardElite();
+        harness.setHand(player1, List.of(eliteCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eliteCard);
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void removeElite(Permanent elite) {
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, elite));

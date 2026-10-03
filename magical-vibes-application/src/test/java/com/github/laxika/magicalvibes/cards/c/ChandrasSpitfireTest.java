@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChandrasSpitfire.class, Shock.class})
 class ChandrasSpitfireTest extends BaseCardTest {
 
     // ===== Triggering =====
@@ -28,8 +29,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
         // Shock targeting player2 (noncombat damage)
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
 
@@ -37,9 +37,8 @@ class ChandrasSpitfireTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Chandra's Spitfire");
-        assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(BoostSelfEffect.class);
+        assertThat(trigger.getControllerId()).isEqualTo(player1.getId());
+        assertThat(trigger.getSourcePermanentId()).isEqualTo(harness.getPermanentId(player1, "Chandra's Spitfire"));
     }
 
     @Test
@@ -49,8 +48,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // Resolve Spitfire trigger
 
         GameData gd = harness.getGameData();
@@ -72,8 +70,7 @@ class ChandrasSpitfireTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -87,15 +84,13 @@ class ChandrasSpitfireTest extends BaseCardTest {
         // First Shock to player2
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // Resolve Spitfire trigger
 
         // Second Shock to player2
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // Resolve Spitfire trigger
 
         Permanent spitfire = findPermanent(player1, "Chandra's Spitfire");
@@ -116,11 +111,77 @@ class ChandrasSpitfireTest extends BaseCardTest {
         // Shock targeting opponent's creature (not the player)
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         GameData gd = harness.getGameData();
         // No triggered ability for Spitfire — damage was to a creature, not a player
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's own spell dealing damage to them still triggers the boost")
+    void triggersOnOpponentsOwnDamageSource() {
+        Permanent spitfire = harness.addToBattlefieldAndReturn(player1, new ChandrasSpitfire());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(spitfire.getPowerModifier()).isEqualTo(3);
+        assertThat(spitfire.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage to the opponent does not trigger the boost")
+    void doesNotTriggerOnCombatDamage() {
+        Permanent spitfire = harness.addToBattlefieldAndReturn(player1, new ChandrasSpitfire());
+        harness.setLife(player2, 20);
+        spitfire.setSummoningSick(false);
+        spitfire.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(spitfire.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost persists through the end step and expires before the next turn")
+    void boostExpiresAtEndOfTurn() {
+        Permanent spitfire = harness.addToBattlefieldAndReturn(player1, new ChandrasSpitfire());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(spitfire.getPowerModifier()).isEqualTo(3);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(spitfire.getPowerModifier()).isZero();
+        assertThat(spitfire.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Spitfire gets its own boost from one damage event")
+    void eachSpitfireTriggersIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ChandrasSpitfire());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ChandrasSpitfire());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(3);
+        assertThat(second.getPowerModifier()).isEqualTo(3);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
     }
 }

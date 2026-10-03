@@ -302,6 +302,73 @@ class BallistaSquadTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
+    @Test
+    @DisplayName("X=0 resolves without dealing damage")
+    void zeroXDealsNoDamage() {
+        addBallistaReadyToCombat(player1);
+        Permanent target = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The generic X cost can be paid with nonwhite mana")
+    void genericXCostAcceptsNonwhiteMana() {
+        addBallistaReadyToCombat(player1);
+        Permanent target = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability deals damage to a blocking creature")
+    void dealsDamageToBlockingCreature() {
+        addBallistaReadyToCombat(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setBlocking(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Ballista Squad leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addBallistaReadyToCombat(player1);
+        Permanent target = addAttackingCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, source);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ballista Squad");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
     private Permanent addBallistaReadyToCombat(Player player) {
         return addCreatureReady(player, new BallistaSquad());
     }

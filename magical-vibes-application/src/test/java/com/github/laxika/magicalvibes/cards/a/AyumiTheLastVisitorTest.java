@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AyumiTheLastVisitor.class, Forest.class, GrizzlyBears.class,
-        MichikoKondaTruthSeeker.class, MirenTheMoaningWell.class})
+        MichikoKondaTruthSeeker.class, MirenTheMoaningWell.class, StaffOfTheAges.class})
 class AyumiTheLastVisitorTest extends BaseCardTest {
 
     @Test
@@ -76,7 +76,6 @@ class AyumiTheLastVisitorTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(StaffOfTheAges.class)
     @DisplayName("Ayumi can be blocked when Staff of the Ages ignores landwalk")
     void canBeBlockedWhenStaffIgnoresLandwalk() {
         harness.addToBattlefield(player2, new MirenTheMoaningWell());
@@ -85,6 +84,49 @@ class AyumiTheLastVisitorTest extends BaseCardTest {
         Permanent ayumi = addReadyAttacker(player1);
 
         prepareDeclareBlockers();
+        declareBlock(blocker, ayumi);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A legendary creature and a separate nonlegendary land do not enable legendary landwalk")
+    void canBeBlockedWhenLegendaryAndLandAreDifferentPermanents() {
+        harness.addToBattlefield(player2, new MichikoKondaTruthSeeker());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ayumi = addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, ayumi);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped legendary land still enables legendary landwalk")
+    void cannotBeBlockedWhenDefendersLegendaryLandIsTapped() {
+        harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell()).setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ayumi = addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, ayumi))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Legendary landwalk checks the battlefield when blockers are declared")
+    void canBeBlockedAfterDefendersLegendaryLandLeavesBattlefield() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ayumi = addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerGraveyards.get(player2.getId()).add(land.getCard());
         declareBlock(blocker, ayumi);
 
         assertThat(blocker.isBlocking()).isTrue();

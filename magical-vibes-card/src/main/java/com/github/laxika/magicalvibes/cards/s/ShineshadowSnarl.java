@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "STX", collectorNumber = "272")
 @CardRegistration(set = "LTC", collectorNumber = "331")
 @CardRegistration(set = "SOC", collectorNumber = "403")
+@CardRegistration(set = "ONC", collectorNumber = "164")
 public class ShineshadowSnarl extends Card {
 
     public ShineshadowSnarl() {

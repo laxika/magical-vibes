@@ -3,14 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,10 +16,7 @@ class CinderHellionTest extends BaseCardTest {
 
     @Test
     void entersBeforeChoosingEtbTarget() {
-        harness.setHand(player1, List.of(new CinderHellion()));
-        addMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CinderHellion(), "{4}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Cinder Hellion");
@@ -60,6 +54,59 @@ class CinderHellionTest extends BaseCardTest {
                 .doesNotContain(player1.getId(), creature.getId());
     }
 
+    @Test
+    void canDamageItsControllersPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+
+        castAndChoose(planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void destroysPlaneswalkerWithTwoLoyaltyWithoutDamagingItsController() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 2);
+
+        castAndChoose(planeswalker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Elspeth, Knight-Errant");
+        harness.assertInGraveyard(player2, "Elspeth, Knight-Errant");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotRedirectDamageWhenTargetPlaneswalkerLeaves() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        castCinderHellion();
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        gd.playerGraveyards.get(player2.getId()).add(planeswalker.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggeredDamageResolvesAfterCinderHellionLeaves() {
+        castCinderHellion();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Cinder Hellion");
+    }
+
     private void castAndChoose(java.util.UUID targetId) {
         castCinderHellion();
         harness.handlePermanentChosen(player1, targetId);
@@ -67,14 +114,7 @@ class CinderHellionTest extends BaseCardTest {
     }
 
     private void castCinderHellion() {
-        harness.setHand(player1, List.of(new CinderHellion()));
-        addMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CinderHellion(), "{4}{R}");
         harness.passBothPriorities();
-    }
-
-    private void addMana() {
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
     }
 }

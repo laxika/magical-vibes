@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArmguardFamiliar.class, GrizzlyBears.class, Shock.class})
+@CardUsed({ArmguardFamiliar.class, GrizzlyBears.class, Shock.class, ProdigalPyromancer.class})
 class ArmguardFamiliarTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,96 @@ class ArmguardFamiliarTest extends BaseCardTest {
         assertThat(armguard.getAttachedTo()).isNull();
     }
 
+    @Test
+    void familiarItselfCountersAnUnpaidOpponentSpell() {
+        Permanent armguard = addReadyArmguard(player1);
+
+        castShockAtCreature(armguard, 1);
+
+        harness.assertOnBattlefield(player1, "Armguard Familiar");
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(armguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void familiarItselfCountersAnUnpaidOpponentAbility() {
+        Permanent armguard = addReadyArmguard(player1);
+        addCreatureReady(player2, new ProdigalPyromancer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, armguard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Armguard Familiar");
+        assertThat(armguard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void equippedCreatureCountersAnUnpaidOpponentAbility() {
+        Permanent armguard = addReadyArmguard(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        armguard.setAttachedTo(creature.getId());
+        addCreatureReady(player2, new ProdigalPyromancer());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void reconfigureMovesDirectlyToAnotherCreature() {
+        Permanent armguard = addReadyArmguard(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        armguard.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(armguard.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.isCreature(gd, armguard)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    void reconfigureCanBeActivatedWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ArmguardFamiliar());
+        Permanent armguard = findPermanent(player1, "Armguard Familiar");
+        armguard.setSummoningSick(true);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armguard.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void bothReconfigureModesRequireSorceryTiming() {
+        Permanent armguard = addReadyArmguard(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        armguard.setAttachedTo(creature.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(armguard.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
     private void castShockAtCreature(Permanent creature, int mana) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -100,9 +191,6 @@ class ArmguardFamiliarTest extends BaseCardTest {
     }
 
     private Permanent addReadyArmguard(Player player) {
-        Permanent armguard = new Permanent(new ArmguardFamiliar());
-        armguard.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(armguard);
-        return armguard;
+        return addCreatureReady(player, new ArmguardFamiliar());
     }
 }

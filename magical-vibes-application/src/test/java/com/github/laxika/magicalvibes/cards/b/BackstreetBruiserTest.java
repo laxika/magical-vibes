@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BackstreetBruiser.class, GrizzlyBears.class})
+@CardUsed({BackstreetBruiser.class, GrizzlyBears.class, Island.class})
 class BackstreetBruiserTest extends BaseCardTest {
 
     @Test
@@ -77,6 +77,52 @@ class BackstreetBruiserTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
+    @Test
+    @DisplayName("Counters on a noncreature permanent do not count")
+    void noncreatureCountersDoNotCount() {
+        addReadyBruiser();
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setCounterCount(CounterType.CHARGE, 2);
+
+        beginAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Removing a counter before declaration restores the defender restriction")
+    void removingCounterBeforeDeclarationPreventsAttack() {
+        Permanent bruiser = addReadyBruiser();
+        Permanent helper = addReadyCreature(player1);
+        helper.setCounterCount(CounterType.CHARGE, 2);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, bruiser, player1.getId())).isTrue();
+        helper.setCounterCount(CounterType.CHARGE, 1);
+
+        beginAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(bruiser.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Meeting the counter threshold does not bypass summoning sickness")
+    void countersDoNotBypassSummoningSickness() {
+        Permanent bruiser = addReadyBruiser();
+        bruiser.setSummoningSick(true);
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        beginAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(bruiser.isAttacking()).isFalse();
+    }
+
     private Permanent addReadyBruiser() {
         return addReadyCreature(player1, new BackstreetBruiser());
     }
@@ -86,9 +132,8 @@ class BackstreetBruiserTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -96,6 +141,6 @@ class BackstreetBruiserTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 }

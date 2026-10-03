@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.cards.s.StormsWrath;
+import com.github.laxika.magicalvibes.cards.t.TectonicGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AnaxHardenedInTheForge.class, DoomBlade.class, GrizzlyBears.class, ShivanDragon.class})
+@CardUsed({AnaxHardenedInTheForge.class, DoomBlade.class, GrizzlyBears.class, ShivanDragon.class,
+        StormsWrath.class, TectonicGiant.class})
 class AnaxHardenedInTheForgeTest extends BaseCardTest {
 
     @Test
@@ -89,11 +92,83 @@ class AnaxHardenedInTheForgeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Simultaneous deaths preserve Anax's devotion when the other creature is removed first")
+    void simultaneousDeathsUseDevotionBeforeEitherCreatureDied() {
+        harness.addToBattlefield(player1, new TectonicGiant());
+        harness.addToBattlefield(player1, new AnaxHardenedInTheForge());
+
+        harness.castFromHand(player1, new StormsWrath(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Tectonic Giant");
+        harness.assertInGraveyard(player1, "Anax, Hardened in the Forge");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Satyr")).hasSize(3)
+                .allSatisfy(satyr -> assertThat(bls.canBlock(gd, satyr)).isFalse());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Anax sees another creature die simultaneously even when Anax is removed first")
+    void simultaneousDeathsTriggerAfterAnaxIsRemovedFirst() {
+        harness.addToBattlefield(player1, new AnaxHardenedInTheForge());
+        harness.addToBattlefield(player1, new TectonicGiant());
+
+        harness.castFromHand(player1, new StormsWrath(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Satyr")).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature contributes neither devotion nor a death trigger")
+    void opponentsCreatureDoesNotContributeDevotionOrTrigger() {
+        Permanent anax = harness.addToBattlefieldAndReturn(player1, new AnaxHardenedInTheForge());
+        harness.addToBattlefield(player2, new TectonicGiant());
+
+        assertThat(gqs.getEffectivePower(gd, anax)).isEqualTo(2);
+        harness.castFromHand(player1, new StormsWrath(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Satyr")).hasSize(1);
+        assertThat(findPermanents(player2, "Satyr")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Red cards outside the battlefield do not contribute devotion")
+    void devotionIgnoresCardsInOtherZones() {
+        Permanent anax = harness.addToBattlefieldAndReturn(player1, new AnaxHardenedInTheForge());
+        harness.setHand(player1, List.of(new TectonicGiant()));
+        harness.setGraveyard(player1, List.of(new TectonicGiant()));
+        harness.setExile(player1, List.of(new TectonicGiant()));
+
+        assertThat(gqs.getEffectivePower(gd, anax)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Anax's power-defining ability works in the graveyard")
+    void graveyardPowerEqualsOwnersRedDevotion() {
+        AnaxHardenedInTheForge anax = new AnaxHardenedInTheForge();
+        harness.setGraveyard(player1, List.of(anax));
+        harness.addToBattlefield(player1, new TectonicGiant());
+
+        assertThat(gqs.getEffectiveCardPower(gd, anax)).isEqualTo(2);
+    }
+
     private void destroyWithDoomBlade(Permanent target) {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
     }
 }

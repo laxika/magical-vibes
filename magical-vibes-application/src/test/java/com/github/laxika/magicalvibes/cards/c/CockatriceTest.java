@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -20,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Cockatrice.class, GiantSpider.class, WallOfAir.class, AmoeboidChangeling.class,
-        ImprisonedInTheMoon.class})
+        ImprisonedInTheMoon.class, Unsummon.class})
 class CockatriceTest extends BaseCardTest {
 
     @Test
@@ -39,8 +42,8 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(spider.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -56,8 +59,9 @@ class CockatriceTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -78,7 +82,7 @@ class CockatriceTest extends BaseCardTest {
                         && se.getCard() instanceof Cockatrice);
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -97,8 +101,8 @@ class CockatriceTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -121,9 +125,9 @@ class CockatriceTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()))
-                .noneMatch(a -> a.permanentId().equals(wall.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()))
+                .noneMatch(a -> a.affectedPermanentId().equals(wall.getId()));
     }
 
     @Test
@@ -168,8 +172,8 @@ class CockatriceTest extends BaseCardTest {
         assertThat(GameQueryService.permanentHasSubtype(spider, CardSubtype.WALL)).isTrue();
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -181,15 +185,94 @@ class CockatriceTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
         aura.setAttachedTo(spider.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         assertThat(gqs.isCreature(gd, spider)).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
     }
 
+    @Test
+    void blockedAttackerDestroyedAtEndOfCombat() {
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        spider.setAttacking(true);
+        addCreatureReady(player2, new Cockatrice());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Cockatrice");
+    }
+
+    @Test
+    void destructionStillOccursWhenCockatriceLeavesBeforeInitialTriggerResolves() {
+        Permanent cockatrice = addCreatureReady(player1, new Cockatrice());
+        cockatrice.setAttacking(true);
+        addCreatureReady(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, cockatrice.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Cockatrice");
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    void delayedDestructionStillAffectsBlockerThatIsNoLongerACreature() {
+        Permanent cockatrice = addCreatureReady(player1, new Cockatrice());
+        cockatrice.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
+        aura.setAttachedTo(spider.getId());
+        assertThat(gqs.isCreature(gd, spider)).isFalse();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    void blockerCanBeReturnedInResponseToDelayedDestruction() {
+        Permanent cockatrice = addCreatureReady(player1, new Cockatrice());
+        cockatrice.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        harness.setHand(player2, List.of(new Unsummon()));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.stack).anyMatch(se -> se.getCard() instanceof Cockatrice
+                && spider.getId().equals(se.getTargetId()));
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, spider.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+    }
 }

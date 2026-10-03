@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChokedEstuary.class, Forest.class, Island.class, Swamp.class})
 class ChokedEstuaryTest extends BaseCardTest {
 
     @Test
@@ -59,7 +61,7 @@ class ChokedEstuaryTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue mana produces one blue")
     void tappingProducesBlueMana() {
-        addLandReady(player1);
+        harness.addToBattlefield(player1, new ChokedEstuary());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -70,7 +72,7 @@ class ChokedEstuaryTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for black mana produces one black")
     void tappingProducesBlackMana() {
-        addLandReady(player1);
+        harness.addToBattlefield(player1, new ChokedEstuary());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -78,17 +80,73 @@ class ChokedEstuaryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Enters tapped with no other cards in hand")
+    void entersTappedWithEmptyHand() {
+        harness.setHand(player1, List.of(new ChokedEstuary()));
+        playLand();
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Island on the battlefield cannot be revealed from hand")
+    void battlefieldIslandDoesNotAllowUntappedEntry() {
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new ChokedEstuary()));
+        playLand();
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Swamp in hand cannot be revealed")
+    void opponentsHandDoesNotAllowUntappedEntry() {
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.setHand(player1, List.of(new ChokedEstuary()));
+        playLand();
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+        harness.assertInHand(player2, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Revealing a card leaves it in hand and allows immediate mana production")
+    void revealedCardStaysInHand() {
+        harness.setHand(player1, List.of(new ChokedEstuary(), new Island()));
+        playLand();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findLand(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller chooses which eligible land card to reveal")
+    void controllerChoosesCardToReveal() {
+        harness.setHand(player1, List.of(new ChokedEstuary(), new Island(), new Swamp()));
+        playLand();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(findLand(player1).isTapped()).isFalse();
+        assertThat(gameLogContains("reveals Swamp")).isTrue();
+        assertThat(gameLogContains("reveals Island")).isFalse();
+        harness.assertInHand(player1, "Island");
+        harness.assertInHand(player1, "Swamp");
+    }
+
     private void playLand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-    }
-
-    private Permanent addLandReady(Player player) {
-        Permanent permanent = new Permanent(new ChokedEstuary());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
     }
 
     private Permanent findLand(Player player) {

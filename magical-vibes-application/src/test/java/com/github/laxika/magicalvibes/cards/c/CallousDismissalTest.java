@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PollenbrightDruid;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CallousDismissal.class, GrizzlyBears.class, Island.class})
+@CardUsed({CallousDismissal.class, GrizzlyBears.class, Island.class, PollenbrightDruid.class,
+        DoublingSeason.class})
 class CallousDismissalTest extends BaseCardTest {
 
     @Test
@@ -74,11 +77,94 @@ class CallousDismissalTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a nonland permanent");
     }
 
+    @Test
+    void addsCounterToArmyCreatedByAnEarlierResolution() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        castCallousDismissal(firstTarget.getId());
+        Permanent army = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+
+        castCallousDismissal(secondTarget.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(army);
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInHand(player2, "Pollenbright Druid");
+    }
+
+    @Test
+    void returningOwnOnlyArmyCreatesANewArmyAfterTheBounce() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        castCallousDismissal(target.getId());
+        Permanent oldArmy = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        castCallousDismissal(oldArmy.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1).doesNotContain(oldArmy);
+        Permanent newArmy = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(newArmy.getCard().isToken()).isTrue();
+        assertThat(newArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotAmassWhenTheOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+        harness.setHand(player1, List.of(new CallousDismissal()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Callous Dismissal");
+        harness.assertInGraveyard(player2, "Pollenbright Druid");
+        harness.assertNotInHand(player2, "Pollenbright Druid");
+    }
+
+    @Test
+    void doublingSeasonPutsCountersOnOnlyOneOfTheTwoCreatedArmies() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PollenbrightDruid());
+
+        castCallousDismissal(target.getId());
+
+        List<Permanent> armies = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(armies).hasSize(2);
+        assertThat(armies).allSatisfy(army ->
+                assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+        Permanent chosen = armies.getFirst();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .containsExactly(chosen);
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInHand(player2, "Pollenbright Druid");
+    }
+
+    @Test
+    void returnsANoncreaturePermanentAndStillAmasses() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DoublingSeason());
+
+        castCallousDismissal(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Doubling Season");
+        harness.assertInHand(player2, "Doubling Season");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent army = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(army.getCard().isToken()).isTrue();
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castCallousDismissal(UUID targetId) {
         harness.setHand(player1, List.of(new CallousDismissal()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 }

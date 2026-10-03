@@ -95,6 +95,23 @@ class BalanceOfPowerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Draws nothing when the opponent empties their hand before resolution")
+    void drawsNothingWhenOpponentHandBecomesEmpty() {
+        harness.setHand(player1, List.of(new BalanceOfPower()));
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Balance of Power");
+    }
+
+    @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new BalanceOfPower()));

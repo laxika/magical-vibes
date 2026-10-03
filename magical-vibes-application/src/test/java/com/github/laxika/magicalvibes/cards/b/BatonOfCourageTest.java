@@ -116,4 +116,72 @@ class BatonOfCourageTest extends BaseCardTest {
     private Permanent addReadyBaton(Player player) {
         return addCreatureReady(player, new BatonOfCourage());
     }
+
+    @Test
+    void enteringWithoutBeingCastAddsNoSunburstCounters() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        Permanent baton = harness.enterBattlefieldAndReturn(player1, new BatonOfCourage());
+
+        assertThat(baton.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedBatonCanActivateRepeatedlyAndPaysBeforeResolution() {
+        Permanent baton = harness.addToBattlefieldAndReturn(player1, new BatonOfCourage());
+        baton.setTapped(true);
+        baton.setCounterCount(CounterType.CHARGE, 2);
+        Permanent creature = addCreatureReady(player1, new GoblinBrawler());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(baton.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(baton.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(baton.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityStillResolvesAfterBatonLeavesBattlefield() {
+        Permanent baton = addReadyBaton(player1);
+        baton.setCounterCount(CounterType.CHARGE, 1);
+        Permanent creature = addCreatureReady(player2, new GoblinBrawler());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(baton);
+        gd.playerGraveyards.get(player1.getId()).add(baton.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void counterIsNotRefundedWhenTargetLeavesBeforeResolution() {
+        Permanent baton = addReadyBaton(player1);
+        baton.setCounterCount(CounterType.CHARGE, 1);
+        Permanent creature = addCreatureReady(player2, new GoblinBrawler());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(baton.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
 }

@@ -13,13 +13,13 @@ This is a **read-only review of implementation**. Do **not** edit card classes, 
 
 **Tests are the exception:** you **should** add new focused tests when coverage is incomplete or you spot plausible edge cases (see Step 4). Do not rewrite or delete existing behavioral tests unless they are clearly wrong (wrong oracle expectation); prefer adding cases. Remove all unused code from the test class, including unused imports, variables, setup, helpers, and dead test code. New tests follow CLAUDE.md conventions (harness/`gs`/`gd` behavior only — no Scryfall metadata or white-box wiring assertions).
 
-The hard rules in `CLAUDE.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
+The hard rules in `AGENTS.md` (rules accuracy, reuse over creation, testing conventions) are the review criteria.
 
 ## Test execution limits
 
 - Never run the full test suite, module-wide tests, package filters, wildcards, or unrelated cards' tests. Run only an exact test class belonging to the card being reviewed, one class at a time, through `scripts/run-card-test.ps1 <ExactCardTestClass> -TimeoutSeconds 7200`. Never invoke Gradle directly for a review.
 - Allow the full **7200 seconds (two hours)** for compilation and test execution. Even a single filtered class can require compiling more than 30,000 card/test classes. A quiet build or a long `compileTestJava` step is expected and is not evidence of a failure. If a tool yields a running session, keep polling until it finishes or the actual two-hour deadline expires; never abandon, cancel, or restart it after a shorter wait.
-- When invoked by `review-worker.ps1`, **do not run tests in the agent session**. Return the completed oracle/implementation review and permitted test edits; the worker validates each changed class using the exact filter and the two-hour timeout before publishing. Tests awaiting worker validation are not an execution error. This worker-specific delegation overrides the optional test-running steps below.
+- When invoked by `review-worker.ps1`, **do not compile or run tests in the agent session**. Create or update the needed card tests and return the completed oracle/implementation review. The worker publishes permitted test changes directly without local validation; the CI server compiles and runs tests and alerts us to failures. Tests awaiting CI validation are not an execution error. This worker-specific instruction overrides the optional test-running steps below.
 
 ## Step 1 — Gather context
 

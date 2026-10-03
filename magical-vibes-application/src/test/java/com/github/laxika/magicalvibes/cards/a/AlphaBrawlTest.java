@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DrogskolReaver;
+import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +20,61 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlphaBrawl.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class,
+        DrogskolReaver.class, PyromancersSwath.class})
 class AlphaBrawlTest extends BaseCardTest {
 
-    
+    @Test
+    @DisplayName("Spell damage bonuses do not increase the creatures' damage")
+    void spellDamageBonusDoesNotApplyToCreatureSources() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new AlphaBrawl()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castAndResolveSorcery(player1, 0, giant.getId());
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(giant.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The targeted creature's lifelink gains life for its controller")
+    void targetLifelinkGainsLifeForOpponent() {
+        Permanent reaver = harness.addToBattlefieldAndReturn(player2, new DrogskolReaver());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AlphaBrawl()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castAndResolveSorcery(player1, 0, reaver.getId());
+
+        harness.assertLife(player2, 23);
+        harness.assertLife(player1, 20);
+        assertThat(reaver.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature dealing damage back also gains life through lifelink")
+    void returningDamageUsesCreatureLifelink() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent reaver = harness.addToBattlefieldAndReturn(player2, new DrogskolReaver());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new AlphaBrawl()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castAndResolveSorcery(player1, 0, giant.getId());
+
+        harness.assertLife(player2, 23);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(reaver.getMarkedDamage()).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Target creature deals power damage to each other creature, then they deal back")
@@ -36,8 +91,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         UUID hillGiantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, hillGiantId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, hillGiantId);
 
         // All three creatures should die
         harness.assertNotOnBattlefield(player2, "Hill Giant");
@@ -62,8 +116,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         UUID hillGiantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, hillGiantId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, hillGiantId);
 
         harness.assertOnBattlefield(player2, "Hill Giant");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -84,8 +137,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         UUID hillGiantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, hillGiantId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, hillGiantId);
 
         // Hill Giant should survive undamaged
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -146,8 +198,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, elvesId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, elvesId);
 
         // Elves die from damage dealt by Hill Giant and Bears
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -176,8 +227,7 @@ class AlphaBrawlTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bearsId);
 
         // Player 1's Hill Giant should be completely unaffected
         harness.assertOnBattlefield(player1, "Hill Giant");

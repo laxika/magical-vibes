@@ -42,9 +42,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -62,9 +60,7 @@ class BogRaidersTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new CoralMerfolk());
 
         Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -74,6 +70,22 @@ class BogRaidersTest extends BaseCardTest {
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
 
+
+    @Test
+    @DisplayName("A blocker with swampwalk cannot block Bog Raiders when the defender controls a Swamp")
+    void swampwalkOnBlockerDoesNotCancelSwampwalk() {
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent blockerPerm = addCreatureReady(player2, new BogRaiders());
+        Permanent atkPerm = addCreatureReady(player1, new BogRaiders());
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 
     @Test
     @DisplayName("Unblocked Bog Raiders deals 2 damage to defending player")

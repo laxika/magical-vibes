@@ -67,6 +67,54 @@ class CompulsionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The discard ability still resolves after Compulsion is sacrificed in response")
+    void discardAbilityResolvesAfterSourceIsSacrificed() {
+        harness.addToBattlefield(player1, new Compulsion());
+        harness.setHand(player1, List.of(new Aquamoeba()));
+        harness.setLibrary(player1, List.of(new Aquamoeba(), new Compulsion()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Aquamoeba");
+        harness.assertOnBattlefield(player1, "Compulsion");
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Compulsion");
+        harness.assertInGraveyard(player1, "Compulsion");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Aquamoeba");
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player1, "Compulsion");
+    }
+
+    @Test
+    @DisplayName("Both abilities require the generic mana as well as blue mana")
+    void abilitiesRequireGenericMana() {
+        harness.addToBattlefield(player1, new Compulsion());
+        harness.setHand(player1, List.of(new Aquamoeba()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Compulsion");
+        harness.assertInHand(player1, "Aquamoeba");
+        harness.assertNotInGraveyard(player1, "Compulsion");
+        harness.assertNotInGraveyard(player1, "Aquamoeba");
+    }
+
+    @Test
     @DisplayName("Both abilities require blue mana")
     void abilitiesRequireBlueMana() {
         harness.addToBattlefield(player1, new Compulsion());

@@ -54,8 +54,7 @@ class AvalancheTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Avalanche()));
         harness.addMana(player1, ManaColor.RED, 4); // X=0: {2}{R}{R}
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(battlefieldIds(player2)).contains(snow.getId());
     }
@@ -96,5 +95,52 @@ class AvalancheTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(plainsId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("snow lands");
+    }
+
+    @Test
+    @DisplayName("Only still-legal targets are destroyed when one land stops being snow")
+    void destroysOnlyStillLegalTargets() {
+        Permanent changed = snowLand(player2);
+        Permanent unchanged = snowLand(player2);
+        harness.setHand(player1, List.of(new Avalanche()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castSorcery(player1, 0, 2, List.of(changed.getId(), unchanged.getId()));
+
+        TestCards.mutableCard(changed).setSupertypes(EnumSet.of(CardSupertype.BASIC));
+        harness.passBothPriorities();
+
+        assertThat(battlefieldIds(player2)).contains(changed.getId()).doesNotContain(unchanged.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId())
+                .contains(unchanged.getCard().getId()).doesNotContain(changed.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Snow lands controlled by either player can be targeted")
+    void destroysSnowLandsOfBothPlayers() {
+        Permanent ownLand = snowLand(player1);
+        Permanent opposingLand = snowLand(player2);
+        harness.setHand(player1, List.of(new Avalanche()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castSorcery(player1, 0, 2, List.of(ownLand.getId(), opposingLand.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Snow-Covered Plains");
+        harness.assertNotOnBattlefield(player2, "Snow-Covered Plains");
+        harness.assertInGraveyard(player1, "Snow-Covered Plains");
+        harness.assertInGraveyard(player2, "Snow-Covered Plains");
+    }
+
+    @Test
+    @DisplayName("The same snow land cannot be chosen twice for X=2")
+    void cannotChooseDuplicateTargets() {
+        Permanent snow = snowLand(player2);
+        harness.setHand(player1, List.of(new Avalanche()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2,
+                List.of(snow.getId(), snow.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

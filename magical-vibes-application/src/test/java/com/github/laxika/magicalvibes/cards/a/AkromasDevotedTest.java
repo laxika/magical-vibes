@@ -21,12 +21,29 @@ class AkromasDevotedTest extends BaseCardTest {
     }
 
     @Test
-    void doesNotGiveVigilanceToNonClericsOrOpponentsClerics() {
+    void givesVigilanceToOpponentsClericsButNotNonClerics() {
         harness.addToBattlefield(player1, new AkromasDevoted());
         Permanent envoy = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
         Permanent opponentCleric = harness.addToBattlefieldAndReturn(player2, new AvenRedeemer());
+        Permanent opponentEnvoy = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
 
         assertThat(gqs.hasKeyword(gd, envoy, Keyword.VIGILANCE)).isFalse();
-        assertThat(gqs.hasKeyword(gd, opponentCleric, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentCleric, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentEnvoy, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void vigilanceEndsWhenDevotedLeavesTheBattlefield() {
+        Permanent devoted = harness.addToBattlefieldAndReturn(player1, new AkromasDevoted());
+        Permanent redeemer = harness.addToBattlefieldAndReturn(player1, new AvenRedeemer());
+
+        assertThat(gqs.hasKeyword(gd, redeemer, Keyword.VIGILANCE)).isTrue();
+
+        devoted.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Akroma's Devoted");
+        harness.assertInGraveyard(player1, "Akroma's Devoted");
+        assertThat(gqs.hasKeyword(gd, redeemer, Keyword.VIGILANCE)).isFalse();
     }
 }

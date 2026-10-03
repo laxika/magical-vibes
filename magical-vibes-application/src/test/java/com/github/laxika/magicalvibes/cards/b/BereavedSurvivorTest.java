@@ -45,7 +45,7 @@ class BereavedSurvivorTest extends BaseCardTest {
         Card valid = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(valid));
 
-        declareAttack();
+        declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(valid.getId()));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -64,7 +64,7 @@ class BereavedSurvivorTest extends BaseCardTest {
         Card invalid = new HillGiant();
         harness.setGraveyard(player1, List.of(invalid));
 
-        declareAttack();
+        declareAttackers(List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(invalid);
@@ -72,19 +72,67 @@ class BereavedSurvivorTest extends BaseCardTest {
 
     private Permanent addTransformedSurvivor() {
         BereavedSurvivor card = new BereavedSurvivor();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setCard(card.getBackFaceCard());
         permanent.setTransformed(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 
-    private void declareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+    @Test
+    @DisplayName("Multiple pending death triggers transform the survivor only once")
+    void multiplePendingDeathTriggersTransformOnlyOnce() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new BereavedSurvivor());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(survivor.isTransformed()).isTrue();
+        assertThat(survivor.getCard().getName()).isEqualTo("Dauntless Avenger");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature dying does not transform the survivor")
+    void opponentCreatureDeathDoesNotTransform() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new BereavedSurvivor());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opponentCreature.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(survivor.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dauntless Avenger does not transform back when an ally dies")
+    void avengerDoesNotTransformOnLaterDeath() {
+        Permanent avenger = addTransformedSurvivor();
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ally.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(avenger.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger cannot return noncreatures or opponents' creatures")
+    void doesNotOfferNoncreaturesOrOpponentGraveyard() {
+        addTransformedSurvivor();
+        Card noncreature = new LightningBolt();
+        Card opponentCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(noncreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCreature);
     }
 }

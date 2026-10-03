@@ -128,6 +128,66 @@ class BonesplitterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Re-equipping moves the boost only when the ability resolves")
+    void reEquipMovesBoostOnResolution() {
+        Permanent bonesplitter = addBonesplitterReady(player1);
+        Permanent first = addCreatureReady(player1, new AlphaMyr());
+        Permanent second = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+
+        assertThat(bonesplitter.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(bonesplitter.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An invalid re-equip target leaves Bonesplitter on its original creature")
+    void failedReEquipPreservesOriginalAttachment() {
+        Permanent bonesplitter = addBonesplitterReady(player1);
+        Permanent first = addCreatureReady(player1, new AlphaMyr());
+        Permanent second = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(bonesplitter.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot equip during combat on your own turn")
+    void cannotEquipDuringCombat() {
+        addBonesplitterReady(player1);
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBonesplitterReady(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new Bonesplitter());
         perm.setSummoningSick(false);

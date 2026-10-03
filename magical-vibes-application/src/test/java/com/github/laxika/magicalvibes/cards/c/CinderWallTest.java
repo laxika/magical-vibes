@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +16,46 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CinderWall.class, GrizzlyBears.class})
+@CardUsed({CinderWall.class, GrizzlyBears.class, HighGround.class})
 class CinderWallTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("End-of-combat destruction uses a delayed trigger that players can respond to")
+    void destructionWaitsForDelayedTriggerToResolve() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new CinderWall());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Cinder Wall");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).anyMatch(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Cinder Wall"));
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player2, "Cinder Wall");
+        harness.assertInGraveyard(player2, "Cinder Wall");
+    }
+
+    @Test
+    @DisplayName("Blocking two creatures triggers Cinder Wall only once")
+    void blockingMultipleCreaturesTriggersOnlyOnce() {
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new CinderWall());
+        harness.addToBattlefield(player2, new HighGround());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack.stream().filter(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Cinder Wall"))).hasSize(1);
+    }
 
     @Test
     @DisplayName("When Cinder Wall blocks, it schedules itself for end-of-combat destruction")

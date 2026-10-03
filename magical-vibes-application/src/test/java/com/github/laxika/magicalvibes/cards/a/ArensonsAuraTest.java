@@ -17,20 +17,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArensonsAura.class, BadMoon.class, GrizzlyBears.class})
+@CardUsed({ArensonsAura.class, BadMoon.class, GrizzlyBears.class, HammerOfPurphoros.class})
 class ArensonsAuraTest extends BaseCardTest {
-
-    // ===== {W}, Sacrifice an enchantment: Destroy target enchantment =====
 
     @Test
     @DisplayName("Destroys target enchantment, sacrificing itself to pay the cost")
     void destroysTargetEnchantment() {
         harness.addToBattlefield(player1, new ArensonsAura());
-        harness.addToBattlefield(player2, new BadMoon());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BadMoon()).getId();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         // Only enchantment player1 controls is Arenson's Aura → auto-sacrificed
-        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
         harness.activateAbility(player1, 0, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -62,6 +59,72 @@ class ArensonsAuraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice is paid immediately, before destruction resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new ArensonsAura());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BadMoon()).getId();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, targetId);
+
+        harness.assertInGraveyard(player1, "Arenson's Aura");
+        harness.assertNotOnBattlefield(player1, "Arenson's Aura");
+        harness.assertOnBattlefield(player2, "Bad Moon");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Bad Moon");
+    }
+
+    @Test
+    @DisplayName("Can target itself and sacrifice itself, leaving no legal target")
+    void canTargetAndSacrificeItself() {
+        UUID auraId = harness.addToBattlefieldAndReturn(player1, new ArensonsAura()).getId();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, auraId);
+        harness.assertInGraveyard(player1, "Arenson's Aura");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Arenson's Aura");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can destroy another enchantment controlled by its controller")
+    void destroysOwnEnchantment() {
+        harness.addToBattlefield(player1, new ArensonsAura());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new BadMoon()).getId();
+        UUID auraId = harness.getPermanentId(player1, "Arenson's Aura");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.handlePermanentChosen(player1, auraId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arenson's Aura");
+        harness.assertInGraveyard(player1, "Bad Moon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroy ability requires white mana and does not sacrifice on failed activation")
+    void destroyRequiresWhiteMana() {
+        harness.addToBattlefield(player1, new ArensonsAura());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BadMoon()).getId();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Arenson's Aura");
+        harness.assertOnBattlefield(player2, "Bad Moon");
+        harness.assertNotInGraveyard(player1, "Arenson's Aura");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Destroy ability cannot target a creature")
     void destroyCannotTargetCreature() {
         harness.addToBattlefield(player1, new ArensonsAura());
@@ -72,8 +135,6 @@ class ArensonsAuraTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bearId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== {3}{U}{U}: Counter target enchantment spell =====
 
     @Test
     @DisplayName("Counters a target enchantment spell")

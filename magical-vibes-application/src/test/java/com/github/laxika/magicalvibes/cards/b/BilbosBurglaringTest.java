@@ -40,6 +40,76 @@ class BilbosBurglaringTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline to target an available opponent artifact")
+    void canDeclineAvailableArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+
+        castBilbosBurglaring(List.of());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+        harness.assertInGraveyard(player1, "Bilbo's Burglaring");
+    }
+
+    @Test
+    @DisplayName("Changing control does not untap the artifact")
+    void stolenArtifactRemainsTapped() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        artifact.setTapped(true);
+
+        castBilbosBurglaring(List.of(artifact.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact can use its tap mana ability immediately after being stolen")
+    void stolenNoncreatureArtifactCanTapForMana() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+
+        castBilbosBurglaring(List.of(artifact.getId()));
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not steal an artifact sacrificed in response")
+    void sacrificedTargetIsNotStolen() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        prepareCast();
+        harness.castSorcery(player1, 0, List.of(artifact.getId()));
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+        harness.assertInGraveyard(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Bilbo's Burglaring");
+    }
+
+    @Test
+    @DisplayName("A stolen artifact goes to its owner's graveyard when sacrificed")
+    void sacrificingStolenArtifactPreservesOwnership() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castBilbosBurglaring(List.of(artifact.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Mind Stone");
+        harness.assertNotInGraveyard(player1, "Mind Stone");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot choose two artifacts controlled by the same opponent")
     void cannotChooseTwoArtifactsOfSameOpponent() {
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
@@ -75,8 +145,7 @@ class BilbosBurglaringTest extends BaseCardTest {
 
     private void castBilbosBurglaring(List<UUID> targetIds) {
         prepareCast();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void prepareCast() {

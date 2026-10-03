@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "NPH", collectorNumber = "117")
+@CardRegistration(set = "ONC", collectorNumber = "109")
 public class MycosynthFiend extends Card {
 
     public MycosynthFiend() {
