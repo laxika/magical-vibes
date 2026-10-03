@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.Cactarantula;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SandstormVerge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,15 +18,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DanceOfTheTumbleweeds.class, DesertOfTheTrue.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DanceOfTheTumbleweeds.class, SandstormVerge.class, Forest.class, Cactarantula.class})
 class DanceOfTheTumbleweedsTest extends BaseCardTest {
 
     @Test
     @DisplayName("The ramp mode searches for a basic land or Desert and puts it onto the battlefield")
     void rampModeSearchesBasicLandOrDesert() {
         Card forest = new Forest();
-        Card desert = new DesertOfTheTrue();
-        harness.setLibrary(player1, List.of(forest, desert, new GrizzlyBears()));
+        Card desert = new SandstormVerge();
+        harness.setLibrary(player1, List.of(forest, desert, new Cactarantula()));
 
         cast(new int[]{0}, 3);
 
@@ -58,7 +59,7 @@ class DanceOfTheTumbleweedsTest extends BaseCardTest {
     void bothModesResolve() {
         addForests(player1, 2);
         Card fetchedForest = new Forest();
-        harness.setLibrary(player1, List.of(fetchedForest, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(fetchedForest, new Cactarantula()));
 
         cast(new int[]{0, 1}, 6);
         harness.handleCardChosen(player1, 0);
@@ -69,6 +70,94 @@ class DanceOfTheTumbleweedsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("A fetched basic land enters untapped and the ramp mode does not create a token")
+    void basicLandEntersUntapped() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        cast(new int[]{0}, 3);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("The search may fail to find and the token mode still resolves")
+    void failedSearchStillCreatesToken() {
+        addForests(player1, 2);
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        cast(new int[]{0, 1}, 6);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
+        Permanent token = findPermanent(player1, "Elemental");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both modes finish when the library contains no matching cards")
+    void noMatchingCardsStillCreatesToken() {
+        addForests(player1, 1);
+        Card creature = new Cactarantula();
+        harness.setLibrary(player1, List.of(creature));
+
+        cast(new int[]{0, 1}, 6);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Elemental"))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Both modes finish when the library is empty")
+    void emptyLibraryStillCreatesToken() {
+        addForests(player1, 1);
+        harness.setLibrary(player1, List.of());
+
+        cast(new int[]{0, 1}, 6);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Elemental"))).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The token's size is fixed when created, rather than changing with the land count")
+    void tokenSizeDoesNotChangeWithLaterLands() {
+        addForests(player1, 2);
+        harness.addToBattlefield(player1, new Cactarantula());
+        Card libraryForest = new Forest();
+        harness.setLibrary(player1, List.of(libraryForest));
+
+        cast(new int[]{1}, 5);
+        Permanent token = findPermanent(player1, "Elemental");
+        harness.addToBattlefield(player1, new SandstormVerge());
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryForest);
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("With no lands, the zero-toughness Elemental dies after resolution")
+    void zeroLandTokenDies() {
+        cast(new int[]{1}, 5);
+
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof DanceOfTheTumbleweeds);
     }
 
     private void cast(int[] modes, int totalMana) {
