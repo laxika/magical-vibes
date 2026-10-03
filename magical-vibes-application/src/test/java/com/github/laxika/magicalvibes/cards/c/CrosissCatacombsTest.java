@@ -118,6 +118,75 @@ class CrosissCatacombsTest extends BaseCardTest {
         assertThat(catacombs.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("A tapped non-Lair land can pay the ETB cost")
+    void returnsTappedLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        land.setTapped(true);
+        playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Terminal Moraine");
+        harness.assertNotOnBattlefield(player1, "Terminal Moraine");
+        harness.assertOnBattlefield(player1, "Crosis's Catacombs");
+    }
+
+    @Test
+    @DisplayName("With no other lands, Crosis's Catacombs sacrifices itself")
+    void sacrificesWithNoOtherLands() {
+        playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Crosis's Catacombs");
+        harness.assertInGraveyard(player1, "Crosis's Catacombs");
+    }
+
+    @Test
+    @DisplayName("A controlled land returns to its owner's hand")
+    void returnsLandToOpponentOwner() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        gd.stolenCreatures.put(land.getId(), player2.getId());
+        playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player2, "Terminal Moraine");
+        harness.assertNotInHand(player1, "Terminal Moraine");
+        harness.assertNotOnBattlefield(player1, "Terminal Moraine");
+        harness.assertOnBattlefield(player1, "Crosis's Catacombs");
+    }
+
+    @Test
+    @DisplayName("The land can produce mana before its ETB trigger sacrifices it")
+    void producesManaBeforeEtbSacrifice() {
+        harness.setHand(player1, List.of(new CrosissCatacombs()));
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Crosis's Catacombs");
+        harness.assertNotOnBattlefield(player1, "Crosis's Catacombs");
+    }
+
+    @Test
+    @DisplayName("Choosing black adds exactly one black mana")
+    void choosingBlackAddsOnlyBlackMana() {
+        Permanent catacombs = harness.addToBattlefieldAndReturn(player1, new CrosissCatacombs());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(catacombs.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private CrosissCatacombs playAndResolveEtb() {
         CrosissCatacombs catacombs = new CrosissCatacombs();
         harness.setHand(player1, List.of(catacombs));

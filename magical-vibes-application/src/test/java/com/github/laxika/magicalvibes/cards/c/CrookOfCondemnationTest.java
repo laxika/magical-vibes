@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrookOfCondemnation.class, GrizzlyBears.class, Shock.class})
 class CrookOfCondemnationTest extends BaseCardTest {
 
     @Test
@@ -92,11 +94,166 @@ class CrookOfCondemnationTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    void newlyEnteredArtifactCanPayTapCost() {
+        Permanent crook = harness.addToBattlefieldAndReturn(player1, new CrookOfCondemnation());
+        Card target = new CrookOfCondemnation();
+        Card other = new CrookOfCondemnation();
+        harness.setGraveyard(player2, List.of(target, other));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+
+        assertThat(crook.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target, other);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void tapAbilityRequiresTarget() {
+        Permanent crook = addReadyCrook(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(crook.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedArtifactCannotPayTapCost() {
+        Permanent crook = addReadyCrook(player1);
+        crook.tap();
+        Card target = new CrookOfCondemnation();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void bothAbilitiesRequireMana() {
+        Permanent crook = addReadyCrook(player1);
+        Card target = new CrookOfCondemnation();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(crook.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crook);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedArtifactExilesItselfAsCostBeforeClearingGraveyards() {
+        Permanent crook = addReadyCrook(player1);
+        crook.tap();
+        Card ownCard = new CrookOfCondemnation();
+        Card opposingCard = new CrookOfCondemnation();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(crook);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(crook.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(crook.getCard(), ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opposingCard);
+    }
+
+    @Test
+    void exileAllCanBeActivatedWithEmptyGraveyards() {
+        Permanent crook = addReadyCrook(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(crook.getCard());
+    }
+
+    @Test
+    void targetExiledInResponseDoesNotExileAnotherCard() {
+        addReadyCrook(player1);
+        addReadyCrook(player2);
+        Card target = new CrookOfCondemnation();
+        Card other = new CrookOfCondemnation();
+        harness.setGraveyard(player2, List.of(target, other));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player2, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void exileAllIncludesCardsThatEnterGraveyardsInResponse() {
+        Permanent crook = addReadyCrook(player1);
+        Card ownCard = new CrookOfCondemnation();
+        Card opposingCard = new CrookOfCondemnation();
+        Shock response = new Shock();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard));
+        harness.setHand(player2, List.of(response));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCard, response);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(crook.getCard(), ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(opposingCard, response);
+    }
     private Permanent addReadyCrook(Player player) {
-        CrookOfCondemnation card = new CrookOfCondemnation();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CrookOfCondemnation());
     }
 }

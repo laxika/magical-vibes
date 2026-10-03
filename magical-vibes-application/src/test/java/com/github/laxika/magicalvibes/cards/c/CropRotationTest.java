@@ -23,8 +23,7 @@ class CropRotationTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices a land as an additional cost")
     void sacrificesLandAsAdditionalCost() {
-        Permanent land = new Permanent(new TreetopVillage());
-        gd.playerBattlefields.get(player1.getId()).add(land);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
 
         harness.setHand(player1, List.of(new CropRotation()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -39,8 +38,7 @@ class CropRotationTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a nonland permanent")
     void cannotSacrificeNonlandPermanent() {
-        Permanent creature = new Permanent(new YavimayaWurm());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new YavimayaWurm());
 
         harness.setHand(player1, List.of(new CropRotation()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -55,8 +53,7 @@ class CropRotationTest extends BaseCardTest {
     @Test
     @DisplayName("Searches for a land and puts it onto the battlefield")
     void searchesForLandToBattlefield() {
-        Permanent sacrificedLand = new Permanent(new TreetopVillage());
-        gd.playerBattlefields.get(player1.getId()).add(sacrificedLand);
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
         harness.setLibrary(player1, List.of(new YavimayaWurm(), new TreetopVillage()));
 
         harness.setHand(player1, List.of(new CropRotation()));
@@ -80,8 +77,7 @@ class CropRotationTest extends BaseCardTest {
     @Test
     @DisplayName("Resolves and shuffles when no land is found")
     void resolvesWhenNoLandIsFound() {
-        Permanent sacrificedLand = new Permanent(new TreetopVillage());
-        gd.playerBattlefields.get(player1.getId()).add(sacrificedLand);
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
         harness.setLibrary(player1, List.of(new YavimayaWurm()));
 
         harness.setHand(player1, List.of(new CropRotation()));
@@ -94,5 +90,96 @@ class CropRotationTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
         harness.assertNotOnBattlefield(player1, "Treetop Village");
         harness.assertInGraveyard(player1, "Treetop Village");
+    }
+
+    @Test
+    @DisplayName("May fail to find even when a land is available")
+    void mayFailToFindAvailableLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        harness.setLibrary(player1, List.of(new TreetopVillage(), new YavimayaWurm()));
+        harness.setHand(player1, List.of(new CropRotation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Treetop Village");
+        harness.assertInGraveyard(player1, "Treetop Village");
+        harness.assertInGraveyard(player1, "Crop Rotation");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library after paying the land cost")
+    void resolvesWithEmptyLibrary() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new CropRotation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Treetop Village");
+        harness.assertInGraveyard(player1, "Crop Rotation");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped land and fetched lands retain their enters-tapped ability")
+    void sacrificesTappedLandAndHonorsEntryAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        land.setTapped(true);
+        harness.setLibrary(player1, List.of(new TreetopVillage()));
+        harness.setHand(player1, List.of(new CropRotation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(found -> {
+                    assertThat(found.getId()).isNotEqualTo(land.getId());
+                    assertThat(found.isTapped()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Treetop Village");
+        harness.assertInGraveyard(player1, "Crop Rotation");
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TreetopVillage());
+        harness.setHand(player1, List.of(new CropRotation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+
+        harness.assertOnBattlefield(player2, "Treetop Village");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without sacrificing a land")
+    void cannotCastWithoutLandSacrifice() {
+        harness.setHand(player1, List.of(new CropRotation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("land");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,7 +47,7 @@ class CrossbowInfantryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("deals 1 damage"));
+        assertThat(gameLogContains("deals 1 damage")).isTrue();
     }
 
     @Test
@@ -95,6 +93,76 @@ class CrossbowInfantryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking");
+    }
+
+    @Test
+    @DisplayName("Can damage a blocking creature its controller controls")
+    void canTargetOwnBlocker() {
+        addCreatureReady(player1, new CrossbowInfantry());
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+        blocker.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(infantry);
+        gd.playerGraveyards.get(player1.getId()).add(infantry.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
+        infantry.setSummoningSick(true);
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(infantry.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability when already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
+        infantry.setTapped(true);
+        Permanent attacker = addAttackingCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(infantry.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addAttackingCreature(Player player) {
