@@ -111,14 +111,53 @@ class CursedFleshTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent enchantedAttackingCreature() {
+    @Test
+    @DisplayName("Reducing toughness to zero puts the creature and its Aura into their owners' graveyards")
+    void zeroToughnessCreatureAndAuraGoToGraveyards() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ThopterSquadron());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new CursedFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof ThopterSquadron);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof CursedFlesh);
+    }
+
+    @Test
+    @DisplayName("Two copies stack their penalties and grant fear only to the enchanted creature")
+    void multipleCopiesStackOnOnlyEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrashingBoars());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new CrashingBoars());
+        harness.setHand(player1, List.of(new CursedFlesh(), new CursedFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FEAR)).isFalse();
+    }
+
+    private void enchantedAttackingCreature() {
         Permanent attacker = addCreatureReady(player1, new CrashingBoars());
         attacker.setAttacking(true);
 
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new CursedFlesh());
         aura.setAttachedTo(attacker.getId());
 
-        return attacker;
     }
 
 }
