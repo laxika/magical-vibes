@@ -68,11 +68,70 @@ class DeathTyrantTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Death Tyrant");
     }
 
+    @Test
+    void noncombatAllyDeathDoesNotCreateZombie() {
+        harness.addToBattlefield(player1, new DeathTyrant());
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+
+        killWithShock(player1, ally);
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void blockingAllyDeathDoesNotCreateZombie() {
+        harness.addToBattlefield(player1, new DeathTyrant());
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        ally.setBlocking(true);
+
+        killWithShock(player1, ally);
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void attackingOpponentDeathDoesNotCreateZombie() {
+        harness.addToBattlefield(player1, new DeathTyrant());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        opponent.setAttacking(true);
+
+        killWithShock(player1, opponent);
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void nonattackingDeathTyrantDeathDoesNotCreateZombie() {
+        Permanent tyrant = addCreatureReady(player1, new DeathTyrant());
+        tyrant.setMarkedDamage(4);
+
+        killWithShock(player1, tyrant);
+
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void graveyardAbilityReturnsOnlyActivatedCopy() {
+        DeathTyrant activated = new DeathTyrant();
+        DeathTyrant other = new DeathTyrant();
+        harness.setGraveyard(player1, List.of(activated, other));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Death Tyrant")).hasSize(1);
+        Permanent returned = findPermanent(player1, "Death Tyrant");
+        assertThat(returned.getCard().getId()).isEqualTo(activated.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
+
     private void killWithShock(com.github.laxika.magicalvibes.model.Player caster, Permanent target) {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
         resolveAllTriggers();
     }
 }
