@@ -47,7 +47,7 @@ class DoOrDieTest extends BaseCardTest {
     @DisplayName("Choosing the second pile destroys the creatures left in that pile")
     void targetPlayerChoosesSecondPile() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
-        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        harness.addToBattlefield(player2, new RazorfootGriffin());
 
         castDoOrDie(player2.getId());
 
@@ -85,12 +85,56 @@ class DoOrDieTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("All creatures in a chosen pile are destroyed, leaving other permanents alone")
+    void destroysEntireChosenPile() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new RagingKavu());
+
+        castDoOrDie(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(kavu.getId(), griffin.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(kavu.getId(), griffin.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertNotOnBattlefield(player2, "Raging Kavu");
+        harness.assertNotOnBattlefield(player2, "Razorfoot Griffin");
+        harness.assertInGraveyard(player2, "Raging Kavu");
+        harness.assertInGraveyard(player2, "Razorfoot Griffin");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The caster can target themselves and make both pile choices")
+    void canTargetSelf() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
+        harness.addToBattlefield(player1, new RazorfootGriffin());
+
+        castDoOrDie(player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(kavu.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        harness.assertNotOnBattlefield(player1, "Razorfoot Griffin");
+        harness.assertInGraveyard(player1, "Razorfoot Griffin");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castDoOrDie(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new DoOrDie()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }
