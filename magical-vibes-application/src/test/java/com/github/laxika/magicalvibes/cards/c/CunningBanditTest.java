@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AzamukiTreacheryIncarnate;
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.v.VitalSurge;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CunningBandit.class, AzamukiTreacheryIncarnate.class, VitalSurge.class,
-        KamiOfFalseHope.class, GoblinCohort.class})
+        KamiOfFalseHope.class, GoblinCohort.class, BoundByMoonsilver.class})
 class CunningBanditTest extends BaseCardTest {
 
     @Test
@@ -184,9 +185,7 @@ class CunningBanditTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.isStolenUntilEndOfTurn(creature.getId())).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(creature.getId()));
@@ -197,7 +196,11 @@ class CunningBanditTest extends BaseCardTest {
     @DisplayName("Azamuki cannot activate without a ki counter")
     void azamukiCannotActivateWithoutKiCounter() {
         Permanent bandit = addBandit();
-        bandit.setTransformed(true);
+        bandit.setCounterCount(CounterType.KI, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        bandit.setCounterCount(CounterType.KI, 0);
         Permanent creature = addCreatureReady(player2, new GoblinCohort());
 
         prepareMainPhase();
@@ -205,6 +208,70 @@ class CunningBanditTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(bandit.getCounterCount(CounterType.KI)).isZero();
+    }
+
+    @Test
+    @DisplayName("A restriction on transforming does not prevent flipping")
+    void flipsWhileBoundByMoonsilver() {
+        Permanent bandit = addBandit();
+        bandit.setCounterCount(CounterType.KI, 2);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(bandit.getId());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bandit.isTransformed()).isTrue();
+        assertThat(bandit.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(aura.getAttachedTo()).isEqualTo(bandit.getId());
+    }
+
+    @Test
+    @DisplayName("Azamuki can activate while tapped and summoning sick without untapping its target")
+    void azamukiCanActivateWhileTappedAndSummoningSick() {
+        Permanent bandit = addBandit();
+        bandit.setCounterCount(CounterType.KI, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        bandit.setTapped(true);
+        bandit.setSummoningSick(true);
+        Permanent creature = addCreatureReady(player2, new GoblinCohort());
+        creature.setTapped(true);
+
+        prepareMainPhase();
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(bandit.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.isSummoningSick()).isTrue();
+        assertThat(bandit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The flipped face no longer gains ki counters from Spirit spells")
+    void flippedFaceDoesNotTriggerForSpiritSpells() {
+        Permanent bandit = addBandit();
+        bandit.setCounterCount(CounterType.KI, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new KamiOfFalseHope()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(bandit.getCounterCount(CounterType.KI)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Kami of False Hope");
     }
 
     private Permanent addBandit() {
