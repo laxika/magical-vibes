@@ -66,4 +66,56 @@ class CanyonJerboaTest extends BaseCardTest {
         assertThat(jerboa.getPowerModifier()).isZero();
         assertThat(jerboa.getToughnessModifier()).isZero();
     }
+
+    @Test
+    void landsEnteringWithoutBeingPlayedEachTriggerLandfall() {
+        Permanent jerboa = addCreatureReady(player1, new CanyonJerboa());
+        Permanent opponent = addCreatureReady(player2, new CanyonJerboa());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(jerboa.getPowerModifier()).isZero();
+        resolveAllTriggers();
+
+        assertThat(jerboa.getPowerModifier()).isEqualTo(2);
+        assertThat(jerboa.getToughnessModifier()).isEqualTo(2);
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void creaturesAreDeterminedWhenLandfallResolves() {
+        Permanent source = addCreatureReady(player1, new CanyonJerboa());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        Permanent beforeResolution = harness.enterBattlefieldAndReturn(player1, new CanyonJerboa());
+
+        resolveAllTriggers();
+        Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new CanyonJerboa());
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void landfallStillResolvesAfterItsSourceDies() {
+        Permanent source = addCreatureReady(player1, new CanyonJerboa());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        Permanent survivor = harness.enterBattlefieldAndReturn(player1, new CanyonJerboa());
+
+        source.setToughnessModifier(-2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        resolveAllTriggers();
+
+        assertThat(survivor.getPowerModifier()).isEqualTo(1);
+        assertThat(survivor.getToughnessModifier()).isEqualTo(1);
+    }
 }
