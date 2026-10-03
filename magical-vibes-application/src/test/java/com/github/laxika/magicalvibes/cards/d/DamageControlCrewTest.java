@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BadMoon;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DamageControlCrew.class, HillGiant.class, GrizzlyBears.class, FountainOfYouth.class, BadMoon.class})
+@CardUsed({DamageControlCrew.class, HillGiant.class, GrizzlyBears.class, FountainOfYouth.class, BadMoon.class,
+        JayemdaeTome.class})
 class DamageControlCrewTest extends BaseCardTest {
 
     @Test
@@ -78,25 +80,87 @@ class DamageControlCrewTest extends BaseCardTest {
     @DisplayName("Impound cannot target a creature")
     void impoundCannotTargetCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        enterAndChooseImpound();
 
-        assertThatThrownBy(() -> castWithImpound(target.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void repairReturnsNoncreatureCard() {
+        Card target = new JayemdaeTome();
+        harness.setGraveyard(player1, List.of(target));
+
+        castWithRepair();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Jayemdae Tome");
+        harness.assertNotInGraveyard(player1, "Jayemdae Tome");
+    }
+
+    @Test
+    void repairCannotTargetOpponentsGraveyard() {
+        Card ownCard = new HillGiant();
+        Card opponentsCard = new JayemdaeTome();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+
+        castWithRepair();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(ownCard.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentsCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Jayemdae Tome");
+    }
+
+    @Test
+    void impoundCanExileYourOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        castWithImpound(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+    }
+
+    @Test
+    void canChooseImpoundWhenEnteringWithoutBeingCast() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        enterAndChooseImpound();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+    }
+
+    private void enterAndChooseImpound() {
+        harness.enterBattlefieldAndReturn(player1, new DamageControlCrew());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.handleListChoice(player1, "Impound — Exile target artifact or enchantment");
     }
 
     private void castWithRepair() {
         harness.setHand(player1, List.of(new DamageControlCrew()));
         addMana();
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void castWithImpound(UUID targetId) {
         harness.setHand(player1, List.of(new DamageControlCrew()));
         addMana();
         harness.castCreature(player1, 0, 1, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addMana() {
