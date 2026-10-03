@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DarigaazReincarnated.class, CruelEdict.class, DeepFreeze.class})
 class DarigaazReincarnatedTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -76,11 +78,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         exileWithEggCounters(player1.getId(), card, 3);
 
         // Trigger upkeep for player1
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability
+        triggerUpkeep(player1);
 
         // Counter decremented to 2
         assertThat(gd.exiledCardEggCounters.get(card.getId())).isEqualTo(2);
@@ -98,11 +96,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         exileWithEggCounters(player1.getId(), card, 1);
 
         // Trigger upkeep for player1
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability
+        triggerUpkeep(player1);
 
         // Back on battlefield
         harness.assertOnBattlefield(player1, "Darigaaz Reincarnated");
@@ -201,16 +195,81 @@ class DarigaazReincarnatedTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("Darigaaz without its abilities goes to the graveyard when sacrificed")
+    void abilityLossDisablesDeathReplacement() {
+        harness.addToBattlefield(player1, new DarigaazReincarnated());
+        Permanent darigaaz = findPermanent(player1, "Darigaaz Reincarnated");
+        harness.setHand(player2, List.of(new DeepFreeze(), new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.castEnchantment(player2, 0, darigaaz.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
+        harness.assertInGraveyard(player1, "Darigaaz Reincarnated");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(darigaaz.getCard());
+        assertThat(gd.exiledCardEggCounters).doesNotContainKey(darigaaz.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Exiling Darigaaz without egg counters does not trigger a return")
+    void exileWithoutEggCountersDoesNotTrigger() {
+        DarigaazReincarnated card = new DarigaazReincarnated();
+        gd.addToExile(player1.getId(), card);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
+    }
+
+    @Test
+    @DisplayName("Removing all egg counters before resolution prevents Darigaaz from returning")
+    void noReturnIfLastCounterRemovedBeforeResolution() {
+        DarigaazReincarnated card = new DarigaazReincarnated();
+        exileWithEggCounters(player1.getId(), card, 1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.exiledCardEggCounters.remove(card.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
+    }
+
+    @Test
+    @DisplayName("Darigaaz leaving exile before resolution prevents its return")
+    void noReturnIfCardLeavesExileBeforeResolution() {
+        DarigaazReincarnated card = new DarigaazReincarnated();
+        exileWithEggCounters(player1.getId(), card, 1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.removeFromExile(card.getId());
+        gd.playerHands.get(player1.getId()).add(card);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        harness.assertNotOnBattlefield(player1, "Darigaaz Reincarnated");
+        assertThat(gd.exiledCardEggCounters).doesNotContainKey(card.getId());
+    }
+
     private void exileWithEggCounters(UUID playerId, Card card, int counters) {
         gd.addToExile(playerId, card);
         gd.exiledCardEggCounters.put(card.getId(), counters);
     }
 
     private void triggerUpkeep(com.github.laxika.magicalvibes.model.Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
-        harness.passBothPriorities(); // resolve triggered ability
+        advanceToUpkeep(player);
+        harness.passBothPriorities();
     }
 }
