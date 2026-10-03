@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Dragonback Lancer")
-@CardUsed(DragonbackLancer.class)
+@CardUsed({DragonbackLancer.class})
 class DragonbackLancerTest extends BaseCardTest {
 
     @Test
@@ -51,12 +51,51 @@ class DragonbackLancerTest extends BaseCardTest {
                 .count()).isEqualTo(1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each attacking Lancer creates its own Warrior and both are sacrificed")
+    void multipleLancersCreateAndSacrificeTheirOwnTokens() {
+        addCreatureReady(player1, new DragonbackLancer());
+        addCreatureReady(player1, new DragonbackLancer());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).hasSize(2);
+        assertThat(findPermanents(player2, "Warrior")).isEmpty();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+        assertThat(findPermanents(player1, "Dragonback Lancer")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Mobilize creates and sacrifices its token even after the Lancer leaves")
+    void mobilizeResolvesAfterSourceLeavesBattlefield() {
+        Permanent lancer = addCreatureReady(player1, new DragonbackLancer());
+
+        declareAttackers(List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(lancer);
+        gd.playerGraveyards.get(player1.getId()).add(lancer.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).hasSize(1);
+        assertThat(findPermanents(player1, "Dragonback Lancer")).isEmpty();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
     }
 }
