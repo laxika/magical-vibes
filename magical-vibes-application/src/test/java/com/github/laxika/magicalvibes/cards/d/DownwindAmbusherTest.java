@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,8 +42,7 @@ class DownwindAmbusherTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, spider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spider.getId());
 
         cast(1, spider.getId());
         harness.passBothPriorities();
@@ -55,18 +55,83 @@ class DownwindAmbusherTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 1 cannot target an opposing creature that was not dealt damage this turn")
     void modeOneRequiresDamageThisTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
 
-        assertThatThrownBy(() -> cast(1, bears.getId()))
+        assertThatThrownBy(() -> harness.handleListChoice(player1,
+                "Destroy target creature an opponent controls that was dealt damage this turn"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Neither mode can target a creature its controller controls")
+    @DisplayName("Mode 0 cannot target a creature its controller controls")
     void cannotTargetOwnCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
+        harness.handleListChoice(player1,
+                "Target creature an opponent controls gets -1/-1 until end of turn");
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> cast(0, bears.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void destructionModeCanBeChosenWhenEnteringWithoutBeingCast() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
+        harness.handleListChoice(player1,
+                "Destroy target creature an opponent controls that was dealt damage this turn");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spider.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    void minusOneMinusOneExpiresAtEndOfTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(bears.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canBeCastDuringOpponentsUpkeep() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        cast(0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Downwind Ambusher");
+        assertThat(bears.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    void destructionModeCannotTargetOwnDamagedCreature() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+        harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1,
+                "Destroy target creature an opponent controls that was dealt damage this turn"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
