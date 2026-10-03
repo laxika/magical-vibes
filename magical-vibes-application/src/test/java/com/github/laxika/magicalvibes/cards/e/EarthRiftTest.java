@@ -77,4 +77,52 @@ class EarthRiftTest extends BaseCardTest {
                 player1, 0, harness.getPermanentId(player2, "Angelic Wall")))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Can destroy a land controlled by the caster")
+    void canDestroyOwnLand() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new EarthRift()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Mountain"));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Earth Rift");
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be paid with only the normal casting cost")
+    void flashbackRequiresItsFullCost() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setGraveyard(player1, List.of(new EarthRift()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(
+                player1, 0, harness.getPermanentId(player2, "Mountain")))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Earth Rift");
+        harness.assertOnBattlefield(player2, "Mountain");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Normal cast goes to the graveyard when its target disappears")
+    void normalCastGoesToGraveyardOnFizzle() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new EarthRift()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Mountain"));
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Earth Rift");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 }
