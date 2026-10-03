@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GruulTurf;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,10 +43,7 @@ class DuneBroodNephilimTest extends BaseCardTest {
         nephilim.setAttacking(true);
         addLands(player1, 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.clearPriorityPassed();
-        harness.resolveCombatDamage();
+        resolveCombat();
         addLands(player1, 2);
         harness.passBothPriorities();
 
@@ -68,6 +64,50 @@ class DuneBroodNephilimTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(findPermanents(player1, "Sand")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage with no lands creates no Sand tokens")
+    void combatDamageWithNoLandsCreatesNoTokens() {
+        Permanent nephilim = addCreatureReady(player1, new DuneBroodNephilim());
+        nephilim.setAttacking(true);
+        addLands(player2, 3);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Sand")).isEmpty();
+        assertThat(findPermanents(player2, "Sand")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Nephilim creates tokens for its own lands")
+    void secondPlayerCreatesTokensForTheirOwnLands() {
+        Permanent nephilim = addCreatureReady(player2, new DuneBroodNephilim());
+        nephilim.setAttacking(true);
+        addLands(player1, 3);
+        addLands(player2, 1);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Sand")).hasSize(1);
+        assertThat(findPermanents(player1, "Sand")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even after the Nephilim leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent nephilim = addCreatureReady(player1, new DuneBroodNephilim());
+        nephilim.setAttacking(true);
+        addLands(player1, 2);
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(nephilim);
+        gd.playerGraveyards.get(player1.getId()).add(nephilim.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Sand")).hasSize(2);
     }
 
     private void addLands(com.github.laxika.magicalvibes.model.Player player, int count) {
