@@ -104,8 +104,7 @@ class DenizenOfTheDeepTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, null, harness.getPermanentId(player1, "Denizen of the Deep"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Denizen of the Deep"));
 
         var reenteredDenizen = gd.playerHands.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Denizen of the Deep"))
@@ -119,6 +118,41 @@ class DenizenOfTheDeepTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(c -> c.getName())
                 .containsExactly("Denizen of the Deep");
+    }
+
+    @Test
+    @DisplayName("ETB resolves after Denizen leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Denizen of the Deep"));
+        harness.assertOnBattlefield(player1, "Air Elemental");
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Denizen of the Deep", "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("ETB includes creatures entering before resolution")
+    void etbChecksCreaturesAtResolution() {
+        harness.castFromHand(player1, new DenizenOfTheDeep(), "{6}{U}{U}");
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Denizen of the Deep");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Grizzly Bears");
     }
 
     @Test
