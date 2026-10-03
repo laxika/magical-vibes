@@ -85,6 +85,57 @@ class DreamStalkerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("A controlled permanent owned by the opponent returns to the opponent's hand")
+    void returnsBorrowedPermanentToOwner() {
+        UUID lensId = harness.addToBattlefieldAndReturn(player1, new PrismaticLens()).getId();
+        gd.stolenCreatures.put(lensId, player2.getId());
+        castAndResolveSpell();
+        resolveTriggerToChoice();
+
+        harness.handlePermanentChosen(player1, lensId);
+
+        harness.assertNotOnBattlefield(player1, "Prismatic Lens");
+        harness.assertInHand(player2, "Prismatic Lens");
+        harness.assertNotInHand(player1, "Prismatic Lens");
+        harness.assertOnBattlefield(player1, "Dream Stalker");
+    }
+
+    @Test
+    @DisplayName("The trigger still returns another permanent after Dream Stalker leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        UUID lensId = harness.addToBattlefieldAndReturn(player1, new PrismaticLens()).getId();
+        castAndResolveSpell();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, findPermanent(player1, "Dream Stalker")));
+
+        resolveTriggerToChoice();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(lensId);
+        harness.handlePermanentChosen(player1, lensId);
+        harness.assertInHand(player1, "Prismatic Lens");
+        harness.assertNotOnBattlefield(player1, "Prismatic Lens");
+        harness.assertInGraveyard(player1, "Dream Stalker");
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing if no controlled permanents remain")
+    void noPermanentsAtResolution() {
+        harness.addToBattlefield(player2, new PrismaticLens());
+        castAndResolveSpell();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, findPermanent(player1, "Dream Stalker")));
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Prismatic Lens");
+        harness.assertNotInHand(player2, "Prismatic Lens");
+        harness.assertInGraveyard(player1, "Dream Stalker");
+    }
+
     private void resolveTriggerToChoice() {
         harness.passBothPriorities();
     }
