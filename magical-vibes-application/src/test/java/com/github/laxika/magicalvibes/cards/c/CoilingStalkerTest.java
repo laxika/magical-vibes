@@ -62,4 +62,57 @@ class CoilingStalkerTest extends BaseCardTest {
         assertThat(stalker.isAttacking()).isTrue();
         assertThat(stalker.getAttackTarget()).isEqualTo(player2.getId());
     }
+
+    @Test
+    @DisplayName("Coiling Stalker can target itself after dealing combat damage")
+    void combatDamageCanPutCounterOnItself() {
+        Permanent stalker = addCreatureReady(player1, new CoilingStalker());
+        stalker.setAttacking(true);
+        Permanent other = addCreatureReady(player1, new CoilingStalker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(stalker.getId(), other.getId());
+        harness.handlePermanentChosen(player1, stalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(stalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that gains a +1/+1 counter before resolution is illegal")
+    void targetGainingCounterBeforeResolutionGetsNoAdditionalCounter() {
+        Permanent stalker = addCreatureReady(player1, new CoilingStalker());
+        stalker.setAttacking(true);
+        Permanent target = addCreatureReady(player1, new CoilingStalker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(stalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage with no eligible creature does not put another counter anywhere")
+    void noLegalTargetDoesNotPlaceCounter() {
+        Permanent stalker = addCreatureReady(player1, new CoilingStalker());
+        stalker.setAttacking(true);
+        stalker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent opponent = addCreatureReady(player2, new CoilingStalker());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(stalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
