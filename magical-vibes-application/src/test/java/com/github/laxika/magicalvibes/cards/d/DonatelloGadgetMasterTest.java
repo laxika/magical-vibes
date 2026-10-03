@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,6 +64,62 @@ class DonatelloGadgetMasterTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copy does not inherit the artifact's tapped state or counters")
+    void copyDoesNotInheritTappedStateOrCounters() {
+        Permanent donatello = addCreatureReady(player1, new DonatelloGadgetMaster());
+        donatello.setAttacking(true);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        mine.setTapped(true);
+        mine.setCounterCount(CounterType.CHARGE, 2);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, mine.getId());
+        harness.passBothPriorities();
+
+        Permanent copy = findPermanents(player1, "Howling Mine").stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(mine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The copy trigger resolves even after Donatello leaves the battlefield")
+    void triggerResolvesWithoutDonatello() {
+        Permanent donatello = addCreatureReady(player1, new DonatelloGadgetMaster());
+        donatello.setAttacking(true);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, mine.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, donatello));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Howling Mine")).hasSize(2);
+        assertThat(findPermanents(player1, "Howling Mine"))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No copy is created if the targeted artifact leaves before resolution")
+    void missingTargetPreventsCopy() {
+        Permanent donatello = addCreatureReady(player1, new DonatelloGadgetMaster());
+        donatello.setAttacking(true);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, mine.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, mine));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Howling Mine")).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 
