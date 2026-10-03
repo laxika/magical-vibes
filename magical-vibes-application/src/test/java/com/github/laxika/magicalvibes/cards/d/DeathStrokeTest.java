@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.v.VolrathsGardens;
+import com.github.laxika.magicalvibes.cards.s.SkeletonScavengers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,9 +12,30 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathStroke.class, DauthiTrapper.class, VolrathsGardens.class})
+@CardUsed({DeathStroke.class, DauthiTrapper.class, VolrathsGardens.class, SkeletonScavengers.class})
 class DeathStrokeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A tapped creature can regenerate from Death Stroke")
+    void tappedCreatureCanRegenerate() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new SkeletonScavengers());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        creature.tap();
+
+        harness.setHand(player1, List.of(new DeathStroke()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+
+        harness.assertOnBattlefield(player2, "Skeleton Scavengers");
+        harness.assertNotInGraveyard(player2, "Skeleton Scavengers");
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Death Stroke");
+    }
 
     @Test
     @DisplayName("Destroys target tapped creature")
