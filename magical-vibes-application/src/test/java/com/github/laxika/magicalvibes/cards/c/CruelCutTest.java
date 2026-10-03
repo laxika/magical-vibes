@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CruelCut.class, GrizzlyBears.class, HillGiant.class, Plains.class})
+@CardUsed({CruelCut.class, GrizzlyBears.class, HillGiant.class, Plains.class, GiantGrowth.class})
 class CruelCutTest extends BaseCardTest {
 
     @Test
@@ -49,10 +50,50 @@ class CruelCutTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private void castCruelCut(Permanent target) {
+    @Test
+    @DisplayName("Can destroy its controller's creature")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castCruelCut(target);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature whose power has been increased above 2")
+    void cannotTargetBoostedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        prepareCruelCut();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("power 2 or less");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not resolve if its target's power increases above 2 in response")
+    void doesNotDestroyTargetThatBecomesTooLarge() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         prepareCruelCut();
         harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cruel Cut");
+    }
+
+    private void castCruelCut(Permanent target) {
+        prepareCruelCut();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareCruelCut() {
