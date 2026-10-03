@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -158,6 +159,79 @@ class DiminishingReturnsTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Exile precedes choices and the active player draws before the next choice")
+    void exileAndDrawsOccurBeforeFollowingChoices() {
+        castDiminishingReturns();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.handleXValueChosen(player1, 4);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleXValueChosen(player2, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Declining to draw from empty libraries does not cause a loss")
+    void decliningDrawsFromEmptyLibrariesDoesNotCauseLoss() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.castFromHand(player1, new DiminishingReturns(), "{2}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Diminishing Returns");
+    }
+
+    @Test
+    @DisplayName("The controller's hand and graveyard are shuffled before cards are exiled")
+    void controllerHandAndGraveyardAreShuffledBeforeExile() {
+        Card spell = new DiminishingReturns();
+        Card handCard = new DiminishingReturns();
+        Card graveyardCard = new DiminishingReturns();
+        harness.setHand(player1, List.of(spell, handCard));
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of());
+        fillLibrary(player2, 7);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(handCard, graveyardCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     private void fillLibrary(com.github.laxika.magicalvibes.model.Player player, int count) {
