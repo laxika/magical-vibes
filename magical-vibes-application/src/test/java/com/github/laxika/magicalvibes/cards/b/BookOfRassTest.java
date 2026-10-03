@@ -86,6 +86,62 @@ class BookOfRassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Book can activate without untapping")
+    void canActivateWhileTapped() {
+        BookOfRass drawnCard = new BookOfRass();
+        var book = harness.addToBattlefieldAndReturn(player1, new BookOfRass());
+        book.setTapped(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertLife(player1, 18);
+        assertThat(book.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each activation pays life immediately and draws only on resolution")
+    void multiplePendingActivationsPayCostsBeforeDrawing() {
+        BookOfRass firstDrawnCard = new BookOfRass();
+        BookOfRass secondDrawnCard = new BookOfRass();
+        var book = harness.addToBattlefieldAndReturn(player1, new BookOfRass());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDrawnCard, secondDrawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(book.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDrawnCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 16);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDrawnCard, secondDrawnCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 16);
+    }
+    @Test
     @DisplayName("Cannot activate with less than 2 life")
     void cannotActivateWithInsufficientLife() {
         harness.addToBattlefield(player1, new BookOfRass());
