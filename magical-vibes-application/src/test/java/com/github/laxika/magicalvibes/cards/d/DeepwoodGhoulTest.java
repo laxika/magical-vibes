@@ -14,6 +14,67 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DeepwoodGhoulTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Life is paid on activation, but the shield waits for resolution")
+    void lifeIsPaidBeforeShieldResolves() {
+        Permanent ghoul = addCreatureReady(player1, new DeepwoodGhoul());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Ghoul can activate repeatedly, paying for each shield")
+    void tappedGhoulCanCreateMultipleShields() {
+        Permanent ghoul = addCreatureReady(player1, new DeepwoodGhoul());
+        ghoul.tap();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        assertThat(ghoul.getRegenerationShield()).isEqualTo(2);
+        assertThat(ghoul.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated shield replaces lethal combat damage destruction")
+    void activatedShieldRemovesDamageAndRemovesGhoulFromCombat() {
+        Permanent ghoul = addCreatureReady(player1, new DeepwoodGhoul());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        ghoul.setBlocking(true);
+        ghoul.addBlockingTarget(0);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player1, "Deepwood Ghoul");
+        harness.assertNotInGraveyard(player1, "Deepwood Ghoul");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(ghoul.isTapped()).isTrue();
+        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(ghoul.getMarkedDamage()).isZero();
+        assertThat(ghoul.isBlocking()).isFalse();
+        assertThat(ghoul.getBlockingTargets()).isEmpty();
+    }
+
+    @Test
     @DisplayName("Paying 2 life grants a regeneration shield")
     void payLifeGrantsRegenerationShield() {
         Permanent ghoul = addCreatureReady(player1, new DeepwoodGhoul());
