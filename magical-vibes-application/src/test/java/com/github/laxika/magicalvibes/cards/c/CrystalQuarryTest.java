@@ -65,4 +65,61 @@ class CrystalQuarryTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Crystal Quarry");
     }
+
+    @Test
+    void insufficientManaLeavesQuarryUntappedAndManaUnspent() {
+        var quarry = harness.addToBattlefieldAndReturn(player1, new CrystalQuarry());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quarry.isTapped()).isFalse();
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(4);
+        for (var color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN}) {
+            assertThat(pool.get(color)).isZero();
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void colorlessAbilityCannotAlsoPayForFiveColorAbilityWithSameQuarry() {
+        var quarry = harness.addToBattlefieldAndReturn(player1, new CrystalQuarry());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quarry.isTapped()).isTrue();
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(5);
+        for (var color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN}) {
+            assertThat(pool.get(color)).isZero();
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fiveColorAbilitySpendsExactlyFiveManaAndPreventsAnotherTapActivation() {
+        var quarry = harness.addToBattlefieldAndReturn(player1, new CrystalQuarry());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(2);
+        for (var color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN}) {
+            assertThat(pool.get(color)).isEqualTo(1);
+        }
+        assertThat(quarry.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
