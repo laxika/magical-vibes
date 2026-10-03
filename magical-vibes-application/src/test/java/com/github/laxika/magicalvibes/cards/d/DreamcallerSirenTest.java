@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.cards.p.PiratesCutlass;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,12 +21,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreamcallerSiren.class, DaringSaboteur.class, JungleDelver.class, Forest.class, AirElemental.class, PiratesCutlass.class})
 class DreamcallerSirenTest extends BaseCardTest {
-
-    // ===== ETB with another Pirate =====
 
     @Nested
     @DisplayName("ETB with another Pirate")
+    @CardUsed({DreamcallerSiren.class, DaringSaboteur.class, JungleDelver.class, Forest.class})
     class EtbWithAnotherPirate {
 
         @Test
@@ -33,8 +34,8 @@ class DreamcallerSirenTest extends BaseCardTest {
         void etbTapsTwoTargets() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
 
-            Permanent bears1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-            Permanent bears2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent bears1 = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+            Permanent bears2 = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
             assertThat(bears1.isTapped()).isFalse();
             assertThat(bears2.isTapped()).isFalse();
 
@@ -53,7 +54,7 @@ class DreamcallerSirenTest extends BaseCardTest {
         void etbTapsOneTarget() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
 
-            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
             assertThat(bears.isTapped()).isFalse();
 
             castDreamcallerSiren();
@@ -69,8 +70,8 @@ class DreamcallerSirenTest extends BaseCardTest {
         @DisplayName("ETB trigger goes on the stack once targets are chosen")
         void etbTriggerGoesOnStack() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            harness.addToBattlefield(player2, new JungleDelver());
+            UUID bearsId = harness.getPermanentId(player2, "Jungle Delver");
 
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
@@ -92,8 +93,8 @@ class DreamcallerSirenTest extends BaseCardTest {
         @DisplayName("Creature enters battlefield with another Pirate")
         void creatureEntersWithAnotherPirate() {
             harness.addToBattlefield(player1, new DaringSaboteur());
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+            harness.addToBattlefield(player2, new JungleDelver());
+            UUID bearsId = harness.getPermanentId(player2, "Jungle Delver");
 
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
@@ -107,7 +108,7 @@ class DreamcallerSirenTest extends BaseCardTest {
         @DisplayName("Cannot choose a land as a trigger target")
         void cannotChooseLandTarget() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new JungleDelver());
             harness.addToBattlefield(player2, new Forest());
 
             castDreamcallerSiren();
@@ -124,10 +125,9 @@ class DreamcallerSirenTest extends BaseCardTest {
         }
     }
 
-    // ===== ETB without another Pirate =====
-
     @Nested
     @DisplayName("ETB without another Pirate")
+    @CardUsed({DreamcallerSiren.class, DaringSaboteur.class})
     class EtbWithoutAnotherPirate {
 
         @Test
@@ -158,13 +158,11 @@ class DreamcallerSirenTest extends BaseCardTest {
         }
     }
 
-    // ===== Condition lost before resolution =====
-
     @Test
     @DisplayName("ETB does nothing if the other Pirate is removed before resolution")
     void etbFizzlesWhenAnotherPirateRemoved() {
         harness.addToBattlefield(player1, new DaringSaboteur());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
 
         castDreamcallerSiren();
         harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
@@ -181,23 +179,20 @@ class DreamcallerSirenTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
     }
 
-    // ===== Blocking restriction =====
-
     @Nested
     @DisplayName("Blocking restriction")
+    @CardUsed({DreamcallerSiren.class, AirElemental.class, JungleDelver.class})
     class BlockingRestriction {
 
         @Test
         @DisplayName("Can block a creature with flying")
         void canBlockFlyingCreature() {
-            Permanent sirenPerm = new Permanent(new DreamcallerSiren());
+            Permanent sirenPerm = harness.addToBattlefieldAndReturn(player2, new DreamcallerSiren());
             sirenPerm.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(sirenPerm);
 
-            Permanent atkPerm = new Permanent(new AirElemental());
+            Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new AirElemental());
             atkPerm.setSummoningSick(false);
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -212,14 +207,12 @@ class DreamcallerSirenTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot block a creature without flying")
         void cannotBlockNonFlyingCreature() {
-            Permanent sirenPerm = new Permanent(new DreamcallerSiren());
+            Permanent sirenPerm = harness.addToBattlefieldAndReturn(player2, new DreamcallerSiren());
             sirenPerm.setSummoningSick(false);
-            gd.playerBattlefields.get(player2.getId()).add(sirenPerm);
 
-            Permanent atkPerm = new Permanent(new GrizzlyBears());
+            Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new JungleDelver());
             atkPerm.setSummoningSick(false);
             atkPerm.setAttacking(true);
-            gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -232,11 +225,140 @@ class DreamcallerSirenTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    void canChooseZeroTargets() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void anotherDreamcallerSirenEnablesTheTrigger() {
+        harness.addToBattlefield(player1, new DreamcallerSiren());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void nonPirateCreatureDoesNotEnableTheTrigger() {
+        harness.addToBattlefield(player1, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Dreamcaller Siren");
+    }
+
+    @Test
+    void enteringWithoutBeingCastStillTriggers() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        harness.enterBattlefieldAndReturn(player1, new DreamcallerSiren());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetItselfAndANoncreatureArtifact() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new PiratesCutlass());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        Permanent siren = findPermanent(player1, "Dreamcaller Siren");
+        harness.handlePermanentChosen(player1, siren.getId());
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.passBothPriorities();
+
+        assertThat(siren.isTapped()).isTrue();
+        assertThat(equipment.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotChooseTheSamePermanentTwice() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void tapsRemainingTargetWhenOneTargetLeaves() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityResolvesWhenSirenLeavesAndAnotherPirateRemains() {
+        harness.addToBattlefield(player1, new DaringSaboteur());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Dreamcaller Siren"));
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canBeCastDuringOpponentsCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        castDreamcallerSiren();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dreamcaller Siren");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castDreamcallerSiren() {
-        harness.setHand(player1, List.of(new DreamcallerSiren()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DreamcallerSiren(), "{2}{U}{U}");
     }
 }
