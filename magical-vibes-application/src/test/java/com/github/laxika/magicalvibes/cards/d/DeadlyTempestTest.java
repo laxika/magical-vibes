@@ -56,6 +56,55 @@ class DeadlyTempestTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Regenerated creatures survive and do not count toward life loss")
+    void regeneratedCreaturesDoNotCount() {
+        Permanent regenerated = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        regenerated.setRegenerationShield(1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castDeadlyTempest();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(regenerated.isTapped()).isTrue();
+        assertThat(regenerated.getRegenerationShield()).isZero();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Life loss follows the creature's controller rather than its owner")
+    void stolenCreatureCountsForItsController() {
+        GrizzlyBears stolen = new GrizzlyBears();
+        stolen.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, stolen);
+
+        castDeadlyTempest();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Only indestructible creatures means no life loss for either player")
+    void allIndestructibleCreaturesMeanNoLifeLoss() {
+        harness.addToBattlefield(player1, new DarksteelSentinel());
+        harness.addToBattlefield(player2, new DarksteelSentinel());
+
+        castDeadlyTempest();
+
+        harness.assertOnBattlefield(player1, "Darksteel Sentinel");
+        harness.assertOnBattlefield(player2, "Darksteel Sentinel");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castDeadlyTempest() {
         harness.setHand(player1, List.of(new DeadlyTempest()));
         harness.addMana(player1, ManaColor.BLACK, 6);
