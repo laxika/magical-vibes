@@ -6,11 +6,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
+import com.github.laxika.magicalvibes.cards.k.KitesailCleric;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CascadeSeer.class, BoggartBrute.class, FaerieMiscreant.class, Forest.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class,
+        StoneworkPackbeast.class, KitesailCleric.class})
 class CascadeSeerTest extends BaseCardTest {
 
     @Test
@@ -52,10 +52,10 @@ class CascadeSeerTest extends BaseCardTest {
     @Test
     @DisplayName("A party creature can fill only one role")
     void oneCreatureFillsOnlyOneRole() {
-        harness.addToBattlefield(player1, partyCreature("Cleric Rogue", CardSubtype.CLERIC, CardSubtype.ROGUE));
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
         harness.addToBattlefield(player1, new BoggartBrute());
         harness.addToBattlefield(player1, new FugitiveWizard());
-        List<Card> library = List.of(new Forest(), new GrizzlyBears(), new Forest());
+        List<Card> library = List.of(new Forest(), new GrizzlyBears(), new Forest(), new GrizzlyBears());
         harness.setLibrary(player1, library);
         castCascadeSeer();
 
@@ -63,7 +63,98 @@ class CascadeSeerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactlyElementsOf(library.subList(0, 3));
+    }
+
+    @Test
+    @DisplayName("Cascade Seer counts itself but ignores opposing party members")
+    void countsItselfAndIgnoresOpponents() {
+        harness.addToBattlefield(player2, new KitesailCleric());
+        harness.addToBattlefield(player2, new StoneworkPackbeast());
+        List<Card> library = List.of(new CascadeSeer(), new KitesailCleric(), new StoneworkPackbeast());
+        harness.setLibrary(player1, library);
+        castCascadeSeer();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(library.getFirst());
+    }
+
+    @Test
+    @DisplayName("Party size is evaluated when the enter trigger resolves")
+    void countsPartyAtResolution() {
+        List<Card> library = List.of(new CascadeSeer(), new KitesailCleric(), new StoneworkPackbeast());
+        harness.setLibrary(player1, library);
+        castCascadeSeer();
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new KitesailCleric());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactlyElementsOf(library.subList(0, 2));
+    }
+
+    @Test
+    @DisplayName("Removing Cascade Seer before its trigger resolves can reduce the party to zero")
+    void sourceLeavingCanMakeScryZero() {
+        List<Card> library = List.of(new CascadeSeer(), new KitesailCleric());
+        harness.setLibrary(player1, library);
+        castCascadeSeer();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("Multiple Packbeasts fill distinct roles for a full party")
+    void maximizesRolesAndOrdersTopAndBottom() {
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        harness.addToBattlefield(player1, new KitesailCleric());
+        List<Card> library = List.of(new CascadeSeer(), new KitesailCleric(),
+                new StoneworkPackbeast(), new CascadeSeer(), new KitesailCleric());
+        harness.setLibrary(player1, library);
+        castCascadeSeer();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactlyElementsOf(library.subList(0, 4));
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(2, 0), List.of(3, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(library.get(2), library.get(0), library.get(4), library.get(3), library.get(1));
+    }
+
+    @Test
+    @DisplayName("Scry examines only available cards when the library is smaller than the party")
+    void handlesShortLibrary() {
+        harness.addToBattlefield(player1, new KitesailCleric());
+        List<Card> library = List.of(new StoneworkPackbeast());
+        harness.setLibrary(player1, library);
+        castCascadeSeer();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactlyElementsOf(library);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("Scry with an empty library does not request an ordering choice")
+    void handlesEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        castCascadeSeer();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addFullParty() {
@@ -74,20 +165,7 @@ class CascadeSeerTest extends BaseCardTest {
     }
 
     private void castCascadeSeer() {
-        harness.setHand(player1, List.of(new CascadeSeer()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CascadeSeer(), "{3}{U}");
     }
 
-    private Card partyCreature(String name, CardSubtype... subtypes) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{2}");
-        card.setPower(2);
-        card.setToughness(2);
-        card.setSubtypes(List.of(subtypes));
-        return card;
-    }
 }
