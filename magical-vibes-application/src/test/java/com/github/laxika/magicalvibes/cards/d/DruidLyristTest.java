@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.c.CatalystStone;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -84,6 +83,56 @@ class DruidLyristTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent lyrist = addCreatureReady(player1, new DruidLyrist());
+        lyrist.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AegisOfHonor());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Druid Lyrist");
+        harness.assertNotInGraveyard(player1, "Druid Lyrist");
+        harness.assertOnBattlefield(player2, "Aegis of Honor");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blue mana cannot pay the green activation cost")
+    void cannotActivateWithWrongColorMana() {
+        addCreatureReady(player1, new DruidLyrist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AegisOfHonor());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Druid Lyrist");
+        harness.assertNotInGraveyard(player1, "Druid Lyrist");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without choosing an enchantment target")
+    void cannotActivateWithoutTarget() {
+        addCreatureReady(player1, new DruidLyrist());
+        harness.addToBattlefield(player2, new AegisOfHonor());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Druid Lyrist");
+        harness.assertNotInGraveyard(player1, "Druid Lyrist");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
         addCreatureReady(player1, new DruidLyrist());
@@ -131,7 +180,7 @@ class DruidLyristTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
 }
