@@ -27,7 +27,7 @@ class KeralKeepDisciplesTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test

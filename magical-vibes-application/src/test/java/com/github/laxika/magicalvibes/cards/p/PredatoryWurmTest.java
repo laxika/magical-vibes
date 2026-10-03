@@ -53,13 +53,12 @@ class PredatoryWurmTest extends BaseCardTest {
     @DisplayName("Loses the boost when the planeswalker leaves")
     void losesBoostWhenPlaneswalkerLeaves() {
         Permanent wurm = addCreatureReady(player1, new PredatoryWurm());
-        harness.addToBattlefield(player1, new GarrukUnleashed());
+        Permanent garruk = harness.addToBattlefieldAndReturn(player1, new GarrukUnleashed());
 
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
 
-        gd.playerBattlefields.get(player1.getId()).removeIf(permanent ->
-                permanent.getCard().getName().equals("Garruk Unleashed"));
+        gd.playerBattlefields.get(player1.getId()).remove(garruk);
 
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(4);

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.t.TeferiMasterOfTime;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,8 @@ class HistorianOfZhalfirTest extends BaseCardTest {
 
     @Test
     void attackingWithTeferiPlaneswalkerDraws() {
-        harness.addToBattlefield(player1, new TeferiMasterOfTime());
+        harness.addToBattlefieldAndReturn(player1, new TeferiMasterOfTime())
+                .setCounterCount(CounterType.LOYALTY, 3);
         addCreatureReady(player1, new HistorianOfZhalfir());
         setDeck(player1, List.of(new ChandraNalaar()));
 
@@ -43,7 +45,8 @@ class HistorianOfZhalfirTest extends BaseCardTest {
 
     @Test
     void conditionIsCheckedAgainWhenTriggerResolves() {
-        harness.addToBattlefield(player1, new TeferiMasterOfTime());
+        harness.addToBattlefieldAndReturn(player1, new TeferiMasterOfTime())
+                .setCounterCount(CounterType.LOYALTY, 3);
         addCreatureReady(player1, new HistorianOfZhalfir());
         setDeck(player1, List.of(new ChandraNalaar()));
 

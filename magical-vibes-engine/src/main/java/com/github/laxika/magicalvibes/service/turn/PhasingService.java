@@ -375,7 +375,7 @@ public class PhasingService {
         gameData.phasedOutPermanents.forEach((controllerId, permanents) ->
                 List.copyOf(permanents).stream()
                         .filter(permanent -> targetIds.contains(permanent.getId()))
-                        .filter(permanent -> !isHeldUntilSourceLeaves(gameData, permanent))
+                        .filter(permanent -> !isHeldUntilEndOfNextTurn(gameData, permanent))
                         .forEach(permanent -> {
                             phasingIn.put(permanent, controllerId);
                             pending.add(permanent);
@@ -415,11 +415,12 @@ public class PhasingService {
                         && sourceIsTapped(gameData, sourceEntry.getKey()))) {
             return true;
         }
-        if (gameData.hasDelayedAction(PhasedOutUntilEndOfNextTurn.class,
-                action -> permanent.getId().equals(action.permanentId()))) {
-            return true;
-        }
-        return false;
+        return isHeldUntilEndOfNextTurn(gameData, permanent);
+    }
+
+    private boolean isHeldUntilEndOfNextTurn(GameData gameData, Permanent permanent) {
+        return gameData.hasDelayedAction(PhasedOutUntilEndOfNextTurn.class,
+                action -> permanent.getId().equals(action.permanentId()));
     }
 
     private boolean sourceIsTapped(GameData gameData, UUID sourceId) {
@@ -511,7 +512,7 @@ public class PhasingService {
         Deque<Permanent> pending = new ArrayDeque<>();
         gameData.phasedOutPermanents.forEach((controllerId, permanents) -> List.copyOf(permanents).stream()
                 .filter(permanent -> !permanent.isPhasedOutIndirectly())
-                .filter(permanent -> !isHeldUntilSourceLeaves(gameData, permanent))
+                .filter(permanent -> !isHeldUntilEndOfNextTurn(gameData, permanent))
                 .filter(permanent -> isPhasedOutCreature(permanent))
                 .forEach(permanent -> {
                     phasingIn.put(permanent, controllerId);

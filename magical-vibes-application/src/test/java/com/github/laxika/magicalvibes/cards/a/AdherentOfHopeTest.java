@@ -19,7 +19,8 @@ class AdherentOfHopeTest extends BaseCardTest {
     @DisplayName("Puts a +1/+1 counter on itself when its controller has a Basri planeswalker")
     void putsCounterWithBasriPlaneswalker() {
         Permanent adherent = addCreatureReady(player1, new AdherentOfHope());
-        harness.addToBattlefield(player1, new BasriKet());
+        harness.addToBattlefieldAndReturn(player1, new BasriKet())
+                .setCounterCount(CounterType.LOYALTY, 3);
 
         advanceToCombat(player1);
         harness.passBothPriorities();
@@ -42,7 +43,8 @@ class AdherentOfHopeTest extends BaseCardTest {
     @DisplayName("Does not trigger during an opponent's combat")
     void doesNotTriggerDuringOpponentCombat() {
         Permanent adherent = addCreatureReady(player1, new AdherentOfHope());
-        harness.addToBattlefield(player1, new BasriKet());
+        harness.addToBattlefieldAndReturn(player1, new BasriKet())
+                .setCounterCount(CounterType.LOYALTY, 3);
 
         advanceToCombat(player2);
         harness.passBothPriorities();

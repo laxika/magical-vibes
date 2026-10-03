@@ -60,6 +60,8 @@ class TeferiTimelessVoyagerTest extends BaseCardTest {
 
     @Test
     void minusEightPhasesOutOnlyTargetOpponentsCreaturesUntilEndOfNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyTeferi(player1, 8);
         Permanent creature = addCreature(player2, new GrizzlyBears());
         Permanent land = new Permanent(new Plains());
@@ -71,11 +73,11 @@ class TeferiTimelessVoyagerTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land).doesNotContain(creature);
 
-        advanceToUpkeep(player2);
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
 
-        advanceToUpkeep(player1);
-        advanceToUpkeep(player2);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
     }
 
