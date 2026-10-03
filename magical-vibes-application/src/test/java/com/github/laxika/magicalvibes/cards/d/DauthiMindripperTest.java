@@ -96,8 +96,7 @@ class DauthiMindripperTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
         Permanent attacker = addAttacker();
 
-        declareAttackers(List.of(attackerIndex(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex(attacker)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker), attackerIndex(attacker))));
@@ -115,8 +114,7 @@ class DauthiMindripperTest extends BaseCardTest {
         addCreatureReady(player2, new SoltariFootSoldier());
         Permanent attacker = addAttacker();
 
-        declareAttackers(List.of(attackerIndex(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex(attacker)));
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
@@ -157,5 +155,27 @@ class DauthiMindripperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dauthi Mindripper");
         harness.assertInGraveyard(player1, "Dauthi Mindripper");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The defender chooses three cards from a larger hand and sacrifice prevents combat damage")
+    void defenderChoosesThreeCardsBeforeCombatDamage() {
+        DauthiMindripper retainedCard = new DauthiMindripper();
+        harness.setHand(player2, List.of(retainedCard,
+                new SoltariFootSoldier(), new SoltariFootSoldier(), new SoltariFootSoldier()));
+        declareUnblockedAttack(addAttacker());
+
+        harness.assertLife(player2, 20);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Dauthi Mindripper");
+        resolveCombat();
+        harness.assertLife(player2, 20);
     }
 }
