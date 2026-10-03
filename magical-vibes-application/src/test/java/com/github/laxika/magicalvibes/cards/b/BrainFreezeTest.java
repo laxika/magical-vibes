@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -96,6 +97,68 @@ class BrainFreezeTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Brain Freeze can target its controller")
+    void canTargetItsController() {
+        harness.setLibrary(player1, List.of(
+                new BrainFreeze(), new BrainFreeze(), new BrainFreeze(), new BrainFreeze()));
+        harness.setHand(player1, List.of(new BrainFreeze()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player1.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library is a legal target and milling it does not end the game")
+    void canMillAnEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+        castBrainFreeze();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm counts an earlier resolved spell but its copies are not cast")
+    void countsEarlierResolvedSpellWithoutCountingCopiesAsCasts() {
+        harness.setLibrary(player2, List.of(
+                new BrainFreeze(), new BrainFreeze(), new BrainFreeze(),
+                new BrainFreeze(), new BrainFreeze(), new BrainFreeze(),
+                new BrainFreeze(), new BrainFreeze(), new BrainFreeze(), new BrainFreeze()));
+        castBrainFreeze();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+
+        castBrainFreeze();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(9);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castBrainFreeze() {
