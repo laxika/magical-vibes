@@ -67,6 +67,47 @@ class DescendantOfMasumaroTest extends BaseCardTest {
         assertThat(descendant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void emptyControllerHandStillRemovesExistingCounters() {
+        Permanent descendant = harness.addToBattlefieldAndReturn(player1, new DescendantOfMasumaro());
+        descendant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, cards(2));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(descendant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void emptyOpponentHandLeavesAllAddedCounters() {
+        Permanent descendant = harness.addToBattlefieldAndReturn(player1, new DescendantOfMasumaro());
+        harness.setHand(player1, cards(3));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(descendant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent descendant = harness.addToBattlefieldAndReturn(player1, new DescendantOfMasumaro());
+        descendant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, cards(3));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(descendant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private List<Card> cards(int count) {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(index -> (Card) new ArabaMothrider())
