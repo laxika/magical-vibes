@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AuraFinesse;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -7,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BrinkOfDisaster.class, GiantSpider.class, Swamp.class, Naturalize.class, AuraFinesse.class})
 class BrinkOfDisasterTest extends BaseCardTest {
 
     @Test
@@ -76,11 +79,7 @@ class BrinkOfDisasterTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(spider);
         attachAura(player1, spider);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Giant Spider");
@@ -94,7 +93,7 @@ class BrinkOfDisasterTest extends BaseCardTest {
         attachAura(player1, swamp);
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Swamp");
     }
@@ -105,20 +104,67 @@ class BrinkOfDisasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Swamp());
 
         harness.tapPermanent(player1, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    void enchantingAlreadyTappedLandDoesNotDestroyIt() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.setTapped(true);
+        harness.setHand(player1, List.of(new BrinkOfDisaster()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, swamp.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(swamp);
+        harness.assertOnBattlefield(player1, "Brink of Disaster");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void destroyingAuraInResponseDoesNotStopDestruction() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        attachAura(player1, swamp);
+        Permanent aura = findPermanent(player1, "Brink of Disaster");
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.tapPermanent(player1, 0);
+        harness.castInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Brink of Disaster");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    void movingAuraInResponseStillDestroysOriginalHost() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        original.setSummoningSick(false);
+        Permanent destination = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        attachAura(player1, original);
+        Permanent aura = findPermanent(player1, "Brink of Disaster");
+        harness.setHand(player1, List.of(new AuraFinesse()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.castInstant(player1, 0, List.of(aura.getId(), destination.getId()));
+        harness.passBothPriorities();
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(original);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(destination);
+        harness.assertOnBattlefield(player1, "Brink of Disaster");
     }
 
     private void attachAura(Player owner, Permanent host) {
         Permanent aura = new Permanent(new BrinkOfDisaster());
         aura.setAttachedTo(host.getId());
         gd.playerBattlefields.get(owner.getId()).add(aura);
-    }
-
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
-            harness.passBothPriorities();
-        }
     }
 }
