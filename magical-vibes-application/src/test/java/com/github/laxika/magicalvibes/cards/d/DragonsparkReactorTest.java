@@ -55,7 +55,7 @@ class DragonsparkReactorTest extends BaseCardTest {
                 List.of(player2.getId(), bear.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
         assertThat(bear.getMarkedDamage()).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Dragonspark Reactor");
     }
@@ -71,7 +71,7 @@ class DragonsparkReactorTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, reactorIndex, 0, List.of(player2.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
         assertThat(bear.getMarkedDamage()).isZero();
     }
 
@@ -85,7 +85,7 @@ class DragonsparkReactorTest extends BaseCardTest {
         harness.activateAbilityWithMultiTargets(player1, reactorIndex, 0, List.of(player2.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -98,5 +98,77 @@ class DragonsparkReactorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, reactorIndex, 0, List.of(bear.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappedReactorCanStillBeSacrificedForDamage() {
+        Permanent reactor = harness.addToBattlefieldAndReturn(player1, new DragonsparkReactor());
+        reactor.setCounterCount(CounterType.CHARGE, 3);
+        reactor.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId()));
+        harness.assertNotOnBattlefield(player1, "Dragonspark Reactor");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void opponentsArtifactDoesNotAddAChargeCounter() {
+        Permanent reactor = harness.addToBattlefieldAndReturn(player1, new DragonsparkReactor());
+        harness.setHand(player2, List.of(new Spellbook()));
+        gd.activePlayerId = player2.getId();
+
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(reactor.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void secondReactorTriggersBothReactorsExactlyOnce() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DragonsparkReactor());
+        harness.setHand(player1, List.of(new DragonsparkReactor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(first.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.getCounterCount(CounterType.CHARGE)).isEqualTo(1));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void zeroChargeCountersDealNoDamageAndStillSacrificeReactor() {
+        harness.addToBattlefield(player1, new DragonsparkReactor());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), bear.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player1, "Dragonspark Reactor");
+    }
+
+    @Test
+    void optionalSecondTargetMustBeACreature() {
+        harness.addToBattlefield(player1, new DragonsparkReactor());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(player2.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Dragonspark Reactor");
     }
 }
