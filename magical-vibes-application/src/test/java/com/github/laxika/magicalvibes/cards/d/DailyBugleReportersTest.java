@@ -64,6 +64,73 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hill Giant");
     }
 
+    @Test
+    void puffPieceCanTargetOneOpposingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castWithPuffPiece(List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void puffPieceCanChooseNoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castWithPuffPiece(List.of());
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Daily Bugle Reporters");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void investigativeJournalismExcludesNoncreaturesAndOpponentsGraveyard() {
+        Card eligibleCreature = new GrizzlyBears();
+        Card land = new Island();
+        Card opposingCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(eligibleCreature, land));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(new DailyBugleReporters()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(eligibleCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void enteringWithoutBeingCastAllowsInvestigativeJournalism() {
+        Card eligibleCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(eligibleCreature));
+
+        harness.enterBattlefieldAndReturn(player1, new DailyBugleReporters());
+        harness.handleListChoice(player1,
+                "Return target creature card with mana value 2 or less from your graveyard to your hand");
+        harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void castWithPuffPiece(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new DailyBugleReporters()));
         harness.addMana(player1, ManaColor.WHITE, 1);
