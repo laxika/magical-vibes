@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DestinedConfrontation.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DestinedConfrontation.class, GrizzlyBears.class, HillGiant.class, Plains.class})
 class DestinedConfrontationTest extends BaseCardTest {
 
     @Test
@@ -59,10 +59,56 @@ class DestinedConfrontationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
     }
 
+    @Test
+    void keepsMultipleCreaturesWithExactlyFourTotalPower() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertInGraveyard(player1, "Hill Giant");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyChoicesSacrificeCreaturesOnlyAfterBothPlayersChoose() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(second);
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void skipsPlayerWithoutCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void cast() {
-        harness.setHand(player1, List.of(new DestinedConfrontation()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DestinedConfrontation(), "{2}{W}{W}");
         harness.passBothPriorities();
     }
 }
