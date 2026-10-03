@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DecimatorBeetle.class, AirElemental.class, GrizzlyBears.class})
 class DecimatorBeetleTest extends BaseCardTest {
 
-    // ===== ETB: put a -1/-1 counter on target creature you control =====
 
     @Test
     @DisplayName("ETB puts a -1/-1 counter on a creature you control")
@@ -31,7 +31,7 @@ class DecimatorBeetleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, elemental.getId(), null);
+        harness.castCreature(player1, 0, elemental.getId());
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -48,17 +48,16 @@ class DecimatorBeetleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, opponentCreature, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, opponentCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
 
-    // ===== Attack trigger: remove a -1/-1 counter from your creature, put one on a defender =====
 
     @Test
     @DisplayName("Attacking queues the two-step counter-move target selection")
     void attackQueuesCounterMoveTargetSelection() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -72,7 +71,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Attack moves a -1/-1 counter from your creature onto a defending creature")
     void attackMovesCounterFromControlledToDefending() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
@@ -90,7 +89,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Attack puts a counter on the defender even with no counter to remove")
     void attackPutsCounterEvenWhenNothingToRemove() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears()); // no -1/-1 counter
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
@@ -107,7 +106,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Attack still puts a counter when the remove target leaves before resolution")
     void attackPutsCounterWhenRemoveTargetLeavesBeforeResolution() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
@@ -125,7 +124,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Attack still removes a counter when the defender target leaves before resolution")
     void attackRemovesCounterWhenDefenderTargetLeavesBeforeResolution() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
@@ -144,7 +143,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Attack can decline the optional second target")
     void attackDeclinesSecondTarget() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
@@ -162,7 +161,7 @@ class DecimatorBeetleTest extends BaseCardTest {
     @Test
     @DisplayName("Second target must be a creature the defending player controls")
     void attackSecondTargetCannotBeOwnCreature() {
-        addBeetleReady(player1);
+        addCreatureReady(player1, new DecimatorBeetle());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent otherOwnCreature = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
@@ -174,12 +173,54 @@ class DecimatorBeetleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Attack removes a counter when the defending player controls no creatures")
+    void attackRemovesCounterWithNoDefendingCreatures() {
+        Permanent beetle = addCreatureReady(player1, new DecimatorBeetle());
+        beetle.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
 
-    private Permanent addBeetleReady(Player player) {
-        Permanent perm = new Permanent(new DecimatorBeetle());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, beetle.getId());
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attack does not remove a counter from a creature now controlled by the opponent")
+    void attackDoesNotRemoveCounterAfterFirstTargetChangesController() {
+        addCreatureReady(player1, new DecimatorBeetle());
+        Permanent ownCreature = addCreatureReady(player1, new DecimatorBeetle());
+        ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent defender = addCreatureReady(player2, new DecimatorBeetle());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, defender.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        gd.playerBattlefields.get(player2.getId()).add(ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(defender.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attack does not put a counter on a creature no longer controlled by the defender")
+    void attackDoesNotPutCounterAfterSecondTargetChangesController() {
+        addCreatureReady(player1, new DecimatorBeetle());
+        Permanent ownCreature = addCreatureReady(player1, new DecimatorBeetle());
+        ownCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent defender = addCreatureReady(player2, new DecimatorBeetle());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handlePermanentChosen(player1, defender.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(defender);
+        gd.playerBattlefields.get(player1.getId()).add(defender);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(defender.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 }
