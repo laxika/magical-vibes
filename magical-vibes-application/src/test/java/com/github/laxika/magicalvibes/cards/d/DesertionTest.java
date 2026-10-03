@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.Armageddon;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HullbreakerHorror;
 import com.github.laxika.magicalvibes.cards.i.IchorWellspring;
 import com.github.laxika.magicalvibes.cards.w.WandOfDenial;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Desertion.class, GrizzlyBears.class, Armageddon.class, WandOfDenial.class,
         IchorWellspring.class, Commandeer.class, Boomerang.class,
-        DrogskolInfantry.class, DrogskolArmaments.class})
+        DrogskolInfantry.class, DrogskolArmaments.class, HullbreakerHorror.class})
 class DesertionTest extends BaseCardTest {
 
     @Test
@@ -147,8 +148,7 @@ class DesertionTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a spell cast with Disturb when it is countered")
     void countersDisturbSpellIntoExile() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         DrogskolInfantry infantry = new DrogskolInfantry();
 
         harness.forceActivePlayer(player1);
@@ -167,6 +167,42 @@ class DesertionTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Drogskol Infantry");
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
                 .contains(infantry.getId());
+    }
+
+    @Test
+    @DisplayName("Does not gain control of an uncounterable creature spell")
+    void doesNotGainUncounterableCreature() {
+        HullbreakerHorror horror = new HullbreakerHorror();
+        harness.castFromHand(player1, horror, "{5}{U}{U}");
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Desertion()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castAndResolveInstant(player2, 0, horror.getId());
+
+        harness.assertNotOnBattlefield(player2, "Hullbreaker Horror");
+        harness.assertNotInGraveyard(player1, "Hullbreaker Horror");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hullbreaker Horror");
+        harness.assertNotOnBattlefield(player2, "Hullbreaker Horror");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own creature spell and put it onto the battlefield")
+    void countersOwnCreatureSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+
+        harness.setHand(player1, List.of(new Desertion()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Desertion");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
