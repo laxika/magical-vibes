@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnlicensedDisintegration;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CultivatorOfBlades.class, GrizzlyBears.class, UnlicensedDisintegration.class})
 class CultivatorOfBladesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Fabricate mode puts two +1/+1 counters on Cultivator of Blades")
     void fabricateCountersMode() {
-        castCultivator(0);
-        resolveCreatureAndEtb();
+        castCultivator();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent cultivator = findPermanent(player1, "Cultivator of Blades");
         assertThat(cultivator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -32,8 +36,9 @@ class CultivatorOfBladesTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates two 1/1 colorless Servo artifact creature tokens")
     void fabricateServoMode() {
-        castCultivator(1);
-        resolveCreatureAndEtb();
+        castCultivator();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -100,14 +105,85 @@ class CultivatorOfBladesTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    private void castCultivator(int mode) {
-        harness.setHand(player1, List.of(new CultivatorOfBlades()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.castCreature(player1, 0, mode);
+    @Test
+    @DisplayName("Fabricate creates Servos if Cultivator leaves before its trigger resolves")
+    void fabricateCreatesServosWhenSourceLeaves() {
+        prepareRemoval();
+        castCultivator();
+        harness.passBothPriorities();
+        Permanent cultivator = findPermanent(player1, "Cultivator of Blades");
+
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, cultivator.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Cultivator of Blades");
+        assertThat(countPermanents(player1, "Servo")).isEqualTo(2);
     }
 
-    private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("The attack trigger uses power at resolution and fixes the boost afterward")
+    void attackUsesPowerAtResolution() {
+        Permanent cultivator = addCreatureReady(player1, new CultivatorOfBlades());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        cultivator.setPowerModifier(3);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+        cultivator.setPowerModifier(0);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The attack trigger uses Cultivator's last power if it leaves the battlefield")
+    void attackUsesLastKnownPower() {
+        prepareRemoval();
+        Permanent cultivator = addCreatureReady(player1, new CultivatorOfBlades());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        cultivator.setPowerModifier(3);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, cultivator.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Cultivator of Blades");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("A negative-power Cultivator reduces the other attackers' power and toughness")
+    void negativePowerReducesOtherAttackers() {
+        Permanent cultivator = addCreatureReady(player1, new CultivatorOfBlades());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        cultivator.setPowerModifier(-2);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, cultivator)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, cultivator)).isEqualTo(1);
+    }
+
+    private void castCultivator() {
+        harness.setHand(player1, List.of(new CultivatorOfBlades()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castCreature(player1, 0);
+    }
+
+    private void prepareRemoval() {
+        harness.setHand(player2, List.of(new UnlicensedDisintegration()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
     }
 }
