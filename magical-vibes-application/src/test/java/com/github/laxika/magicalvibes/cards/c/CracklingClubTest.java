@@ -53,10 +53,53 @@ class CracklingClubTest extends BaseCardTest {
     @DisplayName("Crackling Club cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         Permanent coffers = harness.addToBattlefieldAndReturn(player2, new CabalCoffers());
-        harness.addToBattlefield(player1, new CracklingClub());
+        Permanent vampire = addCreatureReady(player2, new SengirVampire());
+        Permanent club = harness.addToBattlefieldAndReturn(player1, new CracklingClub());
+        club.setAttachedTo(vampire.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, coffers.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+        harness.assertOnBattlefield(player1, "Crackling Club");
+        assertThat(club.getAttachedTo()).isEqualTo(vampire.getId());
+    }
+
+    @Test
+    @DisplayName("Sacrificing the Aura immediately removes its power boost")
+    void sacrificeRemovesBoostBeforeDamageResolves() {
+        Permanent vampire = addCreatureReady(player2, new SengirVampire());
+        Permanent club = harness.addToBattlefieldAndReturn(player1, new CracklingClub());
+        club.setAttachedTo(vampire.getId());
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(5);
+
+        harness.activateAbility(player1, 0, null, vampire.getId());
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(4);
+        assertThat(vampire.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(vampire.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Aura can damage a different creature without the enchanted Vampire dealing damage")
+    void canDamageAnotherCreatureAndAuraIsDamageSource() {
+        Permanent enchanted = addCreatureReady(player1, new SengirVampire());
+        Permanent target = addCreatureReady(player2, new SengirVampire());
+        target.setMarkedDamage(3);
+        Permanent club = harness.addToBattlefieldAndReturn(player1, new CracklingClub());
+        club.setAttachedTo(enchanted.getId());
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crackling Club");
+        harness.assertNotOnBattlefield(player2, "Sengir Vampire");
+        harness.assertInGraveyard(player2, "Sengir Vampire");
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 }
