@@ -62,4 +62,128 @@ class DirgurIslandDragonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void omenDrawsBeforeReturningExactlyOnePhysicalCardToLibrary() {
+        DirgurIslandDragon card = new DirgurIslandDragon();
+        GrizzlyBears draw = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void illegalSoleTargetPreventsDrawAndShuffle() {
+        DirgurIslandDragon card = new DirgurIslandDragon();
+        GrizzlyBears draw = new GrizzlyBears();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castWithAlternateCost(player1, 0, creature.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void omenRejectsMoreThanOneCreatureTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardWithAlternateCost(gd, player1, 0, 0,
+                null, null, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void omenRejectsNonCreatureInTargetList() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AnkhOfMishra());
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardWithAlternateCost(gd, player1, 0, 0,
+                null, null, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creatureFaceResolvesOntoBattlefield() {
+        DirgurIslandDragon card = new DirgurIslandDragon();
+        harness.castFromHand(player1, card, "{5}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dirgur Island Dragon");
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void decliningWardCountersOpponentsOmenWithoutDrawingOrShuffling() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new DirgurIslandDragon());
+        DirgurIslandDragon card = new DirgurIslandDragon();
+        GrizzlyBears draw = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castWithAlternateCost(player1, 0, dragon.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(dragon.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void payingWardAllowsOpponentsOmenToResolve() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new DirgurIslandDragon());
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithAlternateCost(player1, 0, dragon.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(dragon.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void ownDragonDoesNotTriggerWardAndAlreadyTappedTargetStillAllowsDraw() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DirgurIslandDragon());
+        dragon.setTapped(true);
+        harness.setHand(player1, List.of(new DirgurIslandDragon()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castWithAlternateCost(player1, 0, dragon.getId());
+        harness.passBothPriorities();
+
+        assertThat(dragon.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }
