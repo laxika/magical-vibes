@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StarfieldShepherd;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DecodeTransmissions.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DecodeTransmissions.class, Forest.class, GrizzlyBears.class, StarfieldShepherd.class})
 class DecodeTransmissionsTest extends BaseCardTest {
 
     @Test
@@ -71,13 +72,70 @@ class DecodeTransmissionsTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Casting a spell for its warp cost enables Void without a permanent leaving")
+    void warpedSpellEnablesVoid() {
+        harness.setHand(player1, List.of(new StarfieldShepherd(), new DecodeTransmissions()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addMana();
+
+        castDecodeTransmissions();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Casting a creature with warp for its normal cost does not enable Void")
+    void normalCostDoesNotEnableVoid() {
+        harness.setHand(player1, List.of(new StarfieldShepherd(), new DecodeTransmissions()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addMana();
+
+        castDecodeTransmissions();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Void checks for a nonland departure at resolution rather than casting")
+    void nonlandLeavingAfterCastingEnablesVoid() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new StarfieldShepherd());
+        harness.setHand(player1, List.of(new DecodeTransmissions()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addMana();
+        harness.castSorcery(player1, 0, 0);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private void castDecodeTransmissions() {
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
