@@ -60,4 +60,31 @@ class DirtcowlWurmTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Each Wurm gets its own counter only when its land-play trigger resolves")
+    void multipleWurmsReceiveCountersOnResolution() {
+        Permanent firstWurm = harness.addToBattlefieldAndReturn(player1, new DirtcowlWurm());
+        Permanent secondWurm = harness.addToBattlefieldAndReturn(player1, new DirtcowlWurm());
+        Permanent opposingWurm = harness.addToBattlefieldAndReturn(player2, new DirtcowlWurm());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(firstWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(secondWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(firstWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingWurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
