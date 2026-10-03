@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DreamCache.class, Forest.class, Island.class})
 class DreamCacheTest extends BaseCardTest {
@@ -97,5 +98,57 @@ class DreamCacheTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn2);
         assertThat(gd.playerDecks.get(player1.getId()))
                 .containsExactly(library.get(3), library.get(4), drawn0, drawn1);
+    }
+
+    @Test
+    @DisplayName("May return cards that were already in hand before drawing")
+    void returnsPreviouslyHeldCards() {
+        List<Card> library = fiveCards();
+        Card heldForest = new Forest();
+        Card heldIsland = new Island();
+        harness.setLibrary(player1, library);
+        harness.castFromHand(player1, new DreamCache(), "{2}{U}");
+        harness.setHand(player1, List.of(heldForest, heldIsland));
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(heldIsland.getId(), heldForest.getId()));
+        harness.handleListChoice(player1, "Top");
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(library.get(0), library.get(1), library.get(2));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(heldIsland, heldForest, library.get(3), library.get(4));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Allows the controller to choose the opposite order of the returned cards")
+    void returnsCardsInChosenOrder() {
+        List<Card> library = fiveCards();
+        castDreamCache(library);
+
+        harness.handleMultipleCardsChosen(player1, List.of(library.get(2).getId(), library.get(0).getId()));
+        harness.handleListChoice(player1, "Bottom");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(1));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(library.get(3), library.get(4), library.get(2), library.get(0));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot select the same card twice instead of returning two distinct cards")
+    void rejectsDuplicateCardSelection() {
+        List<Card> library = fiveCards();
+        castDreamCache(library);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(library.get(0).getId(), library.get(0).getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(library.get(0), library.get(1), library.get(2));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(3), library.get(4));
     }
 }
