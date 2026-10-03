@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CunningAdvisor.class)
+@CardUsed({CunningAdvisor.class})
 class CunningAdvisorTest extends BaseCardTest {
 
     @Test
@@ -108,6 +108,63 @@ class CunningAdvisorTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("The opponent chooses exactly one card from a larger hand")
+    void opponentChoosesOneCard() {
+        setupAdvisorOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        CunningAdvisor keptCard = new CunningAdvisor();
+        CunningAdvisor discardedCard = new CunningAdvisor();
+        harness.setHand(player2, List.of(keptCard, discardedCard));
+        harness.setHand(player1, List.of(new CunningAdvisor()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CunningAdvisor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(findPermanent(player1, "Cunning Advisor").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        setupAdvisorOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the postcombat main phase")
+    void cannotActivatePostcombat() {
+        setupAdvisorOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(findPermanent(player1, "Cunning Advisor").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private void setupAdvisorOnMyTurn(TurnStep step) {
         addCreatureReady(player1, new CunningAdvisor());
         harness.forceActivePlayer(player1);
