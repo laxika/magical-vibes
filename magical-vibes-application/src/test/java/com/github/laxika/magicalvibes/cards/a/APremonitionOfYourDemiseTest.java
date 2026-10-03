@@ -22,6 +22,7 @@ class APremonitionOfYourDemiseTest extends BaseCardTest {
     void putsBothRevealedCardsIntoHandAndDealsTheirCombinedNonlandManaValue() {
         Shock shock = new Shock();
         GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(shock, bears));
         int startingLife = gd.getLife(player2.getId());
 
@@ -35,6 +36,7 @@ class APremonitionOfYourDemiseTest extends BaseCardTest {
     void landsGoToHandButDoNotContributeToDamage() {
         Forest forest = new Forest();
         Shock shock = new Shock();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(forest, shock));
         int startingLife = gd.getLife(player2.getId());
 

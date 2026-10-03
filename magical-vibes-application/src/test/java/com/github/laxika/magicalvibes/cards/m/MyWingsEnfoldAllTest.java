@@ -23,6 +23,7 @@ class MyWingsEnfoldAllTest extends BaseCardTest {
     void drawsTwoCardsWhenThatModeIsChosen() {
         GrizzlyBears firstCard = new GrizzlyBears();
         GrizzlyBears secondCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstCard, secondCard));
 
         resolveScheme("Draw two cards");

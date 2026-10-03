@@ -22,6 +22,7 @@ class PowerWithoutEqualTest extends BaseCardTest {
     @Test
     void drawsThreeAndGrantsNoMaximumHandSizeUntilNextTurn() {
         List<Card> drawn = List.of(new Forest(), new Forest(), new Forest());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, drawn);
 
         resolveScheme();
@@ -37,7 +38,8 @@ class PowerWithoutEqualTest extends BaseCardTest {
         List<Card> spells = List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
         harness.setHand(player1, new ArrayList<>(spells));
-        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        List<Card> drawn = List.of(new Forest(), new Forest(), new Forest());
+        harness.setLibrary(player1, drawn);
 
         resolveScheme();
 
@@ -51,7 +53,8 @@ class PowerWithoutEqualTest extends BaseCardTest {
                 .filteredOn(entry -> entry.getEntryType() == StackEntryType.CREATURE_SPELL)
                 .extracting(StackEntry::getCard)
                 .containsExactlyInAnyOrder(spells.get(0), spells.get(1), spells.get(2));
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spells.get(3));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(spells.get(3), drawn.get(0), drawn.get(1), drawn.get(2));
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

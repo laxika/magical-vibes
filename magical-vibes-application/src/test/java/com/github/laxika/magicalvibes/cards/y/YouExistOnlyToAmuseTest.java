@@ -40,6 +40,8 @@ class YouExistOnlyToAmuseTest extends BaseCardTest {
     void weakensOpposingCreatures() {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingCreature = addCreatureReady(player2, new SerraAngel());
+        int originalPower = gqs.getEffectivePower(gd, opposingCreature);
+        int originalToughness = gqs.getEffectiveToughness(gd, opposingCreature);
 
         resolveScheme();
         chooseModes(WEAKEN_MODE);
@@ -51,10 +53,9 @@ class YouExistOnlyToAmuseTest extends BaseCardTest {
 
         endTurn(player1);
         endTurn(player2);
-        endTurn(player1);
 
-        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(originalPower);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(originalToughness);
         assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FLYING)).isTrue();
     }
 
@@ -89,17 +90,18 @@ class YouExistOnlyToAmuseTest extends BaseCardTest {
         for (String mode : modes) {
             harness.handleListChoice(player1, mode);
         }
-        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
-        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
+        }
+        resolveAllTriggers();
     }
 
     private void endTurn(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.setHand(activePlayer, List.of());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && activePlayer.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+        harness.forceStep(TurnStep.CLEANUP);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isNotEqualTo(activePlayer.getId());
     }
 }

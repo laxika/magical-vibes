@@ -25,6 +25,7 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears());
         List<Card> drawn = List.of(new Forest(), new Forest(), new Forest());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, opponentHand);
         harness.setLibrary(player1, drawn);
 
@@ -62,6 +63,7 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
     @Test
     void drawsThreeWhenNoOpponentHasMoreThanFiveCards() {
         List<Card> drawn = List.of(new Forest(), new Forest(), new Forest());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player1, drawn);
@@ -81,5 +83,6 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
                 scheme.getName(),
                 scheme.getEffects(EffectSlot.SPELL)));
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

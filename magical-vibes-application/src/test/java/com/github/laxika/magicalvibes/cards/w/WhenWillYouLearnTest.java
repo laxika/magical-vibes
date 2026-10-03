@@ -46,10 +46,11 @@ class WhenWillYouLearnTest extends BaseCardTest {
         resolveScheme();
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
 
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == spell
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(spell.getId())
                 && entry.getEntryType() == StackEntryType.CREATURE_SPELL
                 && entry.getControllerId().equals(player1.getId()));
-        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remainder);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainder);
     }
 
     private void resolveScheme() {

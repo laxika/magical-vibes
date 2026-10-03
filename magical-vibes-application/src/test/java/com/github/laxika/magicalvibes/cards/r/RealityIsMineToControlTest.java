@@ -29,7 +29,8 @@ class RealityIsMineToControlTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scheme);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(scheme.getCard());
-        assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof DarkRitual).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(6);
     }
 
     @Test
@@ -48,7 +49,8 @@ class RealityIsMineToControlTest extends BaseCardTest {
     @Test
     void copyingPermanentSpellCreatesTokenPermanent() {
         Permanent scheme = addScheme();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -57,9 +59,10 @@ class RealityIsMineToControlTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, scheme.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(permanent -> permanent.getCard() instanceof GrizzlyBears)
+                .filteredOn(permanent -> permanent.getCard().getName().equals(spell.getName()))
                 .hasSize(2)
                 .anyMatch(permanent -> permanent.getCard().isToken());
     }
