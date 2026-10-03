@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DurkwoodBaloth.class})
 class DurkwoodBalothTest extends BaseCardTest {
@@ -89,5 +91,63 @@ class DurkwoodBalothTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateHandAbility(player1, 0, null);
         return card;
+    }
+
+    @Test
+    @DisplayName("Suspend requires its green mana payment")
+    void suspendRequiresMana() {
+        DurkwoodBaloth card = new DurkwoodBaloth();
+        harness.setHand(player1, List.of(card));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Durkwood Baloth cannot normally be suspended during upkeep")
+    void cannotSuspendDuringUpkeep() {
+        DurkwoodBaloth card = new DurkwoodBaloth();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep counter is removed when the trigger resolves")
+    void upkeepCounterRemovalUsesStack() {
+        DurkwoodBaloth card = suspendCard();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 5);
+
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
+    @DisplayName("Casting Durkwood Baloth normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new DurkwoodBaloth()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        var permanent = findPermanent(player1, "Durkwood Baloth");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
     }
 }
