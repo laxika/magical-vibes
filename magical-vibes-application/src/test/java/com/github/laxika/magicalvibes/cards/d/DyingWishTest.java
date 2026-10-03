@@ -1,11 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.Agoraphobia;
+import com.github.laxika.magicalvibes.cards.a.ArmoredTransport;
+import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,14 +18,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DyingWish.class, GiantSpider.class, FountainOfYouth.class, ArmoredTransport.class,
+        BurstOfStrength.class, Agoraphobia.class})
 class DyingWishTest extends BaseCardTest {
 
     @Test
     void enchantedCreatureDeathTargetsPlayerAndUsesLastKnownPower() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        Permanent dyingWish = new Permanent(new DyingWish());
+        Permanent dyingWish = harness.addToBattlefieldAndReturn(player1, new DyingWish());
         dyingWish.setAttachedTo(spider.getId());
-        gd.playerBattlefields.get(player1.getId()).add(dyingWish);
 
         int player1Before = gd.getLife(player1.getId());
         int player2Before = gd.getLife(player2.getId());
@@ -57,5 +63,93 @@ class DyingWishTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    void resolvesAttachedToCreatureYouControl() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmoredTransport());
+        harness.setHand(player1, List.of(new DyingWish()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Dying Wish").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void cannotEnchantOpponentsCreature() {
+        harness.addToBattlefield(player1, new ArmoredTransport());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
+        harness.setHand(player1, List.of(new DyingWish()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    void deathTriggerUsesPowerIncludingCounters() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmoredTransport());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DyingWish());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLife + 3);
+        harness.assertLife(player2, opponentLife - 3);
+        harness.assertInGraveyard(player1, "Armored Transport");
+        harness.assertInGraveyard(player1, "Dying Wish");
+    }
+
+    @Test
+    void targetingYourselfGainsLifeBeforeStateBasedActionsCheckLifeTotal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmoredTransport());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DyingWish());
+        aura.setAttachedTo(creature.getId());
+        harness.setLife(player1, 1);
+        int opponentLife = gd.getLife(player2.getId());
+
+        creature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, opponentLife);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void negativePowerCausesNeitherLifeLossNorLifeGain() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmoredTransport());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DyingWish());
+        aura.setAttachedTo(creature.getId());
+        Permanent agoraphobia = harness.addToBattlefieldAndReturn(player2, new Agoraphobia());
+        agoraphobia.setAttachedTo(creature.getId());
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        creature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLife);
+        harness.assertLife(player2, opponentLife);
     }
 }
