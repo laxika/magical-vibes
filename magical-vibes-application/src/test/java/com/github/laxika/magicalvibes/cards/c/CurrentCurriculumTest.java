@@ -26,7 +26,7 @@ class CurrentCurriculumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CoralMerfolk()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(convoker.getId()));
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convoker.getId()));
 
         assertThat(convoker.isTapped()).isTrue();
     }
@@ -41,11 +41,11 @@ class CurrentCurriculumTest extends BaseCardTest {
                 new CoralMerfolk()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(convoker.getId()));
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convoker.getId()));
         harness.passBothPriorities();
         convoker.untap();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0,
                 List.of(), List.of(convoker.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -57,7 +57,7 @@ class CurrentCurriculumTest extends BaseCardTest {
         Permanent convoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0,
                 List.of(), List.of(convoker.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(convoker.isTapped()).isFalse();
@@ -96,10 +96,102 @@ class CurrentCurriculumTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard() instanceof StonybrookSchoolmaster);
     }
 
+    @Test
+    @DisplayName("The tapped creature condition is checked again on resolution")
+    void doesNotConjureIfCreatureUntapsBeforeResolution() {
+        harness.addToBattlefield(player1, new CurrentCurriculum());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        first.tap();
+        second.tap();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        second.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof StonybrookSchoolmaster);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's end step")
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new CurrentCurriculum());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        first.tap();
+        second.tap();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's tapped creatures do not satisfy the condition")
+    void opponentsCreaturesDoNotCount() {
+        harness.addToBattlefield(player1, new CurrentCurriculum());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        own.tap();
+        opposing.tap();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Merfolk cast before Curriculum entered still uses the allowance")
+    void earlierMerfolkCastUsesAllowance() {
+        harness.setHand(player1, List.of(new CoralMerfolk(), new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new CurrentCurriculum());
+        Permanent convoker = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        assertThatThrownBy(() -> harness.castInstantWithConvoke(player1, 0,
+                List.of(), List.of(convoker.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(convoker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting a non-Merfolk leaves the first Merfolk's convoke available")
+    void nonMerfolkCastDoesNotUseAllowance() {
+        harness.addToBattlefield(player1, new CurrentCurriculum());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent convoker = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
+                .findFirst().orElseThrow();
+
+        harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convoker.getId()));
+
+        assertThat(convoker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped noncreature permanents do not satisfy the condition")
+    void tappedEnchantmentDoesNotCount() {
+        Permanent curriculum = harness.addToBattlefieldAndReturn(player1, new CurrentCurriculum());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        curriculum.tap();
+        creature.tap();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
     }
 }
