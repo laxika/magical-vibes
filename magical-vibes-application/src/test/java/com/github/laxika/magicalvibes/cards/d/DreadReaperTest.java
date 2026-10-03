@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -61,10 +60,7 @@ class DreadReaperTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -72,6 +68,42 @@ class DreadReaperTest extends BaseCardTest {
                         gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot block Dread Reaper (flying)");
+    }
+
+    @Test
+    @DisplayName("The trigger still causes life loss after Dread Reaper leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        harness.setLife(player1, 20);
+        castDreadReaper();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        Permanent reaper = findPermanent(player1, "Dread Reaper");
+        gd.playerBattlefields.get(player1.getId()).remove(reaper);
+        harness.setGraveyard(player1, List.of(reaper.getCard()));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertNotOnBattlefield(player1, "Dread Reaper");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent casting Dread Reaper loses life instead of the first player")
+    void opponentControllerLosesLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new DreadReaper(), "{3}{B}{B}{B}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dread Reaper");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castDreadReaper() {
