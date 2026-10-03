@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@CardUsed(DoublingCube.class)
+@CardUsed({DoublingCube.class, ManaReflection.class})
 class DoublingCubeTest extends BaseCardTest {
 
     // ===== Mana ability resolves immediately (CR 605.1a, CR 605.3a) =====
@@ -119,6 +120,54 @@ class DoublingCubeTest extends BaseCardTest {
         // Second activation should fail — already tapped
         assertThrows(IllegalStateException.class, () ->
                 harness.activateAbility(player1, 0, null, null));
+    }
+
+    @Test
+    @DisplayName("Doubling Cube doubles colorless mana after paying its activation cost")
+    void doublesColorlessMana() {
+        var cube = harness.addToBattlefieldAndReturn(player1, new DoublingCube());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(8);
+        assertThat(cube.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Doubling Cube doubles each mana type independently")
+    void doublesEveryManaType() {
+        harness.addToBattlefield(player1, new DoublingCube());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pool.getTotal()).isEqualTo(40);
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(pool.get(color)).isEven();
+            assertThat(pool.get(color)).isLessThanOrEqualTo(color == ManaColor.COLORLESS ? 6 : 8);
+        }
+    }
+
+    @Test
+    @CardUsed({DoublingCube.class, ManaReflection.class})
+    @DisplayName("Mana Reflection doubles the mana added by Doubling Cube")
+    void manaReflectionDoublesNewMana() {
+        harness.addToBattlefield(player1, new DoublingCube());
+        harness.addToBattlefield(player1, new ManaReflection());
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(12);
+        assertThat(gd.stack).isEmpty();
     }
 }
 
