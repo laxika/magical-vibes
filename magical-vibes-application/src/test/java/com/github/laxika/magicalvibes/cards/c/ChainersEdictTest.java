@@ -42,8 +42,7 @@ class ChainersEdictTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -101,5 +100,52 @@ class ChainersEdictTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A player with no creatures is still a legal target")
+    void targetWithNoCreaturesDoesNotSacrificeCastersCreature() {
+        harness.addToBattlefield(player1, new PardicLancer());
+        harness.setHand(player1, List.of(new ChainersEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player1, "Pardic Lancer");
+        harness.assertInGraveyard(player1, "Chainer's Edict");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when the target has no creatures")
+    void flashbackExilesSpellWithNoCreaturesToSacrifice() {
+        harness.setGraveyard(player1, List.of(new ChainersEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+
+        harness.assertNotInGraveyard(player1, "Chainer's Edict");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Chainer's Edict"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The normal mana cost is insufficient to cast using flashback")
+    void flashbackRequiresItsFullCost() {
+        harness.setGraveyard(player1, List.of(new ChainersEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Chainer's Edict");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
