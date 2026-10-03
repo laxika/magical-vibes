@@ -2,20 +2,22 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TragicSlip;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrogskolCaptain.class, ChapelGeist.class, GrizzlyBears.class, TragicSlip.class})
 class DrogskolCaptainTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Spirits you control =====
 
     @Test
     @DisplayName("Other Spirit creatures you control get +1/+1 and hexproof")
@@ -68,8 +70,6 @@ class DrogskolCaptainTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentGeist, Keyword.HEXPROOF)).isFalse();
     }
 
-    // ===== Multiple Drogskol Captains =====
-
     @Test
     @DisplayName("Two Drogskol Captains buff each other")
     void twoCaptainsBuffEachOther() {
@@ -101,8 +101,6 @@ class DrogskolCaptainTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, geist, Keyword.HEXPROOF)).isTrue();
     }
 
-    // ===== Bonus gone when source leaves =====
-
     @Test
     @DisplayName("Bonus is removed when Drogskol Captain leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
@@ -131,10 +129,7 @@ class DrogskolCaptainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, geist, Keyword.HEXPROOF)).isFalse();
 
-        harness.setHand(player1, List.of(new DrogskolCaptain()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DrogskolCaptain(), "{1}{W}{U}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
@@ -158,5 +153,52 @@ class DrogskolCaptainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, geist, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot target a Spirit protected by another Captain")
+    void opponentCannotTargetProtectedSpirit() {
+        harness.addToBattlefield(player1, new DrogskolCaptain());
+        harness.addToBattlefield(player1, new DrogskolCaptain());
+        Permanent captain = findPermanents(player1, "Drogskol Captain").getFirst();
+        harness.setHand(player2, List.of(new TragicSlip()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, captain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Hexproof allows the Spirit's controller to target it")
+    void controllerCanTargetProtectedSpirit() {
+        harness.addToBattlefield(player1, new DrogskolCaptain());
+        harness.addToBattlefield(player1, new DrogskolCaptain());
+        Permanent captain = findPermanents(player1, "Drogskol Captain").getFirst();
+        harness.setHand(player1, List.of(new TragicSlip()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, captain.getId());
+
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A lone Captain remains a legal target for its opponent")
+    void opponentCanTargetLoneCaptain() {
+        harness.addToBattlefield(player1, new DrogskolCaptain());
+        Permanent captain = findPermanent(player1, "Drogskol Captain");
+        harness.setHand(player2, List.of(new TragicSlip()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player2, 0, captain.getId());
+
+        assertThat(gqs.getEffectivePower(gd, captain)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, captain)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, captain, Keyword.HEXPROOF)).isFalse();
     }
 }
