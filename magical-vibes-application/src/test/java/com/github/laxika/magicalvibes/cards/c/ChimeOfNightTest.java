@@ -125,4 +125,72 @@ class ChimeOfNightTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Metathran Soldier");
     }
+
+    @Test
+    @DisplayName("The Aura going to the graveyard after its creature dies can destroy your own creature")
+    void triggersWhenEnchantedCreatureDiesAndCanTargetOwnCreature() {
+        Permanent enchantedCreature = addCreatureReady(player2, new ApprenticeNecromancer());
+        Permanent targetCreature = addCreatureReady(player1, new MetathranSoldier());
+        harness.setHand(player1, List.of(new ChimeOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, enchantedCreature.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchantedCreature));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chime of Night");
+        harness.assertInGraveyard(player2, "Apprentice Necromancer");
+        harness.handlePermanentChosen(player1, targetCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Metathran Soldier");
+        harness.assertInGraveyard(player1, "Metathran Soldier");
+    }
+
+    @Test
+    @DisplayName("Going to the graveyard with only black creatures does not leave a target choice")
+    void noLegalTargetDoesNotLeavePendingChoice() {
+        Permanent enchantedCreature = addCreatureReady(player2, new ApprenticeNecromancer());
+        harness.setHand(player1, List.of(new ChimeOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, enchantedCreature.getId());
+        harness.passBothPriorities();
+
+        Permanent chime = findPermanent(player1, "Chime of Night");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, chime));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chime of Night");
+        harness.assertOnBattlefield(player2, "Apprentice Necromancer");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning the Aura to hand does not trigger destruction")
+    void returningAuraToHandDoesNotTrigger() {
+        Permanent enchantedCreature = addCreatureReady(player2, new MetathranSoldier());
+        harness.setHand(player1, List.of(new ChimeOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, enchantedCreature.getId());
+        harness.passBothPriorities();
+
+        Permanent chime = findPermanent(player1, "Chime of Night");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, chime));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Chime of Night");
+        harness.assertNotInGraveyard(player1, "Chime of Night");
+        harness.assertOnBattlefield(player2, "Metathran Soldier");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
