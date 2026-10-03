@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.cards.v.VotaryOfTheConclave;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,5 +70,27 @@ class DromadPurebredTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         harness.assertOnBattlefield(player1, "Dromad Purebred");
         harness.assertInGraveyard(player2, "Votary of the Conclave");
+    }
+
+    @Test
+    void gainsLifeOnlyOnceWhenTwoBlockersDealDamageSimultaneously() {
+        harness.setLife(player1, 20);
+        Permanent dromad = addCreatureReady(player1, new DromadPurebred());
+        Permanent firstBlocker = addCreatureReady(player2, new VotaryOfTheConclave());
+        Permanent secondBlocker = addCreatureReady(player2, new VotaryOfTheConclave());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 0));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        assertThat(dromad.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Dromad Purebred");
     }
 }
