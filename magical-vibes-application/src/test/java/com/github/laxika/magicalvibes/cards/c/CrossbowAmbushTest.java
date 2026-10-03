@@ -59,10 +59,38 @@ class CrossbowAmbushTest extends BaseCardTest {
         harness.castFromHand(player2, new CrossbowAmbush(), "{G}");
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Crossbow Ambush affects all creatures controlled when it resolves")
+    void includesCreaturesEnteringBeforeResolution() {
+        Permanent firstCreature = addCreatureReady(player1, new SkyshroudArcher());
+
+        harness.castFromHand(player1, new CrossbowAmbush(), "{G}");
+        Permanent secondCreature = addCreatureReady(player1, new SkyshroudArcher());
+        assertThat(firstCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+        assertThat(secondCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
+
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.getGrantedKeywords()).contains(Keyword.REACH);
+        assertThat(secondCreature.getGrantedKeywords()).contains(Keyword.REACH);
+    }
+
+    @Test
+    @DisplayName("Crossbow Ambush resolves without creatures and does not affect later arrivals")
+    void resolvesWithNoCreatures() {
+        harness.castFromHand(player1, new CrossbowAmbush(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crossbow Ambush");
+        assertThat(gd.stack).isEmpty();
+
+        Permanent laterCreature = addCreatureReady(player1, new SkyshroudArcher());
+        assertThat(laterCreature.getGrantedKeywords()).doesNotContain(Keyword.REACH);
     }
 }
