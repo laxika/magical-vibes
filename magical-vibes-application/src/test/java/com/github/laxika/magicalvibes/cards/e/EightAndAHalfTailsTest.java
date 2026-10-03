@@ -178,7 +178,56 @@ class EightAndAHalfTailsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard().getName())
-                .contains("Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Eight-and-a-Half-Tails can grant itself protection while summoning sick")
+    void canProtectItselfWithoutTapping() {
+        Permanent tails = harness.addToBattlefieldAndReturn(player1, new EightAndAHalfTails());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, tails.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, tails, CardColor.WHITE)).isTrue();
+        assertThat(tails.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The color ability can make an opposing colorless land white until cleanup")
+    void colorlessLandBecomesWhiteUntilCleanup() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, land)).containsExactly(CardColor.WHITE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectiveColors(gd, land)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection gained in response makes the color ability lose its target")
+    void protectionInResponseStopsColorChange() {
+        harness.addToBattlefield(player1, new EightAndAHalfTails());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, land.getId());
+        harness.activateAbility(player1, 0, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, land, CardColor.WHITE)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, land)).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
