@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.q.QasaliAmbusher;
+import com.github.laxika.magicalvibes.cards.r.RafiqOfTheMany;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonfireBlade.class, BantCharm.class, GiantGrowth.class, GrizzlyBears.class, Ornithopter.class, QasaliAmbusher.class})
+@CardUsed({DragonfireBlade.class, BantCharm.class, GiantGrowth.class, GrizzlyBears.class, Ornithopter.class, QasaliAmbusher.class, RafiqOfTheMany.class})
 class DragonfireBladeTest extends BaseCardTest {
 
     @Test
@@ -98,9 +99,69 @@ class DragonfireBladeTest extends BaseCardTest {
     }
 
     private Permanent addDragonfireBladeReady(Player player) {
-        Permanent permanent = new Permanent(new DragonfireBlade());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new DragonfireBlade());
+    }
+
+    @Test
+    void equipSucceedsForColorlessCreatureWithFourMana() {
+        Permanent blade = addDragonfireBladeReady(player1);
+        Permanent creature = addCreatureReady(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void equipCostsOneForThreeColorCreature() {
+        Permanent blade = addDragonfireBladeReady(player1);
+        Permanent creature = addCreatureReady(player1, new RafiqOfTheMany());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void controllerCanTargetEquippedCreatureWithMonocoloredSpell() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blade = addDragonfireBladeReady(player1);
+        blade.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+    }
+
+    @Test
+    void reequippingMovesBoostAndHexproofToNewCreature() {
+        Permanent blade = addDragonfireBladeReady(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        blade.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasHexproofFromMonocolored(gd, first)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.hasHexproofFromMonocolored(gd, second)).isTrue();
     }
 }
