@@ -172,4 +172,72 @@ class CrypticCommandTest extends BaseCardTest {
                 harness.castModalInstantWithModes(player2, 0, 2, new int[]{0, 3}, null, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Return + draw does not draw when its only target leaves the battlefield")
+    void illegalReturnTargetPreventsDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{1, 3}, target.getId(), List.of());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cryptic Command");
+    }
+
+    @Test
+    @DisplayName("Counter + return still counters when the permanent target leaves")
+    void countersWithIllegalPermanentTarget() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{0, 1}, bears.getId(), List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("Return + draw can return a permanent controlled by the caster")
+    void returnsOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{1, 3}, target.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Spellbook");
+        harness.assertNotOnBattlefield(player2, "Spellbook");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Tap + draw works with no creatures on the battlefield")
+    void drawsWithNoCreaturesToTap() {
+        harness.setHand(player2, List.of(new CrypticCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.castModalInstantWithModes(player2, 0, 2, new int[]{2, 3}, null, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
 }
