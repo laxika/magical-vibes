@@ -59,4 +59,15 @@ class BrassclawOrcsTest extends BaseCardTest {
         assertThat(bls.canBlockAttacker(gd, orcs, infantry,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
     }
+
+    @Test
+    @DisplayName("Can block a power 2 attacker after its effective power falls to 1")
+    void canBlockReducedPowerAttacker() {
+        Permanent orcs = orcs();
+        Permanent phalanx = addCreatureReady(player2, new IcatianPhalanx());
+        phalanx.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, orcs, phalanx,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
 }
