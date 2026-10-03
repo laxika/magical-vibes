@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CloudDjinn.class, DenseFoliage.class, GoblinVandal.class, Opalescence.class, Shock.class, SouthernPaladin.class, Thunderbolt.class})
+@CardUsed({CloudDjinn.class, DenseFoliage.class, Disenchant.class, GoblinVandal.class, Opalescence.class, Shock.class, SouthernPaladin.class, Thunderbolt.class})
 class DenseFoliageTest extends BaseCardTest {
 
     @Test
@@ -93,6 +93,42 @@ class DenseFoliageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thunderbolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("Removing Dense Foliage allows spells to target creatures again")
+    void removingDenseFoliageRestoresTargeting() {
+        Permanent foliage = harness.addToBattlefieldAndReturn(player1, new DenseFoliage());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudDjinn());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, foliage.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Dense Foliage");
+
+        prepareThunderbolt();
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Cloud Djinn");
+    }
+
+    @Test
+    @DisplayName("Dense Foliage makes a previously legal spell target illegal at resolution")
+    void spellTargetBecomesIllegalBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CloudDjinn());
+        prepareThunderbolt();
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+
+        harness.addToBattlefield(player2, new DenseFoliage());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Cloud Djinn");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Thunderbolt");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
