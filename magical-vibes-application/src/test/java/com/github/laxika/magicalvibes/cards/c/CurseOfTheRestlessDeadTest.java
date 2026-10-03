@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -59,6 +60,81 @@ class CurseOfTheRestlessDeadTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Zombie")).isZero();
         assertThat(countPermanents(player2, "Zombie")).isZero();
+    }
+
+    @Test
+    @DisplayName("Can be cast enchanting an opponent and creates tokens for its controller")
+    void castCurseEnchantsOpponent() {
+        harness.setHand(player1, List.of(new CurseOfTheRestlessDead()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Curse of the Restless Dead").getAttachedTo())
+                .isEqualTo(player2.getId());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Zombie")).isZero();
+    }
+
+    @Test
+    @DisplayName("Each land entering without being played creates a separate token")
+    void triggersForEachLandPutOntoBattlefield() {
+        placeCurseOnPlayer2();
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Zombie")).isZero();
+    }
+
+    @Test
+    @DisplayName("A queued trigger still creates a token after the Curse leaves")
+    void queuedTriggerSurvivesCurseLeaving() {
+        placeCurseOnPlayer2();
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Zombie")).isZero();
+    }
+
+    @Test
+    @DisplayName("A created decayed Zombie cannot block")
+    void createdZombieCannotBlock() {
+        placeCurseOnPlayer2();
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        resolveAllTriggers();
+        Permanent zombie = findPermanent(player1, "Zombie");
+        zombie.setSummoningSick(false);
+
+        assertThat(bls.canBlock(gd, zombie)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attacking decayed Zombie deals damage and is sacrificed after combat")
+    void attackingZombieIsSacrificedAfterCombat() {
+        placeCurseOnPlayer2();
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        resolveAllTriggers();
+        Permanent zombie = findPermanent(player1, "Zombie");
+        zombie.setSummoningSick(false);
+        int initialLife = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(zombie)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertLife(player2, initialLife - 2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(zombie);
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
     }
 
     private void placeCurseOnPlayer2() {
