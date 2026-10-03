@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.d.DesertersQuarters;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CrystallineNautilus.class, GrizzlyBears.class, Shock.class, Demystify.class, DesertersQuarters.class})
 class CrystallineNautilusTest extends BaseCardTest {
 
     @Test
@@ -49,8 +53,7 @@ class CrystallineNautilusTest extends BaseCardTest {
     @Test
     @DisplayName("Crystalline Nautilus sacrifices itself when targeted as a creature")
     void sacrificesWhenTargetedAsCreature() {
-        harness.addToBattlefield(player1, new CrystallineNautilus());
-        Permanent nautilus = findPermanent(player1, "Crystalline Nautilus");
+        Permanent nautilus = harness.addToBattlefieldAndReturn(player1, new CrystallineNautilus());
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -78,6 +81,70 @@ class CrystallineNautilusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Crystalline Nautilus");
+        harness.assertNotInGraveyard(player1, "Crystalline Nautilus");
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Crystalline Nautilus"))).isTrue();
+    }
+
+    @Test
+    void bestowedNautilusSacrificesItselfBeforeEnchantmentRemovalResolves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CrystallineNautilus()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        Permanent nautilus = findPermanent(player1, "Crystalline Nautilus");
+
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, nautilus.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Crystalline Nautilus");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void opponentEnchantedCreatureSacrificesItselfWhenTargetedByAbility() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CrystallineNautilus()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new DesertersQuarters());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 1, null, bear.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Crystalline Nautilus");
+        harness.assertNotInGraveyard(player1, "Crystalline Nautilus");
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Crystalline Nautilus"))).isTrue();
+    }
+
+    @Test
+    void bestowResolvesAsCreatureWhenItsTargetLeavesBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CrystallineNautilus()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castWithAlternateCost(player1, 0, bear.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Crystalline Nautilus");
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Crystalline Nautilus"))).isTrue();
     }
 }
