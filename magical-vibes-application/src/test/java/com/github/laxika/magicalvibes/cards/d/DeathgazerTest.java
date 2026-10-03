@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HengeGuardian;
+import com.github.laxika.magicalvibes.cards.h.HornedTroll;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.p.PrimevalShambler;
 import com.github.laxika.magicalvibes.cards.r.RockBadger;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,9 +20,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 
-@CardUsed({Deathgazer.class, HengeGuardian.class, RockBadger.class, PrimevalShambler.class, GiantSpider.class, ScatheZombies.class})
+@CardUsed({Deathgazer.class, HengeGuardian.class, RockBadger.class, PrimevalShambler.class,
+        GiantSpider.class, ScatheZombies.class, HornedTroll.class, PaladinEnVec.class})
 class DeathgazerTest extends BaseCardTest {
 
     @Test
@@ -38,8 +43,8 @@ class DeathgazerTest extends BaseCardTest {
 
         // Resolving it schedules the blocker for destruction at end of combat
         resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -62,8 +67,8 @@ class DeathgazerTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -81,8 +86,7 @@ class DeathgazerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         // Resolve the trigger, then advance through end of combat
-        resolveAllTriggers();
-        resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -101,7 +105,7 @@ class DeathgazerTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Deathgazer"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -121,8 +125,8 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -138,7 +142,7 @@ class DeathgazerTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Deathgazer"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -154,8 +158,7 @@ class DeathgazerTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Rock Badger");
         harness.assertInGraveyard(player1, "Rock Badger");
@@ -180,11 +183,10 @@ class DeathgazerTest extends BaseCardTest {
                         && se.getCard().getName().equals("Deathgazer"))
                 .hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -200,8 +202,8 @@ class DeathgazerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactly(hengeGuardian.getId());
     }
 
@@ -227,12 +229,104 @@ class DeathgazerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactly(nonblackBlocker.getId());
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .doesNotContain(blackBlocker.getId());
+    }
+
+    @Test
+    @DisplayName("Destruction waits for the end-of-combat trigger to resolve")
+    void destructionUsesTheStackAtEndOfCombat() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.stack).anyMatch(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Deathgazer")
+                        && spider.getId().equals(se.getTargetId()));
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent destruction after Deathgazer dies in first-strike combat")
+    void protectionAndSourceDeathDoNotStopDestruction() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        addCreatureReady(player2, new PaladinEnVec());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player1, "Deathgazer");
+        harness.assertOnBattlefield(player2, "Paladin en-Vec");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
+    }
+
+    @Test
+    @DisplayName("Regenerating out of combat does not cancel the delayed destruction")
+    void regenerationDuringDamageDoesNotCancelDelayedDestruction() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent troll = addCreatureReady(player2, new HornedTroll());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Horned Troll");
+        assertThat(troll.isBlocking()).isFalse();
+        assertThat(troll.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Deathgazer");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Horned Troll");
+        harness.assertInGraveyard(player2, "Horned Troll");
+    }
+
+    @Test
+    @DisplayName("The end-of-combat destruction can be regenerated in response")
+    void canRegenerateInResponseToDelayedDestruction() {
+        Permanent deathgazer = addCreatureReady(player1, new Deathgazer());
+        deathgazer.setAttacking(true);
+        Permanent troll = addCreatureReady(player2, new HornedTroll());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Horned Troll");
+        assertThat(troll.getRegenerationShield()).isZero();
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Horned Troll");
+        harness.assertNotInGraveyard(player2, "Horned Troll");
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.isTapped()).isTrue();
     }
 
 }
