@@ -23,6 +23,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DivertTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Divert can change the sole chosen target of an up-to-three-target spell")
+    void retargetsSingleChosenTargetOfMultiTargetSpell() {
+        ShowerOfCoals shower = new ShowerOfCoals();
+        harness.setHand(player1, List.of(shower));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, List.of(player2.getId()));
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Divert()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, shower.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Retargeting a creature-only spell excludes players and destroys the new target")
+    void retargetingPreservesCreatureRestriction() {
+        Permanent original = addCreatureReady(player1, new NomadDecoy());
+        Permanent replacement = addCreatureReady(player2, new NomadDecoy());
+        harness.setGraveyard(player1, List.of(new Concentrate(), new Firebolt()));
+        GhastlyDemise demise = new GhastlyDemise();
+        harness.setHand(player1, List.of(demise));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, original.getId());
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new Divert()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, demise.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(replacement.getId());
+        harness.handlePermanentChosen(player2, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(replacement);
+        harness.assertInGraveyard(player2, "Nomad Decoy");
+    }
+
+    @Test
     @DisplayName("Casting Divert requires a single-target spell")
     void castingRequiresSingleTargetSpell() {
         Concentrate concentrate = new Concentrate();
@@ -70,8 +118,7 @@ class DivertTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, firebolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -98,8 +145,7 @@ class DivertTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, firebolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -129,8 +175,7 @@ class DivertTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, firebolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, firebolt.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player2, player1.getId());
@@ -152,8 +197,7 @@ class DivertTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Divert()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, ghastlyDemise.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ghastlyDemise.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
