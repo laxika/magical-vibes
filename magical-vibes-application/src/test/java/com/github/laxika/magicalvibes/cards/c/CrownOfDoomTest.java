@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TeferiTemporalArchmage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrownOfDoom.class, GrizzlyBears.class})
+@CardUsed({CrownOfDoom.class, GrizzlyBears.class, TeferiTemporalArchmage.class})
 class CrownOfDoomTest extends BaseCardTest {
 
     @Test
@@ -44,8 +46,8 @@ class CrownOfDoomTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The transfer ability returns Crown of Doom at the next cleanup")
-    void transferReturnsAtCleanup() {
+    @DisplayName("The transfer ability lasts beyond cleanup")
+    void transferPersistsAfterCleanup() {
         Permanent crown = addCrown(player1, player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -56,7 +58,70 @@ class CrownOfDoomTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.CLEANUP);
 
-        assertThat(gqs.findPermanentController(gd, crown.getId())).isEqualTo(player1.getId());
+        assertThat(gqs.findPermanentController(gd, crown.getId())).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void eachAttackingCreatureGetsItsOwnBoost() {
+        addCrown(player1, player1);
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void attackingPlaneswalkerGetsBoost() {
+        addCrown(player1, player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new TeferiTemporalArchmage());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(0), Map.of(0, planeswalker.getId()));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void attackingCreatureBoostExpiresAtCleanup() {
+        addCrown(player1, player1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void transferredCrownBoostsCreaturesAttackingItsNewController() {
+        addCrown(player1, player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
     @Test

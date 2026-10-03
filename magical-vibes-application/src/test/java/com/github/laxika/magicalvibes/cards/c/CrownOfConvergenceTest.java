@@ -129,6 +129,65 @@ class CrownOfConvergenceTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, redCreature)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Sharing both colors grants only one boost per Crown")
+    void sharingBothColorsGrantsOneBoost() {
+        addCrown();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SelesnyaGuildmage());
+        harness.setLibrary(player1, List.of(new SelesnyaGuildmage()));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Crowns each grant their boost")
+    void multipleCrownsStack() {
+        addCrown();
+        addCrown();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper());
+        harness.setLibrary(player1, List.of(new ElvishSkysweeper()));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An empty library grants no boost and the activated ability does nothing")
+    void emptyLibraryDoesNotBoostAndCanActivate() {
+        addCrown();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Crown can activate and a single card library keeps the same card")
+    void tappedCrownCanActivateWithSingleCardLibrary() {
+        Permanent crown = addCrown();
+        crown.setTapped(true);
+        Card topCard = new ElvishSkysweeper();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(crown.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addCrown() {
         return harness.addToBattlefieldAndReturn(player1, new CrownOfConvergence());
     }

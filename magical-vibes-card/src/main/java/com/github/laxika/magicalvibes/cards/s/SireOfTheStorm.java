@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "85")
+@CardRegistration(set = "VOC", collectorNumber = "113")
 public class SireOfTheStorm extends Card {
 
     public SireOfTheStorm() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.WillOfTheCouncilEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "19")
+@CardRegistration(set = "VOC", collectorNumber = "83")
 public class CustodiSquire extends Card {
 
     public CustodiSquire() {

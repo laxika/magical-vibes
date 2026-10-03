@@ -1013,8 +1013,9 @@ public class DamagePreventionService {
      * on the battlefield carries a {@link PreventDamageToCreaturesEffect} covering this damage to the
      * given creature. Mark of Asylum's variant ({@code noncombatOnly}) leaves combat damage untouched;
      * Inner Sanctum's covers both but only for creatures its controller controls, while Bubble Matrix's
-     * ({@code allCreatures}) covers every creature regardless of controller. Damage matched here is
-     * fully prevented by the caller.
+     * ({@code allCreatures}) covers every creature regardless of controller. An optional permanent
+     * filter further narrows the protected creatures. Damage matched here is fully prevented by the
+     * caller.
      */
     private boolean hasCreatureDamagePreventionSource(GameData gameData, Permanent creature, boolean isCombatDamage) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
@@ -1026,7 +1027,16 @@ public class DamagePreventionService {
                                         && !(isCombatDamage && prevent.noncombatOnly())
                                         && (prevent.allCreatures() || controllerId.equals(entry.getKey()))
                                         && (!prevent.excludeSource()
-                                        || !source.getId().equals(creature.getId())))));
+                                        || !source.getId().equals(creature.getId()))
+                                        && (prevent.filter() == null
+                                        || predicateEvaluationService.matchesPermanentPredicate(
+                                        creature,
+                                        prevent.filter(),
+                                        FilterContext.of(gameData)
+                                                .withSourceCardId(source.getCard().getId())
+                                                .withSourceControllerId(entry.getKey())
+                                                .withSourcePermanentSnapshot(source)
+                                                .withSourcePermanentId(source.getId()))))));
     }
 
     /**

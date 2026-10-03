@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.MagewrightsStone;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.r.RainOfGore;
 import com.github.laxika.magicalvibes.cards.s.SkullmeadCauldron;
+import com.github.laxika.magicalvibes.cards.w.WritOfPassage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CrimePunishment.class, MistralCharger.class, RainOfGore.class, MagewrightsStone.class,
-        SkullmeadCauldron.class, BloodCrypt.class})
+        SkullmeadCauldron.class, BloodCrypt.class, WritOfPassage.class})
 class CrimePunishmentTest extends BaseCardTest {
 
     private static final int CRIME = 0;
@@ -36,10 +37,7 @@ class CrimePunishmentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, CRIME, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(Permanent::getCard)
-                .extracting(Card::getId)
-                .contains(creature.getId());
+        harness.assertOnBattlefield(player1, "Mistral Charger");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -108,6 +106,59 @@ class CrimePunishmentTest extends BaseCardTest {
                 .contains(differentManaValue.getId(), differentType.getId());
     }
 
+    @Test
+    @DisplayName("Crime returns an Aura attached to the only legal creature")
+    void crimeReturnsAuraAttachedToLegalCreature() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        Card aura = new WritOfPassage();
+        harness.setGraveyard(player2, List.of(aura));
+        harness.setHand(player1, List.of(new CrimePunishment()));
+        addCrimeMana();
+
+        harness.castSorcery(player1, 0, CRIME, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Writ of Passage");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getId().equals(aura.getId()))
+                .singleElement()
+                .satisfies(p -> assertThat(p.getAttachedTo()).isEqualTo(host.getId()));
+        harness.assertNotInGraveyard(player2, "Writ of Passage");
+    }
+
+    @Test
+    @DisplayName("Crime does not return a target that left the graveyard before resolution")
+    void crimeDoesNotReturnMissingTarget() {
+        Card creature = new MistralCharger();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new CrimePunishment()));
+        addCrimeMana();
+
+        harness.castSorcery(player1, 0, CRIME, creature.getId());
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mistral Charger");
+        harness.assertInGraveyard(player1, "Crime // Punishment");
+    }
+
+    @Test
+    @DisplayName("Punishment with X zero leaves lands and positive mana value permanents")
+    void punishmentForZeroLeavesLandsAndPositiveManaValues() {
+        harness.addToBattlefield(player1, new BloodCrypt());
+        harness.addToBattlefield(player2, new MistralCharger());
+        harness.setHand(player1, List.of(new CrimePunishment()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{PUNISHMENT}, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Blood Crypt");
+        harness.assertOnBattlefield(player2, "Mistral Charger");
+        harness.assertInGraveyard(player1, "Crime // Punishment");
+    }
     private void addCrimeMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

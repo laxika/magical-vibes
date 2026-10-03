@@ -16,6 +16,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "75")
+@CardRegistration(set = "M21", collectorNumber = "275")
+@CardRegistration(set = "M21", collectorNumber = "276")
+@CardRegistration(set = "M21", collectorNumber = "277")
+@CardRegistration(set = "M21", collectorNumber = "281")
+@CardRegistration(set = "M21", collectorNumber = "290")
+@CardRegistration(set = "M21", collectorNumber = "291")
+@CardRegistration(set = "M21", collectorNumber = "292")
+@CardRegistration(set = "M21", collectorNumber = "293")
 public class TeferiMasterOfTime extends Card {
 
     public TeferiMasterOfTime() {

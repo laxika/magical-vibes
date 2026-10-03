@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.ScreechingBuzzard;
+import com.github.laxika.magicalvibes.cards.s.Smother;
 import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CrownOfSuspicion.class, ElvishWarrior.class, GlorySeeker.class, ScreechingBuzzard.class,
-        WirewoodElf.class, WirewoodLodge.class})
+        WirewoodElf.class, WirewoodLodge.class, Smother.class})
 class CrownOfSuspicionTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,43 @@ class CrownOfSuspicionTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, lateElf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, lateElf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Uses the departed enchanted creature's last known types")
+    void boostsSharingCreaturesWhenHostDiesInResponse() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent otherElf = addCreatureReady(player2, new WirewoodElf());
+        Permanent human = addCreatureReady(player2, new GlorySeeker());
+        Permanent crown = attachCrown(warrior);
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, warrior.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warrior);
+        assertThat(gqs.getEffectivePower(gd, otherElf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherElf)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifice boost includes creatures present when the ability resolves")
+    void sacrificeAbilityIncludesCreaturesEnteringBeforeResolution() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent crown = attachCrown(warrior);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        Permanent newElf = addCreatureReady(player2, new WirewoodElf());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, newElf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newElf)).isEqualTo(1);
     }
 
     private Permanent attachCrown(Permanent host) {

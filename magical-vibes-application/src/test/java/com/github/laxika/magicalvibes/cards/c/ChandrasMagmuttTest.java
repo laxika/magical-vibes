@@ -76,7 +76,7 @@ class ChandrasMagmuttTest extends BaseCardTest {
     @DisplayName("Tap ability cannot be activated while already tapped")
     void tapAbilityCannotBeActivatedWhileTapped() {
         Permanent magmutt = addCreatureReady(player1, new ChandrasMagmutt());
-        magmutt.setTapped(true);
+        magmutt.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

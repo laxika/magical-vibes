@@ -432,26 +432,30 @@ public sealed interface MultiPermanentChoiceContext {
      * with the head of the remainder. For the direct single-player flow both lists are empty
      * and the chosen permanents are sacrificed immediately. {@code recordSacrificedCount} carries
      * the actual number sacrificed back to the parked stack entry for a following effect.
+     * {@code recordSacrificedPower} carries the greatest effective power sacrificed back to the
+     * parked stack entry for a following effect.
      */
     record ForcedSacrifice(UUID sacrificingPlayerId,
                            java.util.List<PendingForcedSacrifice> remainingChoosers,
                            java.util.List<UUID> accumulatedSacrificeIds,
                            boolean simultaneousFlow,
                            boolean recordSacrificedCount,
+                           boolean recordSacrificedPower,
                            LibrarySearchFollowUp afterSacrifices)
             implements MultiPermanentChoiceContext {
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, null);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, false, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
                                java.util.List<PendingForcedSacrifice> remainingChoosers,
                                java.util.List<UUID> accumulatedSacrificeIds,
                                boolean simultaneousFlow) {
-            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds, simultaneousFlow, false, null);
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, false, false, null);
         }
 
         public ForcedSacrifice(UUID sacrificingPlayerId,
@@ -460,7 +464,17 @@ public sealed interface MultiPermanentChoiceContext {
                                boolean simultaneousFlow,
                                boolean recordSacrificedCount) {
             this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
-                    simultaneousFlow, recordSacrificedCount, null);
+                    simultaneousFlow, recordSacrificedCount, false, null);
+        }
+
+        public ForcedSacrifice(UUID sacrificingPlayerId,
+                               java.util.List<PendingForcedSacrifice> remainingChoosers,
+                               java.util.List<UUID> accumulatedSacrificeIds,
+                               boolean simultaneousFlow,
+                               boolean recordSacrificedCount,
+                               LibrarySearchFollowUp afterSacrifices) {
+            this(sacrificingPlayerId, remainingChoosers, accumulatedSacrificeIds,
+                    simultaneousFlow, recordSacrificedCount, false, afterSacrifices);
         }
     }
 
@@ -795,6 +809,10 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** The controller chooses any number of creatures with different powers to boost and grant vigilance. */
     record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller chooses any number of creatures with different mana values to destroy. */
+    record ChooseCreaturesWithDifferentManaValuesDestroy() implements MultiPermanentChoiceContext {
     }
 
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */
@@ -1477,5 +1495,16 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record EquipoisePhaseOut(Card sourceCard, UUID controllerId, UUID targetPlayerId, EquipoisePhase phase)
             implements MultiPermanentChoiceContext {
+    }
+
+    /** My Will Is Irresistible: the controller chooses up to three, then the targeted opponent keeps one. */
+    record ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne(
+            UUID controllerId, UUID opponentId, List<UUID> chosenPermanentIds,
+            String sourceName, boolean opponentChoosing)
+            implements MultiPermanentChoiceContext {
+
+        public ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne {
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
+        }
     }
 }

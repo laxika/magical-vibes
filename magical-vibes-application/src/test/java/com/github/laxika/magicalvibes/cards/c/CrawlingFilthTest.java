@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTheHonoredDead;
 import com.github.laxika.magicalvibes.cards.k.KamiOfTatteredShoji;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfStone;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         CrawlingFilth.class,
@@ -47,10 +49,8 @@ class CrawlingFilthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spirit.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(spirit.getId()));
+        harness.assertInHand(player1, "Kami of False Hope");
+        harness.assertNotInGraveyard(player1, "Kami of False Hope");
     }
 
     @Test
@@ -101,9 +101,64 @@ class CrawlingFilthTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(spirit.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(spirit.getId()));
+        harness.assertInGraveyard(player1, "Kami of False Hope");
+        harness.assertNotInHand(player1, "Kami of False Hope");
+    }
+
+    @Test
+    void soulshiftRequiresTargetBeforeResolutionChoice() {
+        harness.addToBattlefield(player1, new CrawlingFilth());
+        Card spirit = new KamiOfFalseHope();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        torrentOfStoneToKillFilth();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Kami of False Hope");
+    }
+
+    @Test
+    void soulshiftReturnsSpiritAtManaValueLimit() {
+        harness.addToBattlefield(player1, new CrawlingFilth());
+        Card spirit = new KamiOfTatteredShoji();
+        harness.setGraveyard(player1, List.of(spirit, new TorrentOfStone()));
+
+        torrentOfStoneToKillFilth();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(spirit.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Kami of Tattered Shoji");
+        harness.assertNotInGraveyard(player1, "Kami of Tattered Shoji");
+        harness.assertInGraveyard(player1, "Torrent of Stone");
+        harness.assertInGraveyard(player1, "Crawling Filth");
+    }
+
+    @Test
+    void fearRejectsWhiteBlocker() {
+        addCreatureReady(player1, new CrawlingFilth());
+        addCreatureReady(player2, new KamiOfFalseHope());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fearAllowsBlackBlocker() {
+        addCreatureReady(player1, new CrawlingFilth());
+        var blocker = addCreatureReady(player2, new CrawlingFilth());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

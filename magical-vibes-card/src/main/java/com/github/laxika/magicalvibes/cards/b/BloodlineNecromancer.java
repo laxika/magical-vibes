@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "185")
+@CardRegistration(set = "VOC", collectorNumber = "120")
 public class BloodlineNecromancer extends Card {
 
     public BloodlineNecromancer() {

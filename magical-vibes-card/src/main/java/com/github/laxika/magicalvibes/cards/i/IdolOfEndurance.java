@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "23")
+@CardRegistration(set = "M21", collectorNumber = "342")
 public class IdolOfEndurance extends Card {
 
     public IdolOfEndurance() {

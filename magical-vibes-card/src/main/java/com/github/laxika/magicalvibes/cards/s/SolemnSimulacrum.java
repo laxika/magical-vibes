@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "MRD", collectorNumber = "245")
 @CardRegistration(set = "FDN", collectorNumber = "257")
 @CardRegistration(set = "M21", collectorNumber = "239")
+@CardRegistration(set = "M21", collectorNumber = "319")
 @CardRegistration(set = "MPS", collectorNumber = "25")
 @CardRegistration(set = "DDU", collectorNumber = "62")
 @CardRegistration(set = "SLD", collectorNumber = "791")

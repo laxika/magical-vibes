@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "201")
 @CardRegistration(set = "M21", collectorNumber = "150")
+@CardRegistration(set = "M21", collectorNumber = "396")
 public class HeartfireImmolator extends Card {
 
     public HeartfireImmolator() {

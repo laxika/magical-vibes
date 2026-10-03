@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "110")
+@CardRegistration(set = "M21", collectorNumber = "299")
 @CardRegistration(set = "SLD", collectorNumber = "845")
 @CardRegistration(set = "MOC", collectorNumber = "255")
 public class LilianasStandardBearer extends Card {

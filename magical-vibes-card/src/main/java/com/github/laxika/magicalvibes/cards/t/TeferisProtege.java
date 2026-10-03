@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "77")
+@CardRegistration(set = "M21", collectorNumber = "295")
 public class TeferisProtege extends Card {
 
     public TeferisProtege() {

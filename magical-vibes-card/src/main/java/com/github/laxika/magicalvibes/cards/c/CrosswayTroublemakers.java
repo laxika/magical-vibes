@@ -20,6 +20,8 @@ import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "518")
 @CardRegistration(set = "LCC", collectorNumber = "190")
+@CardRegistration(set = "VOC", collectorNumber = "17")
+@CardRegistration(set = "VOC", collectorNumber = "55")
 public class CrosswayTroublemakers extends Card {
 
     private static final MayPayLifeEffect DEATH_TRIGGER = new MayPayLifeEffect(

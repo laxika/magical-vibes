@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "24")
 @CardRegistration(set = "A25", collectorNumber = "30")
+@CardRegistration(set = "VOC", collectorNumber = "96")
 public class PromiseOfBunrei extends Card {
 
     public PromiseOfBunrei() {

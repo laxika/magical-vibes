@@ -121,6 +121,7 @@ public enum CardSet {
     SET_MIC("MIC"),
     SET_YMID("YMID"),
     SET_VOW("VOW"),
+    SET_VOC("VOC"),
     SET_DBL("DBL"),
     SET_DKA("DKA"),
     SET_AVR("AVR"),
