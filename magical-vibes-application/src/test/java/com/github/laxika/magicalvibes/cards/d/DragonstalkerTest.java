@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
 import com.github.laxika.magicalvibes.cards.e.EternalDragon;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Dragonstalker.class, DaruWarchief.class, EternalDragon.class})
+@CardUsed({Dragonstalker.class, DaruWarchief.class, EternalDragon.class, AvenLiberator.class})
 class DragonstalkerTest extends BaseCardTest {
 
     @Test
@@ -47,8 +48,7 @@ class DragonstalkerTest extends BaseCardTest {
         Permanent dragon = addCreatureReady(player1, new EternalDragon());
         Permanent dragonstalker = addCreatureReady(player2, new Dragonstalker());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -56,5 +56,21 @@ class DragonstalkerTest extends BaseCardTest {
         assertThat(dragon.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragon);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(dragonstalker);
+    }
+
+    @Test
+    @DisplayName("Non-Dragon flying creatures can block and damage Dragonstalker")
+    void nonDragonFlyerCanBlockAndDealDamage() {
+        Permanent dragonstalker = addCreatureReady(player1, new Dragonstalker());
+        Permanent blocker = addCreatureReady(player2, new AvenLiberator());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(dragonstalker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragonstalker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
 }
