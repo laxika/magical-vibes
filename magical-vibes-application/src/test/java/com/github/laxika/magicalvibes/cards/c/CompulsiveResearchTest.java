@@ -27,8 +27,7 @@ class CompulsiveResearchTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island(), new Mountain(), new CompulsiveResearch()));
         addCompulsiveResearchMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(5);
@@ -49,8 +48,7 @@ class CompulsiveResearchTest extends BaseCardTest {
                 new CompulsiveResearch(), new CompulsiveResearch(), new CompulsiveResearch()));
         addCompulsiveResearchMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -67,8 +65,7 @@ class CompulsiveResearchTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island(), new Mountain(), new BorosRecruit()));
         addCompulsiveResearchMana();
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
@@ -92,6 +89,48 @@ class CompulsiveResearchTest extends BaseCardTest {
                 player1, 0, harness.getPermanentId(player2, "Boros Recruit")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only target players");
+    }
+
+    @Test
+    @DisplayName("A player may discard a land and another card rather than stop after the land")
+    void mayDiscardTwoCardsIncludingLand() {
+        Forest land = new Forest();
+        BorosRecruit creature = new BorosRecruit();
+        harness.setHand(player1, List.of(new CompulsiveResearch()));
+        harness.setHand(player2, List.of(land, creature));
+        harness.setLibrary(player2, List.of(new Island(), new Mountain(), new CompulsiveResearch()));
+        addCompulsiveResearchMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3).doesNotContain(land, creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(land, creature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding a nonland does not permit declining the second discard")
+    void cannotStopAfterDiscardingNonland() {
+        harness.setHand(player1, List.of(new CompulsiveResearch()));
+        harness.setHand(player2, List.of(new BorosRecruit(), new Forest()));
+        harness.setLibrary(player2, List.of(new Island(), new Mountain(), new CompulsiveResearch()));
+        addCompulsiveResearchMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addCompulsiveResearchMana() {
