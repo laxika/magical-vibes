@@ -83,6 +83,35 @@ class DevourInShadowTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Devour in Shadow");
     }
 
+    @Test
+    @DisplayName("Can destroy the spell controller's own creature")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        prepareDevourInShadow();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dross Crocodile");
+        harness.assertInGraveyard(player1, "Dross Crocodile");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Uses the creature's toughness at resolution rather than when the spell was cast")
+    void usesToughnessAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        prepareDevourInShadow();
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setToughnessModifier(4);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Dross Crocodile");
+        harness.assertInGraveyard(player2, "Dross Crocodile");
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
     private void prepareDevourInShadow() {
         harness.setHand(player1, List.of(new DevourInShadow()));
         harness.addMana(player1, ManaColor.BLACK, 2);
