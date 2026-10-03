@@ -73,10 +73,76 @@ class DauthiTrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, knight.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, knight, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    void canGrantShadowToItself() {
+        Permanent trapper = addCreatureReady(player1, new DauthiTrapper());
+
+        harness.activateAbility(player1, 0, null, trapper.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, trapper, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent trapper = addCreatureReady(player1, new DauthiTrapper());
+        Permanent knight = addCreatureReady(player2, new YouthfulKnight());
+
+        harness.activateAbility(player1, 0, null, knight.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(trapper);
+        gd.playerGraveyards.get(player1.getId()).add(trapper.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, knight, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    void summoningSickTrapperCannotActivate() {
+        Permanent trapper = harness.addToBattlefieldAndReturn(player1, new DauthiTrapper());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, trapper.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(trapper.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedTrapperCannotActivate() {
+        Permanent trapper = addCreatureReady(player1, new DauthiTrapper());
+        trapper.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, trapper.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantedShadowRestrictsBlockingInBothDirections() {
+        addCreatureReady(player1, new DauthiTrapper());
+        Permanent knight = addCreatureReady(player1, new YouthfulKnight());
+        addCreatureReady(player2, new DauthiTrapper());
+        Permanent opposingKnight = addCreatureReady(player2, new YouthfulKnight());
+
+        harness.activateAbility(player1, 0, null, knight.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, opposingKnight, knight,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, knight, opposingKnight,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+
+        harness.activateAbility(player2, 0, null, opposingKnight.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, opposingKnight, knight,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+        assertThat(bls.canBlockAttacker(gd, knight, opposingKnight,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
     }
 }
