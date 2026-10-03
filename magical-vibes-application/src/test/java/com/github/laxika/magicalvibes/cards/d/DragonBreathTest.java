@@ -104,7 +104,7 @@ class DragonBreathTest extends BaseCardTest {
     }
 
     @Test
-    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+    void acceptedReturnStaysInGraveyardWhenEnteringCreatureLeavesBeforeResolution() {
         harness.setGraveyard(player1, List.of(new DragonBreath()));
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new NobleTemplar());
 
@@ -115,9 +115,40 @@ class DragonBreathTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gameLogContains("Dragon Breath returns to the battlefield unattached.")).isTrue();
+        assertThat(gameLogContains("Dragon Breath returns to the battlefield")).isFalse();
         harness.assertInGraveyard(player1, "Dragon Breath");
         harness.assertNotOnBattlefield(player1, "Dragon Breath");
+    }
+
+    @Test
+    void returnDoesNothingWhenAuraLeavesGraveyardBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new DragonBreath()));
+        harness.enterBattlefieldAndReturn(player1, new NobleTemplar());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.setExile(player1, List.copyOf(gd.playerGraveyards.get(player1.getId())));
+        harness.setGraveyard(player1, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Dragon Breath");
+        harness.assertNotInGraveyard(player1, "Dragon Breath");
+    }
+
+    @Test
+    void auraControllerCanRepeatedlyBoostOpponentsEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new AvenFarseer());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DragonBreath());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }
 
     @Test
