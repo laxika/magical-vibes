@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClergyOfTheHolyNimbus.class, PsychicPurge.class})
+@CardUsed({ClergyOfTheHolyNimbus.class, PsychicPurge.class, Humble.class})
 class ClergyOfTheHolyNimbusTest extends BaseCardTest {
 
     @Test
@@ -94,5 +95,67 @@ class ClergyOfTheHolyNimbusTest extends BaseCardTest {
 
     private void addPsychicPurgeMana() {
         harness.addMana(player2, ManaColor.BLUE, 1);
+    }
+
+    @Test
+    @DisplayName("Intrinsic regeneration works repeatedly even while already tapped")
+    void regeneratesRepeatedlyWhileTapped() {
+        Permanent clergy = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
+        harness.setHand(player2, List.of(new PsychicPurge(), new PsychicPurge()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player2, 0, clergy.getId());
+        harness.castAndResolveSorcery(player2, 0, clergy.getId());
+
+        harness.assertOnBattlefield(player1, "Clergy of the Holy Nimbus");
+        assertThat(clergy.isTapped()).isTrue();
+        assertThat(clergy.getMarkedDamage()).isZero();
+        assertThat(clergy.getTimesRegeneratedThisTurn()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Disabling one Clergy does not disable another Clergy")
+    void preventionAppliesOnlyToSourcePermanent() {
+        Permanent disabled = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
+        Permanent other = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new PsychicPurge(), new PsychicPurge()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player2, 0, other.getId());
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.getMarkedDamage()).isZero();
+        harness.castAndResolveSorcery(player2, 0, disabled.getId());
+
+        assertThat(findPermanents(player1, "Clergy of the Holy Nimbus")).containsExactly(other);
+        harness.assertInGraveyard(player1, "Clergy of the Holy Nimbus");
+    }
+
+    @Test
+    @CardUsed({ClergyOfTheHolyNimbus.class, Humble.class, PsychicPurge.class})
+    @DisplayName("Losing all abilities removes intrinsic regeneration")
+    void losingAllAbilitiesRemovesIntrinsicRegeneration() {
+        Permanent clergy = addCreatureReady(player1, new ClergyOfTheHolyNimbus());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Humble(), new PsychicPurge()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, clergy.getId());
+        harness.castAndResolveSorcery(player2, 0, clergy.getId());
+
+        harness.assertNotOnBattlefield(player1, "Clergy of the Holy Nimbus");
+        harness.assertInGraveyard(player1, "Clergy of the Holy Nimbus");
     }
 }
