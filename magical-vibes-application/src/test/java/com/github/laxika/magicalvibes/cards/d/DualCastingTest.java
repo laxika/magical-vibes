@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,24 +19,22 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DualCasting.class, Boomerang.class, CounselOfTheSoratami.class, GrizzlyBears.class, FountainOfYouth.class})
 class DualCastingTest extends BaseCardTest {
 
     private Permanent enchant(com.github.laxika.magicalvibes.model.Player creatureController) {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(creatureController, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(creatureController.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new DualCasting());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new DualCasting());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
         return bearsPerm;
     }
 
     @Test
     @DisplayName("Resolving Dual Casting attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DualCasting()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -51,7 +51,7 @@ class DualCastingTest extends BaseCardTest {
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotEnchantNoncreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new DualCasting()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -90,9 +90,8 @@ class DualCastingTest extends BaseCardTest {
     void copyKeepsOriginalTargetWhenRetargetDeclined() {
         enchant(player1);
 
-        Permanent victim = new Permanent(new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         victim.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(victim);
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -171,9 +170,8 @@ class DualCastingTest extends BaseCardTest {
     void otherCreaturesDoNotGetTheAbility() {
         enchant(player1);
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         CounselOfTheSoratami counsel = new CounselOfTheSoratami();
         harness.setHand(player1, List.of(counsel));
@@ -185,5 +183,78 @@ class DualCastingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(otherBears.isTapped()).isFalse();
+    }
+
+    @Test
+    void creatureControllerCanCopyTheirSpellWithOpponentsAura() {
+        Permanent creature = enchant(player2);
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castSorcery(player2, 0, 0);
+        harness.activateAbility(player2, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1)
+                .allMatch(e -> e.getControllerId().equals(player2.getId()));
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void copyCanResolveWithNewTargetWithoutChangingOriginal() {
+        enchant(player1);
+        harness.setHand(player2, List.of());
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent newTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Boomerang spell = new Boomerang();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, originalTarget.getId());
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(originalTarget).doesNotContain(newTarget);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(originalTarget.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(originalTarget);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    void summoningSickCreatureCannotUseGrantedTapAbility() {
+        Permanent creature = enchant(player1);
+        creature.setSummoningSick(true);
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void activatedAbilityStillCopiesAfterAuraLeaves() {
+        enchant(player1);
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castSorcery(player1, 0, 0);
+        harness.activateAbility(player1, 0, null, spell.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Dual Casting"));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
     }
 }
