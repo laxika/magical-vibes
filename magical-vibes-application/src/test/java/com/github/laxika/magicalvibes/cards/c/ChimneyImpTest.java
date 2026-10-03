@@ -78,6 +78,41 @@ class ChimneyImpTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A hand card can be put on top of an empty library")
+    void putsCardOnEmptyLibrary() {
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new ChimneyImp());
+        Card handCard = new ElectrostaticBolt();
+        harness.setHand(player2, List.of(handCard));
+        harness.setLibrary(player2, List.of());
+
+        killImp(imp);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(handCard.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(handCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing if the opponent empties their hand in response")
+    void handEmptiedInResponseDoesNothing() {
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new ChimneyImp());
+        harness.setHand(player2, List.of(new ElectrostaticBolt()));
+        List<Card> libraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        killImp(imp);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void killImp(Permanent imp) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
