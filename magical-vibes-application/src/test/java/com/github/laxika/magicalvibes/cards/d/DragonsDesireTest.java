@@ -50,4 +50,31 @@ class DragonsDesireTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
+
+    @Test
+    @DisplayName("Does not count artifacts controlled only by the caster")
+    void ignoresOnlyCastersArtifacts() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+
+        harness.castFromHand(player1, new DragonsDesire(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts artifacts relative to the spell controller and awards that player mana")
+    void awardsManaToOtherPlayerWhenTheyCastIt() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        harness.castFromHand(player2, new DragonsDesire(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
 }
