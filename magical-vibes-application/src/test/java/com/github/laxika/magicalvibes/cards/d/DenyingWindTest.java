@@ -20,8 +20,7 @@ class DenyingWindTest extends BaseCardTest {
         harness.setLibrary(targetPlayer, targetLibrary);
         harness.setHand(player1, List.of(new DenyingWind()));
         harness.addMana(player1, ManaColor.BLUE, 9);
-        harness.castSorcery(player1, 0, targetPlayer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayer.getId());
     }
 
     @Test
@@ -105,5 +104,29 @@ class DenyingWindTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Exiles the chosen cards from only the target library")
+    void exilesChosenCardsWithoutChangingControllerLibrary() {
+        Card first = new DenyingWind();
+        Card second = new DenyingWind();
+        Card third = new DenyingWind();
+        Card fourth = new DenyingWind();
+        Card controllerFirst = new DenyingWind();
+        Card controllerSecond = new DenyingWind();
+        harness.setLibrary(player1, List.of(controllerFirst, controllerSecond));
+        castDenyingWind(player2, List.of(first, second, third, fourth));
+
+        harness.handleCardChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, third);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(second, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerFirst, controllerSecond);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 }
