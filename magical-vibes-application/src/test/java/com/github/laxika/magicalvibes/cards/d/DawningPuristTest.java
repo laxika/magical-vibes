@@ -77,15 +77,7 @@ class DawningPuristTest extends BaseCardTest {
     @Test
     @DisplayName("Dawning Purist can be cast face down and turned face up for its morph cost")
     void canBeMorphed() {
-        harness.setHand(player1, List.of(new DawningPurist()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        Permanent purist = findPermanent(player1, "Dawning Purist");
+        Permanent purist = castFaceDownPurist();
         assertThat(purist.isFaceDown()).isTrue();
 
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -95,6 +87,70 @@ class DawningPuristTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(purist.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Dawning Purist deals combat damage without its enchantment destruction trigger")
+    void faceDownCombatDamageDoesNotTrigger() {
+        Permanent purist = castFaceDownPurist();
+        purist.setSummoningSick(false);
+        purist.setAttacking(true);
+        harness.addToBattlefield(player2, new AstralSlide());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Astral Slide");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Turning Dawning Purist face up before combat damage enables its enchantment destruction trigger")
+    void turningFaceUpBeforeCombatDamageEnablesTrigger() {
+        Permanent purist = castFaceDownPurist();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(purist));
+        purist.setSummoningSick(false);
+        purist.setAttacking(true);
+        Permanent slide = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, slide.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player2, "Astral Slide");
+        harness.assertInGraveyard(player2, "Astral Slide");
+    }
+
+    @Test
+    @DisplayName("The target becomes illegal if the damaged player no longer controls it at resolution")
+    void targetChangingControllerIsNotDestroyed() {
+        attackWithPurist();
+        Permanent slide = harness.addToBattlefieldAndReturn(player2, new AstralSlide());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, slide.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(slide);
+        gd.playerBattlefields.get(player1.getId()).add(slide);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Astral Slide");
+        harness.assertNotInGraveyard(player2, "Astral Slide");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent castFaceDownPurist() {
+        harness.setHand(player1, List.of(new DawningPurist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        return findPermanent(player1, "Dawning Purist");
     }
 
     private void attackWithPurist() {
