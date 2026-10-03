@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Brand.class, Confiscate.class, GorillaWarrior.class, Mountain.class})
+@CardUsed({Brand.class, Confiscate.class, Disenchant.class, GorillaWarrior.class, Mountain.class})
 class BrandTest extends BaseCardTest {
 
     @Test
@@ -66,6 +67,41 @@ class BrandTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ownedByPlayer1);
     }
 
+    @Test
+    @DisplayName("Brand establishes lasting control even when an owned permanent is already controlled")
+    void establishesControlOverAlreadyControlledOwnedPermanent() {
+        Permanent creature = addCreatureReady(player1, new GorillaWarrior());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        java.util.UUID ownAuraId = harness.getPermanentId(player1, "Confiscate");
+
+        harness.castFromHand(player1, new Brand(), "{R}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, ownAuraId);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Confiscate");
+    }
     @Test
     @DisplayName("Cycling {2} discards Brand and draws a card")
     void cyclingDrawsACard() {
