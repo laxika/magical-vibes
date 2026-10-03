@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AnimateLand;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.Lunge;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DesertNomads.class, Desert.class, GrizzlyBears.class, Lunge.class, BloodMoon.class})
+@CardUsed({DesertNomads.class, Desert.class, GrizzlyBears.class, Lunge.class, BloodMoon.class, AnimateLand.class})
 class DesertNomadsTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,57 @@ class DesertNomadsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Desert Nomads");
+    }
+
+    @Test
+    @DisplayName("A Desert controlled by the attacker does not prevent blocking")
+    void attackerControlledDesertDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Desert());
+        Permanent attacker = addCreatureReady(player1, new DesertNomads());
+        Permanent blocker = addCreatureReady(player2, new DesertNomads());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prevents damage from its controller's own Desert")
+    void preventsDamageFromOwnDesert() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        Permanent nomads = addCreatureReady(player1, new DesertNomads());
+        nomads.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.activateAbility(player1, indexOf(player1, desert), 1, null, nomads.getId());
+        harness.passBothPriorities();
+
+        assertThat(nomads.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Desert Nomads");
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage from an animated Desert")
+    void preventsCombatDamageFromAnimatedDesert() {
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new Desert());
+        desert.setSummoningSick(false);
+        Permanent nomads = addCreatureReady(player2, new DesertNomads());
+        harness.setHand(player1, List.of(new AnimateLand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, desert.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, desert)));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(indexOf(player2, nomads), indexOf(player1, desert))));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Desert Nomads");
+        assertThat(nomads.getMarkedDamage()).isZero();
+        assertThat(desert.getMarkedDamage()).isEqualTo(2);
     }
 
     private int indexOf(Player player, Permanent permanent) {
