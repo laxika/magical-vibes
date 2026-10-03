@@ -83,4 +83,56 @@ class DesperateRitualTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonArcaneSpell, ritual);
     }
+
+    @Test
+    @DisplayName("Splicing onto another Desperate Ritual adds six mana without consuming the spliced card")
+    void splicesOntoAnotherRitual() {
+        DesperateRitual splicedRitual = new DesperateRitual();
+        harness.setHand(player1, List.of(splicedRitual, new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithSplice(player1, 1, null, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(splicedRitual);
+        harness.assertInGraveyard(player1, "Desperate Ritual");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the splice cost with mana the spell would produce")
+    void cannotUseFutureManaToPaySpliceCost() {
+        DesperateRitual host = new DesperateRitual();
+        DesperateRitual splicedRitual = new DesperateRitual();
+        harness.setHand(player1, List.of(host, splicedRitual));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(host, splicedRitual);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot splice the same physical card twice onto one spell")
+    void cannotSpliceSameCardTwice() {
+        DesperateRitual host = new DesperateRitual();
+        DesperateRitual splicedRitual = new DesperateRitual();
+        harness.setHand(player1, List.of(host, splicedRitual));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(host, splicedRitual);
+        assertThat(gd.stack).isEmpty();
+    }
 }
