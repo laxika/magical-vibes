@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CreepyPuppeteer.class, GrizzlyBears.class})
 class CreepyPuppeteerTest extends BaseCardTest {
+
+    @Test
+    void attackingAloneDoesNotOfferTheAbility() {
+        addCreatureReady(player1, new CreepyPuppeteer());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void otherAttackerStillBecomesFourThreeAfterPuppeteerLeaves() {
+        Permanent puppeteer = addCreatureReady(player1, new CreepyPuppeteer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(puppeteer);
+        gd.playerGraveyards.get(player1.getId()).add(puppeteer.getCard());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void otherCreatureStillBecomesFourThreeAfterLeavingCombat() {
+        addCreatureReady(player1, new CreepyPuppeteer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        bears.setAttacking(false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void basePowerAndToughnessReturnToNormalAfterTheTurn() {
+        addCreatureReady(player1, new CreepyPuppeteer());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
 
     @Test
     void exactlyTwoAttackersOfferToSetTheOtherAttackerToFourThree() {

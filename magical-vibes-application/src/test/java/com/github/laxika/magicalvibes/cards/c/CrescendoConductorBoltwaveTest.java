@@ -44,4 +44,56 @@ class CrescendoConductorBoltwaveTest extends BaseCardTest {
         assertThat(conductor.isPrepared()).isFalse();
         assertThat(conductor.getPreparedSpellCardId()).isNull();
     }
+
+    @Test
+    void opponentsConjureDoesNotPrepareConductor() {
+        Permanent conductor = harness.addToBattlefieldAndReturn(player1, new CrescendoConductorBoltwave());
+
+        harness.enterBattlefieldAndReturn(player2, new BraveMeadowguard());
+        resolveAllTriggers();
+
+        assertThat(conductor.isPrepared()).isFalse();
+        assertThat(conductor.getPreparedSpellCardId()).isNull();
+        harness.assertInHand(player2, "Might of the Meek");
+    }
+
+    @Test
+    void conjuringAgainWhilePreparedKeepsTheSameSpellCopy() {
+        Permanent conductor = harness.addToBattlefieldAndReturn(player1, new CrescendoConductorBoltwave());
+        harness.enterBattlefieldAndReturn(player1, new BraveMeadowguard());
+        resolveAllTriggers();
+        UUID preparedSpellId = conductor.getPreparedSpellCardId();
+        assertThat(preparedSpellId).isNotNull();
+
+        harness.enterBattlefieldAndReturn(player1, new BraveMeadowguard());
+        resolveAllTriggers();
+
+        assertThat(conductor.isPrepared()).isTrue();
+        assertThat(conductor.getPreparedSpellCardId()).isEqualTo(preparedSpellId);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void canPrepareAgainAfterCastingBoltwave() {
+        Permanent conductor = harness.addToBattlefieldAndReturn(player1, new CrescendoConductorBoltwave());
+        harness.enterBattlefieldAndReturn(player1, new BraveMeadowguard());
+        resolveAllTriggers();
+        UUID firstSpellId = conductor.getPreparedSpellCardId();
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castFromExile(player1, firstSpellId);
+
+        assertThat(conductor.isPrepared()).isFalse();
+        assertThat(conductor.getPreparedSpellCardId()).isNull();
+        harness.passBothPriorities();
+
+        harness.enterBattlefieldAndReturn(player1, new BraveMeadowguard());
+        resolveAllTriggers();
+
+        assertThat(conductor.isPrepared()).isTrue();
+        assertThat(conductor.getPreparedSpellCardId()).isNotNull().isNotEqualTo(firstSpellId);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
 }

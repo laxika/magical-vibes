@@ -624,15 +624,29 @@ public class TriggerCollectionService {
         }
 
         UUID settingPlayerId = schemeEntry.getControllerId();
+        int schemesSet = 1;
+        Integer pendingReplacements = gameData.pendingNextSchemeSetInMotionReplacements.get(settingPlayerId);
+        if (pendingReplacements != null) {
+            if (pendingReplacements <= 1) {
+                gameData.pendingNextSchemeSetInMotionReplacements.remove(settingPlayerId);
+            } else {
+                gameData.pendingNextSchemeSetInMotionReplacements.put(settingPlayerId,
+                        pendingReplacements - 1);
+            }
+            schemesSet = 3;
+        }
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(settingPlayerId);
         if (battlefield == null) {
             return;
         }
 
-        TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
-        for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, settingPlayerId,
-                    EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+        for (int schemeIndex = 0; schemeIndex < schemesSet; schemeIndex++) {
+            TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, permanent, settingPlayerId,
+                        EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+            }
         }
     }
 

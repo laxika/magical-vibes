@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "169")
 @CardRegistration(set = "RVR", collectorNumber = "70")
 @CardRegistration(set = "C14", collectorNumber = "139")
+@CardRegistration(set = "DSC", collectorNumber = "368")
 public class CryptGhast extends Card {
 
     public CryptGhast() {
