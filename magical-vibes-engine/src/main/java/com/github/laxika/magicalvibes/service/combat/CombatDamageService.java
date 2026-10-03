@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -402,6 +403,36 @@ public class CombatDamageService {
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
 
         applyPlayerDamage(gameData, state, defenderId);
+        Map<UUID, Set<Permanent>> damagedPlayerSources = new LinkedHashMap<>();
+        state.redirectedCombatDamageSourcesToPlayers.forEach((playerId, sources) ->
+                damagedPlayerSources.put(playerId, new LinkedHashSet<>(sources)));
+        state.combatDamageDealtToPlayer.forEach((source, damage) -> {
+            if (damage > 0) damagedPlayerSources.computeIfAbsent(defenderId,
+                    ignored -> new LinkedHashSet<>()).add(source);
+        });
+        if (state.poisonDamageToDefendingPlayer > 0) {
+            damagedPlayerSources.computeIfAbsent(defenderId, ignored -> new LinkedHashSet<>());
+        }
+        damagedPlayerSources.forEach((playerId, sources) -> {
+            Map<UUID, Integer> toxicByController = new LinkedHashMap<>();
+            if (playerId.equals(defenderId) && state.poisonDamageToDefendingPlayer > 0) {
+                toxicByController.put(gameQueryService.getOpponentId(gameData, defenderId),
+                        state.poisonDamageToDefendingPlayer);
+            }
+            for (Permanent source : sources) {
+                if (!gameQueryService.hasKeyword(gameData, source, Keyword.TOXIC)) continue;
+                List<CardEffect> toxicEffects = new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, source));
+                toxicEffects.addAll(gameQueryService.getGrantedEffects(gameData, source));
+                int toxic = toxicEffects.stream()
+                        .filter(ToxicEffect.class::isInstance).map(ToxicEffect.class::cast)
+                        .mapToInt(ToxicEffect::value).sum();
+                UUID controllerId = state.combatDamageDealerControllers.getOrDefault(source,
+                        gameQueryService.findPermanentController(gameData, source.getId()));
+                if (toxic > 0 && controllerId != null) toxicByController.merge(controllerId, toxic, Integer::sum);
+            }
+            toxicByController.forEach((controllerId, amount) -> lifeSupport.applyPoisonCounters(
+                    gameData, playerId, amount, "Combat damage", controllerId));
+        });
         updateMonarchFromCombatDamage(gameData, state, defenderId);
         state.combatDamageDealtToPlayer.forEach((source, damage) -> {
             if (damage > 0 && gameData.isCommander(source.getOriginalCard().getId())) {
@@ -543,10 +574,11 @@ public class CombatDamageService {
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
+        int stackSizeBeforeDamageTriggers = gameData.stack.size();
+
         // Death triggers were already collected by the SBA pass above. They must remain on the
         // stack for normal priority rather than being folded into the engine's auto-resolved
         // combat-damage trigger batch below.
-        int stackSizeBeforeDamageTriggers = gameData.stack.size();
         updateMonarchFromCombatDamage(gameData, state, defenderId);
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
         gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
@@ -621,16 +653,26 @@ public class CombatDamageService {
         // Process combat damage reflection triggers (e.g. Harsh Justice)
         processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
-        // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
         Set<String> firedBatchedTriggerKeys = new HashSet<>();
+        Map<UUID, Integer> damageToDefenderByController = new LinkedHashMap<>();
+        for (var damage : state.combatDamageDealtToPlayer.entrySet()) {
+            if (damage.getValue() <= 0) continue;
+            triggerCollectionService.checkDamageDealtToControllerTriggers(
+                    gameData, defenderId, damage.getKey().getId(), true, firedBatchedTriggerKeys);
+            UUID controllerId = state.combatDamageDealerControllers.getOrDefault(damage.getKey(), activeId);
+            damageToDefenderByController.merge(controllerId, damage.getValue(), Integer::sum);
+        }
+        int totalDamageToDefender = damageToDefenderByController.values().stream().mapToInt(Integer::intValue).sum();
+        triggerCollectionService.checkControllerDealtDamageTriggers(
+                gameData, defenderId, null, totalDamageToDefender);
+        damageToDefenderByController.forEach((controllerId, damage) ->
+                triggerCollectionService.checkControllerDealtDamageTriggers(
+                        gameData, defenderId, controllerId, damage, false));
+
+        // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
-                triggerCollectionService.checkDamageDealtToControllerTriggers(
-                        gameData, defenderId, dmgEntry.getKey().getId(), true, firedBatchedTriggerKeys);
                 triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, defenderId, dmgEntry.getKey().getId(), dmgEntry.getValue());
-                // Combat damage to the defender always comes from the active player's attackers, so the
-                // source's controller is the active player (an opponent of the defender).
-                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, activeId, dmgEntry.getValue());
                 // Night Dealings: "whenever a source you control deals damage to another player".
                 triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
                         gameData, defenderId, activeId, dmgEntry.getKey().getId(), dmgEntry.getValue());
@@ -1673,12 +1715,12 @@ public class CombatDamageService {
             // Record creature subtypes at combat damage time for subtype-conditional triggers
             // (e.g. Admiral Beckett Brass checks if 3+ Pirates dealt damage to a player)
             gameData.combatDamageSourceNamesThisTurn.putIfAbsent(creature.getId(), creature.getCard().getName());
-            if (!gameData.combatDamageSourceSubtypesThisTurn.containsKey(creature.getId())) {
-                Set<CardSubtype> effectiveSubtypes = ConcurrentHashMap.newKeySet();
+            {
+                Set<CardSubtype> effectiveSubtypes = gameData.combatDamageSourceSubtypesThisTurn
+                        .computeIfAbsent(creature.getId(), ignored -> ConcurrentHashMap.newKeySet());
                 effectiveSubtypes.addAll(creature.getCard().getSubtypes());
                 effectiveSubtypes.addAll(creature.getGrantedSubtypes());
                 effectiveSubtypes.addAll(creature.getTransientSubtypes());
-                gameData.combatDamageSourceSubtypesThisTurn.put(creature.getId(), effectiveSubtypes);
                 if (gameQueryService.hasKeyword(gameData, creature, Keyword.CHANGELING)) {
                     gameData.combatDamageSourcesWithChangelingThisTurn.add(creature.getId());
                 }
@@ -1695,10 +1737,17 @@ public class CombatDamageService {
             }
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
-            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
-            allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            boolean hasPrintedAbilities = !creature.isFaceDown()
+                    && !creature.isLosesAllAbilitiesUntilEndOfTurn()
+                    && !gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
+            if (hasPrintedAbilities) {
+                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            }
             if (!attackerId.equals(defenderId)) {
-                allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                if (hasPrintedAbilities) {
+                    allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                }
                 allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -1722,6 +1771,8 @@ public class CombatDamageService {
                     gameData, attackerId, creature, false, combatDamageContext));
             try {
             for (CardEffect rawEffect : allDamageEffects) {
+                if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
+                        && creature.isRenowned()) continue;
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
                         ? amountAware.snapshotCombatDamage(damageDealt)
                         : rawEffect;
@@ -2356,6 +2407,8 @@ public class CombatDamageService {
         if (attackerBattlefield == null) return;
 
         for (Permanent perm : attackerBattlefield) {
+            if (perm.isFaceDown() || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()
+                    || perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
             List<CardEffect> effects = new ArrayList<>();
             if (!battleDamage) {
                 effects.addAll(perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER));
@@ -2542,6 +2595,8 @@ public class CombatDamageService {
                             card.getName() + "'s graveyard trigger",
                             List.of(trigger.effect())
                     );
+                    se.setTriggeringCardId(card.getId());
+                    se.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameLogService.append(gameData, GameLog.cardThen(card,
@@ -3887,21 +3942,7 @@ public class CombatDamageService {
         if (state.poisonDamageToDefendingPlayer > 0) {
             state.poisonDamageToDefendingPlayer -= damageSupport.applySoulEchoCounterRemoval(gameData, defenderId, state.poisonDamageToDefendingPlayer);
         }
-        if (state.poisonDamageToDefendingPlayer > 0
-                && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
-            int poisonAmount = gameQueryService.applyPoisonCounterReplacement(
-                    gameData, defenderId, state.poisonDamageToDefendingPlayer);
-            poisonAmount = gameQueryService.replacePoisonCounters(gameData, defenderId, poisonAmount);
-            if (poisonAmount > 0) {
-                int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
-                gameData.playerPoisonCounters.put(defenderId, currentPoison + poisonAmount);
-                triggerCollectionService.checkYouPutCountersTriggers(
-                        gameData, gameQueryService.getOpponentId(gameData, defenderId), poisonAmount);
-                String logEntry = gameData.playerIdToName.get(defenderId) + " gets " + poisonAmount
-                        + " poison counter" + (poisonAmount > 1 ? "s" : "") + ".";
-                gameLogService.append(gameData, GameLog.text(logEntry));
-            }
-        }
+
         }
 
         // Aggregate prevention/replacement above must also update the per-source ledger.
@@ -4025,7 +4066,7 @@ public class CombatDamageService {
      * Processes pending source-specific redirect damage entries (e.g. Harm's Way).
      * The prevented damage is dealt to the redirect target, which can be a player or permanent.
      */
-    private void processSourceRedirectDamage(GameData gameData) {
+    private void processSourceRedirectDamage(GameData gameData, CombatDamageState state) {
         if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
 
         List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
@@ -4060,6 +4101,8 @@ public class CombatDamageService {
                                 gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
                     }
                     gameData.recordCombatDamageToPlayer(targetId, redirectEffective);
+                    if (damageSource != null) state.redirectedCombatDamageSourcesToPlayers
+                            .computeIfAbsent(targetId, ignored -> new LinkedHashSet<>()).add(damageSource);
                     Permanent sourcePermanent = redirect.damageSourceId() == null
                             ? null
                             : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
@@ -4242,15 +4285,15 @@ public class CombatDamageService {
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
                     gameData, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
             // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
             damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), pw.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             damage = damagePreventionService.applyCreatureRedirectShields(gameData, pw.getId(), atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Apply one-shot Sanctum Guardian / Honorable Passage shields (prevent the next damage from the chosen source to any target)
             if (damage > 0) restoreSourceShieldForCombatChunk(gameData, state, atk.getId(), pw.getId(), false);
             damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage, pw.getId(), true);
@@ -4373,31 +4416,31 @@ public class CombatDamageService {
             damage = gameQueryService.applyDamageReplacementEffects(gameData, damage);
             damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
                     gameData, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Mirror Strike: redirect the chosen attacker's combat damage to its controller.
             damage = damagePreventionService.applyTurnSourceDamageRedirectToController(
                     gameData, defenderId, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Apply source-specific redirect shields (e.g. Harm's Way) per-attacker.
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             damage = damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
                     gameData, defenderId, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Soltari Guerrillas: this attacker's next combat damage to an opponent goes to a creature instead.
             UUID atkController = gameQueryService.findPermanentController(gameData, atk.getId());
             if (atkController != null && !atkController.equals(defenderId)) {
                 damage = damagePreventionService.applySourceNextCombatDamageToOpponentRedirect(
                         gameData, defenderId, atk.getId(), damage);
-                processSourceRedirectDamage(gameData);
+                processSourceRedirectDamage(gameData, state);
             }
             // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
             damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, atk.getId(), damage);
             processEyeForAnEyeReflections(gameData);
             // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
             damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, atk.getId(), null, damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             UUID combatRedirectTargetId = damagePreventionService.findCombatDamageRedirectTarget(gameData, defenderId);
             Permanent combatRedirectTarget = combatRedirectTargetId == null
                     ? null : gameQueryService.findPermanentById(gameData, combatRedirectTargetId);
@@ -4470,16 +4513,16 @@ public class CombatDamageService {
             // Saving Grace: redirect all combat damage this turn to the defending player onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(
                     gameData, defenderId, null, atk.getId(), damage, true);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             if (damage > 0) restoreSharedRedirectForCombatChunk(gameData, state, defenderId, true);
             damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPlayer(
                     gameData, defenderId, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Martyrdom: redirect the next N combat damage to the defending player onto the creature
             // carrying the ability.
             damage = damagePreventionService.applyPlayerNextDamageRedirectShields(
                     gameData, defenderId, atk.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Ghostly Flame can make the attacker a colourless source of damage.
             CardColor attackerColor = gameQueryService.getDamageSourceColor(gameData, atkStats.color());
             if (damage > 0
@@ -4697,42 +4740,42 @@ public class CombatDamageService {
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetControllerId != null) {
             damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             damage = damagePreventionService.applyCreatureControllerDamageRedirectUntilNextTurn(
                     gameData, targetControllerId, target, source.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Saving Grace: redirect all combat damage this turn to a permanent you control onto the enchanted creature.
             damage = damagePreventionService.applyTurnDamageRedirectToCreature(gameData, targetControllerId, target.getId(), damage, true);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
             // Palisade Giant: combat damage to other permanents its controller controls is dealt to it instead.
             damage = damagePreventionService.applyStaticPermanentDamageRedirectToSelf(gameData, targetControllerId, target.getId(), damage);
-            processSourceRedirectDamage(gameData);
+            processSourceRedirectDamage(gameData, state);
         }
         damage = damagePreventionService.applyAllCreatureDamageRedirectToController(
                 gameData, target, source.getId(), damage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         damage = damagePreventionService.applyEnchantedCreatureDamageRedirectToController(
                 gameData, target, source.getId(), damage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         if (damage <= 0) return;
         restoreSharedRedirectForCombatChunk(gameData, state, target.getId(), false);
         damage = damagePreventionService.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
                 gameData, target.getId(), source.getId(), damage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         if (damage <= 0) return;
         // Reflect Damage: the chosen source's next damage is dealt to that source's controller instead.
         damage = damagePreventionService.applySourceNextCombatDamageToControllerShield(
                 gameData, source.getId(), damage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         damage = damagePreventionService.applyReflectDamageToSourceControllerShield(gameData, source.getId(), damage);
         processEyeForAnEyeReflections(gameData);
         // Opal-Eye: the chosen source's next damage is dealt to a fixed creature instead.
         damage = damagePreventionService.applySourceNextDamageRedirectToPermanent(gameData, source.getId(), target.getId(), damage);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets
         damage = damagePreventionService.applyCreatureRedirectShields(
                 gameData, target.getId(), source.getId(), damage, true);
-        processSourceRedirectDamage(gameData);
+        processSourceRedirectDamage(gameData, state);
         if (damage > 0 && damageSupport.hasDralnuDamageReplacement(target)) {
             queueDralnuReplacement(state, target, damage);
             return;

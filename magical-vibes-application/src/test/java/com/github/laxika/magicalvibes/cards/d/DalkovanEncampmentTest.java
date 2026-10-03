@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TradeRouteEnvoy;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DalkovanEncampment.class, GrizzlyBears.class, Mountain.class, Swamp.class})
+@CardUsed({DalkovanEncampment.class, TradeRouteEnvoy.class, Mountain.class, Swamp.class})
 class DalkovanEncampmentTest extends BaseCardTest {
 
     @Test
@@ -61,7 +61,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
     @DisplayName("The attack ability creates two tapped and attacking Warrior tokens")
     void attackingCreatesTwoWarriorTokens() {
         addEncampmentReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new TradeRouteEnvoy());
         activateAttackAbility();
 
         declareAttackers(List.of(1));
@@ -78,7 +78,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
     @DisplayName("The created tokens are sacrificed at the next end step")
     void createdTokensAreSacrificedAtNextEndStep() {
         addEncampmentReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new TradeRouteEnvoy());
         activateAttackAbility();
 
         declareAttackers(List.of(1));
@@ -92,6 +92,97 @@ class DalkovanEncampmentTest extends BaseCardTest {
         assertThat(warriorTokens()).isEmpty();
     }
 
+    @Test
+    void tokensNoLongerControlledByAbilityControllerAreNotSacrificed() {
+        addEncampmentReady(player1);
+        addCreatureReady(player1, new TradeRouteEnvoy());
+        activateAttackAbility();
+        declareAttackers(List.of(1));
+        resolveTokenAttackTargetChoices();
+        Permanent stolenToken = warriorTokens().getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(stolenToken);
+        gd.playerBattlefields.get(player2.getId()).add(stolenToken);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolenToken);
+        assertThat(warriorTokens()).isEmpty();
+    }
+
+    @Test
+    void endStepSacrificeUsesTheStack() {
+        addEncampmentReady(player1);
+        addCreatureReady(player1, new TradeRouteEnvoy());
+        activateAttackAbility();
+        declareAttackers(List.of(1));
+        resolveTokenAttackTargetChoices();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(warriorTokens()).hasSize(2);
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
+        assertThat(warriorTokens()).isEmpty();
+    }
+
+    @Test
+    void opponentsQualifyingLandsDoNotAllowUntappedEntry() {
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Mountain());
+
+        playEncampment();
+
+        assertThat(findPermanent(player1, "Dalkovan Encampment").isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleAttackersStillCreateOnlyTwoTokens() {
+        addEncampmentReady(player1);
+        addCreatureReady(player1, new TradeRouteEnvoy());
+        addCreatureReady(player1, new TradeRouteEnvoy());
+        activateAttackAbility();
+
+        declareAttackers(List.of(1, 2));
+        resolveTokenAttackTargetChoices();
+
+        assertThat(warriorTokens()).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void delayedAbilityStillWorksAfterEncampmentLeavesBattlefield() {
+        Permanent encampment = addEncampmentReady(player1);
+        addCreatureReady(player1, new TradeRouteEnvoy());
+        activateAttackAbility();
+        gd.playerBattlefields.get(player1.getId()).remove(encampment);
+
+        declareAttackers(List.of(0));
+        resolveTokenAttackTargetChoices();
+
+        assertThat(warriorTokens()).hasSize(2);
+    }
+
+    @Test
+    void delayedAbilityTriggersAgainInAnotherCombatThisTurn() {
+        addEncampmentReady(player1);
+        Permanent attacker = addCreatureReady(player1, new TradeRouteEnvoy());
+        activateAttackAbility();
+        declareAttackers(List.of(1));
+        resolveTokenAttackTargetChoices();
+        assertThat(warriorTokens()).hasSize(2);
+
+        attacker.setTapped(false);
+        declareAttackers(List.of(1));
+        resolveTokenAttackTargetChoices();
+
+        assertThat(warriorTokens()).hasSize(4);
+    }
+
     private void playEncampment() {
         harness.setHand(player1, List.of(new DalkovanEncampment()));
         harness.forceActivePlayer(player1);
@@ -100,10 +191,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
     }
 
     private Permanent addEncampmentReady(Player player) {
-        Permanent permanent = new Permanent(new DalkovanEncampment());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new DalkovanEncampment());
     }
 
     private void activateAttackAbility() {

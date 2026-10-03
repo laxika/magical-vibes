@@ -28,10 +28,7 @@ class DefilerOfFleshTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TyphoidRats()));
         harness.setLife(player1, 20);
 
-        harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, List.of(), null, null, false, null, null, null, List.of(), List.of(), false,
-                null, null, List.of(), List.of(), null, null, false, true, null);
+        harness.castInstantWithLifeOrManaAdditionalCost(player1, 0, null, true);
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
@@ -97,5 +94,68 @@ class DefilerOfFleshTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("using both Defilers to remove two black mana requires four life")
+    void multipleDefilersRequireSeparateLifePayments() {
+        addCreatureReady(player1, new DefilerOfFlesh());
+        addCreatureReady(player1, new DefilerOfFlesh());
+        harness.setHand(player1, List.of(new DefilerOfFlesh()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithLifeOrManaAdditionalCost(player1, 0, null, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("declining both Defilers' life payments preserves the full mana cost")
+    void multipleDefilersDoNotReduceCostWhenLifeIsNotPaid() {
+        addCreatureReady(player1, new DefilerOfFlesh());
+        addCreatureReady(player1, new DefilerOfFlesh());
+        harness.setHand(player1, List.of(new DefilerOfFlesh()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("a Defiler cast with no Defiler on the battlefield does not trigger itself")
+    void doesNotTriggerForItsOwnCast() {
+        harness.setHand(player1, List.of(new DefilerOfFlesh()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("a nonblack permanent spell neither triggers the boost nor receives a reduction")
+    void nonblackPermanentDoesNotTrigger() {
+        Permanent defiler = addCreatureReady(player1, new DefilerOfFlesh());
+        int originalPower = defiler.getEffectivePower();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(defiler.getEffectivePower()).isEqualTo(originalPower);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

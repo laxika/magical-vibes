@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,5 +57,76 @@ class DoomsdayConfluenceTest extends BaseCardTest {
         int modes = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 1, 2);
         assertThatThrownBy(() -> gs.playModalXCard(gd, player1, 0, modes, 3, null, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroXResolvesWithoutChoosingAnyModes() {
+        harness.setHand(player1, List.of(new DoomsdayConfluence()));
+        harness.setHand(player2, List.of(new DoomsdayConfluence()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3);
+        gs.playModalXCard(gd, player1, 0, modes, 0, null, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Dalek")).isZero();
+        harness.assertInHand(player2, "Doomsday Confluence");
+        harness.assertInGraveyard(player1, "Doomsday Confluence");
+    }
+
+    @Test
+    void createdDalekHasExpectedStatsAndSurvivesSacrificeMode() {
+        harness.setHand(player1, List.of(new DoomsdayConfluence(), new DoomsdayConfluence()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        int tokenMode = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 1);
+        gs.playModalXCard(gd, player1, 0, tokenMode, 1, null, List.of());
+        harness.passBothPriorities();
+
+        var dalek = findPermanent(player1, "Dalek");
+        assertThat(gqs.getEffectivePower(gd, dalek)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, dalek)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, dalek, Keyword.MENACE)).isTrue();
+
+        int sacrificeMode = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 0);
+        gs.playModalXCard(gd, player1, 0, sacrificeMode, 1, null, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dalek");
+    }
+
+    @Test
+    void repeatedDiscardStopsAtEmptyHandAndContinuesResolving() {
+        harness.setHand(player1, List.of(new DoomsdayConfluence(), new DoomsdayConfluence()));
+        harness.setHand(player2, List.of(new DoomsdayConfluence()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 1, 2, 2);
+        gs.playModalXCard(gd, player1, 0, modes, 3, null, List.of());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInHand(player1, "Doomsday Confluence");
+        harness.assertInGraveyard(player2, "Doomsday Confluence");
+        harness.assertOnBattlefield(player1, "Dalek");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void modesResolveInPrintedOrderRegardlessOfSelectionOrder() {
+        harness.setHand(player1, List.of(new DoomsdayConfluence()));
+        harness.setHand(player2, List.of(new DoomsdayConfluence()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelectionInRange(0, Integer.MAX_VALUE, 3, 2, 1);
+        gs.playModalXCard(gd, player1, 0, modes, 2, null, List.of());
+        harness.passBothPriorities();
+
+        long daleksBeforeDiscard = countPermanents(player1, "Dalek");
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(daleksBeforeDiscard).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Doomsday Confluence");
     }
 }

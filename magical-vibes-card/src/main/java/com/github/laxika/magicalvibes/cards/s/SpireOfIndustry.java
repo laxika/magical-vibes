@@ -14,12 +14,15 @@ import java.util.List;
 @CardRegistration(set = "AER", collectorNumber = "184")
 @CardRegistration(set = "KLR", collectorNumber = "285")
 @CardRegistration(set = "MKC", collectorNumber = "296")
+@CardRegistration(set = "DRC", collectorNumber = "172")
 @CardRegistration(set = "PIP", collectorNumber = "293")
 @CardRegistration(set = "PIP", collectorNumber = "511")
 @CardRegistration(set = "PIP", collectorNumber = "821")
 @CardRegistration(set = "PIP", collectorNumber = "1039")
 @CardRegistration(set = "NEC", collectorNumber = "178")
 @CardRegistration(set = "FIC", collectorNumber = "426")
+@CardRegistration(set = "EOC", collectorNumber = "183")
+@CardRegistration(set = "BRC", collectorNumber = "203")
 public class SpireOfIndustry extends Card {
 
     public SpireOfIndustry() {

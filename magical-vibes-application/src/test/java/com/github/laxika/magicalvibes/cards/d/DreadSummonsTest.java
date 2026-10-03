@@ -72,6 +72,44 @@ class DreadSummonsTest extends BaseCardTest {
         assertThat(zombies(player1)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Milling more than the library size counts only available creatures")
+    void millsAvailableCardsWhenLibrariesAreShorterThanX() {
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(creature, land));
+        harness.setLibrary(player2, List.of());
+
+        castDreadSummons(5);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature, land);
+        assertThat(zombies(player1)).hasSize(1);
+        assertThat(zombies(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures already in graveyards or below the milled cards do not count")
+    void countsOnlyCreaturesAmongTheTopXCards() {
+        Card existingCreature = new GrizzlyBears();
+        Card unmilledCreature = new GrizzlyBears();
+        Card milledLand = new Forest();
+        harness.setGraveyard(player1, List.of(existingCreature));
+        harness.setLibrary(player1, List.of(milledLand, unmilledCreature));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castDreadSummons(1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unmilledCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(existingCreature, milledLand)
+                .doesNotContain(unmilledCreature);
+        assertThat(zombies(player1)).isEmpty();
+        assertThat(zombies(player2)).isEmpty();
+    }
+
     private void castDreadSummons(int xValue) {
         harness.setHand(player1, List.of(new DreadSummons()));
         harness.addMana(player1, ManaColor.BLACK, xValue + 2);

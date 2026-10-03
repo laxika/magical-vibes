@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodhallPriest.class, GrizzlyBears.class, RavensCrime.class})
 class BloodhallPriestTest extends BaseCardTest {
 
     @Test
@@ -55,7 +57,7 @@ class BloodhallPriestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castCreature(player1, 0);
 
         harness.passBothPriorities();
 
@@ -129,12 +131,65 @@ class BloodhallPriestTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    private void castBloodhallPriestAlone() {
+    @Test
+    @DisplayName("ETB deals no damage if controller gains a card before resolution")
+    void etbRechecksEmptyHandAtResolution() {
+        harness.setLife(player2, 20);
+        castBloodhallPriestAlone();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
         harness.setHand(player1, List.of(new BloodhallPriest()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player1, "Bloodhall Priest");
+    }
+
+    @Test
+    @DisplayName("Attack deals no trigger damage if controller gains a card before resolution")
+    void attackRechecksEmptyHandAtResolution() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BloodhallPriest());
+        harness.setHand(player1, List.of());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player1, List.of(new BloodhallPriest()));
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("ETB may target its own controller")
+    void etbCanDamageController() {
+        harness.setLife(player1, 20);
+        castBloodhallPriestAlone();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Declining madness moves the discarded card from exile to graveyard")
+    void decliningMadnessPutsCardInGraveyard() {
+        BloodhallPriest priest = discardViaRavensCrime();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(priest.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(priest.getId()));
+        harness.assertNotOnBattlefield(player1, "Bloodhall Priest");
+    }
+
+    private void castBloodhallPriestAlone() {
+        harness.castFromHand(player1, new BloodhallPriest(), "{2}{B}{R}");
     }
 
     private BloodhallPriest discardViaRavensCrime() {

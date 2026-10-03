@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DragonAppeasement.class, GrizzlyBears.class, Forest.class})
 class DragonAppeasementTest extends BaseCardTest {
-
-    // ===== Skip your draw step =====
 
     @Test
     @DisplayName("Controller skips their draw step")
@@ -29,14 +29,56 @@ class DragonAppeasementTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance UPKEEP → DRAW, runs handleDrawStep
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
     }
 
-    // ===== Whenever you sacrifice a creature, you may draw a card =====
+    @Test
+    @DisplayName("Skipped draw step offers no priority before the main phase")
+    void skippedDrawStepOffersNoPriority() {
+        harness.addToBattlefield(player1, new DragonAppeasement());
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.withAutoStop(TurnStep.DRAW, () ->
+                harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities));
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("Opponent still draws during their draw step")
+    void opponentDoesNotSkipDrawStep() {
+        harness.addToBattlefield(player1, new DragonAppeasement());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature sacrifice does not trigger the enchantment")
+    void opponentSacrificeDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DragonAppeasement());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .checkAllyPermanentSacrificedTriggers(gd, player2.getId(), bears.getCard()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     @Test
     @DisplayName("Sacrificing a creature and accepting draws a card")

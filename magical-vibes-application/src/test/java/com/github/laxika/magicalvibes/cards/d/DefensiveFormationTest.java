@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.e.EndlessWurm;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.p.PouncingJaguar;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,12 +12,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefensiveFormation.class, PouncingJaguar.class})
+@CardUsed({DefensiveFormation.class, PouncingJaguar.class, EndlessWurm.class, Humble.class, Opalescence.class})
 class DefensiveFormationTest extends BaseCardTest {
 
     @Test
@@ -104,7 +108,6 @@ class DefensiveFormationTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(EndlessWurm.class)
     @DisplayName("Defensive Formation can keep trample damage on a blocker")
     void defendingPlayerCanAssignAllTrampleDamageToBlocker() {
         harness.setLife(player2, 20);
@@ -127,5 +130,62 @@ class DefensiveFormationTest extends BaseCardTest {
         harness.handleCombatDamageAssigned(player2, 0, Map.of(blocker.getId(), 9));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Defensive Formation permits splitting damage without killing either blocker")
+    void defendingPlayerCanSplitDamageBetweenBlockers() {
+        harness.addToBattlefield(player2, new DefensiveFormation());
+        Permanent attacker = addCreatureReady(player1, new PouncingJaguar());
+        Permanent blocker1 = addCreatureReady(player2, new PouncingJaguar());
+        Permanent blocker2 = addCreatureReady(player2, new PouncingJaguar());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        blocker1.setBlocking(true);
+        blocker1.addBlockingTarget(0);
+        blocker2.setBlocking(true);
+        blocker2.addBlockingTarget(0);
+
+        resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player2, 0,
+                Map.of(blocker1.getId(), 1, blocker2.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(blocker1, blocker2);
+        assertThat(blocker1.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker2.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities stops Defensive Formation from assigning damage")
+    void losingAbilitiesRestoresAttackingPlayersAssignment() {
+        harness.addToBattlefield(player2, new Opalescence());
+        Permanent formation = harness.addToBattlefieldAndReturn(player2, new DefensiveFormation());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, formation.getId());
+        assertThat(gqs.hasLostAllAbilities(gd, formation)).isTrue();
+
+        Permanent attacker = addCreatureReady(player1, new PouncingJaguar());
+        Permanent blocker1 = addCreatureReady(player2, new PouncingJaguar());
+        Permanent blocker2 = addCreatureReady(player2, new PouncingJaguar());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        blocker1.setBlocking(true);
+        blocker1.addBlockingTarget(0);
+        blocker2.setBlocking(true);
+        blocker2.addBlockingTarget(0);
+
+        resolveCombat(player1);
+
+        PendingInteraction.CombatDamageAssignment prompt = gd.interaction
+                .activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player1.getId());
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker1.getId(), 2));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(blocker2).doesNotContain(blocker1);
     }
 }

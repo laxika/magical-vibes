@@ -129,4 +129,51 @@ class DragonTyrantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
+
+    @Test
+    @DisplayName("The upkeep payment can be declined even with enough red mana")
+    void decliningAffordableUpkeepPaymentSacrificesIt() {
+        harness.addToBattlefield(player1, new DragonTyrant());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Dragon Tyrant");
+        harness.assertInGraveyard(player1, "Dragon Tyrant");
+    }
+
+    @Test
+    @DisplayName("Other colors cannot replace red mana in the upkeep payment")
+    void upkeepPaymentRequiresFourRedMana() {
+        harness.addToBattlefield(player1, new DragonTyrant());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Dragon Tyrant");
+        harness.assertInGraveyard(player1, "Dragon Tyrant");
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations stack without tapping or requiring haste")
+    void pumpActivationsStackWhileSummoningSick() {
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new DragonTyrant());
+        tyrant.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tyrant)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, tyrant)).isEqualTo(6);
+        assertThat(tyrant.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
 }

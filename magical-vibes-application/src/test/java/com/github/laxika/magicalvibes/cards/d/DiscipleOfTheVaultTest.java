@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AetherSpellbomb;
 import com.github.laxika.magicalvibes.cards.c.CreepingMold;
+import com.github.laxika.magicalvibes.cards.o.OblivionStone;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DiscipleOfTheVault.class, AetherSpellbomb.class, CreepingMold.class, RuleOfLaw.class})
+@CardUsed({DiscipleOfTheVault.class, AetherSpellbomb.class, CreepingMold.class, RuleOfLaw.class,
+        OblivionStone.class, Ornithopter.class})
 class DiscipleOfTheVaultTest extends BaseCardTest {
 
     @Test
@@ -26,13 +29,12 @@ class DiscipleOfTheVaultTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         destroyPermanentWithCreepingMold(player2, "Aether Spellbomb");
-        harness.passBothPriorities();
-
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player2, 19);
     }
@@ -45,6 +47,7 @@ class DiscipleOfTheVaultTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         destroyPermanentWithCreepingMold(player2, "Aether Spellbomb");
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -59,13 +62,11 @@ class DiscipleOfTheVaultTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         destroyPermanentWithCreepingMold(player1, "Aether Spellbomb");
-        harness.passBothPriorities();
-
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertLife(player2, 19);
     }
@@ -82,6 +83,52 @@ class DiscipleOfTheVaultTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Rule of Law");
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Sacrificing an artifact also triggers life loss")
+    void sacrificingArtifactAlsoTriggersLifeLoss() {
+        harness.addToBattlefield(player1, new DiscipleOfTheVault());
+        harness.addToBattlefield(player1, new AetherSpellbomb());
+        harness.setLibrary(player1, List.of(new RuleOfLaw()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Aether Spellbomb");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("An artifact creature dying simultaneously with Disciple still triggers the ability")
+    void artifactCreatureDyingSimultaneouslyWithDiscipleStillTriggers() {
+        harness.addToBattlefield(player1, new DiscipleOfTheVault());
+        harness.addToBattlefield(player1, new OblivionStone());
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 19);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Disciple of the Vault");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 18);
     }
 
     private void destroyPermanentWithCreepingMold(Player targetPlayer, String targetName) {

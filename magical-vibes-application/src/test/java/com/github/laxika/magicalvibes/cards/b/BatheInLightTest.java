@@ -74,6 +74,40 @@ class BatheInLightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster chooses protection even when targeting an opponent's creature")
+    void casterChoosesProtectionForOpponentTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.setHand(player1, List.of(new BatheInLight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(matchingCreature.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Radiance includes creatures present at resolution, but not later entrants")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        harness.setHand(player1, List.of(new BatheInLight()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+
+        assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(beforeResolution.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(afterResolution.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLACK);
+    }
+
+    @Test
     @DisplayName("Protection wears off at end of turn")
     void protectionWearsOffAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());

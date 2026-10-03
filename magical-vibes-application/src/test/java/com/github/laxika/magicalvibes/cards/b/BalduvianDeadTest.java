@@ -66,9 +66,7 @@ class BalduvianDeadTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Graveborn");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Graveborn");
@@ -112,11 +110,87 @@ class BalduvianDeadTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Balduvian Dead can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        int idx = setUpBoard();
+        Permanent dead = findPermanent(player1, "Balduvian Dead");
+        dead.tap();
+        dead.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new StormCrow()));
+
+        harness.activateAbility(player1, idx, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Graveborn");
+    }
+
+    @Test
+    @DisplayName("Each activation exiles one creature and creates its own token")
+    void multipleActivationsCreateTokensThatAreAllSacrificed() {
+        int idx = setUpBoard();
+        harness.setGraveyard(player1, List.of(new StormCrow(), new StormCrow()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, idx, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, idx, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Graveborn")).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Graveborn");
+    }
+
+    @Test
+    @DisplayName("A token created during an end step survives until the following turn's end step")
+    void tokenCreatedDuringEndStepWaitsForNextEndStep() {
+        int idx = setUpBoard();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setLibrary(player2, List.of(new StormCrow()));
+        harness.setGraveyard(player1, List.of(new StormCrow()));
+
+        harness.activateAbility(player1, idx, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Graveborn");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertOnBattlefield(player1, "Graveborn");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Graveborn");
+    }
+
+    @Test
+    @DisplayName("Activation requires red mana even when enough total mana is available")
+    void cannotActivateWithoutRedMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addCreatureReady(player1, new BalduvianDead());
+        harness.setGraveyard(player1, List.of(new StormCrow()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Storm Crow");
+        harness.assertNotOnBattlefield(player1, "Graveborn");
     }
 }

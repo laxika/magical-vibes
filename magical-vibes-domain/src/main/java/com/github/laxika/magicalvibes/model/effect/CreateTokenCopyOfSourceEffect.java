@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -37,6 +38,9 @@ import java.util.Set;
  * @param initialPlusOnePlusOneCounters +1/+1 counters with which each token enters
  * @param tapped             if true, the token enters tapped without entering attacking
  * @param excludedEffectType an effect type omitted from the token copy's copied effects
+ * @param additionalExcludedEffectTypes additional effect types omitted from the token copy
+ * @param excludedKeywords keywords omitted from the token copy
+ * @param exileAtEndOfCombat if true, the token is exiled at end of combat
  */
 public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
                                             CardColor colorOverride, CardSubtype addedSubtype,
@@ -48,7 +52,10 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                             Set<CardType> additionalTypes,
                                             Integer startingLoyaltyOverride,
                                             boolean tapped, int initialPlusOnePlusOneCounters,
-                                            Class<? extends CardEffect> excludedEffectType)
+                                            Class<? extends CardEffect> excludedEffectType,
+                                            Set<Class<? extends CardEffect>> additionalExcludedEffectTypes,
+                                            Set<Keyword> excludedKeywords,
+                                            boolean exileAtEndOfCombat)
         implements CardEffect {
         /** Backward-compatible constructor for a plain source copy. */
         public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
@@ -64,7 +71,25 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
                     powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters,
                     tappedAndAttacking, additionalTypes, startingLoyaltyOverride, tapped,
-                    initialPlusOnePlusOneCounters, null);
+                    initialPlusOnePlusOneCounters, null, Set.of(), Set.of(), false);
+        }
+
+        /** Backward-compatible constructor for a source copy omitting one effect type. */
+        public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
+                                            CardColor colorOverride, CardSubtype addedSubtype,
+                                            boolean removeManaCost,
+                                            Integer powerOverride, Integer toughnessOverride,
+                                            boolean grantHaste, boolean exileAtEndStep,
+                                            Map<CounterType, DynamicAmount> initialCounters,
+                                            boolean tappedAndAttacking,
+                                            Set<CardType> additionalTypes,
+                                            Integer startingLoyaltyOverride,
+                                            boolean tapped, int initialPlusOnePlusOneCounters,
+                                            Class<? extends CardEffect> excludedEffectType) {
+            this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
+                    powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters,
+                    tappedAndAttacking, additionalTypes, startingLoyaltyOverride, tapped,
+                    initialPlusOnePlusOneCounters, excludedEffectType, Set.of(), Set.of(), false);
         }
 
         public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
@@ -175,6 +200,19 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             Class<? extends CardEffect> excludedEffectType) {
         return new CreateTokenCopyOfSourceEffect(
                 false, new Fixed(1), null, null, false, null, null, false, false,
-                Map.of(), false, Set.of(), null, false, 0, excludedEffectType);
+                Map.of(), false, Set.of(), null, false, 0, excludedEffectType,
+                Set.of(), Set.of(), false);
+    }
+
+    /** Creates a source copy with explicit keyword/effect omissions and an end-of-combat exile. */
+    public static CreateTokenCopyOfSourceEffect withoutSourceEffects(
+            Set<Class<? extends CardEffect>> excludedEffectTypes,
+            Set<Keyword> excludedKeywords,
+            boolean grantHaste,
+            boolean exileAtEndOfCombat) {
+        return new CreateTokenCopyOfSourceEffect(
+                false, new Fixed(1), null, null, false, null, null, grantHaste, false,
+                Map.of(), false, Set.of(), null, false, 0, null,
+                excludedEffectTypes, excludedKeywords, exileAtEndOfCombat);
     }
 }

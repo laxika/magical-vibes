@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JestersMask;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CharismaticConqueror.class, GrizzlyBears.class, JestersMask.class})
+@CardUsed({CharismaticConqueror.class, GrizzlyBears.class, JestersMask.class, SolRing.class})
 class CharismaticConquerorTest extends BaseCardTest {
 
     @Test
@@ -59,6 +60,47 @@ class CharismaticConquerorTest extends BaseCardTest {
         assertThat(mask.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(findVampires(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped opponent artifact can be tapped instead of creating a Vampire")
+    void opponentMayTapEnteringArtifact() {
+        harness.addToBattlefield(player1, new CharismaticConqueror());
+
+        Permanent ring = harness.enterBattlefieldAndReturn(player2, new SolRing());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(findVampires(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact tapped for mana in response forces creation of a Vampire")
+    void alreadyTappedPermanentCreatesVampire() {
+        harness.addToBattlefield(player1, new CharismaticConqueror());
+        Permanent ring = harness.enterBattlefieldAndReturn(player2, new SolRing());
+
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(ring.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(findVampires(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A permanent that left before resolution forces creation of a Vampire")
+    void removedPermanentCreatesVampire() {
+        harness.addToBattlefield(player1, new CharismaticConqueror());
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(findVampires(player1)).hasSize(1);
     }
 
     private java.util.List<Permanent> findVampires(Player player) {

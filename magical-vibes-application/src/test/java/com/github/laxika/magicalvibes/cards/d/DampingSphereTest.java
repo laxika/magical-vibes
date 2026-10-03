@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.c.CabalStronghold;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.p.PalladiumMyr;
 import com.github.laxika.magicalvibes.cards.r.ResonatingLute;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DampingSphere.class, CabalStronghold.class, Forest.class, GrizzlyBears.class,
+        Island.class, ResonatingLute.class, Swamp.class, PalladiumMyr.class})
 class DampingSphereTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -257,13 +262,72 @@ class DampingSphereTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DampingSphere());
 
         // PalladiumMyr is a creature (not a land) that taps for 2 colorless
-        Permanent myr = new Permanent(new com.github.laxika.magicalvibes.cards.p.PalladiumMyr());
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new PalladiumMyr());
         myr.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(myr);
 
         // Tap PalladiumMyr — produces 2 colorless, NOT replaced (not a land)
         harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(ManaReflection.class)
+    @DisplayName("A basic land doubled by Mana Reflection produces one colorless mana")
+    void replacesDoubledBasicLandMana() {
+        harness.addToBattlefield(player1, new DampingSphere());
+        harness.addToBattlefield(player1, new ManaReflection());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(ManaReflection.class)
+    @DisplayName("An activated land ability doubled from one to two mana produces one colorless")
+    void replacesDoubledActivatedLandMana() {
+        harness.addToBattlefield(player1, new DampingSphere());
+        harness.addToBattlefield(player1, new ManaReflection());
+        harness.addToBattlefield(player1, new CabalStronghold());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The tax counts Sphere itself and spells cast before it entered")
+    void countsSpellsCastBeforeSphereEntered() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new DampingSphere(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A land producing only one mana is not replaced")
+    void singleManaFromStrongholdKeepsItsColor() {
+        harness.addToBattlefield(player1, new DampingSphere());
+        harness.addToBattlefield(player1, new CabalStronghold());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }

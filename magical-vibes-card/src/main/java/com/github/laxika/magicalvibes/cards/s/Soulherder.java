@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "2174")
 @CardRegistration(set = "MH1", collectorNumber = "214")
+@CardRegistration(set = "KHC", collectorNumber = "93")
 public class Soulherder extends Card {
 
     public Soulherder() {

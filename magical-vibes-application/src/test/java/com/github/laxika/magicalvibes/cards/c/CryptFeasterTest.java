@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CryptFeaster.class})
 class CryptFeasterTest extends BaseCardTest {
 
     @Test
@@ -69,6 +73,57 @@ class CryptFeasterTest extends BaseCardTest {
         assertThat(feaster.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Threshold must still be met when the attack trigger resolves")
+    void losingThresholdBeforeResolutionPreventsBoost() {
+        Permanent feaster = addCreatureReady(player1, new CryptFeaster());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        resolveAllTriggers();
+
+        assertThat(feaster.getPowerModifier()).isZero();
+        assertThat(feaster.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Reaching threshold after attacking cannot create an attack trigger")
+    void gainingThresholdAfterAttackDoesNotBoost() {
+        Permanent feaster = addCreatureReady(player1, new CryptFeaster());
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).isEmpty();
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        resolveAllTriggers();
+
+        assertThat(feaster.getPowerModifier()).isZero();
+        assertThat(feaster.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Menace rejects one blocker and allows two blockers")
+    void menaceRequiresTwoBlockers() {
+        addCreatureReady(player1, new CryptFeaster());
+        Permanent firstBlocker = addCreatureReady(player2, new CryptFeaster());
+        Permanent secondBlocker = addCreatureReady(player2, new CryptFeaster());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
     private List<Card> graveyardWithSevenCards() {
         return List.of(
                 new CryptFeaster(), new CryptFeaster(), new CryptFeaster(), new CryptFeaster(),

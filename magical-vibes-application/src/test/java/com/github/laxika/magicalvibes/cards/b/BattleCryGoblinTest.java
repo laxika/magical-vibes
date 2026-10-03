@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LolthSpiderQueen;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BattleCryGoblin.class, GrizzlyBears.class})
+@CardUsed({BattleCryGoblin.class, GrizzlyBears.class, LolthSpiderQueen.class})
 class BattleCryGoblinTest extends BaseCardTest {
 
     @Test
@@ -52,7 +54,8 @@ class BattleCryGoblinTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Goblin");
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        assertThat(token.isAttackedThisTurn()).isFalse();
     }
 
     @Test
@@ -81,5 +84,82 @@ class BattleCryGoblinTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goblin")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Pack tactics does not trigger below six power, even if power increases afterward")
+    void packTacticsDoesNotTriggerBelowThreshold() {
+        Permanent source = addCreatureReady(player1, new BattleCryGoblin());
+        addCreatureReady(player1, new BattleCryGoblin());
+
+        declareAttackers(List.of(0, 1));
+        source.setPowerModifier(2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and do not affect opposing Goblins")
+    void repeatedActivationsOnlyBoostControlledGoblins() {
+        Permanent source = addCreatureReady(player1, new BattleCryGoblin());
+        Permanent opponent = addCreatureReady(player2, new BattleCryGoblin());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Goblin created after the activated ability resolves does not inherit the boost or haste")
+    void newTokenDoesNotInheritEarlierActivation() {
+        addCreatureReady(player1, new BattleCryGoblin());
+        addCreatureReady(player1, new BattleCryGoblin());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
+        for (Permanent token : findPermanents(player1, "Goblin")) {
+            assertThat(token.getPowerModifier()).isZero();
+            assertThat(token.getToughnessModifier()).isZero();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("The controller chooses whether the new Goblin attacks the defending player or their planeswalker")
+    void tokenAttackDestinationRequiresChoice() {
+        addCreatureReady(player1, new BattleCryGoblin());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LolthSpiderQueen());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }

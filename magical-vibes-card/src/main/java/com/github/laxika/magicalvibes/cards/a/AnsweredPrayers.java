@@ -19,7 +19,7 @@ import java.util.Set;
 public class AnsweredPrayers extends Card {
 
     public AnsweredPrayers() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
                 new GainLifeEffect(1),
                 ConditionalEffect.unless(new NotCondition(new SourceIsCreature()),
                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING)))));

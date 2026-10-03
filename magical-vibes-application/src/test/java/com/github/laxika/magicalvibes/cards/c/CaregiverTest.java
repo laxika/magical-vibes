@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
+import com.github.laxika.magicalvibes.cards.l.LightningHelix;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Caregiver.class, Watchwolf.class})
+@CardUsed({Caregiver.class, Watchwolf.class, LightningHelix.class})
 class CaregiverTest extends BaseCardTest {
 
     @Test
@@ -83,5 +84,57 @@ class CaregiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    void preventsOnlyOneDamageAcrossSuccessiveSpells() {
+        harness.addToBattlefield(player1, new Caregiver());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningHelix(), new LightningHelix()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void preventsLethalNoncombatDamageToCreature() {
+        harness.addToBattlefield(player1, new Caregiver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningHelix()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Watchwolf");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void canTargetTheCreatureSacrificedAsItsCost() {
+        harness.addToBattlefield(player1, new Caregiver());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.assertInGraveyard(player1, "Watchwolf");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        harness.assertOnBattlefield(player1, "Caregiver");
     }
 }

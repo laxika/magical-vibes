@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "243")
 @CardRegistration(set = "C14", collectorNumber = "61")
+@CardRegistration(set = "C16", collectorNumber = "309")
 @CardRegistration(set = "CMM", collectorNumber = "421")
 @CardRegistration(set = "CMM", collectorNumber = "660")
 @CardRegistration(set = "WHO", collectorNumber = "290")
@@ -29,8 +30,14 @@ import java.util.List;
 @CardRegistration(set = "C20", collectorNumber = "292")
 @CardRegistration(set = "MIC", collectorNumber = "177")
 @CardRegistration(set = "C19", collectorNumber = "261")
+@CardRegistration(set = "BRC", collectorNumber = "190")
+@CardRegistration(set = "ONC", collectorNumber = "159")
 @CardRegistration(set = "WOC", collectorNumber = "164")
 @CardRegistration(set = "C18", collectorNumber = "269")
+@CardRegistration(set = "EOC", collectorNumber = "169")
+@CardRegistration(set = "KHC", collectorNumber = "115")
+@CardRegistration(set = "LTC", collectorNumber = "534")
+@CardRegistration(set = "VOC", collectorNumber = "176")
 public class MyriadLandscape extends Card {
 
     public MyriadLandscape() {

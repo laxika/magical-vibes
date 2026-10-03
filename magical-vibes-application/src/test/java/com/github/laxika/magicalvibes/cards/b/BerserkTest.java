@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
+import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Berserk.class, GrizzlyBears.class, Forest.class, MinimusContainment.class,
-        FountainOfYouth.class, Stifle.class})
+        FountainOfYouth.class, Stifle.class, RelentlessAssault.class})
 class BerserkTest extends BaseCardTest {
 
     @Test
@@ -32,8 +33,7 @@ class BerserkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Berserk()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -57,15 +57,13 @@ class BerserkTest extends BaseCardTest {
         target.setAttackedThisTurn(true);
         harness.setHand(player1, List.of(new Stifle()));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.stack).hasSize(1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, gd.stack.getLast().getTargetableId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getTargetableId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
@@ -90,6 +88,7 @@ class BerserkTest extends BaseCardTest {
         resolveEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
@@ -100,9 +99,8 @@ class BerserkTest extends BaseCardTest {
         Permanent target = castBerserkOnTarget();
         target.setAttackedThisTurn(true);
 
-        Permanent containment = new Permanent(new MinimusContainment());
+        Permanent containment = harness.addToBattlefieldAndReturn(player1, new MinimusContainment());
         containment.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(player1.getId()).add(containment);
 
         assertThat(gqs.isCreature(gd, target)).isFalse();
         resolveEndStep();
@@ -136,6 +134,107 @@ class BerserkTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    void cannotCastDuringAnAdditionalCombatAfterTheFirstCombat() {
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(List.of(0));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void usesPowerAtResolutionForEachBerserk() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Berserk(), new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void negativePowerGivesNoPowerBoostButStillGrantsTrample() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setPowerModifier(-3);
+        harness.setHand(player1, List.of(new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void delayedAbilityTriggersEvenWhenTheCreatureDidNotAttack() {
+        Permanent target = castBerserkOnTarget();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    void illegalTargetAtResolutionDoesNotCreateDelayedDestruction() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setAttackedThisTurn(true);
+        harness.setHand(player1, List.of(new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        Permanent containment = harness.addToBattlefieldAndReturn(player1, new MinimusContainment());
+        containment.setAttachedTo(target.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Berserk");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    void cannotCastInPostcombatMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
     private Permanent castBerserkOnTarget() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -143,16 +242,14 @@ class BerserkTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Berserk()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         return target;
     }
 
     private void resolveEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 }

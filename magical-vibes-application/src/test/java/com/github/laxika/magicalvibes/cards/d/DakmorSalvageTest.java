@@ -99,4 +99,49 @@ class DakmorSalvageTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(salvage);
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
+    @Test
+    @DisplayName("A Dakmor Salvage milled by dredge can replace the next draw")
+    void dredgesNewlyMilledCardDuringMultipleDraws() {
+        DakmorSalvage original = new DakmorSalvage();
+        DakmorSalvage newlyMilled = new DakmorSalvage();
+        DakmorSalvage second = new DakmorSalvage();
+        DakmorSalvage third = new DakmorSalvage();
+        DakmorSalvage fourth = new DakmorSalvage();
+        DakmorSalvage remaining = new DakmorSalvage();
+        harness.setGraveyard(player1, List.of(original));
+        harness.setLibrary(player1, List.of(newlyMilled, second, third, fourth, remaining));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original, newlyMilled);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second, third, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Dakmor Salvage cannot replace your draw")
+    void cannotDredgeFromOpponentsGraveyard() {
+        DakmorSalvage salvage = new DakmorSalvage();
+        DakmorSalvage topCard = new DakmorSalvage();
+        DakmorSalvage nextCard = new DakmorSalvage();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(salvage));
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(salvage);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
 }

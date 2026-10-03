@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BattleMadRonin.class, WanderingOnes.class})
@@ -113,5 +114,37 @@ class BattleMadRoninTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A tapped Battle-Mad Ronin is not required to attack")
+    void tappedRoninMayStayOutOfCombat() {
+        Permanent ronin = addCreatureReady(player1, new BattleMadRonin());
+        ronin.tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+        assertThat(ronin.isAttacking()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Battle-Mad Ronin is not required to attack")
+    void summoningSickRoninMayStayOutOfCombat() {
+        Permanent ronin = harness.addToBattlefieldAndReturn(player1, new BattleMadRonin());
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+        assertThat(ronin.isAttacking()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Attacking with another creature does not satisfy Battle-Mad Ronin's requirement")
+    void cannotOmitAbleRoninWhenAnotherCreatureAttacks() {
+        addCreatureReady(player1, new BattleMadRonin());
+        addCreatureReady(player1, new WanderingOnes());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
     }
 }

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,8 +51,7 @@ class DreadTillerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(island));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID bearsId = bears.getId();
-        harness.castInstant(player1, 0, bearsId);
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -86,6 +84,77 @@ class DreadTillerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class))
                 .isNull();
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A land chosen from hand enters tapped and nonlands are excluded")
+    void putsLandFromHandTapped() {
+        harness.addToBattlefield(player1, new DreadTiller());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Forest forest = new Forest();
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Shock(), forest, nonland));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(forest.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && permanent.isTapped());
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The controller may decline to put a land onto the battlefield")
+    void mayDeclineLand() {
+        harness.addToBattlefield(player1, new DreadTiller());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new Shock(), forest));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class))
+                .isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dread Tiller triggers for its own death with a -1/-1 counter")
+    void triggersForOwnDeath() {
+        Permanent tiller = harness.addToBattlefieldAndReturn(player1, new DreadTiller());
+        tiller.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new Shock(), forest));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, tiller.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dread Tiller");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class))
+                .isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && permanent.isTapped());
     }
 
     @Test

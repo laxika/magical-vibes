@@ -33,6 +33,7 @@ class DowsingShamanTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(enchantment);
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
         assertThat(shaman.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -65,6 +66,94 @@ class DowsingShamanTest extends BaseCardTest {
 
         assertThat(shaman.isTapped()).isFalse();
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(enchantment);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new DowsingShaman());
+        Card enchantment = new FistsOfIronwood();
+        harness.setGraveyard(player1, List.of(enchantment));
+        addActivationMana();
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, null, enchantment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+    }
+
+    @Test
+    @DisplayName("Cannot activate when already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent shaman = addCreatureReady(player1, new DowsingShaman());
+        shaman.setTapped(true);
+        Card enchantment = new FistsOfIronwood();
+        harness.setGraveyard(player1, List.of(enchantment));
+        addActivationMana();
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, null, enchantment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost without green mana")
+    void requiresGreenMana() {
+        Permanent shaman = addCreatureReady(player1, new DowsingShaman());
+        Card enchantment = new FistsOfIronwood();
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, null, enchantment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not return a different enchantment when the target leaves the graveyard")
+    void doesNotSubstituteAnotherEnchantmentForMissingTarget() {
+        Permanent shaman = addCreatureReady(player1, new DowsingShaman());
+        Card target = new FistsOfIronwood();
+        Card other = new FistsOfIronwood();
+        harness.setGraveyard(player1, List.of(target, other));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+
+        harness.setGraveyard(player1, List.of(other));
+        harness.setHand(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(shaman.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after the Shaman leaves the battlefield")
+    void resolvesWithoutSourceOnBattlefield() {
+        DowsingShaman source = new DowsingShaman();
+        addCreatureReady(player1, source);
+        Card enchantment = new FistsOfIronwood();
+        harness.setGraveyard(player1, List.of(enchantment));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, enchantment.getId(), Zone.GRAVEYARD);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(enchantment, source));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
     }
 
     private void addActivationMana() {

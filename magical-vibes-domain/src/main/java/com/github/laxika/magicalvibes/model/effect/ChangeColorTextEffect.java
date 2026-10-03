@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+
 /**
  * "Change the text of target [spell or] permanent by replacing all instances of one [color/basic land
  * type/creature type] word with another." Resolves by prompting the controller for a from-word and a to-word, then
@@ -10,7 +12,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param landTypesAllowed when true the word swap may change basic land type words (Mind Bend,
  *                         Magical Hack); when false only color words may be swapped (Glamerdye)
  * @param creatureTypesAllowed when true the word swap may change creature type words (Artificial
- *                             Evolution); the replacement creature type cannot be Wall
+ *                             Evolution)
+ * @param excludedReplacementCreatureType creature type forbidden as the replacement, if any;
+ *                                        this restriction also changes when the effect's text changes
  * @param canTargetSpell   when true the effect may also target a spell on the stack in addition to a
  *                         permanent (Glamerdye, Magical Hack). A text change made to a permanent spell
  *                         carries to the permanent it becomes (CR 400.7a). The spell capability is
@@ -24,7 +28,14 @@ package com.github.laxika.magicalvibes.model.effect;
  *                         the battlefield (Mind Bend, Magical Hack, Glamerdye).
  */
 public record ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
-                                    boolean untilEndOfTurn, boolean creatureTypesAllowed) implements CardEffect {
+                                    boolean untilEndOfTurn, boolean creatureTypesAllowed,
+                                    CardSubtype excludedReplacementCreatureType) implements CardEffect {
+
+    public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell,
+                                boolean untilEndOfTurn, boolean creatureTypesAllowed) {
+        this(colorWordsAllowed, landTypesAllowed, canTargetSpell, untilEndOfTurn, creatureTypesAllowed,
+                creatureTypesAllowed ? CardSubtype.WALL : null);
+    }
 
     public ChangeColorTextEffect(boolean colorWordsAllowed, boolean landTypesAllowed, boolean canTargetSpell) {
         this(colorWordsAllowed, landTypesAllowed, canTargetSpell, false, false);

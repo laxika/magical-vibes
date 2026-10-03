@@ -19,6 +19,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BosssChauffeurTest extends BaseCardTest {
 
     @Test
+    void enteringAloneGetsOneCounterAndDoesNotTriggerItsOwnAlliance() {
+        Permanent chauffeur = castChauffeur();
+
+        assertThat(chauffeur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Boss's Chauffeur");
+    }
+
+    @Test
+    void allianceTriggersForEachCreatureWithoutOncePerTurnLimit() {
+        Permanent chauffeur = castChauffeur();
+
+        castCreature(new GrizzlyBears(), ManaColor.GREEN, ManaColor.COLORLESS);
+        castCreature(new GrizzlyBears(), ManaColor.GREEN, ManaColor.COLORLESS);
+
+        assertThat(chauffeur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void simultaneousDeathsCreateTokensForEachChauffeursController() {
+        Permanent ownChauffeur = harness.addToBattlefieldAndReturn(player1, new BosssChauffeur());
+        ownChauffeur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent opposingChauffeur = harness.addToBattlefieldAndReturn(player2, new BosssChauffeur());
+        opposingChauffeur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(2);
+        assertThat(findPermanents(player2, "Citizen")).hasSize(4);
+        harness.assertNotOnBattlefield(player1, "Boss's Chauffeur");
+        harness.assertNotOnBattlefield(player2, "Boss's Chauffeur");
+    }
+
+    @Test
     void entersWithOneCounterPlusOneForEachOtherControlledCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -46,8 +83,7 @@ class BosssChauffeurTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
         List<Permanent> citizens = findPermanents(player1, "Citizen");

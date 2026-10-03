@@ -96,4 +96,91 @@ class ArgivianArchaeologistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+
+    @Test
+    void cannotActivateWithOnlyOneWhiteMana() {
+        Permanent archaeologist = addReadyArchaeologist();
+        Card artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(archaeologist.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent archaeologist = addReadyArchaeologist();
+        archaeologist.tap();
+        Card artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent archaeologist = addReadyArchaeologist();
+        archaeologist.setSummoningSick(true);
+        Card artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(archaeologist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotReturnArtifactExiledInResponse() {
+        Permanent archaeologist = addReadyArchaeologist();
+        Card artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addToBattlefield(player2, new TormodsCrypt());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact);
+        assertThat(archaeologist.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesAfterArchaeologistLeavesBattlefield() {
+        Permanent archaeologist = addReadyArchaeologist();
+        Card artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, archaeologist);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(archaeologist.getCard());
+        harness.assertNotOnBattlefield(player1, "Argivian Archaeologist");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

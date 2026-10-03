@@ -120,6 +120,67 @@ class DimensionalBreachTest extends BaseCardTest {
                 .containsExactly(ownedByPlayer2ControlledByPlayer1);
     }
 
+    @Test
+    @DisplayName("The spell controller controls the delayed trigger during an opponent's upkeep")
+    void spellControllerControlsOpponentUpkeepTrigger() {
+        harness.addToBattlefield(player2, new TempleOfTheFalseGod());
+        harness.castFromHand(player1, new DimensionalBreach(), "{5}{W}{W}");
+        harness.passBothPriorities();
+
+        advanceToSecondTurnUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("An upkeep with no owned exiled cards does not end subsequent returns")
+    void upkeepWithNoOwnedCardsDoesNotEndReturns() {
+        Card land = new TempleOfTheFalseGod();
+        harness.addToBattlefield(player2, land);
+        harness.castFromHand(player1, new DimensionalBreach(), "{5}{W}{W}");
+        harness.passBothPriorities();
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+
+        advanceToSecondTurnUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard()).containsExactly(land);
+
+        advanceToSecondTurnUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A player returns their remaining card on a later upkeep")
+    void returnsRemainingCardOnLaterUpkeep() {
+        Card creature = new DaruSpiritualist();
+        Card land = new TempleOfTheFalseGod();
+        harness.addToBattlefield(player1, creature);
+        harness.addToBattlefield(player1, land);
+        harness.castFromHand(player1, new DimensionalBreach(), "{5}{W}{W}");
+        harness.passBothPriorities();
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        advanceToSecondTurnUpkeep(player2);
+        harness.passBothPriorities();
+
+        advanceToSecondTurnUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard()).containsExactly(land, creature);
+    }
+
     private void advanceToSecondTurnUpkeep(Player activePlayer) {
         gd.turnNumber = 2;
         advanceToUpkeep(activePlayer);

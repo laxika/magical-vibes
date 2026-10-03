@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -61,5 +64,54 @@ class DreamProwlerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @CardUsed({DreamProwler.class, Boomerang.class})
+    @DisplayName("Dream Prowler becomes unblockable when the other attacker leaves before blocks")
+    void becomesUnblockableWhenOtherAttackerLeaves() {
+        Permanent blocker = addCreatureReady(player2, new DreamProwler());
+        Permanent prowler = addCreatureReady(player1, new DreamProwler());
+        Permanent otherAttacker = addCreatureReady(player1, new DreamProwler());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.castAndResolveInstant(player1, 0, otherAttacker.getId());
+        });
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(prowler)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @CardUsed({DreamProwler.class, Boomerang.class})
+    @DisplayName("Becoming the only attacker after blocks does not undo an existing block")
+    void remainsBlockedWhenOtherAttackerLeavesAfterBlocks() {
+        Permanent blocker = addCreatureReady(player2, new DreamProwler());
+        Permanent prowler = addCreatureReady(player1, new DreamProwler());
+        Permanent otherAttacker = addCreatureReady(player1, new DreamProwler());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                    gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                    gd.playerBattlefields.get(player1.getId()).indexOf(prowler))));
+            harness.castAndResolveInstant(player1, 0, otherAttacker.getId());
+        });
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherAttacker);
+        assertThat(blocker.isBlocking()).isTrue();
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
     }
 }

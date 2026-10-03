@@ -63,4 +63,46 @@ class CantivoreTest extends BaseCardTest {
 
         assertThat(cantivore.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Cantivore dies after resolving with no enchantment cards in graveyards")
+    void diesAfterResolvingWithoutEnchantments() {
+        harness.castFromHand(player1, new Cantivore(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cantivore");
+        harness.assertInGraveyard(player1, "Cantivore");
+    }
+
+    @Test
+    @DisplayName("An enchantment in the opponent's graveyard lets Cantivore survive resolution")
+    void survivesWithOnlyOpponentsEnchantment() {
+        harness.setGraveyard(player2, List.of(new Standstill()));
+        harness.castFromHand(player1, new Cantivore(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        Permanent cantivore = findPermanent(player1, "Cantivore");
+        assertThat(gqs.getEffectivePower(gd, cantivore)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cantivore)).isEqualTo(1);
+
+        harness.setGraveyard(player2, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Cantivore");
+        harness.assertInGraveyard(player1, "Cantivore");
+    }
+
+    @Test
+    @DisplayName("Enchantments outside graveyards do not increase Cantivore's power or toughness")
+    void ignoresEnchantmentsOutsideGraveyards() {
+        harness.setGraveyard(player1, List.of(new Standstill()));
+        harness.setHand(player1, List.of(new Standstill()));
+        harness.setLibrary(player2, List.of(new Standstill()));
+        harness.setExile(player2, List.of(new Standstill()));
+        harness.addToBattlefield(player2, new Standstill());
+        Permanent cantivore = addCreatureReady(player1, new Cantivore());
+
+        assertThat(gqs.getEffectivePower(gd, cantivore)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cantivore)).isEqualTo(1);
+    }
 }

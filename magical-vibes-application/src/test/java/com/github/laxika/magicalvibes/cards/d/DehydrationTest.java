@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.Twitch;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Dehydration.class, GrizzlyBears.class, Island.class})
+@CardUsed({Dehydration.class, GrizzlyBears.class, Island.class, Twitch.class})
 class DehydrationTest extends BaseCardTest {
 
     @Test
@@ -267,5 +268,30 @@ class DehydrationTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(bearsPerm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untap spell can untap the enchanted creature without removing Dehydration")
+    void untapSpellCanUntapEnchantedCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+        harness.setHand(player1, List.of(new Dehydration()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new Twitch()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Dehydration").getAttachedTo()).isEqualTo(bears.getId());
+
+        bears.tap();
+        advanceToUpkeep(player2);
+
+        assertThat(bears.isTapped()).isTrue();
     }
 }

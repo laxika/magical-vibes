@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ConquerorsPledge.class})
 class ConquerorsPledgeTest extends BaseCardTest {
 
     @Test
@@ -20,8 +23,7 @@ class ConquerorsPledgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ConquerorsPledge()));
         addBaseMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertKorSoldiers(6);
     }
@@ -37,6 +39,34 @@ class ConquerorsPledgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertKorSoldiers(12);
+    }
+
+    @Test
+    @DisplayName("Kicker requires the full additional six mana")
+    void cannotKickWithOnlyFiveAdditionalMana() {
+        harness.setHand(player1, List.of(new ConquerorsPledge()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castKickedSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Conqueror's Pledge");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Having enough mana for kicker does not require paying it")
+    void canDeclineKickerWithEnoughMana() {
+        harness.setHand(player1, List.of(new ConquerorsPledge()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertKorSoldiers(6);
     }
 
     private void addBaseMana() {

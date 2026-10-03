@@ -28,6 +28,7 @@ class BorosFuryShieldTest extends BaseCardTest {
         addAttacker(player2, 2, 2);
 
         castShield(player2, target, ManaColor.WHITE, 2);
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -41,6 +42,7 @@ class BorosFuryShieldTest extends BaseCardTest {
         Permanent target = addAttacker(player2, 3, 3);
 
         castShield(player2, target, ManaColor.RED, 2);
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
@@ -69,6 +71,73 @@ class BorosFuryShieldTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Red spent damages you when targeting your own attacker")
+    void redSpentDamagesOwnCreatureController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent target = addAttacker(player1, 3, 3);
+
+        castShield(player1, target, ManaColor.RED, 2);
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Neither effect resolves when the target is no longer attacking or blocking")
+    void targetLeavingCombatMakesSpellIllegal() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent target = addAttacker(player2, 3, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BorosFuryShield()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, target.getId());
+        target.setAttacking(false);
+        target.setAttackTarget(null);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Red spent damages the blocking creature's controller")
+    void redSpentDamagesBlockerController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent attacker = addAttacker(player1, 2, 2);
+        Permanent blocker = addBlocker(player2, 3, 3, 0);
+
+        castShield(player1, blocker, ManaColor.RED, 2);
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Negative power deals no damage to the creature's controller")
+    void negativePowerDealsNoDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent target = addAttacker(player2, -1, 3);
+
+        castShield(player2, target, ManaColor.RED, 2);
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     private void castShield(Player attackingPlayer, Permanent target, ManaColor coloredMana, int genericMana) {

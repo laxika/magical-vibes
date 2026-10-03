@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Decommission.class, AngelicChorus.class, FountainOfYouth.class, GrizzlyBears.class})
 class DecommissionTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class DecommissionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -45,8 +46,7 @@ class DecommissionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertInGraveyard(player2, "Angelic Chorus");
@@ -64,5 +64,71 @@ class DecommissionTest extends BaseCardTest {
         UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroying your own artifact enables Revolt during resolution")
+    void destroyingOwnArtifactEnablesRevolt() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Decommission()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Destroying only an opponent's artifact does not enable Revolt")
+    void destroyingOpponentsArtifactDoesNotEnableRevolt() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Decommission()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Revolt checks for a permanent leaving after the spell is cast")
+    void revoltEnabledWhileSpellIsOnStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Decommission()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, artifact.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents life gain even when Revolt is enabled")
+    void illegalTargetPreventsLifeGain() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new Decommission()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, artifact.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, artifact));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Decommission");
+        harness.assertLife(player1, 20);
     }
 }

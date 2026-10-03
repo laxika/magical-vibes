@@ -73,4 +73,47 @@ class DramaticEntranceTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Barkshell Blessing");
         harness.assertInHand(player1, "Barkshell Blessing");
     }
+
+    @Test
+    @DisplayName("Chooses one green creature from a mixed hand and leaves the other cards alone")
+    void choosesOnlyOneCreatureFromMixedHand() {
+        SafeholdElite chosen = new SafeholdElite();
+        SafeholdElite remaining = new SafeholdElite();
+        Tatterkite colorlessCreature = new Tatterkite();
+        BarkshellBlessing greenInstant = new BarkshellBlessing();
+        harness.setHand(player1, List.of(new DramaticEntrance(), colorlessCreature,
+                chosen, greenInstant, remaining));
+        harness.setHand(player2, List.of(new SafeholdElite()));
+        castEntrance();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(findPermanent(player1, "Safehold Elite").getCard()).isSameAs(chosen);
+        assertThat(countPermanents(player1, "Safehold Elite")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(
+                colorlessCreature, greenInstant, remaining);
+        harness.assertInHand(player1, "Tatterkite");
+        harness.assertInHand(player1, "Barkshell Blessing");
+        harness.assertInHand(player2, "Safehold Elite");
+        harness.assertNotOnBattlefield(player2, "Safehold Elite");
+        harness.assertInGraveyard(player1, "Dramatic Entrance");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves with no creature in hand even when the opponent has one")
+    void resolvesWithEmptyHand() {
+        harness.setHand(player2, List.of(new SafeholdElite()));
+        harness.castFromHand(player1, new DramaticEntrance(), "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Safehold Elite");
+        harness.assertInHand(player2, "Safehold Elite");
+        harness.assertInGraveyard(player1, "Dramatic Entrance");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BribersPurse;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +15,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AvalancheTusker.class, AlpineGrizzly.class, BribersPurse.class})
 class AvalancheTuskerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking targets a creature defending player controls and forces it to block")
     void attacksAndForcesDefendingCreatureToBlock() {
-        Permanent tusker = readyCreature(player1, new AvalancheTusker());
-        Permanent defendingCreature = readyCreature(player2, new GrizzlyBears());
-        Permanent ownCreature = readyCreature(player1, new GrizzlyBears());
-        Permanent defendingNoncreature = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(defendingNoncreature);
+        Permanent tusker = addCreatureReady(player1, new AvalancheTusker());
+        Permanent defendingCreature = addCreatureReady(player2, new AlpineGrizzly());
+        Permanent ownCreature = addCreatureReady(player1, new AlpineGrizzly());
+        Permanent defendingNoncreature = harness.addToBattlefieldAndReturn(player2, new BribersPurse());
 
         declareAttackers(player1, List.of(0));
 
@@ -43,16 +42,14 @@ class AvalancheTuskerTest extends BaseCardTest {
     @Test
     @DisplayName("The targeted creature must be declared as a blocker")
     void targetedCreatureMustBlock() {
-        Permanent tusker = readyCreature(player1, new AvalancheTusker());
-        Permanent defendingCreature = readyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player1, new AvalancheTusker());
+        Permanent defendingCreature = addCreatureReady(player2, new AlpineGrizzly());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, defendingCreature.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -62,10 +59,65 @@ class AvalancheTuskerTest extends BaseCardTest {
         assertThat(defendingCreature.isBlocking()).isTrue();
     }
 
-    private Permanent readyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("A tapped creature is a legal target but is not forced to block")
+    void tappedTargetCannotBlock() {
+        addCreatureReady(player1, new AvalancheTusker());
+        Permanent defender = addCreatureReady(player2, new AlpineGrizzly());
+        defender.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, defender.getId());
+        harness.passBothPriorities();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(defender.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature with summoning sickness must still block if able")
+    void summoningSickTargetMustBlock() {
+        addCreatureReady(player1, new AvalancheTusker());
+        Permanent defender = harness.addToBattlefieldAndReturn(player2, new AlpineGrizzly());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, defender.getId());
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(defender.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A previous combat's target need not block in an additional combat")
+    void blockingRequirementExpiresAtEndOfCombat() {
+        Permanent tusker = addCreatureReady(player1, new AvalancheTusker());
+        Permanent firstTarget = addCreatureReady(player2, new AlpineGrizzly());
+        Permanent secondTarget = addCreatureReady(player2, new AlpineGrizzly());
+        firstTarget.tap();
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, firstTarget.getId());
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        });
+
+        tusker.untap();
+        firstTarget.untap();
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.passBothPriorities();
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        assertThat(firstTarget.isBlocking()).isFalse();
     }
 }

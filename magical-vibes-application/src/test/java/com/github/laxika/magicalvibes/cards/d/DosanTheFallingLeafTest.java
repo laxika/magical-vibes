@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.e.EtherealHaze;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.k.KabutoMoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DosanTheFallingLeaf.class, EtherealHaze.class, Forest.class, KabutoMoth.class})
+@CardUsed({DosanTheFallingLeaf.class, EtherealHaze.class, Forest.class, KabutoMoth.class, Humility.class})
 class DosanTheFallingLeafTest extends BaseCardTest {
 
     @Test
@@ -133,5 +134,53 @@ class DosanTheFallingLeafTest extends BaseCardTest {
 
         assertThat(dosan.getPowerModifier()).isEqualTo(1);
         assertThat(dosan.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Humility removes Dosan's restriction on casting spells")
+    void continuousAbilityLossRemovesRestriction() {
+        harness.addToBattlefield(player1, new DosanTheFallingLeaf());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player2, List.of(new EtherealHaze()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passPriority(player1);
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player2.getId())).contains(0);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dosan does not prevent responses while it is a spell on the stack")
+    void dosanOnStackDoesNotRestrictCasting() {
+        harness.setHand(player1, List.of(new DosanTheFallingLeaf()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.setHand(player2, List.of(new EtherealHaze()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Dosan allows instants outside the main phase during a player's own turn")
+    void ownTurnInstantCanBeCastDuringCombat() {
+        harness.addToBattlefield(player2, new DosanTheFallingLeaf());
+        harness.setHand(player1, List.of(new EtherealHaze()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
     }
 }

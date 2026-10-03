@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "190")
+@CardRegistration(set = "C16", collectorNumber = "156")
 public class LurkingPredators extends Card {
 
     public LurkingPredators() {

@@ -44,8 +44,7 @@ class CrazedArmodonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Crazed Armodon");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Crazed Armodon");
@@ -71,10 +70,66 @@ class CrazedArmodonTest extends BaseCardTest {
     void survivesEndStepWithoutActivation() {
         addArmodon();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Crazed Armodon");
+    }
+
+    @Test
+    @DisplayName("End-step destruction uses the stack and allows responses")
+    void destructionWaitsForDelayedTriggerToResolve() {
+        addArmodon();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Crazed Armodon");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crazed Armodon");
+        harness.assertInGraveyard(player1, "Crazed Armodon");
+    }
+
+    @Test
+    @DisplayName("Activation during the end step waits for the following turn's end step")
+    void endStepActivationSurvivesCleanupAndLosesTemporaryBenefits() {
+        Permanent armodon = addArmodon();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, armodon, Keyword.TRAMPLE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Crazed Armodon");
+        assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, armodon, Keyword.TRAMPLE)).isFalse();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Crazed Armodon");
+    }
+
+    @Test
+    @DisplayName("The activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileFirstActivationIsOnStack() {
+        addArmodon();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
     }
 }

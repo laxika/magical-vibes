@@ -93,4 +93,77 @@ class DiveBomberTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("attacking or blocking creature");
     }
+
+    @Test
+    @DisplayName("A tapped Dive Bomber cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent bomber = addCreatureReady(player1, new DiveBomber());
+        bomber.tap();
+        Permanent attacker = addCreatureReady(player2, new BatteringCraghorn());
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertOnBattlefield(player1, "Dive Bomber");
+        harness.assertNotInGraveyard(player1, "Dive Bomber");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Dive Bomber cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent bomber = addCreatureReady(player1, new DiveBomber());
+        bomber.setSummoningSick(true);
+        Permanent attacker = addCreatureReady(player2, new BatteringCraghorn());
+        attacker.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertOnBattlefield(player1, "Dive Bomber");
+        harness.assertNotInGraveyard(player1, "Dive Bomber");
+        assertThat(bomber.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not damage a creature that stops blocking before resolution")
+    void doesNotDamageCreatureThatStopsBlockingBeforeResolution() {
+        addCreatureReady(player1, new DiveBomber());
+        Permanent blocker = addCreatureReady(player2, new BatteringCraghorn());
+        blocker.setBlocking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Battering Craghorn");
+        harness.assertInGraveyard(player1, "Dive Bomber");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its own controller")
+    void canDamageOwnBlockingCreature() {
+        addCreatureReady(player1, new DiveBomber());
+        Permanent blocker = addCreatureReady(player1, new BatteringCraghorn());
+        blocker.setBlocking(true);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dive Bomber");
+        harness.assertInGraveyard(player1, "Battering Craghorn");
+    }
 }

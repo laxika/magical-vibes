@@ -112,7 +112,39 @@ public record LookAtTopCardsEffect(
         EnterWithCountersEffect battlefieldEntryReplacement,
         DynamicAmount chooseTotalManaValueAtMost,
         CardPredicate selectedCardPredicate, CardEffect effectIfSelectedCardMatches,
-        boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard) implements CombatDamageAmountAwareEffect {
+        boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, boolean exileBeforeChoosing) implements CombatDamageAmountAwareEffect {
+    public LookAtTopCardsEffect(
+        DynamicAmount lookCount,
+        DynamicAmount chooseCount,
+        CardPredicate choosePredicate,
+        LookDestination restDestination,
+        boolean reveal,
+        LibrarySearchDestination chosenDestination,
+        boolean optional,
+        boolean gainLifeEqualToChosenCardManaValue,
+        DynamicAmount chooseManaValueAtMost,
+        CardEffect effectIfNoCardChosen,
+        boolean recordChosenCount,
+        int loseLifePerSelectedCard,
+        boolean exactChooseCount,
+        boolean grantHaste,
+        boolean returnToHandAtEndStep,
+        boolean cloakChosenPermanents,
+        int payLifePerSelectedCard,
+        LibrarySelectionFollowUp battlefieldSelectionFollowUp,
+        boolean selectedCardMayGoToHandIfBattlefieldDeclined,
+        EnterWithCountersEffect battlefieldEntryReplacement,
+        DynamicAmount chooseTotalManaValueAtMost,
+        CardPredicate selectedCardPredicate, CardEffect effectIfSelectedCardMatches,
+        boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard) {
+        this(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, chooseTotalManaValueAtMost, selectedCardPredicate, effectIfSelectedCardMatches, gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, false);
+    }
+
+    /** Exiles the entire top-card group before the battlefield card is chosen. */
+    public LookAtTopCardsEffect withExileBeforeChoosing() {
+        return new LookAtTopCardsEffect(lookCount, chooseCount, choosePredicate, restDestination, reveal, chosenDestination, optional, gainLifeEqualToChosenCardManaValue, chooseManaValueAtMost, effectIfNoCardChosen, recordChosenCount, loseLifePerSelectedCard, exactChooseCount, grantHaste, returnToHandAtEndStep, cloakChosenPermanents, payLifePerSelectedCard, battlefieldSelectionFollowUp, selectedCardMayGoToHandIfBattlefieldDeclined, battlefieldEntryReplacement, chooseTotalManaValueAtMost, selectedCardPredicate, effectIfSelectedCardMatches, gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard, true);
+    }
+
         public LookAtTopCardsEffect(
         DynamicAmount lookCount,
         DynamicAmount chooseCount,

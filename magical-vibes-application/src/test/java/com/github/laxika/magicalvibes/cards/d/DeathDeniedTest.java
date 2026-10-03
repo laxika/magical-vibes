@@ -113,4 +113,56 @@ class DeathDeniedTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Araba Mothrider");
         harness.assertInGraveyard(player1, "Death Denied");
     }
+
+    @Test
+    @DisplayName("The same creature card cannot be chosen twice for X=2")
+    void cannotChooseSameCardTwice() {
+        Card first = new ArabaMothrider();
+        Card second = new ArabaMothrider();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new DeathDenied()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, 2, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is returned when another target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card first = new ArabaMothrider();
+        Card second = new ArabaMothrider();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new DeathDenied()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setGraveyard(player1, List.of(second));
+        harness.setExile(player1, List.of(first));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(second.getId());
+        harness.assertInGraveyard(player1, "Death Denied");
+        assertThat(gd.exiledCards.stream().map(entry -> entry.card()).toList())
+                .extracting(Card::getId).contains(first.getId());
+    }
+
+    @Test
+    @DisplayName("X=0 can be cast with an empty graveyard")
+    void xZeroWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new DeathDenied()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Death Denied");
+    }
 }

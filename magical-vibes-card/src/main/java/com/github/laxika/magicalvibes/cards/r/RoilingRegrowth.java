@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "201")
+@CardRegistration(set = "EOC", collectorNumber = "105")
 public class RoilingRegrowth extends Card {
 
     public RoilingRegrowth() {

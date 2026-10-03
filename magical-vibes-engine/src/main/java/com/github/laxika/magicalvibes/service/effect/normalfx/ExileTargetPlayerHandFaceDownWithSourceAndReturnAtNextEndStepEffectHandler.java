@@ -47,11 +47,12 @@ public class ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect
         }
 
         List<Card> cardsToExile = new ArrayList<>(hand);
+        UUID returnGroupId = UUID.randomUUID();
         hand.clear();
         for (Card card : cardsToExile) {
             exileService.exileCardFaceDown(gameData, targetPlayerId, card, sourcePermanentId);
             gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    card.getId(), targetPlayerId, entry.getCard(), entry.getControllerId()));
+                    card.getId(), targetPlayerId, entry.getCard(), entry.getControllerId(), returnGroupId));
         }
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);

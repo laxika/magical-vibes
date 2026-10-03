@@ -27,8 +27,7 @@ class ArgivianFindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(artifact.getId()));
@@ -43,8 +42,7 @@ class ArgivianFindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArgivianFind()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, enchantment.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchantment.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(enchantment.getId()));
@@ -74,5 +72,37 @@ class ArgivianFindTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a required graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new JanglingAutomaton()));
+        harness.setHand(player1, List.of(new ArgivianFind()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return another card when the target leaves the graveyard")
+    void doesNotReturnAnotherCardWhenTargetLeavesGraveyard() {
+        Card target = new JanglingAutomaton();
+        Card other = new KithkinArmor();
+        Card spell = new ArgivianFind();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, spell);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -198,7 +198,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         UUID returnControllerId = e.returnUnderController()
                 ? entry.getControllerId()
-                : source.getCard().getOwnerId() != null ? source.getCard().getOwnerId() : entry.getControllerId();
+                : gameData.stolenCreatures.getOrDefault(source.getId(),
+                        source.getCard().getOwnerId() != null ? source.getCard().getOwnerId() : entry.getControllerId());
         exileSupport.exileAndScheduleReturn(gameData, entry, source, returnControllerId, e.returnTapped(), e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), e.returnAtControllerNextStep(),
                 e.returnAtControllerNextStep() ? entry.getControllerId() : null);
@@ -516,6 +517,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         UUID ownerId = flickered.ownerId();
         UUID returnControllerId = flickered.returnControllerId();
         boolean hadBonusSubtype = flickered.hadBonusSubtype();
+
+        if (card.isToken() || gameData.findExiledCard(card.getId()) == null) {
+            return;
+        }
 
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());

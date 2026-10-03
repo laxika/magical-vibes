@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +25,7 @@ class DancersChakramsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent chakrams = findPermanent(player1, "Dancer's Chakrams");
         Permanent hero = findPermanent(player1, "Hero");
@@ -43,9 +41,9 @@ class DancersChakramsTest extends BaseCardTest {
     @Test
     @DisplayName("Equip moves Dancer's Chakrams and its grants to another creature")
     void equipMovesChakrams() {
-        Permanent chakrams = addChakramsReady(player1);
-        Permanent first = addCreatureReady(player1);
-        Permanent second = addCreatureReady(player1);
+        Permanent chakrams = harness.addToBattlefieldAndReturn(player1, new DancersChakrams());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
         chakrams.setAttachedTo(first.getId());
 
         harness.forceActivePlayer(player1);
@@ -66,10 +64,12 @@ class DancersChakramsTest extends BaseCardTest {
     @Test
     @DisplayName("Other commanders you control get +2/+2 and lifelink")
     void boostsOtherCommandersYouControl() {
-        Permanent chakrams = addChakramsReady(player1);
-        Permanent commander = addCreatureReady(player1);
-        Permanent nonCommander = addCreatureReady(player1);
-        Permanent opponentCommander = addCreatureReady(player2);
+        Permanent chakrams = harness.addToBattlefieldAndReturn(player1, new DancersChakrams());
+        Permanent commander = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearer = addCreatureReady(player1, new GrizzlyBears());
+        chakrams.setAttachedTo(bearer.getId());
+        Permanent nonCommander = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCommander = addCreatureReady(player2, new GrizzlyBears());
         gd.makeCommander(player1.getId(), commander.getCard());
         gd.makeCommander(player2.getId(), opponentCommander.getCard());
 
@@ -83,17 +83,48 @@ class DancersChakramsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCommander, Keyword.LIFELINK)).isFalse();
     }
 
-    private Permanent addChakramsReady(Player player) {
-        Permanent permanent = new Permanent(new DancersChakrams());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Unattached Chakrams do not boost commanders")
+    void unattachedChakramsDoNotBoostCommanders() {
+        harness.addToBattlefield(player1, new DancersChakrams());
+        Permanent commander = addCreatureReady(player1, new GrizzlyBears());
+        gd.makeCommander(player1.getId(), commander.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.LIFELINK)).isFalse();
     }
 
-    private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Equipped commander receives only the direct equipment boost")
+    void equippedCommanderDoesNotBoostItself() {
+        Permanent chakrams = harness.addToBattlefieldAndReturn(player1, new DancersChakrams());
+        Permanent commander = addCreatureReady(player1, new GrizzlyBears());
+        gd.makeCommander(player1.getId(), commander.getCard());
+        chakrams.setAttachedTo(commander.getId());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The granted anthem follows the equipped creature's controller")
+    void anthemUsesEquippedCreaturesController() {
+        Permanent chakrams = harness.addToBattlefieldAndReturn(player1, new DancersChakrams());
+        Permanent bearer = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCommander = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentsCommander = addCreatureReady(player2, new GrizzlyBears());
+        gd.makeCommander(player1.getId(), ownCommander.getCard());
+        gd.makeCommander(player2.getId(), opponentsCommander.getCard());
+        chakrams.setAttachedTo(bearer.getId());
+
+        assertThat(gqs.getEffectivePower(gd, ownCommander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCommander)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownCommander, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opponentsCommander)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponentsCommander)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opponentsCommander, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bearer)).isEqualTo(4);
     }
 }

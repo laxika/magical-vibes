@@ -20,6 +20,9 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "229")
 @CardRegistration(set = "AFC", collectorNumber = "190")
 @CardRegistration(set = "LCC", collectorNumber = "284")
+@CardRegistration(set = "EOC", collectorNumber = "125")
+@CardRegistration(set = "C16", collectorNumber = "218")
+@CardRegistration(set = "VOC", collectorNumber = "156")
 public class RakdosCharm extends Card {
 
     public RakdosCharm() {

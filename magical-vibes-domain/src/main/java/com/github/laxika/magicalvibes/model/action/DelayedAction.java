@@ -18,6 +18,7 @@ package com.github.laxika.magicalvibes.model.action;
  * {@code GameData} god-class.
  */
 public sealed interface DelayedAction permits
+        DelayedZoneChangeTrigger,
         DelayedCleanupTrigger,
         DelayedAdditionalCombatBeginningEffect,
         TargetCreatureMustAttackNextCombat,
@@ -140,7 +141,9 @@ public sealed interface DelayedAction permits
         EachPlayerHandExileReturnAtNextEndStep,
         TargetPlayerHandExileReturnAtNextTurnEndStep,
         ExpireControlAtEndOfNextTurn,
+        PhasedOutUntilEndOfNextTurn,
         DelayedDamageDoubling,
+        DelayedControllerDamageMultiplication,
         DelayedSourceDamageMultiplication,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {

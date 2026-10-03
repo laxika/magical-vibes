@@ -101,7 +101,8 @@ public class GraveyardTargetValidators {
                 && !(effect.filter() instanceof CardSharesCardTypeWithImprintedCardPredicate)
                 && !predicateEvaluationService.matchesCardPredicate(
                 graveyardCard, effect.filter(), sourceCardId, ctx.gameData(), graveyardOwnerId,
-                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(),
+                ctx.sourcePermanentSnapshot())) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
@@ -673,7 +674,7 @@ public class GraveyardTargetValidators {
         if (effect.requireManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
-        if (effect.maxManaValue() != null) {
+        if (effect.maxManaValue() != null && !effect.checkManaValueOnlyOnResolution()) {
             UUID controllerId = ctx.sourceControllerId() != null
                     ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
             int maxManaValue = amountEvaluationService.evaluate(

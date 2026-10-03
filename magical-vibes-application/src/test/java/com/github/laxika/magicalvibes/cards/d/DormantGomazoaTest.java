@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DormantGomazoa.class, Shock.class, TurnToFrog.class})
 class DormantGomazoaTest extends BaseCardTest {
 
     @Test
@@ -32,7 +33,7 @@ class DormantGomazoaTest extends BaseCardTest {
         Permanent gomazoa = harness.addToBattlefieldAndReturn(player1, new DormantGomazoa());
         gomazoa.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(gomazoa.isTapped()).isTrue();
     }
@@ -44,8 +45,7 @@ class DormantGomazoaTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -63,8 +63,7 @@ class DormantGomazoaTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -75,14 +74,48 @@ class DormantGomazoaTest extends BaseCardTest {
         assertThat(gomazoa.isTapped()).isFalse();
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+    @Test
+    void targetingCreatureDoesNotTriggerUntap() {
+        Permanent gomazoa = harness.addToBattlefieldAndReturn(player1, new DormantGomazoa());
+        gomazoa.tap();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, gomazoa.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gomazoa.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Dormant Gomazoa");
+    }
+
+    @Test
+    void targetingOtherPlayerDoesNotTriggerUntap() {
+        Permanent gomazoa = harness.addToBattlefieldAndReturn(player1, new DormantGomazoa());
+        gomazoa.tap();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gomazoa.isTapped()).isTrue();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void doesNotTriggerAfterLosingAbilities() {
+        Permanent gomazoa = harness.addToBattlefieldAndReturn(player1, new DormantGomazoa());
+        gomazoa.tap();
+        harness.setHand(player2, List.of(new TurnToFrog(), new Shock()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, gomazoa.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gomazoa.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
     }
 }

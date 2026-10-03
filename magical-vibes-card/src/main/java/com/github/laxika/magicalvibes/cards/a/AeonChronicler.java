@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "PLC", collectorNumber = "32")
 @CardRegistration(set = "DDM", collectorNumber = "17")
 @CardRegistration(set = "TSR", collectorNumber = "51")
+@CardRegistration(set = "C16", collectorNumber = "82")
 public class AeonChronicler extends Card {
 
     public AeonChronicler() {

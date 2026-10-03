@@ -52,10 +52,7 @@ class DisplacerKittenTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not trigger the ability")
     void creatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new DisplacerKitten());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).singleElement()
@@ -85,6 +82,113 @@ class DisplacerKittenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Kitten can flicker itself before the triggering spell resolves")
+    void canFlickerItself() {
+        Permanent kitten = harness.addToBattlefieldAndReturn(player1, new DisplacerKitten());
+        castNoncreatureSpell();
+
+        harness.handlePermanentChosen(player1, kitten.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Displacer Kitten");
+        assertThat(harness.getPermanentId(player1, "Displacer Kitten")).isNotEqualTo(kitten.getId());
+        assertThat(gd.stack).singleElement()
+                .extracting(entry -> entry.getEntryType())
+                .isEqualTo(StackEntryType.INSTANT_SPELL);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A stolen permanent returns under its owner's control")
+    void stolenPermanentReturnsToOwner() {
+        harness.addToBattlefield(player1, new DisplacerKitten());
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, bears);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        castNoncreatureSpell();
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isNotEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger the Kitten")
+    void opponentNoncreatureSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DisplacerKitten());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).singleElement()
+                .extracting(entry -> entry.getEntryType())
+                .isEqualTo(StackEntryType.INSTANT_SPELL);
+    }
+
+    @Test
+    @DisplayName("A target that changes controllers before resolution is not flickered")
+    void targetMustRemainUnderYourControl() {
+        harness.addToBattlefield(player1, new DisplacerKitten());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castNoncreatureSpell();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(target.getId());
+    }
+    @Test
+    @DisplayName("The trigger still resolves after the Kitten is destroyed")
+    void triggerSurvivesSourceRemoval() {
+        Permanent kitten = harness.addToBattlefieldAndReturn(player1, new DisplacerKitten());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castNoncreatureSpell();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, kitten.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Displacer Kitten");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isNotEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("A destroyed target is not returned from the graveyard")
+    void destroyedTargetIsNotReturned() {
+        harness.addToBattlefield(player1, new DisplacerKitten());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castNoncreatureSpell();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
     private void castNoncreatureSpell() {
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);

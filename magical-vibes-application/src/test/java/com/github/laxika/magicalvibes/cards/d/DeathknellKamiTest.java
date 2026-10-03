@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +57,7 @@ class DeathknellKamiTest extends BaseCardTest {
     void soulshiftReturnsCheapSpiritToHand() {
         addCreatureReady(player1, new DeathknellKami());
         Card spirit = new GhostLitRedeemer();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(spirit)));
+        harness.setGraveyard(player1, List.of(spirit));
 
         killKamiWithKagemaro();
 
@@ -77,7 +76,7 @@ class DeathknellKamiTest extends BaseCardTest {
     void soulshiftMayBeDeclined() {
         addCreatureReady(player1, new DeathknellKami());
         Card spirit = new GhostLitRedeemer();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(spirit)));
+        harness.setGraveyard(player1, List.of(spirit));
 
         killKamiWithKagemaro();
 
@@ -100,8 +99,8 @@ class DeathknellKamiTest extends BaseCardTest {
         Card expensiveSpirit = new KagemaroFirstToSuffer();
         Card nonSpirit = new DeathmaskNezumi();
         Card opponentSpirit = new GhostLitRedeemer();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(cheapSpirit, expensiveSpirit, nonSpirit)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentSpirit)));
+        harness.setGraveyard(player1, List.of(cheapSpirit, expensiveSpirit, nonSpirit));
+        harness.setGraveyard(player2, List.of(opponentSpirit));
 
         killKamiWithKagemaro();
 
@@ -109,6 +108,106 @@ class DeathknellKamiTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).contains(cheapSpirit.getId());
         assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack their boosts")
+    void repeatedActivationsStack() {
+        Permanent kami = addCreatureReady(player1, new DeathknellKami());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kami)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice triggers during the opponent's end step too")
+    void sacrificesAtOpponentsEndStep() {
+        addCreatureReady(player1, new DeathknellKami());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Deathknell Kami");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Deathknell Kami");
+        harness.assertInGraveyard(player1, "Deathknell Kami");
+    }
+
+    @Test
+    @DisplayName("Without an activation Deathknell Kami survives the end step")
+    void noSacrificeWithoutActivation() {
+        addCreatureReady(player1, new DeathknellKami());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Deathknell Kami");
+        harness.assertNotInGraveyard(player1, "Deathknell Kami");
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits for the following end step and its boost expires")
+    void endStepActivationWaitsUntilFollowingEndStep() {
+        Permanent kami = addCreatureReady(player1, new DeathknellKami());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deathknell Kami");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.getEffectivePower(gd, kami)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, kami)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Deathknell Kami");
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Deathknell Kami");
+        harness.assertNotOnBattlefield(player1, "Deathknell Kami");
+    }
+
+    @Test
+    @DisplayName("Soulshift does not return a target that leaves the graveyard before resolution")
+    void soulshiftTargetLeavesGraveyard() {
+        addCreatureReady(player1, new DeathknellKami());
+        Card spirit = new GhostLitRedeemer();
+        harness.setGraveyard(player1, List.of(spirit));
+        killKamiWithKagemaro();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(spirit.getId()));
+        harness.setExile(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Ghost-Lit Redeemer");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spirit);
+    }
+
+    @Test
+    @DisplayName("Soulshift has no return when the graveyard has no eligible Spirit")
+    void soulshiftWithoutEligibleSpirit() {
+        addCreatureReady(player1, new DeathknellKami());
+        harness.setGraveyard(player1, List.of(new DeathmaskNezumi()));
+
+        killKamiWithKagemaro();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Deathknell Kami");
+        harness.assertInGraveyard(player1, "Deathmask Nezumi");
+        harness.assertNotInHand(player1, "Deathknell Kami");
+        harness.assertNotInHand(player1, "Deathmask Nezumi");
     }
 
     private void killKamiWithKagemaro() {

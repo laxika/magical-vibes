@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,10 +16,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Blistergrub.class, MoriokReaver.class, Swamp.class})
 class BlistergrubTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Blistergrub puts it on the battlefield")
@@ -32,8 +34,6 @@ class BlistergrubTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Blistergrub");
     }
 
-    // ===== Death trigger =====
-
     @Test
     @DisplayName("When Blistergrub dies in combat, death trigger goes on the stack")
     void deathTriggerGoesOnStack() {
@@ -41,7 +41,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereBlistergrubDies();
-        harness.passBothPriorities(); // Combat damage — Blistergrub dies
+        resolveCombat(); // Combat damage — Blistergrub dies
 
         // Blistergrub should be in graveyard
         harness.assertInGraveyard(player1, "Blistergrub");
@@ -60,7 +60,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereBlistergrubDies();
-        harness.passBothPriorities(); // Combat damage — Blistergrub dies
+        resolveCombat(); // Combat damage — Blistergrub dies
 
         // Resolve the death trigger
         harness.passBothPriorities();
@@ -77,7 +77,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereBlistergrubDies();
-        harness.passBothPriorities(); // Combat damage — Blistergrub dies
+        resolveCombat(); // Combat damage — Blistergrub dies
 
         // Resolve the death trigger
         harness.passBothPriorities();
@@ -93,7 +93,7 @@ class BlistergrubTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         setupCombatWhereBlistergrubDies();
-        harness.passBothPriorities(); // Combat damage — Blistergrub dies
+        resolveCombat(); // Combat damage — Blistergrub dies
 
         // Resolve the death trigger
         harness.passBothPriorities();
@@ -101,28 +101,44 @@ class BlistergrubTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses") && log.contains("2") && log.contains("life"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Swampwalk prevents blocking when the defender controls a Swamp")
+    void swampwalkPreventsBlocking() {
+        addCreatureReady(player1, new Blistergrub());
+        addCreatureReady(player2, new MoriokReaver());
+        harness.addToBattlefield(player2, new Swamp());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled only by the attacker does not prevent blocking")
+    void attackersSwampDoesNotPreventBlocking() {
+        addCreatureReady(player1, new Blistergrub());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new MoriokReaver());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     /**
-     * Sets up combat where Blistergrub (player1, 2/2) attacks and is blocked by a 3/3 creature (player2).
-     * Blistergrub will die from combat damage.
+     * Blistergrub attacks into a real SOM 3/2 and dies from combat damage.
      */
     private void setupCombatWhereBlistergrubDies() {
-        Permanent blistergrubPerm = findPermanent(player1, "Blistergrub");
-        blistergrubPerm.setSummoningSick(false);
-        blistergrubPerm.setAttacking(true);
+        Permanent attacker = findPermanent(player1, "Blistergrub");
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(3);
-        bigBear.setToughness(3);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
-        blockerPerm.setBlocking(true);
-        blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        Permanent blocker = addCreatureReady(player2, new MoriokReaver());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
     }
 }

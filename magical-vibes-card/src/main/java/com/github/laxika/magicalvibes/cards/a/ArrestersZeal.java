@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,7 +20,7 @@ public class ArrestersZeal extends Card {
     public ArrestersZeal() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 2))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerMainPhase(),
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new AllOf(java.util.List.of(new WasCast(), new ControllerMainPhase())),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)));
     }
 }

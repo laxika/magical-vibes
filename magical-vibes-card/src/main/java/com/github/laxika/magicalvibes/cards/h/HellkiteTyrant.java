@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "RVR", collectorNumber = "111")
 @CardRegistration(set = "FIC", collectorNumber = "295")
 @CardRegistration(set = "C21", collectorNumber = "172")
+@CardRegistration(set = "C16", collectorNumber = "128")
 public class HellkiteTyrant extends Card {
 
     public HellkiteTyrant() {

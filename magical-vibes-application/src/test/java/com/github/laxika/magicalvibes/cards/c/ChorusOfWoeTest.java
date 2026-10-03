@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChorusOfWoe.class, GrizzlyBears.class})
+@CardUsed({ChorusOfWoe.class, GrizzlyBears.class, Swamp.class})
 class ChorusOfWoeTest extends BaseCardTest {
 
     @Test
@@ -60,7 +61,6 @@ class ChorusOfWoeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -85,5 +85,57 @@ class ChorusOfWoeTest extends BaseCardTest {
         assertThat(laterBear.getToughnessModifier()).isZero();
         assertThat(laterBear.getEffectivePower()).isEqualTo(2);
         assertThat(laterBear.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Includes creatures that enter while the spell is on the stack")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(3);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures or targets")
+    void resolvesWithNoCreatures() {
+        harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Chorus of Woe");
+    }
+
+    @Test
+    @DisplayName("Does not boost noncreature permanents")
+    void doesNotBoostNoncreatures() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(swamp.getPowerModifier()).isZero();
+        assertThat(swamp.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple casts stack their boosts until cleanup")
+    void multipleCastsStackUntilCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new ChorusOfWoe(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
 }

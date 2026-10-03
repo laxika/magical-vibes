@@ -76,4 +76,55 @@ class DestructiveFlowTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(basicLand.getId()));
     }
+
+    @Test
+    @DisplayName("Only the active player sacrifices, even when both players have nonbasic lands")
+    void leavesInactivePlayersNonbasicLandUntouched() {
+        harness.addToBattlefield(player1, new DestructiveFlow());
+        harness.addToBattlefield(player1, new MeteorCrater());
+        harness.addToBattlefield(player2, new MeteorCrater());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Meteor Crater");
+        harness.assertNotInGraveyard(player1, "Meteor Crater");
+        harness.assertNotOnBattlefield(player2, "Meteor Crater");
+        harness.assertInGraveyard(player2, "Meteor Crater");
+    }
+
+    @Test
+    @DisplayName("With no lands the active player sacrifices nothing, even if the controller has a nonbasic land")
+    void doesNothingWhenActivePlayersBattlefieldIsEmpty() {
+        harness.addToBattlefield(player1, new DestructiveFlow());
+        harness.addToBattlefield(player1, new MeteorCrater());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Meteor Crater");
+        harness.assertOnBattlefield(player1, "Destructive Flow");
+    }
+
+    @Test
+    @DisplayName("Two Destructive Flows each require a separate nonbasic land sacrifice")
+    void multipleCopiesTriggerSeparately() {
+        harness.addToBattlefield(player1, new DestructiveFlow());
+        harness.addToBattlefield(player1, new DestructiveFlow());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new MeteorCrater());
+        harness.addToBattlefield(player2, new MeteorCrater());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Meteor Crater");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof MeteorCrater)
+                .hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

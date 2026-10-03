@@ -71,4 +71,50 @@ class DevastateTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Wintermoon Mesa");
         harness.assertNotInGraveyard(player1, "Wintermoon Mesa");
     }
+
+    @Test
+    @DisplayName("Devastate deals no damage when its only target leaves the battlefield")
+    void doesNotResolveWhenTargetLandLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        harness.addToBattlefield(player1, new SporeFrog());
+        harness.addToBattlefield(player2, new SporeFrog());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Devastate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Spore Frog");
+        harness.assertOnBattlefield(player2, "Spore Frog");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Devastate");
+    }
+
+    @Test
+    @DisplayName("Regenerating the target land does not stop Devastate's damage")
+    void dealsDamageEvenWhenTargetLandRegenerates() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        target.setRegenerationShield(1);
+        harness.addToBattlefield(player1, new SporeFrog());
+        harness.addToBattlefield(player2, new SporeFrog());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Devastate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Wintermoon Mesa");
+        harness.assertInGraveyard(player1, "Spore Frog");
+        harness.assertInGraveyard(player2, "Spore Frog");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
 }

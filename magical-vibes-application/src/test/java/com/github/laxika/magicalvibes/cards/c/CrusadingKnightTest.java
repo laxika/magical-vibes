@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AgonizingDemise;
+import com.github.laxika.magicalvibes.cards.e.ExoticCurse;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TrenchWurm;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AgonizingDemise.class, CrusadingKnight.class, Swamp.class, TrenchWurm.class})
+@CardUsed({AgonizingDemise.class, CrusadingKnight.class, ExoticCurse.class, Swamp.class, TrenchWurm.class})
 class CrusadingKnightTest extends BaseCardTest {
 
     @Test
@@ -41,6 +42,37 @@ class CrusadingKnightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Crusading Knight ignores Swamps controlled by its own controller")
+    void ignoresOwnSwamps() {
+        Permanent knight = addCreatureReady(player1, new CrusadingKnight());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Crusading Knight's bonus updates as opponent Swamps enter and leave")
+    void bonusUpdatesWithOpponentBattlefield() {
+        Permanent knight = addCreatureReady(player1, new CrusadingKnight());
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(3);
+
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player2.getId()).clear();
+
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Crusading Knight cannot be targeted by black spells")
     void hasProtectionFromBlack() {
         Permanent knight = addCreatureReady(player2, new CrusadingKnight());
@@ -51,6 +83,20 @@ class CrusadingKnightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, knight.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Crusading Knight cannot be enchanted by a black Aura")
+    void cannotBeTargetedByBlackAura() {
+        Permanent knight = addCreatureReady(player2, new CrusadingKnight());
+        harness.setHand(player1, List.of(new ExoticCurse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, knight.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from black");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -75,8 +121,7 @@ class CrusadingKnightTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new TrenchWurm());
         Permanent knight = addCreatureReady(player2, new CrusadingKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 

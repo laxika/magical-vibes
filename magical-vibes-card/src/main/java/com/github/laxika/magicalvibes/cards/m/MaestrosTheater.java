@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "251")
+@CardRegistration(set = "EOC", collectorNumber = "167")
 public class MaestrosTheater extends Card {
 
     public MaestrosTheater() {

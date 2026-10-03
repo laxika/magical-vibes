@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RiseAndShine;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,10 +15,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CombineChrysalis.class, GrizzlyBears.class})
+@CardUsed({CombineChrysalis.class, GrizzlyBears.class, RiseAndShine.class})
 class CombineChrysalisTest extends BaseCardTest {
 
     @Test
@@ -77,6 +80,66 @@ class CombineChrysalisTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void animatedTokenCopyHasFlyingFromItsOwnAbility() {
+        CombineChrysalis tokenCopy = new CombineChrysalis();
+        tokenCopy.setToken(true);
+        Permanent chrysalis = harness.addToBattlefieldAndReturn(player1, tokenCopy);
+        harness.setHand(player1, List.of(new RiseAndShine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        prepareMainPhase(player1);
+
+        harness.castAndResolveSorcery(player1, 0, chrysalis.getId());
+
+        assertThat(gqs.isCreature(gd, chrysalis)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chrysalis, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void canSacrificeNoncreatureTokenCopyOfItself() {
+        CombineChrysalis tokenCopy = new CombineChrysalis();
+        tokenCopy.setToken(true);
+        Permanent chrysalis = harness.addToBattlefieldAndReturn(player1, tokenCopy);
+        addManaForAbility();
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(chrysalis.getId()));
+        harness.passBothPriorities();
+        Permanent beast = findPermanent(player1, "Beast");
+        assertThat(beast.getEffectivePower()).isEqualTo(4);
+        assertThat(beast.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsToken() {
+        harness.addToBattlefield(player1, new CombineChrysalis());
+        harness.addToBattlefield(player2, createTokenCreature("Opponent Token"));
+        addManaForAbility();
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a token");
+    }
+
+    @Test
+    void cannotActivateDuringOwnCombat() {
+        harness.addToBattlefield(player1, new CombineChrysalis());
+        harness.addToBattlefield(player1, createTokenCreature("Soldier Token"));
+        addManaForAbility();
+        prepareMainPhase(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("main phase");
     }
 
     private void addManaForAbility() {

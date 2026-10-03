@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.l.LatchkeyFaerie;
 import com.github.laxika.magicalvibes.cards.m.MudbuttonClanger;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,12 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AuntiesSnitch.class, MudbuttonClanger.class, LatchkeyFaerie.class, ElvishWarrior.class})
+@CardUsed({AuntiesSnitch.class, MudbuttonClanger.class, LatchkeyFaerie.class, ElvishWarrior.class,
+        FuneralCharm.class})
 class AuntiesSnitchTest extends BaseCardTest {
 
     private Card putSnitchInGraveyard() {
         Card snitch = new AuntiesSnitch();
-        gd.playerGraveyards.get(player1.getId()).add(snitch);
+        harness.setGraveyard(player1, List.of(snitch));
         return snitch;
     }
 
@@ -131,13 +133,100 @@ class AuntiesSnitchTest extends BaseCardTest {
         addCreatureReady(player2, new AuntiesSnitch());
         addReadyAttacker(new ElvishWarrior());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Combat damage from a Rogue enables prowl even after that creature leaves play")
+    void prowlCastAfterRogueLeavesBattlefield() {
+        Permanent rogue = addReadyAttacker(new LatchkeyFaerie());
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(rogue);
+        gd.playerGraveyards.get(player1.getId()).add(rogue.getCard());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AuntiesSnitch()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Auntie's Snitch");
+    }
+
+    @Test
+    @DisplayName("The Snitch can be cast normally without dealing combat damage")
+    void normalCastWithoutCombatDamage() {
+        harness.setHand(player1, List.of(new AuntiesSnitch()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Auntie's Snitch");
+    }
+
+    @Test
+    @DisplayName("Prowl cannot be paid with only one black mana")
+    void prowlRequiresTwoMana() {
+        addReadyAttacker(new MudbuttonClanger());
+        resolveCombat();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AuntiesSnitch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Auntie's Snitch");
+        harness.assertNotOnBattlefield(player1, "Auntie's Snitch");
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin dealing combat damage does not return your Snitch")
+    void opponentsGoblinDoesNotTrigger() {
+        Card snitch = putSnitchInGraveyard();
+        Permanent attacker = addCreatureReady(player2, new MudbuttonClanger());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(snitch);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(snitch);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An old graveyard trigger cannot return a Snitch that was returned and discarded again")
+    void oldTriggerLosesTrackAfterReturnAndDiscard() {
+        Card snitch = putSnitchInGraveyard();
+        addReadyAttacker(new MudbuttonClanger());
+        addReadyAttacker(new MudbuttonClanger());
+        harness.setHand(player1, List.of(new FuneralCharm()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        runCombatDamage();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(snitch);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(snitch);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(snitch);
     }
 }

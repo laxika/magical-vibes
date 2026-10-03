@@ -1,153 +1,149 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.w.WardenOfTheWall;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({DerangedOutcast.class, DawntreaderElk.class, WardenOfTheWall.class})
 class DerangedOutcastTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
     @Test
-    @DisplayName("Has one activated ability: {1}{G}, Sacrifice a Human: put two +1/+1 counters on target creature")
-    void hasCorrectAbility() {
-        DerangedOutcast card = new DerangedOutcast();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        ));
-        // The two +1/+1 counters landing on the target is asserted behaviorally below.
-    }
-
-    // ===== Sacrifice a Human, put two +1/+1 counters on target =====
-
-    @Test
-    @DisplayName("Sacrificing a Human puts two +1/+1 counters on target creature; the Outcast survives")
+    @DisplayName("Sacrificing another Human puts two counters on the target and leaves the Outcast alive")
     void sacrificeHumanPutsTwoCountersOnTarget() {
-        Permanent outcast = addReadyOutcast(player1);
-        Permanent human = harness.addToBattlefieldAndReturn(player1, createHumanToken());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent outcast = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
+        prepareActivation();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        // Two Humans exist (Outcast + token) → prompted to choose the sacrifice.
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, human.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(outcast).doesNotContain(human);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Deranged Outcast");
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        harness.assertInGraveyard(player1, "Human");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .contains(outcast);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(outcast);
     }
 
     @Test
     @DisplayName("Can sacrifice the Outcast itself when it is the only Human")
     void canSacrificeItselfWhenOnlyHuman() {
-        Permanent outcast = addReadyOutcast(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DerangedOutcast());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
+        prepareActivation();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        // Outcast is the only Human → auto-sacrifices itself.
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Deranged Outcast");
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        harness.assertInGraveyard(player1, "Deranged Outcast");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Deranged Outcast");
     }
 
     @Test
     @DisplayName("Can target an opponent's creature")
     void canTargetOpponentCreature() {
-        addReadyOutcast(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DerangedOutcast());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DawntreaderElk());
+        prepareActivation();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        // Outcast is the only Human → auto-sacrifices itself.
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
-
-    // ===== Mana cost required =====
 
     @Test
     @DisplayName("Ability cannot be activated without enough mana")
     void abilityRequiresMana() {
-        addReadyOutcast(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-
+        harness.addToBattlefield(player1, new DerangedOutcast());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        // Only {G} — need {1}{G}
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Deranged Outcast");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A tapped, summoning-sick Outcast can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent outcast = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        outcast.setTapped(true);
+        outcast.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
+        prepareActivation();
 
-    private Permanent addReadyOutcast(Player player) {
-        DerangedOutcast card = new DerangedOutcast();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deranged Outcast");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    private Card createHumanToken() {
-        Card card = new Card();
-        card.setName("Human");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.WHITE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.HUMAN));
-        return card;
+    @Test
+    @DisplayName("Can target the Outcast and sacrifice a different Human")
+    void canTargetItselfAndSacrificeAnotherHuman() {
+        Permanent outcast = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        prepareActivation();
+
+        harness.activateAbility(player1, 0, 0, null, outcast.getId());
+        harness.handlePermanentChosen(player1, human.getId());
+        harness.passBothPriorities();
+
+        assertThat(outcast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(outcast).doesNotContain(human);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted Outcast leaves no legal target")
+    void canTargetAndSacrificeItself() {
+        Permanent outcast = harness.addToBattlefieldAndReturn(player1, new DerangedOutcast());
+        prepareActivation();
+
+        harness.activateAbility(player1, 0, 0, null, outcast.getId());
+        harness.assertInGraveyard(player1, "Deranged Outcast");
+        harness.passBothPriorities();
+
+        assertThat(outcast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new DerangedOutcast());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WardenOfTheWall());
+        prepareActivation();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Deranged Outcast");
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void prepareActivation() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
     }
 }

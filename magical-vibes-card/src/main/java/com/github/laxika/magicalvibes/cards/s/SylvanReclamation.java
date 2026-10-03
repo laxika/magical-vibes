@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "DMC", collectorNumber = "170")
+@CardRegistration(set = "C16", collectorNumber = "44")
 public class SylvanReclamation extends Card {
 
     public SylvanReclamation() {

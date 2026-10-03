@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CathedralSanctifier;
+import com.github.laxika.magicalvibes.cards.f.FavorableWinds;
+import com.github.laxika.magicalvibes.cards.s.ScrollOfAvacyn;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DevoutChaplain.class, GrizzlyBears.class, CathedralSanctifier.class,
+        ScrollOfAvacyn.class, FavorableWinds.class})
 class DevoutChaplainTest extends BaseCardTest {
 
     @Test
@@ -81,14 +87,110 @@ class DevoutChaplainTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void summoningSickHumansCanPayCostAndArtifactGoesToExile() {
+        Permanent chaplain = addChaplainReady(player1);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CathedralSanctifier());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CathedralSanctifier());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(chaplain.isTapped()).isTrue();
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.exiledCards).anySatisfy(entry ->
+                assertThat(entry.card().getId()).isEqualTo(artifact.getCard().getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(artifact.getCard());
+    }
+
+    @Test
+    void canExileOwnEnchantment() {
+        addChaplainReady(player1);
+        Permanent first = addPermanent(player1, new CathedralSanctifier());
+        Permanent second = addPermanent(player1, new CathedralSanctifier());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new FavorableWinds());
+
+        harness.activateAbility(player1, 0, 0, null, enchantment.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment);
+        assertThat(gd.exiledCards).anySatisfy(entry ->
+                assertThat(entry.card().getId()).isEqualTo(enchantment.getCard().getId()));
+    }
+
+    @Test
+    void summoningSickChaplainCannotActivate() {
+        Permanent chaplain = addChaplainReady(player1);
+        chaplain.setSummoningSick(true);
+        addPermanent(player1, new CathedralSanctifier());
+        addPermanent(player1, new CathedralSanctifier());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(chaplain.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedChaplainCannotActivate() {
+        Permanent chaplain = addChaplainReady(player1);
+        chaplain.tap();
+        addPermanent(player1, new CathedralSanctifier());
+        addPermanent(player1, new CathedralSanctifier());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedHumanCannotCountTowardCost() {
+        Permanent chaplain = addChaplainReady(player1);
+        addPermanent(player1, new CathedralSanctifier());
+        Permanent tapped = addPermanent(player1, new CathedralSanctifier());
+        tapped.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(chaplain.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opposingHumansCannotCountTowardCost() {
+        Permanent chaplain = addChaplainReady(player1);
+        addPermanent(player1, new CathedralSanctifier());
+        addPermanent(player2, new CathedralSanctifier());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(chaplain.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addChaplainReady(Player player) {
         return addPermanent(player, new DevoutChaplain());
     }
 
     private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

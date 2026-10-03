@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +39,7 @@ public class ArceeAcrobaticCoupe extends Card {
                 null,
                 List.of(new PutCountersOnSelfEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
-                        new TriggeringSpellTargetCount(controlledCreatureOrVehicle))),
+                        new TriggeringSpellTargetCount(controlledCreatureOrVehicle)), new TransformSelfEffect()),
                 new StackEntryTargetsPermanentPredicate(controlledCreatureOrVehicle)));
     }
 }

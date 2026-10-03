@@ -25,6 +25,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "52")
 @CardRegistration(set = "LTC", collectorNumber = "135")
+@CardRegistration(set = "LTC", collectorNumber = "455")
 public class OmerKingOfRohan extends Card {
 
     public OmerKingOfRohan() {

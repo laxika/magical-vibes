@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -55,6 +56,40 @@ class CentaurSafeguardTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(13);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Safeguards dying simultaneously in combat each offer life to their controller")
+    void simultaneousCombatDeathsTriggerForBothControllers() {
+        addCreatureReady(player1, new CentaurSafeguard());
+        addCreatureReady(player2, new CentaurSafeguard());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Centaur Safeguard");
+        harness.assertInGraveyard(player2, "Centaur Safeguard");
+        harness.assertNotOnBattlefield(player1, "Centaur Safeguard");
+        harness.assertNotOnBattlefield(player2, "Centaur Safeguard");
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+
+        for (int i = 0; i < 2; i++) {
+            resolveAllTriggers();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            var choice = (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+            Player controller = choice.playerId().equals(player1.getId()) ? player1 : player2;
+            harness.handleMayAbilityChosen(controller, true);
+        }
+
+        resolveAllTriggers();
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 13);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void destroyCentaurSafeguard() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "55")
+@CardRegistration(set = "C16", collectorNumber = "41")
 public class SaskiaTheUnyielding extends Card {
 
     public SaskiaTheUnyielding() {

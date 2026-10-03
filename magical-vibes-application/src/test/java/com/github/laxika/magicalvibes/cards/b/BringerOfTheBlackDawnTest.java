@@ -42,8 +42,7 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
         addCreatureReady(player1, new BringerOfTheBlackDawn());
         Permanent blocker = addCreatureReady(player2, new DrossCrocodile());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -121,5 +120,49 @@ class BringerOfTheBlackDawnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Can be cast for its normal mana cost")
+    void castsForNormalCost() {
+        harness.castFromHand(player1, new BringerOfTheBlackDawn(), "{7}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bringer of the Black Dawn");
+    }
+
+    @Test
+    @DisplayName("Paying life with an empty library still costs 2 life")
+    void paysLifeWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new BringerOfTheBlackDawn());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching a one-card library keeps the chosen card in the library exactly once")
+    void searchesOneCardLibrary() {
+        harness.addToBattlefield(player1, new BringerOfTheBlackDawn());
+        Card chosen = new DrossCrocodile();
+        harness.setLibrary(player1, List.of(chosen));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen);
+        harness.assertNotInHand(player1, "Dross Crocodile");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,8 +53,7 @@ class CoercedToKillTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Demystify()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
@@ -75,6 +75,51 @@ class CoercedToKillTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Coerced to Kill adds Assassin without removing existing creature types")
+    void retainsOriginalCreatureTypes() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        castAuraOn(creature);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR, CardSubtype.ASSASSIN);
+    }
+
+    @Test
+    @DisplayName("Counters modify the enchanted creature's new base power and toughness")
+    void countersApplyAfterBasePowerToughness() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAuraOn(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Coerced to Kill can enchant your own creature and affects only that creature")
+    void enchantsOwnCreatureWithoutAffectingOthers() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+
+        castAuraOn(creature);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR, CardSubtype.ASSASSIN);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).doesNotContain(CardSubtype.ASSASSIN);
     }
 
     private void castAuraOn(Permanent target) {

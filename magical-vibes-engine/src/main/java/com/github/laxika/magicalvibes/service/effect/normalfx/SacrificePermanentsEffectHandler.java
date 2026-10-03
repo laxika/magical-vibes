@@ -280,6 +280,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (e.recordSacrificedCount()) {
             entry.setEventValue(0);
         }
+        if (e.recordSacrificedPower()) {
+            entry.setEventValue(0);
+        }
 
         // Per CR 101.4 and the Destructive Force ruling (2010-08-15): active player chooses first,
         // then each other player in turn order, then all chosen permanents are sacrificed at the
@@ -334,6 +337,9 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
         if (choosers.isEmpty()) {
             // All players auto-resolved — sacrifice everything now
+            if (e.recordSacrificedPower()) {
+                entry.setEventValue(maxEffectivePower(gameData, autoSacrificeIds));
+            }
             destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
             if (e.recordSacrificedCount()) {
                 entry.setEventValue(autoSacrificeIds.size());
@@ -342,8 +348,17 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             // Some players need to choose — begin the first prompt
             destructionSupport.beginNextForcedSacrificeFromQueue(
                     gameData, choosers, autoSacrificeIds, e.simultaneousChoices(), null,
-                    e.recordSacrificedCount());
+                    e.recordSacrificedCount(), e.recordSacrificedPower());
         }
+    }
+
+    private int maxEffectivePower(GameData gameData, List<UUID> permanentIds) {
+        return permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent))
+                .max()
+                .orElse(0);
     }
 
     private UUID targetPlayerId(StackEntry entry, SacrificePermanentsEffect effect) {

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -41,11 +43,48 @@ class CrossroadsVillageTest extends BaseCardTest {
         assertThat(village.isTapped()).isTrue();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CardColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void chosenColorFromEntryDeterminesManaWithoutUsingStack(CardColor color) {
+        harness.setHand(player1, List.of(new CrossroadsVillage()));
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        Permanent village = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.valueOf(color.name())))
+                .isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(village.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void separateVillagesKeepIndependentColorChoices() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new CrossroadsVillage());
+        harness.handleListChoice(player1, "WHITE");
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new CrossroadsVillage());
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
     private Permanent addReadyVillage(Player player, CardColor chosenColor) {
-        Permanent village = new Permanent(new CrossroadsVillage());
+        Permanent village = harness.addToBattlefieldAndReturn(player, new CrossroadsVillage());
         village.setSummoningSick(false);
         village.setChosenColor(chosenColor);
-        gd.playerBattlefields.get(player.getId()).add(village);
         return village;
     }
 }

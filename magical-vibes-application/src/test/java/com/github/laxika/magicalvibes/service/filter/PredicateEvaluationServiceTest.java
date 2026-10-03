@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledTappedCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
@@ -481,6 +482,27 @@ class PredicateEvaluationServiceTest {
             threeMana.setManaCost("{3}");
             CardManaValueAtMostControlledTappedCreaturesPredicate predicate =
                     new CardManaValueAtMostControlledTappedCreaturesPredicate();
+
+            assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(threeMana, predicate, null, gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardManaValueAtMostControlledCountPredicate counts matching permanents")
+        void cardManaValueAtMostControlledCountPredicateMatches() {
+            addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Spirit One", 1, 1, CardColor.WHITE, List.of(CardSubtype.SPIRIT)));
+            addPermanent(player1Id, createCreatureWithSubtypes(
+                    "Spirit Two", 1, 1, CardColor.WHITE, List.of(CardSubtype.SPIRIT)));
+            addPermanent(player1Id, createCreature("Bear", 2, 2, CardColor.GREEN));
+
+            Card twoMana = createCreature("Two Mana", 2, 2, CardColor.BLUE);
+            twoMana.setManaCost("{2}");
+            Card threeMana = createCreature("Three Mana", 3, 3, CardColor.BLUE);
+            threeMana.setManaCost("{3}");
+            CardManaValueAtMostControlledCountPredicate predicate =
+                    new CardManaValueAtMostControlledCountPredicate(
+                            new PermanentHasSubtypePredicate(CardSubtype.SPIRIT));
 
             assertThat(evaluator.matchesCardPredicate(twoMana, predicate, null, gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(threeMana, predicate, null, gd, player1Id)).isFalse();

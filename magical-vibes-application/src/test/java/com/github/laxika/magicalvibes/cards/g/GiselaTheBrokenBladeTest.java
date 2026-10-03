@@ -1,17 +1,36 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BriselaVoiceOfNightmares;
+import com.github.laxika.magicalvibes.cards.b.BrunaTheFadingLight;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GiselaTheBrokenBlade.class, BrunaTheFadingLight.class, BriselaVoiceOfNightmares.class})
 class GiselaTheBrokenBladeTest extends BaseCardTest {
+
+    @Test
+    void tokenCopyOfBrunaIsExiledButCannotMeld() {
+        harness.addToBattlefield(player1, new GiselaTheBrokenBlade());
+        BrunaTheFadingLight token = new BrunaTheFadingLight();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+
+        advanceToControllerEndStep();
+        assertThat(gd.stack).isNotEmpty();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Brisela, Voice of Nightmares");
+        harness.assertNotOnBattlefield(player1, "Gisela, the Broken Blade");
+        harness.assertNotOnBattlefield(player1, "Bruna, the Fading Light");
+        assertThat(gd.exiledCards).anyMatch(c -> c.card().getName().equals("Gisela, the Broken Blade"));
+    }
 
     @Test
     @DisplayName("End step melds with owned Bruna into Brisela")
@@ -108,12 +127,7 @@ class GiselaTheBrokenBladeTest extends BaseCardTest {
     }
 
     private static Card namedBruna() {
-        Card bruna = new Card();
-        bruna.setName("Bruna, the Fading Light");
-        bruna.setType(CardType.CREATURE);
-        bruna.setPower(5);
-        bruna.setToughness(7);
-        return bruna;
+        return new BrunaTheFadingLight();
     }
 
     private void advanceToControllerEndStep() {

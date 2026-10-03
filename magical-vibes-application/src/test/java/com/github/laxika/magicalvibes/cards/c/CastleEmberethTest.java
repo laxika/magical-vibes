@@ -39,6 +39,29 @@ class CastleEmberethTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Mountain does not let Castle Embereth enter untapped")
+    void entersTappedWithOnlyOpponentsMountain() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new CastleEmbereth()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Castle Embereth").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain still lets Castle Embereth enter untapped")
+    void entersUntappedWithTappedMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+        harness.setHand(player1, List.of(new CastleEmbereth()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Castle Embereth").isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Mana ability adds red mana")
     void manaAbilityAddsRed() {
         harness.addToBattlefield(player1, new CastleEmbereth());
@@ -70,5 +93,28 @@ class CastleEmberethTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The pump affects creatures present on resolution, not later arrivals")
+    void pumpDeterminesAffectedCreaturesOnResolution() {
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new CastleEmbereth());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(castle.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        Permanent presentOnResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, presentOnResolution)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, presentOnResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, presentOnResolution)).isEqualTo(2);
+        Permanent laterArrival = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, laterArrival)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterArrival)).isEqualTo(2);
     }
 }

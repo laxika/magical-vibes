@@ -1,55 +1,48 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
-import com.github.laxika.magicalvibes.cards.s.StormfrontPegasus;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DaybreakRanger.class, AbbeyGriffin.class, DarkthicketWolf.class})
 class DaybreakRangerTest extends BaseCardTest {
-
-    // ===== Front face: {T}: deal 2 damage to target creature with flying =====
 
     @Test
     @DisplayName("Tap ability deals 2 damage to target creature with flying")
     void tapAbilityDeals2DamageToFlyingCreature() {
-        harness.addToBattlefield(player1, new DaybreakRanger());
-        harness.addToBattlefield(player2, new StormfrontPegasus());
-        Permanent ranger = findPermanent(player1, "Daybreak Ranger");
-        Permanent pegasus = findPermanent(player2, "Stormfront Pegasus");
-        ranger.setSummoningSick(false);
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        harness.addToBattlefield(player2, new AbbeyGriffin());
+        Permanent pegasus = findPermanent(player2, "Abbey Griffin");
 
         int rangerIdx = indexOf(player1, ranger);
         harness.activateAbility(player1, rangerIdx, null, pegasus.getId());
         harness.passBothPriorities();
 
-        // Stormfront Pegasus is 2/1, 2 damage kills it
-        harness.assertNotOnBattlefield(player2, "Stormfront Pegasus");
+        // Abbey Griffin is 2/2, 2 damage kills it
+        harness.assertNotOnBattlefield(player2, "Abbey Griffin");
     }
 
     @Test
     @DisplayName("Cannot target a creature without flying")
     void cannotTargetCreatureWithoutFlying() {
-        harness.addToBattlefield(player1, new DaybreakRanger());
-        harness.addToBattlefield(player2, new RuneclawBear());
-        Permanent ranger = findPermanent(player1, "Daybreak Ranger");
-        Permanent bear = findPermanent(player2, "Runeclaw Bear");
-        ranger.setSummoningSick(false);
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        harness.addToBattlefield(player2, new DarkthicketWolf());
+        Permanent bear = findPermanent(player2, "Darkthicket Wolf");
 
         int rangerIdx = indexOf(player1, ranger);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, rangerIdx, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
     @DisplayName("Transforms to Nightfall Predator when no spells were cast last turn")
@@ -60,10 +53,7 @@ class DaybreakRangerTest extends BaseCardTest {
         // spellsCastLastTurn is empty (no spells cast)
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(ranger.isTransformed()).isTrue();
@@ -81,16 +71,11 @@ class DaybreakRangerTest extends BaseCardTest {
         // Simulate that a spell was cast last turn
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
 
         assertThat(ranger.isTransformed()).isFalse();
         assertThat(ranger.getCard().getName()).isEqualTo("Daybreak Ranger");
     }
-
-    // ===== Werewolf transform: back → front (two or more spells cast last turn) =====
 
     @Test
     @DisplayName("Nightfall Predator transforms back when a player cast two or more spells last turn")
@@ -100,10 +85,7 @@ class DaybreakRangerTest extends BaseCardTest {
 
         // Transform to Nightfall Predator first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve transform
         assertThat(ranger.isTransformed()).isTrue();
 
@@ -111,10 +93,7 @@ class DaybreakRangerTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve transform back
 
         assertThat(ranger.isTransformed()).isFalse();
@@ -131,10 +110,7 @@ class DaybreakRangerTest extends BaseCardTest {
 
         // Transform to Nightfall Predator first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(ranger.isTransformed()).isTrue();
 
@@ -143,50 +119,38 @@ class DaybreakRangerTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
 
         assertThat(ranger.isTransformed()).isTrue();
         assertThat(ranger.getCard().getName()).isEqualTo("Nightfall Predator");
     }
 
-    // ===== Back face: {R}, {T}: fight target creature =====
-
     @Test
     @DisplayName("Nightfall Predator fights target creature")
     void nightfallPredatorFightsTargetCreature() {
-        harness.addToBattlefield(player1, new DaybreakRanger());
-        harness.addToBattlefield(player2, new RuneclawBear());
-        Permanent ranger = findPermanent(player1, "Daybreak Ranger");
-        Permanent bear = findPermanent(player2, "Runeclaw Bear");
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        harness.addToBattlefield(player2, new DarkthicketWolf());
+        Permanent bear = findPermanent(player2, "Darkthicket Wolf");
 
         // Transform to Nightfall Predator
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(ranger.isTransformed()).isTrue();
 
-        // Untap and remove summoning sickness for fight
-        ranger.untap();
-        ranger.setSummoningSick(false);
         harness.addMana(player1, ManaColor.RED, 1);
 
         int rangerIdx = indexOf(player1, ranger);
         harness.activateAbility(player1, rangerIdx, null, bear.getId());
         harness.passBothPriorities();
 
-        // Nightfall Predator is 4/4, Runeclaw Bear is 2/2
+        // Nightfall Predator is 4/4, Darkthicket Wolf is 2/2
         // Bear takes 4 damage → dies. Predator takes 2 damage → survives (4 toughness - 2 = 2 left).
-        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
         harness.assertOnBattlefield(player1, "Nightfall Predator");
+        assertThat(ranger.getMarkedDamage()).isEqualTo(2);
+        assertThat(ranger.isTapped()).isTrue();
     }
-
-    // ===== Transform triggers on every upkeep (not just controller's) =====
 
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
@@ -198,17 +162,115 @@ class DaybreakRangerTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
 
         // Trigger on opponent's upkeep (not player1's)
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve
 
         assertThat(ranger.isTransformed()).isTrue();
         assertThat(ranger.getCard().getName()).isEqualTo("Nightfall Predator");
     }
 
-    // ===== Helpers =====
+    @Test
+    void flyingRestrictionIsCheckedAgainOnResolution() {
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new AbbeyGriffin());
+
+        harness.activateAbility(player1, indexOf(player1, ranger), null, griffin.getId());
+        griffin.getRemovedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Abbey Griffin");
+        assertThat(griffin.getMarkedDamage()).isZero();
+        assertThat(ranger.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateTapAbilityWhileSummoningSick() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new DaybreakRanger());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new AbbeyGriffin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ranger), null, griffin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ranger.isTapped()).isFalse();
+    }
+
+    @Test
+    void fightRequiresRedMana() {
+        Permanent predator = transformReadyRanger();
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, predator), null, wolf.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(predator.isTapped()).isFalse();
+    }
+
+    @Test
+    void fightDealsNoDamageWhenSourceLeavesBeforeResolution() {
+        Permanent predator = transformReadyRanger();
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, predator), null, wolf.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(predator);
+        gd.playerGraveyards.get(player1.getId()).add(predator.getOriginalCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darkthicket Wolf");
+        assertThat(wolf.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void predatorCanFightItself() {
+        Permanent predator = transformReadyRanger();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, indexOf(player1, predator), null, predator.getId());
+        harness.passBothPriorities();
+
+        assertThat(predator.getMarkedDamage()).isEqualTo(8);
+        harness.assertNotOnBattlefield(player1, "Nightfall Predator");
+    }
+
+    @Test
+    void fightUsesPowerAtResolutionAndBothCreaturesDealLethalDamage() {
+        Permanent predator = transformReadyRanger();
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, indexOf(player1, predator), null, wolf.getId());
+        harness.activateAbility(player2, indexOf(player2, wolf), null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Nightfall Predator");
+        harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
+    }
+
+    @Test
+    void fightDamageRemainsWhenTransformingBack() {
+        Permanent predator = transformReadyRanger();
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new DarkthicketWolf());
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, predator), null, wolf.getId());
+        harness.passBothPriorities();
+        assertThat(predator.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Daybreak Ranger");
+        harness.assertNotOnBattlefield(player1, "Nightfall Predator");
+    }
+
+    private Permanent transformReadyRanger() {
+        Permanent ranger = addCreatureReady(player1, new DaybreakRanger());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(ranger.isTransformed()).isTrue();
+        return ranger;
+    }
 
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);

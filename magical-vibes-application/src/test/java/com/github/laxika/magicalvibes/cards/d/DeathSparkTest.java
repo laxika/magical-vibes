@@ -96,6 +96,7 @@ class DeathSparkTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
@@ -132,6 +133,61 @@ class DeathSparkTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns only the triggering copy and spends exactly one mana")
+    void returnsOnlyTriggeringCopy() {
+        DeathSpark buriedSpark = new DeathSpark();
+        DeathSpark eligibleSpark = new DeathSpark();
+        harness.setGraveyard(player1, List.of(buriedSpark, new ArcaneDenial(),
+                eligibleSpark, new AgentOfStromgald(), new ArcaneDenial()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eligibleSpark).doesNotContain(buriedSpark);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(buriedSpark).doesNotContain(eligibleSpark);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Adding a creature above it after upkeep begins does not create a trigger")
+    void becomingEligibleAfterUpkeepDoesNotTrigger() {
+        DeathSpark spark = new DeathSpark();
+        harness.setGraveyard(player1, List.of(spark));
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(spark, new AgentOfStromgald()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Death Spark");
+        harness.assertNotInHand(player1, "Death Spark");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Another creature becoming directly above it still satisfies the condition")
+    void differentCreatureAboveStillAllowsReturn() {
+        DeathSpark spark = new DeathSpark();
+        AgentOfStromgald firstCreature = new AgentOfStromgald();
+        AgentOfStromgald secondCreature = new AgentOfStromgald();
+        harness.setGraveyard(player1, List.of(spark, firstCreature, secondCreature));
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of(spark, secondCreature));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Death Spark");
+        harness.assertNotInGraveyard(player1, "Death Spark");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondCreature);
     }
 }

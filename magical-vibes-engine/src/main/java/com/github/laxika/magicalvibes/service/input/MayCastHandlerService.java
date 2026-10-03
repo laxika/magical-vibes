@@ -83,6 +83,7 @@ public class MayCastHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final SpellCastingService spellCastingService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
@@ -1286,24 +1287,29 @@ public class MayCastHandlerService {
             return;
         }
 
+        int xReduction = ability.effects().stream().filter(MayCastForMiracleCostEffect.class::isInstance)
+                .map(MayCastForMiracleCostEffect.class::cast).mapToInt(MayCastForMiracleCostEffect::xReduction)
+                .findFirst().orElse(0);
         ManaCost cost = new ManaCost(costStr);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
 
         // An {X} in the alternative cost still has to be announced (CR 601.2b), so the actual
         // payment waits for the X prompt. Entreat the Angels' miracle cost {X}{W}{W}.
         if (cost.hasX()) {
-            beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "miracle");
+            beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "miracle", xReduction);
             return;
         }
 
-        if (!cost.canPay(pool)) {
+        int additionalCost = castingCostService.getCastCostModifier(
+                gameData, player.getId(), cardToCast, 0, Zone.HAND);
+        if (!cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its miracle cost."));
             log.info("Game {} - {} can't pay miracle cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        cost.pay(pool);
+        cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
 
         hand.remove(cardIndex);
         castCardFromHandPayingAlternateCost(gameData, player, cardToCast, costStr, "miracle", 0);
@@ -1317,10 +1323,18 @@ public class MayCastHandlerService {
      */
     private void beginAlternateCastXChoice(GameData gameData, Player player, Card cardToCast,
                                            String costStr, String costLabel) {
-        ManaCost cost = new ManaCost(costStr);
-        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()));
+        beginAlternateCastXChoice(gameData, player, cardToCast, costStr, costLabel, 0);
+    }
 
-        if (maxX <= 0 && !cost.canPay(gameData.playerManaPools.get(player.getId()), 0)) {
+    private void beginAlternateCastXChoice(GameData gameData, Player player, Card cardToCast,
+                                           String costStr, String costLabel, int xReduction) {
+        ManaCost cost = new ManaCost(costStr);
+        int tax = castingCostService.getCastCostModifier(gameData, player.getId(), cardToCast, 0,
+                "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
+        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()),
+                tax - xReduction);
+
+        if (maxX <= 0 && !cost.canPayWithAdditionalGenericCost(gameData.playerManaPools.get(player.getId()), 0, tax)) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " cannot pay " + costStr + " to cast ", cardToCast,
                     " for its " + costLabel + " cost."));
@@ -1333,7 +1347,7 @@ public class MayCastHandlerService {
         String prompt = "Choose a value for X to cast " + cardToCast.getName()
                 + " for its " + costLabel + " cost (" + costStr + ").";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AlternateCastXValueChoice(
-                player.getId(), cardToCast.getId(), costStr, maxX, prompt, cardToCast.getName(), costLabel));
+                player.getId(), cardToCast.getId(), costStr, maxX, prompt, cardToCast.getName(), costLabel, xReduction));
     }
 
     /**
@@ -1383,11 +1397,14 @@ public class MayCastHandlerService {
         ManaCost cost = new ManaCost(interaction.manaCost());
         ManaPool pool = gameData.playerManaPools.get(player.getId());
 
-        if (!cost.canPay(pool, chosenX)) {
+        int additionalCost = castingCostService.getCastCostModifier(gameData, player.getId(), cardToCast,
+                chosenX, castFromExile ? Zone.EXILE : Zone.HAND)
+                - Math.min(interaction.xReduction(), chosenX * cost.getXSymbolCount());
+        if (!cost.canPayWithAdditionalGenericCost(pool, chosenX, additionalCost)) {
             // Only worth re-prompting while untapped sources could still cover the choice —
             // otherwise the cast is simply abandoned instead of looping on the prompt.
             ManaPool potential = potentialManaService.buildVirtualManaPool(gameData, player.getId());
-            if (!cost.canPay(potential, chosenX)) {
+            if (!cost.canPayWithAdditionalGenericCost(potential, chosenX, additionalCost)) {
                 gameLogService.append(gameData, GameLog.textCardText(
                         playerName + " cannot pay " + interaction.manaCost() + " to cast ",
                         cardToCast, " for its " + interaction.costLabel() + " cost."));
@@ -1401,10 +1418,10 @@ public class MayCastHandlerService {
                     cardToCast, " yet (tap mana sources, then choose X again)."));
             log.info("Game {} - {} cannot yet pay {} with X={} for {} — re-prompting",
                     gameData.id, playerName, interaction.manaCost(), chosenX, cardToCast.getName());
-            beginAlternateCastXChoice(gameData, player, cardToCast, interaction.manaCost(), interaction.costLabel());
+            beginAlternateCastXChoice(gameData, player, cardToCast, interaction.manaCost(), interaction.costLabel(), interaction.xReduction());
             return;
         }
-        cost.pay(pool, chosenX);
+        cost.payWithAdditionalGenericCost(pool, chosenX, additionalCost);
 
         if (castFromExile) {
             gameData.removeFromExile(cardToCast.getId());
@@ -1477,6 +1494,17 @@ public class MayCastHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
             log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        List<CardEffect> madnessEffects = cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY)
+                ? cardToCast.getEffects(EffectSlot.SPELL) : List.of();
+        if ((EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+                && buildValidSpellTargets(gameData, cardToCast, madnessEffects, player.getId(), 0, true).isEmpty()) {
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1707,13 +1735,14 @@ public class MayCastHandlerService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         int handIndex = hand == null ? -1 : indexOfCard(hand, cardToCast.getId());
         if (handIndex >= 0) {
-            if (!isEligibleArtifact(cardToCast) || !canPayManaValueLife(gameData, player, cardToCast)) {
+            if (!isEligibleArtifact(gameData, player.getId(), cardToCast) || !canPayManaValueLife(gameData, player, cardToCast)) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                         " can't be cast by paying life equal to its mana value."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
 
+            if (!payArtifactLifeCastManaTaxes(gameData, player, cardToCast, Zone.HAND)) return;
             hand.remove(handIndex);
             lifeSupport.applyLifePayment(gameData, player.getId(), cardToCast.getManaValue(),
                     cardToCast.getName() + "'s alternate cost");
@@ -1726,14 +1755,16 @@ public class MayCastHandlerService {
         UUID graveyardOwnerId = graveyardCard == null
                 ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToCast.getId());
         if (graveyardCard == null || !player.getId().equals(graveyardOwnerId)
-                || !isEligibleArtifact(graveyardCard)
-                || !canPayManaValueLife(gameData, player, graveyardCard)) {
+                || !isEligibleArtifact(gameData, player.getId(), graveyardCard)
+                || !canPayManaValueLife(gameData, player, graveyardCard)
+                || !gameQueryService.canCastSpellFromZone(gameData, graveyardCard, Zone.GRAVEYARD, player.getId())) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast by paying life equal to its mana value."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
+        if (!payArtifactLifeCastManaTaxes(gameData, player, graveyardCard, Zone.GRAVEYARD)) return;
         lifeSupport.applyLifePayment(gameData, player.getId(), graveyardCard.getManaValue(),
                 graveyardCard.getName() + "'s alternate cost");
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
@@ -1760,14 +1791,32 @@ public class MayCastHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private boolean isEligibleArtifact(Card card) {
-        return card.hasType(CardType.ARTIFACT) && !card.hasType(CardType.LAND);
+    private boolean isEligibleArtifact(GameData gameData, UUID playerId, Card card) {
+        return gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)
+                && !gameQueryService.cardHasType(card, CardType.LAND, gameData, playerId);
     }
 
     private boolean canPayManaValueLife(GameData gameData, Player player, Card card) {
         return gameData.getLife(player.getId()) >= card.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, player.getId())
                 && gameQueryService.canPayLifeForCosts(gameData);
+    }
+
+    private boolean payArtifactLifeCastManaTaxes(GameData gameData, Player player, Card card, Zone sourceZone) {
+        Card paymentCard = card.createRuntimeCopy();
+        paymentCard.setManaCost("{0}");
+        try {
+            if (sourceZone == Zone.HAND) {
+                spellCastingService.paySpellManaCost(gameData, player.getId(), paymentCard, 0, List.of());
+            } else {
+                spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), paymentCard, 0, sourceZone);
+            }
+            return true;
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast because its additional mana cost cannot be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return false;
+        }
     }
 
     private void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,

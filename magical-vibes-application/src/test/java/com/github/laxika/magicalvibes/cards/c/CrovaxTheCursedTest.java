@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.Fling;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,18 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrovaxTheCursed.class, CravenGiant.class})
+@CardUsed({CrovaxTheCursed.class, CravenGiant.class, Fling.class})
 class CrovaxTheCursedTest extends BaseCardTest {
 
     @Test
     @DisplayName("Crovax enters with four +1/+1 counters")
     void entersWithCounters() {
-        harness.setHand(player1, List.of(new CrovaxTheCursed()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CrovaxTheCursed(), "{2}{B}{B}");
         harness.passBothPriorities();
 
         Permanent source = findPermanent(player1, "Crovax the Cursed");
@@ -115,6 +113,95 @@ class CrovaxTheCursedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Crovax does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent source = addReadyCrovax();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The upkeep sacrifice can select only creatures you control")
+    void sacrificeChoiceExcludesOpponentsCreatures() {
+        Permanent source = addReadyCrovax();
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CravenGiant());
+        harness.addToBattlefield(player2, new CravenGiant());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(source.getId(), giant.getId());
+
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Craven Giant");
+        harness.assertOnBattlefield(player2, "Craven Giant");
+    }
+
+    @Test
+    @DisplayName("The upkeep sacrifice remains optional after Crovax leaves the battlefield")
+    void canSacrificeAfterSourceLeaves() {
+        Permanent source = addReadyCrovax();
+        harness.addToBattlefield(player1, new CravenGiant());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Fling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), source.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Crovax the Cursed");
+        harness.assertInGraveyard(player1, "Craven Giant");
+        harness.assertNotOnBattlefield(player1, "Craven Giant");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves without a choice when no creatures remain")
+    void noSacrificeChoiceWhenNoCreaturesRemain() {
+        Permanent source = addReadyCrovax();
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Fling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), source.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Crovax the Cursed");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Crovax can activate flying")
+    void flyingDoesNotRequireTappingOrHaste() {
+        Permanent source = addReadyCrovax();
+        source.setSummoningSick(true);
+        source.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
+        assertThat(source.isTapped()).isTrue();
     }
 
     private Permanent addReadyCrovax() {

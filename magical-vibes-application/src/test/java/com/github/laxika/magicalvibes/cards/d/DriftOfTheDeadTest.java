@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DriftOfTheDead.class, KarplusanForest.class, SnowCoveredPlains.class})
@@ -83,6 +85,51 @@ class DriftOfTheDeadTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(snow);
         assertThat(gqs.getEffectivePower(gd, drift)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drift)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dies as a state-based action with no snow lands")
+    void diesWithNoSnowLands() {
+        addDrift(player1);
+        addSnowLand(player2);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Drift of the Dead");
+        harness.assertInGraveyard(player1, "Drift of the Dead");
+    }
+
+    @Test
+    @DisplayName("Dies when the last controlled snow land leaves")
+    void diesWhenLastSnowLandLeaves() {
+        addDrift(player1);
+        Permanent snow = addSnowLand(player1);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Drift of the Dead");
+
+        gd.playerBattlefields.get(player1.getId()).remove(snow);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Drift of the Dead");
+        harness.assertInGraveyard(player1, "Drift of the Dead");
+    }
+
+    @Test
+    @DisplayName("Characteristic-defining power and toughness work in the graveyard")
+    void definesPowerAndToughnessInGraveyard() {
+        DriftOfTheDead drift = new DriftOfTheDead();
+        harness.setGraveyard(player1, List.of(drift));
+        addSnowLand(player1);
+        addSnowLand(player1);
+        addSnowLand(player2);
+
+        assertThat(gqs.getEffectiveCardPower(gd, drift)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, drift)).isEqualTo(2);
+
+        addSnowLand(player1);
+
+        assertThat(gqs.getEffectiveCardPower(gd, drift)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, drift)).isEqualTo(3);
     }
 
     private Permanent addDrift(Player player) {

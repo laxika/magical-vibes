@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.a.Armageddon;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.Jokulhaups;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
@@ -22,8 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DingusEgg.class, Armageddon.class, DemonicHordes.class, GrizzlyBears.class,
-        Mountain.class, Shatter.class, StoneRain.class, WrathOfGod.class})
+@CardUsed({DingusEgg.class, Armageddon.class, Boomerang.class, DemonicHordes.class, GrizzlyBears.class,
+        Jokulhaups.class, Mountain.class, Shatter.class, StoneRain.class, WrathOfGod.class})
 class DingusEggTest extends BaseCardTest {
 
     @Test
@@ -55,12 +57,10 @@ class DingusEggTest extends BaseCardTest {
         UUID mountainId = harness.getPermanentId(player2, "Mountain");
         harness.setHand(player1, List.of(new StoneRain(), new Shatter()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, mountainId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mountainId);
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, egg.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, egg.getId());
 
         harness.assertNotOnBattlefield(player1, "Dingus Egg");
         assertThat(gd.stack).hasSize(1);
@@ -180,5 +180,62 @@ class DingusEggTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("'s ability triggers."));
+    }
+
+    @Test
+    @DisplayName("Triggers for every land destroyed simultaneously with Dingus Egg")
+    void triggersWhenDestroyedSimultaneouslyWithLands() {
+        harness.addToBattlefield(player1, new DingusEgg());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dingus Egg");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Returning a land to hand does not trigger Dingus Egg")
+    void doesNotTriggerWhenLandReturnsToHand() {
+        harness.addToBattlefield(player1, new DingusEgg());
+        UUID landId = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, landId);
+
+        harness.assertInHand(player2, "Mountain");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for lands destroyed after Dingus Egg has left")
+    void doesNotTriggerAfterEggLeaves() {
+        UUID eggId = harness.addToBattlefieldAndReturn(player1, new DingusEgg()).getId();
+        UUID landId = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shatter(), new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, eggId);
+        harness.castAndResolveSorcery(player1, 0, landId);
+
+        harness.assertInGraveyard(player1, "Dingus Egg");
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 }

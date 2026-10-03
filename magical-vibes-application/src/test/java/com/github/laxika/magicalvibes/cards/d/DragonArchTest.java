@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AngelfireCrusader;
 import com.github.laxika.magicalvibes.cards.c.CoalitionFlag;
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonArch.class, GaeasSkyfolk.class, AngelfireCrusader.class, CoalitionFlag.class})
+@CardUsed({DragonArch.class, GaeasSkyfolk.class, AngelfireCrusader.class, CoalitionFlag.class, MycosynthLattice.class})
 class DragonArchTest extends BaseCardTest {
 
     @Test
@@ -57,7 +58,7 @@ class DragonArchTest extends BaseCardTest {
         assertThat(arch.isTapped()).isTrue();
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .allMatch(permanent -> !permanent.isTapped())).isTrue();
+                .toList()).singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isFalse());
     }
 
     @Test
@@ -97,6 +98,71 @@ class DragonArchTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Colorless cards under Mycosynth Lattice cannot be put onto the battlefield")
+    void colorlessCardsUnderLatticeAreNotEligible() {
+        Permanent arch = addReadyDragonArch();
+        harness.addToBattlefield(player2, new MycosynthLattice());
+        GaeasSkyfolk creature = new GaeasSkyfolk();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(arch.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves with no eligible cards even when the opponent has one")
+    void noEligibleCardsResolvesWithoutHandChoice() {
+        Permanent arch = addReadyDragonArch();
+        AngelfireCrusader creature = new AngelfireCrusader();
+        harness.setHand(player1, List.of(creature));
+        GaeasSkyfolk opponentCreature = new GaeasSkyfolk();
+        harness.setHand(player2, List.of(opponentCreature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCreature);
+        harness.assertNotOnBattlefield(player1, "Angelfire Crusader");
+        harness.assertNotOnBattlefield(player2, "Gaea's Skyfolk");
+        assertThat(arch.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature enters when multiple cards are eligible")
+    void putsExactlyOneChosenCreatureOntoBattlefield() {
+        addReadyDragonArch();
+        GaeasSkyfolk first = new GaeasSkyfolk();
+        GaeasSkyfolk second = new GaeasSkyfolk();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(second.getId()))
+                .hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
     }
 
     private Permanent addReadyDragonArch() {

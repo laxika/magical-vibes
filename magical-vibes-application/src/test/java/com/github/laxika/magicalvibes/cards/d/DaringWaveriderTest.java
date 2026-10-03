@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Sift;
 import com.github.laxika.magicalvibes.cards.t.Tidings;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DaringWaverider.class, GrizzlyBears.class, Shock.class, Tidings.class})
+@CardUsed({DaringWaverider.class, GrizzlyBears.class, Shock.class, Tidings.class,
+        CounselOfTheSoratami.class, RemoveSoul.class, Sift.class})
 class DaringWaveriderTest extends BaseCardTest {
 
     @Test
@@ -82,5 +86,82 @@ class DaringWaveriderTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(shock.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getId().equals(shock.getId()));
+    }
+
+    @Test
+    void includesSorceryAtManaValueFour() {
+        Sift sift = new Sift();
+        harness.setGraveyard(player1, List.of(sift, new Tidings()));
+        harness.setHand(player1, List.of(new DaringWaverider()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(sift.getId());
+    }
+
+    @Test
+    void castsSorceryDuringEtbResolutionWithoutMana() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new Shock();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new DaringWaverider()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(counsel);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(counsel);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void uncastableSpellWithoutLegalTargetsStaysInGraveyard() {
+        RemoveSoul removeSoul = new RemoveSoul();
+        harness.setGraveyard(player1, List.of(removeSoul));
+        harness.setHand(player1, List.of(new DaringWaverider()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(removeSoul.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(removeSoul);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(removeSoul);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetLeavingGraveyardBeforeResolutionCannotBeCast() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.setHand(player1, List.of(new DaringWaverider()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(shock));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(shock);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

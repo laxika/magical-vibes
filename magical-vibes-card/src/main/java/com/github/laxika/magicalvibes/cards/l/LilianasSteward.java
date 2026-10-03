@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "111")
+@CardRegistration(set = "M21", collectorNumber = "300")
 public class LilianasSteward extends Card {
 
     public LilianasSteward() {

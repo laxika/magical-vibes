@@ -34,7 +34,9 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        java.util.UUID attachedId = equipment != null ? equipment.getAttachedTo() : entry.getTargetId();
+        java.util.UUID attachedId = equipment != null ? equipment.getAttachedTo()
+                : entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();
         if (attachedId == null) {
             // The source left the battlefield (e.g. its own sacrifice cost) and no attached
             // permanent was captured at activation.

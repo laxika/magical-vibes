@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,10 +69,8 @@ class DeathWishTest extends BaseCardTest {
 
     private DeathWish castDeathWish() {
         DeathWish wish = new DeathWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{1}{B}{B}");
+        harness.passBothPriorities();
         return wish;
     }
 
@@ -100,7 +97,7 @@ class DeathWishTest extends BaseCardTest {
         gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(opponentCard)));
         harness.setLife(player1, 20);
 
-        DeathWish wish = castDeathWishForJudReview();
+        DeathWish wish = castDeathWish();
 
         PendingInteraction.LibrarySearch search = pendingSearch();
         assertThat(search.params().cards()).containsExactly(chosen);
@@ -116,16 +113,47 @@ class DeathWishTest extends BaseCardTest {
     void exilesAfterLethalLifeLoss() {
         harness.setLife(player1, 1);
 
-        DeathWish wish = castDeathWishForJudReview();
+        DeathWish wish = castDeathWish();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isZero();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
-    private DeathWish castDeathWishForJudReview() {
-        DeathWish wish = new DeathWish();
-        harness.castFromHand(player1, wish, "{1}{B}{B}");
-        harness.passBothPriorities();
-        return wish;
+    @Test
+    @DisplayName("Takes exactly one chosen card and waits for the choice before losing life or exiling")
+    void choosesOneOfMultipleOutsideTheGameCards() {
+        Card unchosen = new AvenFogbringer();
+        Card chosen = new BorderPatrol();
+        setSideboard(unchosen, chosen);
+        harness.setLife(player1, 11);
+
+        DeathWish wish = castDeathWish();
+
+        assertThat(pendingSearch().params().cards()).containsExactly(unchosen, chosen);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(wish);
+        choose(chosen);
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(unchosen);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(5);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
+    @Test
+    @DisplayName("Cannot retrieve a card exiled in the current game")
+    void doesNotRetrieveExiledCards() {
+        Card exiled = new AvenFogbringer();
+        gd.addToExile(player1.getId(), exiled);
+        harness.setLife(player1, 20);
+
+        DeathWish wish = castDeathWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(exiled);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiled, wish);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
     }
 }

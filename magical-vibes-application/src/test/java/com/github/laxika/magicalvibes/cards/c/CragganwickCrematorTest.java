@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.Brainstorm;
+import com.github.laxika.magicalvibes.cards.d.DroveOfElves;
 import com.github.laxika.magicalvibes.cards.g.GrimLavamancer;
 import com.github.laxika.magicalvibes.cards.j.JaceTheMindSculptor;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,8 +15,67 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CragganwickCremator.class, GrimLavamancer.class, Brainstorm.class, JaceTheMindSculptor.class})
+@CardUsed({CragganwickCremator.class, GrimLavamancer.class, Brainstorm.class, JaceTheMindSculptor.class,
+        DroveOfElves.class})
 class CragganwickCrematorTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("ETB: characteristic-defined power is evaluated in the graveyard")
+    void usesDiscardedCreaturesCharacteristicDefinedPower() {
+        harness.addToBattlefield(player1, new DroveOfElves());
+        harness.addToBattlefield(player1, new DroveOfElves());
+        harness.setHand(player1, List.of(new CragganwickCremator(), new DroveOfElves()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, List.of(player2.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Drove of Elves");
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB: a random discard removes exactly one card from a larger hand")
+    void discardsExactlyOneCard() {
+        harness.setHand(player1, List.of(new CragganwickCremator(),
+                new CragganwickCremator(), new CragganwickCremator()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, List.of(player2.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Cragganwick Cremator");
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("ETB: the discard waits until the triggered ability resolves")
+    void doesNotDiscardWhenTriggerIsPutOnStack() {
+        harness.setHand(player1, List.of(new CragganwickCremator(), new GrimLavamancer()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cragganwick Cremator");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Grim Lavamancer");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grim Lavamancer");
+        harness.assertLife(player2, 19);
+    }
 
     @Test
     @DisplayName("ETB: discarding a creature card deals its power to target player")

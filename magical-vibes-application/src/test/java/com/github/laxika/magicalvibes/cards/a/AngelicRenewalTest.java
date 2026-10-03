@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AngelicRenewal.class, CruelEdict.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({AngelicRenewal.class, CruelEdict.class, GrizzlyBears.class, WrathOfGod.class, StealEnchantment.class})
 class AngelicRenewalTest extends BaseCardTest {
 
     /** Player 2 edicts away player 1's only creature, firing Angelic Renewal's death trigger. */
@@ -27,10 +28,7 @@ class AngelicRenewalTest extends BaseCardTest {
         harness.setHand(player2, List.of(new CruelEdict()));
         harness.addMana(player2, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        // Pass 1: Cruel Edict resolves and the creature dies. Pass 2: the death trigger resolves and
-        // Angelic Renewal's controller is asked whether to sacrifice it.
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.passBothPriorities();
     }
 
@@ -83,8 +81,7 @@ class AngelicRenewalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Angelic Renewal");
@@ -166,6 +163,66 @@ class AngelicRenewalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card.getName().equals("Grizzly Bears")))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifices Renewal but returns nothing when the creature has left the graveyard")
+    void creatureLeavingGraveyardDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player1, new AngelicRenewal());
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, bears);
+
+        putIntoGraveyard(creature);
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, bears.getId());
+            harness.getPermanentRemovalService()
+                    .addCardToHandFromGraveyard(gd, player1.getId(), player1.getId(), bears);
+        });
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Angelic Renewal");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("An older trigger cannot return a creature that left the graveyard and died again")
+    void olderTriggerDoesNotReturnNewGraveyardObject() {
+        harness.addToBattlefield(player1, new AngelicRenewal());
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, bears);
+        putIntoGraveyard(firstCreature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, bears.getId()));
+        Permanent returnedCreature = harness.enterBattlefieldAndReturn(player1, bears);
+        putIntoGraveyard(returnedCreature);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Angelic Renewal");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice Renewal after another player gains control of it")
+    void cannotSacrificeRenewalControlledByOpponent() {
+        Permanent renewal = harness.addToBattlefieldAndReturn(player1, new AngelicRenewal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        putIntoGraveyard(creature);
+
+        harness.addToBattlefieldAndReturn(player2, new StealEnchantment()).setAttachedTo(renewal.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Angelic Renewal");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

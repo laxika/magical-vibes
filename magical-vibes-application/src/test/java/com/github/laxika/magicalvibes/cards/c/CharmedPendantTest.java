@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.a.AbandonedOutpost;
 import com.github.laxika.magicalvibes.cards.a.Atogatog;
 import com.github.laxika.magicalvibes.cards.d.Dismember;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.s.SelesnyaGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 @CardUsed({
         AbandonedOutpost.class, Atogatog.class, CharmedPendant.class,
-        Dismember.class, SelesnyaGuildmage.class
+        Dismember.class, LeylineOfTheVoid.class, SelesnyaGuildmage.class
 })
 class CharmedPendantTest extends BaseCardTest {
 
@@ -63,8 +64,8 @@ class CharmedPendantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Counts both colors in each hybrid mana symbol")
-    void countsColorsInHybridManaSymbols() {
+    @DisplayName("Chooses one color for each hybrid mana symbol")
+    void choosesOneColorForEachHybridManaSymbol() {
         harness.forceActivePlayer(player1);
         harness.addToBattlefieldAndReturn(player1, new CharmedPendant());
         Card milled = new SelesnyaGuildmage();
@@ -73,9 +74,13 @@ class CharmedPendantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        assertThat(pool.get(ManaColor.WHITE)).isEqualTo(2);
-        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(pool.get(ManaColor.BLUE)).isZero();
         assertThat(pool.get(ManaColor.BLACK)).isZero();
         assertThat(pool.get(ManaColor.RED)).isZero();
@@ -113,5 +118,73 @@ class CharmedPendantTest extends BaseCardTest {
 
         assertThat(pendant.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mills as an activation cost but adds mana only on resolution")
+    void millsBeforeResolutionAndAddsManaOnResolution() {
+        harness.forceActivePlayer(player2);
+        Permanent pendant = harness.addToBattlefieldAndReturn(player1, new CharmedPendant());
+        Card milled = new Atogatog();
+        harness.setLibrary(player1, List.of(milled));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pendant.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each pending activation remembers its own milled card")
+    void pendingActivationsRememberTheirOwnMilledCards() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new CharmedPendant());
+        harness.addToBattlefield(player1, new CharmedPendant());
+        Card first = new Atogatog();
+        Card second = new AbandonedOutpost();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            assertThat(pool.get(color)).isEqualTo(1);
+        }
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Uses the milled card's mana cost when it is exiled instead of entering the graveyard")
+    void addsManaWhenMilledCardIsExiledInstead() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new CharmedPendant());
+        harness.addToBattlefield(player2, new LeylineOfTheVoid());
+        Card milled = new Atogatog();
+        harness.setLibrary(player1, List.of(milled));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(milled.getId())).isNotNull();
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN)) {
+            assertThat(pool.get(color)).isEqualTo(1);
+        }
     }
 }

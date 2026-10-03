@@ -16,6 +16,45 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AuratogTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The enchantment is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent auratog = harness.addToBattlefieldAndReturn(player1, new Auratog());
+        Permanent otherAuratog = harness.addToBattlefieldAndReturn(player1, new Auratog());
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Circle of Protection: White");
+        harness.assertInGraveyard(player1, "Circle of Protection: White");
+        assertThat(auratog.getPowerModifier()).isZero();
+        assertThat(auratog.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(auratog.getPowerModifier()).isEqualTo(2);
+        assertThat(auratog.getToughnessModifier()).isEqualTo(2);
+        assertThat(otherAuratog.getPowerModifier()).isZero();
+        assertThat(otherAuratog.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Auratog with summoning sickness can activate its ability")
+    void tappedAuratogWithSummoningSicknessCanActivate() {
+        Permanent auratog = harness.addToBattlefieldAndReturn(player1, new Auratog());
+        auratog.tap();
+        auratog.setSummoningSick(true);
+        harness.addToBattlefield(player1, new CircleOfProtectionWhite());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Circle of Protection: White");
+        assertThat(auratog.isTapped()).isTrue();
+        assertThat(auratog.getPowerModifier()).isEqualTo(2);
+        assertThat(auratog.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Sacrificing an enchantment gives Auratog +2/+2 until end of turn")
     void sacrificeBoostsAuratog() {
         Permanent auratog = harness.addToBattlefieldAndReturn(player1, new Auratog());

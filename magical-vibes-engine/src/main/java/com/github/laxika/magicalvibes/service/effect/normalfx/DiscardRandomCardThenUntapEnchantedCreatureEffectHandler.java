@@ -55,6 +55,9 @@ public class DiscardRandomCardThenUntapEnchantedCreatureEffectHandler implements
         playerInteractionSupport.resolveRandomDiscardCards(gameData, discarderId, sourceName, 1);
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (entry.getSourcePermanentSnapshot() != null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             log.info("Game {} - {} untap fizzles: Aura no longer attached", gameData.id, sourceName);
             return;

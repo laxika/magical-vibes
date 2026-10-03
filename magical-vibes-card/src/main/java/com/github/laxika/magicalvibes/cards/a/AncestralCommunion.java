@@ -15,7 +15,7 @@ public class AncestralCommunion extends Card {
 
     public AncestralCommunion() {
         addEffect(EffectSlot.ON_SELF_CAST,
-                CopyThisSpellIfConditionEffect.whenCastWhile(new ControlledCommanderAsCast(), true));
+                CopyThisSpellIfConditionEffect.whenCastWhile(new ControlledCommanderAsCast(), false));
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardIsPermanentPredicate())

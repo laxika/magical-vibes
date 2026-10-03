@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.StopCold;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Choke.class, Island.class, Forest.class})
+@CardUsed({Choke.class, Island.class, Forest.class, Opalescence.class, StopCold.class, SeasClaim.class, Twiddle.class})
 class ChokeTest extends BaseCardTest {
 
     @Test
@@ -98,10 +100,59 @@ class ChokeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castEnchantment(player1, 0, choke.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.hasLostAllAbilities(gd, choke)).isTrue();
+        advanceToUpkeep(player1);
+
+        assertThat(island.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Twiddle.class})
+    @DisplayName("Choke does not prevent an Island from being untapped by a spell")
+    void spellCanUntapIsland() {
+        harness.addToBattlefield(player1, new Choke());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, island.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(island.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({SeasClaim.class})
+    @DisplayName("A land that becomes an Island stays tapped until it loses that subtype")
+    void appliesToCurrentIslandSubtype() {
+        harness.addToBattlefield(player1, new Choke());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        resolveAllTriggers();
+        Permanent aura = findPermanent(player1, "Sea's Claim");
+        forest.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(forest.isTapped()).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        advanceToUpkeep(player1);
+
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choke does not tap an untapped Island")
+    void untappedIslandStaysUntapped() {
+        harness.addToBattlefield(player1, new Choke());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+
         advanceToUpkeep(player1);
 
         assertThat(island.isTapped()).isFalse();

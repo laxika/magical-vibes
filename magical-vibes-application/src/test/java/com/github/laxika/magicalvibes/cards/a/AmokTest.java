@@ -74,6 +74,50 @@ class AmokTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Random discard is paid immediately while the counter waits for resolution")
+    void discardsExactlyOneCardBeforeResolution() {
+        harness.addToBattlefield(player1, new Amok());
+        Permanent monk = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
+        VenerableMonk first = new VenerableMonk();
+        Amok second = new Amok();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Amok"), null, monk.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(first, second);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .doesNotContain(gd.playerGraveyards.get(player1.getId()).getFirst());
+        assertThat(monk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(monk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Amok can be activated repeatedly to put counters on your own creature")
+    void repeatedActivationsAccumulateCounters() {
+        harness.addToBattlefield(player1, new Amok());
+        Permanent monk = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
+        harness.setHand(player1, List.of(new VenerableMonk(), new Amok()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, "Amok"), null, monk.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(player1, "Amok"), null, monk.getId());
+        harness.passBothPriorities();
+
+        assertThat(monk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
     private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, String cardName) {
         return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, cardName));
     }

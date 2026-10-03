@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "BLC", collectorNumber = "156")
+@CardRegistration(set = "VOC", collectorNumber = "9")
+@CardRegistration(set = "VOC", collectorNumber = "47")
 public class StormOfSouls extends Card {
 
     public StormOfSouls() {

@@ -20,6 +20,50 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CreditVoucherTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Drawing completes during resolution, without another priority round")
+    void drawsDuringTheSameResolution() {
+        Card selected = new FreshVolunteers();
+        harness.addToBattlefield(player1, new CreditVoucher());
+        harness.setHand(player1, List.of(selected));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Credit Voucher");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The same hand card cannot be selected twice")
+    void rejectsDuplicateHandCardSelections() {
+        Card first = new FreshVolunteers();
+        Card second = new DartingMerfolk();
+        Card libraryCard = new RishadanAirship();
+        harness.addToBattlefield(player1, new CreditVoucher());
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
     @DisplayName("Sacrificing Credit Voucher shuffles a chosen number of hand cards and draws that many")
     void shufflesChosenCardsAndDrawsThatMany() {
         CreditVoucher voucher = new CreditVoucher();

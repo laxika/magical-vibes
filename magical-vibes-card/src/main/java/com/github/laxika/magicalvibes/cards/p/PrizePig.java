@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "43")
 @CardRegistration(set = "LTC", collectorNumber = "126")
+@CardRegistration(set = "LTC", collectorNumber = "445")
 public class PrizePig extends Card {
 
     public PrizePig() {

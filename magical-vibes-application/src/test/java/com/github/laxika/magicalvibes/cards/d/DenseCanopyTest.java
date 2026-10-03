@@ -58,4 +58,49 @@ class DenseCanopyTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("The restriction also applies when the defending player controls Dense Canopy")
+    void defenderControlledCanopyRestrictsBlocking() {
+        addCreatureReady(player1, new GnatMiser()).setAttacking(true);
+        harness.addToBattlefield(player2, new DenseCanopy());
+        addCreatureReady(player2, new OboroBreezecaller());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Creatures with flying can block only creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Dense Canopy does not allow a nonflying creature to block a flying attacker")
+    void nonflierStillCannotBlockFlier() {
+        harness.addToBattlefield(player1, new DenseCanopy());
+        addCreatureReady(player1, new OboroBreezecaller()).setAttacking(true);
+        addCreatureReady(player2, new GnatMiser());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The blocking restriction ends when Dense Canopy leaves the battlefield")
+    void restrictionEndsWhenCanopyLeavesBattlefield() {
+        harness.addToBattlefield(player1, new DenseCanopy());
+        Permanent attacker = addCreatureReady(player1, new GnatMiser());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new OboroBreezecaller());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker, gd.playerBattlefields.get(player2.getId())))
+                .isFalse();
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }

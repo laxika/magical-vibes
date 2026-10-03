@@ -170,4 +170,115 @@ class CryptwailingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void paysCostsBeforeTheDiscardResolves() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        DaggerclawImp firstCreature = new DaggerclawImp();
+        DaggerclawImp secondCreature = new DaggerclawImp();
+        DaggerclawImp discardedCard = new DaggerclawImp();
+        harness.setGraveyard(player1, List.of(firstCreature, secondCreature));
+        harness.setHand(player2, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(firstCreature, secondCreature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+    }
+
+    @Test
+    void cannotUseCreaturesFromTheOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        DaggerclawImp ownCreature = new DaggerclawImp();
+        DaggerclawImp opposingCreature = new DaggerclawImp();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        DaggerclawImp firstCreature = new DaggerclawImp();
+        DaggerclawImp secondCreature = new DaggerclawImp();
+        harness.setGraveyard(player1, List.of(firstCreature, secondCreature));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCreature, secondCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateDuringUpkeep() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, List.of(new DaggerclawImp(), new DaggerclawImp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileAnotherAbilityIsOnTheStack() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        DaggerclawImp firstCreature = new DaggerclawImp();
+        DaggerclawImp secondCreature = new DaggerclawImp();
+        harness.setGraveyard(player1, List.of(
+                firstCreature, secondCreature, new DaggerclawImp(), new DaggerclawImp()));
+        harness.setHand(player2, List.of(new DaggerclawImp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(firstCreature.getId(), secondCreature.getId()));
+        harness.ensurePriority(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+    }
+
+    @Test
+    void canActivateDuringPostcombatMainPhase() {
+        harness.addToBattlefield(player1, new Cryptwailing());
+        harness.setGraveyard(player1, List.of(new DaggerclawImp(), new DaggerclawImp()));
+        DaggerclawImp discardedCard = new DaggerclawImp();
+        harness.setHand(player2, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+    }
 }

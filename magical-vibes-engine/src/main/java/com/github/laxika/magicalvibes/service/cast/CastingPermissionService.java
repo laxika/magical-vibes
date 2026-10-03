@@ -1285,7 +1285,8 @@ public class CastingPermissionService {
                     && gameData.combatPhasesThisTurn <= 1;
             case DECLARE_ATTACKERS_IF_ATTACKED ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
-                            && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
+                            && (gameData.playersAttackedThisCombat.contains(playerId)
+                            || gameQueryService.isPlayerBeingAttacked(gameData, playerId));
             case YOUR_END_STEP ->
                     gameData.currentStep == TurnStep.END_STEP
                             && playerId.equals(gameData.activePlayerId);
@@ -2646,6 +2647,13 @@ public class CastingPermissionService {
 
     /** Returns whether the player has an active direct permission to play the exiled card. */
     public boolean hasExilePlayPermission(GameData gameData, UUID playerId, UUID cardId) {
+        for (var battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent permanent : battlefield.getValue()) {
+                if (permanent.isPrepared() && cardId.equals(permanent.getPreparedSpellCardId())) {
+                    return playerId.equals(battlefield.getKey());
+                }
+            }
+        }
         ExiledCardEntry exiledCard = gameData.findExiledCard(cardId);
         if (exiledCard != null
                 && !exiledCard.faceDown()

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.Deathgreeter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChoiceOfDamnations.class, GrizzlyBears.class, JayemdaeTome.class, Swamp.class})
+@CardUsed({ChoiceOfDamnations.class, GrizzlyBears.class, JayemdaeTome.class, Swamp.class,
+        Deathgreeter.class})
 class ChoiceOfDamnationsTest extends BaseCardTest {
 
     @Test
@@ -111,11 +113,100 @@ class ChoiceOfDamnationsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Accepting zero life loss keeps every permanent")
+    void acceptingZeroLifeLossKeepsEveryPermanent() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Swamp());
+
+        cast();
+        harness.handleXValueChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Swamp");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing the permanent count and declining life loss sacrifices nothing")
+    void choosingExactlyPermanentCountSacrificesNothing() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Swamp());
+
+        cast();
+        harness.handleXValueChosen(player2, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Swamp");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent without permanents can still choose a number and lose life")
+    void opponentWithoutPermanentsCanLoseLife() {
+        cast();
+        harness.handleXValueChosen(player2, 7);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 13);
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing zero sacrifices creatures simultaneously so each sees the other's death")
+    void choosingZeroSacrificesCreaturesSimultaneously() {
+        harness.addToBattlefield(player2, new Deathgreeter());
+        harness.addToBattlefield(player2, new Deathgreeter());
+
+        cast();
+        harness.handleXValueChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        acceptBothDeathgreeterTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Deathgreeter");
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Selected creatures are sacrificed simultaneously while the unselected land stays")
+    void selectedCreaturesAreSacrificedSimultaneously() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Deathgreeter());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Deathgreeter());
+        harness.addToBattlefield(player2, new Swamp());
+
+        cast();
+        harness.handleXValueChosen(player2, 1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId(), second.getId()));
+
+        acceptBothDeathgreeterTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Deathgreeter");
+        harness.assertOnBattlefield(player2, "Swamp");
+        harness.assertLife(player2, 22);
+    }
+
+    private void acceptBothDeathgreeterTriggers() {
+        for (int i = 0; i < 2; i++) {
+            if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
+                harness.passBothPriorities();
+            }
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                    .isNotNull();
+            harness.handleMayAbilityChosen(player2, true);
+        }
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new ChoiceOfDamnations()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void addMana() {

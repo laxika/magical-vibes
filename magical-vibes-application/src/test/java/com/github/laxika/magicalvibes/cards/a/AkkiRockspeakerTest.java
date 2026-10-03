@@ -22,4 +22,36 @@ class AkkiRockspeakerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Entering puts the mana trigger on the stack before adding mana")
+    void manaIsAddedOnlyWhenTriggerResolves() {
+        harness.castFromHand(player1, new AkkiRockspeaker(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Akki Rockspeaker");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast adds mana to the entering creature's controller")
+    void enteringWithoutCastingAddsManaToController() {
+        harness.enterBattlefieldAndReturn(player2, new AkkiRockspeaker());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Akki Rockspeaker");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

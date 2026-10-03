@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.k.Kindle;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.l.Legerdemain;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.p.PuppetStrings;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoffinQueen.class, Kindle.class, Legerdemain.class, MoggFanatic.class, PuppetStrings.class})
+@CardUsed({CoffinQueen.class, Humility.class, Kindle.class, Legerdemain.class, MoggFanatic.class, PuppetStrings.class})
 class CoffinQueenTest extends BaseCardTest {
 
     @Test
@@ -86,9 +87,7 @@ class CoffinQueenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Kindle()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        Permanent reanimatedPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getId().equals(reanimated.getId()))
-                .findFirst().orElseThrow();
+        Permanent reanimatedPermanent = findPermanent(player1, "Mogg Fanatic");
         harness.castInstant(player1, 0, reanimatedPermanent.getId());
         resolveAllTriggers();
 
@@ -225,6 +224,95 @@ class CoffinQueenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(reanimated.getId()));
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(reanimated.getId()));
+    }
+
+    @Test
+    @DisplayName("An older untap trigger exiles its own creature after another activation resolves")
+    void eachActivationKeepsItsOwnExileReference() {
+        Permanent queen = addCreatureReady(player1, new CoffinQueen());
+        Card first = new MoggFanatic();
+        Card second = new MoggFanatic();
+        harness.setGraveyard(player2, List.of(first, second));
+        activateReanimate(queen, first);
+
+        Permanent strings = harness.addToBattlefieldAndReturn(player1, new PuppetStrings());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(strings),
+                0, null, queen.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(queen.isTapped()).isFalse();
+
+        activateReanimate(queen, second);
+
+        assertExiled(first);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(second.getId()));
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getId().equals(second.getId()));
+
+        untapWithPuppetStrings(queen);
+        assertExiled(second);
+    }
+
+    @Test
+    @DisplayName("A creature sacrificed in response to the exile trigger stays in its owner's graveyard")
+    void dyingInResponseToQueenLeavingDoesNotExileGraveyardCard() {
+        Permanent queen = addCreatureReady(player1, new CoffinQueen());
+        Card reanimated = new MoggFanatic();
+        harness.setGraveyard(player2, List.of(reanimated));
+        activateReanimate(queen, reanimated);
+
+        harness.setHand(player1, List.of(new Kindle()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, queen.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Coffin Queen");
+
+        Permanent fanatic = findPermanent(player1, "Mogg Fanatic");
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(fanatic),
+                0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Mogg Fanatic");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getId().equals(reanimated.getId()));
+    }
+
+    @Test
+    @DisplayName("Removing Coffin Queen's abilities does not remove an already created delayed trigger")
+    void delayedExileSurvivesAbilityRemoval() {
+        Permanent queen = addCreatureReady(player1, new CoffinQueen());
+        Card reanimated = new MoggFanatic();
+        harness.setGraveyard(player2, List.of(reanimated));
+        activateReanimate(queen, reanimated);
+
+        harness.setHand(player1, List.of(new Humility()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new Kindle()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, queen.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        assertExiled(reanimated);
+    }
+
+    @Test
+    @DisplayName("Reanimates a creature from your own graveyard")
+    void reanimatesFromOwnGraveyard() {
+        Permanent queen = addCreatureReady(player1, new CoffinQueen());
+        Card reanimated = new MoggFanatic();
+        harness.setGraveyard(player1, List.of(reanimated));
+
+        activateReanimate(queen, reanimated);
+
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertNotInGraveyard(player1, "Mogg Fanatic");
     }
 
     private void activateReanimate(Permanent queen, Card graveyardCard) {

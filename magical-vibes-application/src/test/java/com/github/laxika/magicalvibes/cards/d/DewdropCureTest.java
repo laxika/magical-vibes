@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BraveKinDuo;
+import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
+import com.github.laxika.magicalvibes.cards.c.CarrotCake;
+import com.github.laxika.magicalvibes.cards.l.LifecreedDuo;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,15 +15,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DewdropCure.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DewdropCure.class, BraveKinDuo.class, BarkformHarvester.class, LifecreedDuo.class, CarrotCake.class})
 class DewdropCureTest extends BaseCardTest {
 
     @Test
     void withoutGiftReturnsUpToTwoEligibleCreatures() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card third = new GrizzlyBears();
-        Card tooExpensive = new HillGiant();
+        Card first = new BraveKinDuo();
+        Card second = new BraveKinDuo();
+        Card third = new BraveKinDuo();
+        Card tooExpensive = new BarkformHarvester();
         harness.setGraveyard(player1, List.of(first, second, third, tooExpensive));
         cast(List.of(first.getId(), second.getId()), false);
 
@@ -34,10 +36,10 @@ class DewdropCureTest extends BaseCardTest {
 
     @Test
     void giftMakesOpponentDrawAndReturnsUpToThreeEligibleCreatures() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card third = new GrizzlyBears();
-        Card tooExpensive = new HillGiant();
+        Card first = new BraveKinDuo();
+        Card second = new BraveKinDuo();
+        Card third = new BraveKinDuo();
+        Card tooExpensive = new BarkformHarvester();
         harness.setGraveyard(player1, List.of(first, second, third, tooExpensive));
         int opponentHandSize = gd.playerHands.get(player2.getId()).size();
         cast(List.of(first.getId(), second.getId(), third.getId()), true);
@@ -52,9 +54,9 @@ class DewdropCureTest extends BaseCardTest {
 
     @Test
     void withoutGiftCannotChooseThreeTargets() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card third = new GrizzlyBears();
+        Card first = new BraveKinDuo();
+        Card second = new BraveKinDuo();
+        Card third = new BraveKinDuo();
         harness.setGraveyard(player1, List.of(first, second, third));
         harness.setHand(player1, List.of(new DewdropCure()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -72,5 +74,105 @@ class DewdropCureTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorceryWithGift(player1, 0, targetIds, giftPromised);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void zeroTargetsWithoutGiftDoesNotMakeOpponentDraw() {
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        cast(List.of(), false);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize);
+        harness.assertInGraveyard(player1, "Dewdrop Cure");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void zeroTargetsWithGiftStillMakesOpponentDraw() {
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        cast(List.of(), true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize + 1);
+        harness.assertInGraveyard(player1, "Dewdrop Cure");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void returnsManaValueTwoCreatureUntappedWithoutGift() {
+        Card creature = new LifecreedDuo();
+        harness.setGraveyard(player1, List.of(creature));
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        cast(List.of(creature.getId()), false);
+
+        harness.assertOnBattlefield(player1, "Lifecreed Duo");
+        harness.assertNotInGraveyard(player1, "Lifecreed Duo");
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> !p.isTapped());
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize);
+    }
+
+    @Test
+    void giftDoesNotHappenWhenEveryTargetLeavesGraveyard() {
+        Card creature = new BraveKinDuo();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new DewdropCure()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorceryWithGift(player1, 0, List.of(creature.getId()), true);
+        harness.setGraveyard(player1, List.of());
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize);
+        harness.assertNotOnBattlefield(player1, "Brave-Kin Duo");
+        harness.assertInGraveyard(player1, "Dewdrop Cure");
+    }
+
+    @Test
+    void remainingLegalTargetReturnsAndGiftIsGiven() {
+        Card first = new BraveKinDuo();
+        Card second = new BraveKinDuo();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new DewdropCure()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorceryWithGift(player1, 0, List.of(first.getId(), second.getId()), true);
+        harness.setGraveyard(player1, List.of(second));
+        int handSize = gd.playerHands.get(player2.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getId()).containsExactly(second.getId());
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize + 1);
+    }
+
+    @Test
+    void rejectsCreatureAboveManaValueLimit() {
+        Card creature = new BarkformHarvester();
+        harness.setGraveyard(player1, List.of(creature));
+        assertThatThrownBy(() -> cast(List.of(creature.getId()), true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsNoncreatureCard() {
+        Card artifact = new CarrotCake();
+        harness.setGraveyard(player1, List.of(artifact));
+        assertThatThrownBy(() -> cast(List.of(artifact.getId()), false))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsOpponentGraveyard() {
+        Card creature = new BraveKinDuo();
+        harness.setGraveyard(player2, List.of(creature));
+        assertThatThrownBy(() -> cast(List.of(creature.getId()), true))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsRepeatedTarget() {
+        Card creature = new BraveKinDuo();
+        harness.setGraveyard(player1, List.of(creature));
+        assertThatThrownBy(() -> cast(List.of(creature.getId(), creature.getId()), true))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CruelEdict.class, GiantSpider.class, GrizzlyBears.class, Plains.class})
+@CardUsed({CruelEdict.class, GiantSpider.class, GrizzlyBears.class, Plains.class,
+        PaladinEnVec.class, TrollAscetic.class})
 class CruelEdictTest extends BaseCardTest {
 
     @Test
@@ -141,6 +144,86 @@ class CruelEdictTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Hexproof does not prevent a creature from being chosen for sacrifice")
+    void hexproofCreatureCanBeChosenForSacrifice() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player2, new TrollAscetic());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(troll.getId(), bears.getId());
+        harness.handlePermanentChosen(player2, troll.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears).doesNotContain(troll);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(troll.getCard());
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent sacrifice to Cruel Edict")
+    void protectionFromBlackDoesNotPreventSacrifice() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(paladin);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(paladin.getCard());
+    }
+
+    @Test
+    @DisplayName("Cruel Edict targets an opponent rather than their creature")
+    void cannotTargetCreatureDirectly() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Caster's creature is unaffected when the opponent controls only a land")
+    void noCreaturesDoesNotSacrificeLandOrCastersCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(plains);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice choice includes only the opponent's creatures")
+    void choiceExcludesCastersCreaturesAndNoncreatures() {
+        Permanent casterBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(bears.getId(), spider.getId());
+        harness.handlePermanentChosen(player2, spider.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(casterBears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(plains, bears).doesNotContain(spider);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(spider.getCard());
     }
 }
 

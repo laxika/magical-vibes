@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.Cloudskate;
+import com.github.laxika.magicalvibes.cards.l.LinSivviDefiantHero;
 import com.github.laxika.magicalvibes.cards.r.RamosianCommander;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefiantFalcon.class, Cloudskate.class, Daze.class, RamosianCommander.class})
+@CardUsed({DefiantFalcon.class, Cloudskate.class, Daze.class, RamosianCommander.class,
+        LinSivviDefiantHero.class})
 class DefiantFalconTest extends BaseCardTest {
 
     @Test
@@ -97,6 +99,60 @@ class DefiantFalconTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(falcon.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Rebel with mana value exactly three can be found and enters untapped")
+    void findsRebelAtManaValueBoundary() {
+        addReadyFalcon();
+        LinSivviDefiantHero rebel = new LinSivviDefiantHero();
+        harness.setLibrary(player1, List.of(rebel));
+
+        activateFalcon();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() == rebel)
+                .singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isSummoningSick()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(rebel);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Falcon cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new DefiantFalcon());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Falcon cannot activate its search ability")
+    void tappedFalconCannotActivate() {
+        Permanent falcon = addReadyFalcon();
+        falcon.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes and shuffles")
+    void emptyLibrarySearchCompletes() {
+        addReadyFalcon();
+        harness.setLibrary(player1, List.of());
+
+        activateFalcon();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     private Permanent addReadyFalcon() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 
 @CardRegistration(set = "LTC", collectorNumber = "40")
 @CardRegistration(set = "LTC", collectorNumber = "123")
+@CardRegistration(set = "LTC", collectorNumber = "442")
 public class LegolasGreenleaf extends Card {
 
     public LegolasGreenleaf() {

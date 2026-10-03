@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.f.ForbiddingWatchtower;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.h.HarshMentor;
 import com.github.laxika.magicalvibes.cards.k.Knighthood;
+import com.github.laxika.magicalvibes.cards.o.Opportunity;
+import com.github.laxika.magicalvibes.cards.u.Unearth;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DampingEngine.class, ForbiddingWatchtower.class, GiantCockroach.class, Knighthood.class,
-        Bloodbriar.class, HarshMentor.class})
+        Bloodbriar.class, HarshMentor.class, Opportunity.class, Unearth.class})
 class DampingEngineTest extends BaseCardTest {
 
     @Test
@@ -165,9 +167,8 @@ class DampingEngineTest extends BaseCardTest {
         assertThat(availability.getPlayableCardIndices(gd, player1.getId())).contains(0);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard() instanceof DampingEngine)
-                .anyMatch(p -> p.getCard() instanceof GiantCockroach);
+        harness.assertOnBattlefield(player1, "Damping Engine");
+        harness.assertOnBattlefield(player1, "Giant Cockroach");
     }
 
     @Test
@@ -305,5 +306,85 @@ class DampingEngineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(availability.getPlayableCardIndices(gd, player1.getId())).isEmpty();
+    }
+
+    @Test
+    void ignoringEngineDoesNotExemptAnotherPlayerWhoBecomesLeader() {
+        harness.addToBattlefield(player1, new DampingEngine());
+        Permanent sacrificeTarget = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        harness.addToBattlefield(player2, new GiantCockroach());
+        harness.addToBattlefield(player2, new GiantCockroach());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GiantCockroach()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player2.getId()))
+                .isEmpty();
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void anotherPlayerMaySacrificeToIgnoreTheSameEngineDuringTheSameTurn() {
+        harness.addToBattlefield(player1, new DampingEngine());
+        Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, firstSacrifice.getId());
+
+        Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+        harness.addToBattlefield(player2, new GiantCockroach());
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.handlePermanentChosen(player2, secondSacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondSacrifice);
+        harness.assertInGraveyard(player2, "Giant Cockroach");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void leaderMayCastInstantAndSorcerySpells() {
+        harness.addToBattlefield(player1, new DampingEngine());
+        harness.addToBattlefield(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Opportunity(), new Unearth()));
+        harness.setLibrary(player1, List.of(new GiantCockroach(), new GiantCockroach(),
+                new GiantCockroach(), new GiantCockroach()));
+        Bloodbriar graveyardCreature = new Bloodbriar();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertInGraveyard(player1, "Opportunity");
+        harness.castAndResolveSorcery(player1, 0, graveyardCreature.getId());
+        harness.assertOnBattlefield(player1, "Bloodbriar");
+    }
+
+    @Test
+    void ignoredRestrictionReturnsOnTheNextTurn() {
+        harness.setLibrary(player2, List.of(new GiantCockroach()));
+        harness.addToBattlefield(player1, new DampingEngine());
+        Permanent sacrificeTarget = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player1, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(harness.getCastingPermissionService().isLandPlayRestricted(gd, player1.getId()))
+                .isTrue();
     }
 }

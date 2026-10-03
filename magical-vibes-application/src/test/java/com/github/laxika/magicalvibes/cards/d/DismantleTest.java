@@ -109,10 +109,56 @@ class DismantleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castDismantle(Permanent target) {
+    @Test
+    @DisplayName("Can double the counters on its own indestructible target")
+    void survivingTargetCanReceiveItsOwnCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        target.setCounterCount(CounterType.CHARGE, 3);
+
+        castDismantle(target);
+        harness.handleListChoice(player1, ChoiceContext.DismantleCounterTypeChoice.CHARGE);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A destroyed controlled artifact cannot receive its own counters")
+    void destroyedOwnTargetIsNotACounterRecipient() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AetherVial());
+        target.setCounterCount(CounterType.CHARGE, 2);
+
+        castDismantle(target);
+        harness.handleListChoice(player1, ChoiceContext.DismantleCounterTypeChoice.PLUS_ONE_PLUS_ONE);
+
+        harness.assertInGraveyard(player1, "Aether Vial");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not place counters if its target leaves before resolution")
+    void missingTargetPreventsCounterPlacement() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AetherVial());
+        target.setCounterCount(CounterType.CHARGE, 2);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
         harness.setHand(player1, List.of(new Dismantle()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
         harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Dismantle");
+    }
+
+    private void castDismantle(Permanent target) {
+        harness.setHand(player1, List.of(new Dismantle()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }

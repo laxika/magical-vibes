@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.k.KorHaven;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -45,9 +46,7 @@ class AnimateLandTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
         castAnimateLand(land);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
         assertThat(gqs.isLand(gd, land)).isTrue();
@@ -62,6 +61,56 @@ class AnimateLandTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Animating a tapped land does not untap it")
+    void tappedLandRemainsTapped() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        castAnimateLand(land);
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated land retains its mana ability")
+    void retainsManaAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        land.setSummoningSick(false);
+        castAnimateLand(land);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the targeted land becomes a creature")
+    void doesNotAnimateOtherLands() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new KorHaven());
+
+        castAnimateLand(land);
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, otherLand)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animation sets base power and toughness before applying counters")
+    void countersApplyOnTopOfAnimation() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAnimateLand(land);
+
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(5);
     }
 
     private void castAnimateLand(Permanent target) {

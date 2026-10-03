@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.t.TempleOfTheFalseGod;
 import com.github.laxika.magicalvibes.cards.u.Upwelling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DecreeOfAnnihilation.class, ArkOfBlight.class, AvenFarseer.class, Dragonstorm.class,
-        TempleOfTheFalseGod.class, Upwelling.class})
+        TempleOfTheFalseGod.class, Upwelling.class, DragonBreath.class})
 class DecreeOfAnnihilationTest extends BaseCardTest {
 
     @Test
@@ -88,5 +89,54 @@ class DecreeOfAnnihilationTest extends BaseCardTest {
                 .doesNotContain("Temple of the False God");
         harness.assertInHand(player1, "Dragonstorm");
         harness.assertInGraveyard(player1, "Decree of Annihilation");
+    }
+
+    @Test
+    @DisplayName("An Aura on an exiled creature goes to the graveyard after the spell resolves")
+    void unattachedAuraIsNotExiledWithTheGraveyards() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AvenFarseer());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DragonBreath());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new DecreeOfAnnihilation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Dragon Breath");
+        harness.assertInGraveyard(player1, "Dragon Breath");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .contains(creature.getCard().getId())
+                .doesNotContain(aura.getCard().getId());
+    }
+
+    @Test
+    @DisplayName("Cycling without lands still draws and leaves other zones intact")
+    void cyclingWithoutLandsStillDraws() {
+        Card draw = new Dragonstorm();
+        Card handCard = new ArkOfBlight();
+        Card graveyardCard = new AvenFarseer();
+        harness.addToBattlefield(player1, new Upwelling());
+        harness.addToBattlefield(player2, new ArkOfBlight());
+        harness.setHand(player1, List.of(new DecreeOfAnnihilation(), handCard));
+        harness.setHand(player2, List.of(new Dragonstorm()));
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Upwelling");
+        harness.assertOnBattlefield(player2, "Ark of Blight");
+        harness.assertInHand(player1, "Ark of Blight");
+        harness.assertInHand(player1, "Dragonstorm");
+        harness.assertInHand(player2, "Dragonstorm");
+        harness.assertInGraveyard(player1, "Aven Farseer");
+        harness.assertInGraveyard(player1, "Decree of Annihilation");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }

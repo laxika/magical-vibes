@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "296")
+@CardRegistration(set = "VOC", collectorNumber = "158")
 public class VampiricDragon extends Card {
 
     public VampiricDragon() {

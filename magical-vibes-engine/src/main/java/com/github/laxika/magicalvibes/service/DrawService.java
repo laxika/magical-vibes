@@ -339,9 +339,6 @@ public class DrawService {
             return;
         }
 
-        // Mark this draw as the player's turn-based draw-step draw before any replacement is applied,
-        // so effects that exempt "the first card they draw in each of their draw steps" (Notion Thief)
-        // see a stable answer even if their source enters play later in the turn.
         boolean firstDrawStepDraw = originalFirstDrawStepDraw != null
                 ? originalFirstDrawStepDraw : markFirstDrawStepDraw(gameData, playerId);
         gameData.pendingDrawFirstDrawStepFlags.put(playerId, firstDrawStepDraw);
@@ -398,6 +395,14 @@ public class DrawService {
         // instead look at the top X cards, put all but one on the bottom in a random order, then draw.
         List<Integer> pendingLookAtTop = gameData.pendingNextDrawLookAtTop.get(playerId);
         if (pendingLookAtTop != null && !pendingLookAtTop.isEmpty()) {
+            if (pendingLookAtTop.stream().distinct().count() > 1) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null,
+                        new com.github.laxika.magicalvibes.model.ChoiceContext.DrawLookReplacementOrder(playerId, pendingLookAtTop),
+                        pendingLookAtTop.stream().distinct().map(String::valueOf).toList(),
+                        "Choose which library-look replacement to apply to this draw."));
+                return;
+            }
             int lookAtTopX = pendingLookAtTop.removeFirst();
             if (pendingLookAtTop.isEmpty()) {
                 gameData.pendingNextDrawLookAtTop.remove(playerId);
@@ -688,10 +693,15 @@ public class DrawService {
 
         // Thought Reflection / Alhammarret's Archive: if you would draw a card, draw two cards
         // instead, except for the first card drawn during the controller's own draw step.
-        boolean doubles = findDoubleDrawSourceCard(gameData, playerId) != null
-                || (!firstDrawStepDraw && findExceptFirstDoubleDrawSourceCard(gameData, playerId) != null);
-        if (doubles) {
-            int drawCount = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
+        int unconditionalDoublers = countDrawDoublers(gameData, playerId, false);
+        int exceptFirstDoublers = countDrawDoublers(gameData, playerId, true);
+        if (unconditionalDoublers > 0 || (!firstDrawStepDraw && exceptFirstDoublers > 0)) {
+            int unconditionalCount = 1 << Math.min(unconditionalDoublers, 20);
+            int exceptFirstMultiplier = 1 << Math.min(exceptFirstDoublers, 20);
+            int drawCount = firstDrawStepDraw
+                    ? 1 + (unconditionalCount - 1) * exceptFirstMultiplier
+                    : unconditionalCount * exceptFirstMultiplier;
+            drawCount *= MaroGoneNutsSupport.doublingFactor(gameData);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw "
                     + drawCount + " cards instead."));
@@ -1244,7 +1254,7 @@ public class DrawService {
         if (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.DRAW) {
             return false;
         }
-        return gameData.drawStepFirstDrawTaken.add(playerId);
+        return !gameData.drawStepFirstDrawTaken.contains(playerId);
     }
 
     /** The opponent-controlled Notion Thief-style source that steals {@code playerId}'s extra draws. */
@@ -1300,6 +1310,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof OpponentDrawTwoOrMoreReplacedEffect);
             if (hasEffect) {
@@ -1320,27 +1331,28 @@ public class DrawService {
                 .text("; " + playerName + " and " + controllerName + " each draw a card.")
                 .build());
 
-        resolveDrawCards(gameData, playerId, 1, null, true);
-        if (gameData.status == GameStatus.FINISHED) {
-            return;
+        UUID firstPlayerId = sourceControllerId.equals(gameData.activePlayerId) ? sourceControllerId : playerId;
+        UUID secondPlayerId = firstPlayerId.equals(playerId) ? sourceControllerId : playerId;
+        resolveDrawCards(gameData, firstPlayerId, 1, null, true);
+        if (gameData.status != GameStatus.FINISHED) {
+            resolveDrawCards(gameData, secondPlayerId, 1, null, true);
         }
-        resolveDrawCards(gameData, sourceControllerId, 1, null, true);
     }
 
-    private Card findDoubleDrawSourceCard(GameData gameData, UUID playerId) {
+    private int countDrawDoublers(GameData gameData, UUID playerId, boolean exceptFirst) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-
+        if (battlefield == null) return 0;
+        int count = 0;
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect));
-            if (hasEffect) {
-                return permanent.getCard();
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (exceptFirst ? effect instanceof DoubleDrawExceptFirstDrawStepDrawEffect
+                        : isActiveDoubleDrawReplacement(gameData, permanent, playerId, effect)) {
+                    count++;
+                }
             }
         }
-        return null;
+        return count;
     }
 
     private boolean isActiveDoubleDrawReplacement(GameData gameData, Permanent permanent,
@@ -1819,6 +1831,18 @@ public class DrawService {
                 false));
     }
 
+    /** Applies the delayed library-look replacement selected by the player who would draw. */
+    public void resolveChosenNextDrawLookAtTop(GameData gameData, UUID playerId, int count) {
+        List<Integer> replacements = gameData.pendingNextDrawLookAtTop.get(playerId);
+        if (replacements == null || !replacements.remove(Integer.valueOf(count))) {
+            throw new IllegalStateException("That draw replacement is no longer available");
+        }
+        if (replacements.isEmpty()) {
+            gameData.pendingNextDrawLookAtTop.remove(playerId);
+        }
+        resolveNextDrawLookAtTop(gameData, playerId, count);
+    }
+
     private void resolveNextDrawLookAtTop(GameData gameData, UUID playerId, int x) {
         List<Card> deck = gameData.playerDecks.get(playerId);
         if (deck == null || deck.isEmpty()) {
@@ -1954,6 +1978,11 @@ public class DrawService {
     }
 
     private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
+        boolean basicLandInLibrary = drawn.hasType(CardType.LAND)
+                && gameQueryService.cardHasSupertype(drawn, CardSupertype.BASIC, gameData, playerId);
+        if (playerId.equals(gameData.activePlayerId) && gameData.currentStep == TurnStep.DRAW) {
+            gameData.drawStepFirstDrawTaken.add(playerId);
+        }
         gameData.addCardToHand(playerId, drawn);
         triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
                 gameData, playerId, drawn);
@@ -1971,7 +2000,7 @@ public class DrawService {
         checkPlanarDrawTriggers(gameData, playerId, drawn);
         checkEnchantedPlayerDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
-        checkRevealFirstDrawTriggers(gameData, playerId, drawn);
+        checkRevealFirstDrawTriggers(gameData, playerId, drawn, basicLandInLibrary);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
         checkMiracleReveal(gameData, playerId, drawn);
     }
@@ -1996,7 +2025,9 @@ public class DrawService {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 drawn,
                 drawingPlayerId,
-                List.of(new MiracleRevealEffect(miracleCost)),
+                List.of(new MiracleRevealEffect(miracleCost,
+                        drawn.getCastingOption(MiracleCast.class).isPresent() ? 0
+                                : gameQueryService.findGrantedMiracleXReduction(gameData, drawingPlayerId, drawn))),
                 "Reveal " + drawn.getName() + " for its miracle ability?"
         ));
         log.info("Game {} - offering miracle reveal for {}", gameData.id, drawn.getName());
@@ -2008,7 +2039,8 @@ public class DrawService {
      * revealed — {@code cardsDrawnThisTurn} has already been incremented for this draw, so first draw
      * means a count of exactly 1. The extra draw is therefore never revealed itself.
      */
-    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn,
+                                              boolean basicLandInLibrary) {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
             return;
         }
@@ -2030,9 +2062,7 @@ public class DrawService {
                     .text(".")
                     .build());
 
-            boolean basicLand = drawn.hasType(CardType.LAND)
-                    && drawn.getSupertypes().contains(CardSupertype.BASIC);
-            if (basicLand) {
+            if (basicLandInLibrary) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

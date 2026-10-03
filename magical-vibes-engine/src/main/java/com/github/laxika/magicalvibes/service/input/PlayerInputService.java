@@ -58,6 +58,9 @@ public class PlayerInputService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector triggerTargetCollector;
+
+    @Autowired @Lazy
     private BattlefieldEntryService battlefieldEntryService;
 
     @Autowired @Lazy
@@ -1156,6 +1159,8 @@ public class PlayerInputService {
                         rememberLastChosenMode);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
+                .filter(option -> triggerTargetCollector.hasLegalGraveyardTarget(
+                        gameData, option.targetFilter(), controllerId, sourceCard))
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList());
         if (effect.optional() && chosenModes.isEmpty()) {
@@ -2279,9 +2284,17 @@ public class PlayerInputService {
     public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
                                        boolean restrictToOpponentHands, boolean nonbasicLandOnly,
                                        UUID attachedTo, CardType requiredType, Zone landPlayZone) {
+        return beginCardNameChoice(gameData, playerId, card, excludedTypes, restrictToOpponentHands,
+                nonbasicLandOnly, attachedTo, requiredType, landPlayZone, null);
+    }
+
+    public boolean beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes,
+                                       boolean restrictToOpponentHands, boolean nonbasicLandOnly,
+                                       UUID attachedTo, CardType requiredType, Zone landPlayZone,
+                                       Permanent preparedPermanent) {
         ChoiceContext.CardNameChoice choiceContext =
                 new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, nonbasicLandOnly,
-                        attachedTo, requiredType, landPlayZone);
+                        attachedTo, requiredType, landPlayZone, preparedPermanent);
 
         List<String> cardNames;
         String prompt;
@@ -3002,6 +3015,20 @@ public class PlayerInputService {
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
                                          ChosenCardAwareEffect chosenCardThenEffect) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown, boolean returnOnSourceLeave,
+                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         UUID playPermissionTaxSourceControllerId,
+                                         int exilePlayOpponentTax, boolean landsEnterTapped,
+                                         ChosenCardAwareEffect chosenCardThenEffect, int exiledCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
@@ -3010,7 +3037,7 @@ public class PlayerInputService {
                 "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
                 cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
                 playPermissionToChooser, playPermissionTaxSourceControllerId,
-                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect));
+                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, exiledCount));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,12 +17,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DoomedTraveler.class, WrathOfGod.class})
 class DoomedTravelerTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({DoomedTraveler.class, WrathOfGod.class})
     class DeathTriggerTests {
 
         @Test
@@ -30,10 +30,7 @@ class DoomedTravelerTest extends BaseCardTest {
         void deathTriggerCreatesSpiritToken() {
             harness.addToBattlefield(player1, new DoomedTraveler());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Doomed Traveler dies
 
             GameData gd = harness.getGameData();
@@ -66,10 +63,7 @@ class DoomedTravelerTest extends BaseCardTest {
         void deathTriggerBelongsToController() {
             harness.addToBattlefield(player2, new DoomedTraveler());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Doomed Traveler dies
             harness.passBothPriorities(); // Resolve death trigger
 
@@ -80,6 +74,29 @@ class DoomedTravelerTest extends BaseCardTest {
             // Player1 should have no Spirit tokens
             List<Permanent> player1Tokens = findPermanents(player1, "Spirit");
             assertThat(player1Tokens).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Each Traveler dying simultaneously creates its own Spirit after the board wipe")
+        void simultaneousDeathsCreateSeparateTokens() {
+            harness.addToBattlefield(player1, new DoomedTraveler());
+            harness.addToBattlefield(player1, new DoomedTraveler());
+
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+            harness.passBothPriorities();
+
+            assertThat(findPermanents(player1, "Doomed Traveler")).isEmpty();
+            assertThat(findPermanents(player1, "Spirit")).isEmpty();
+            assertThat(harness.getGameData().stack).hasSize(2);
+
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+            assertThat(harness.getGameData().stack).hasSize(1);
+
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+            assertThat(harness.getGameData().stack).isEmpty();
+            assertThat(findPermanents(player2, "Spirit")).isEmpty();
         }
     }
 }

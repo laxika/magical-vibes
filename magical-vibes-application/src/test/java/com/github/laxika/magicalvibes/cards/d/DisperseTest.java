@@ -25,8 +25,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving bounces target creature to owner's hand")
     void bouncesCreature() {
-        harness.addToBattlefield(player2, new StonybrookBanneret());
-        UUID targetId = harness.getPermanentId(player2, "Stonybrook Banneret");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new StonybrookBanneret()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -39,8 +38,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving bounces target artifact to owner's hand")
     void bouncesArtifact() {
-        harness.addToBattlefield(player2, new ThornbiteStaff());
-        UUID targetId = harness.getPermanentId(player2, "Thornbite Staff");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new ThornbiteStaff()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -53,8 +51,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving bounces target enchantment to owner's hand")
     void bouncesEnchantment() {
-        harness.addToBattlefield(player2, new Bitterblossom());
-        UUID targetId = harness.getPermanentId(player2, "Bitterblossom");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Bitterblossom()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -70,8 +67,7 @@ class DisperseTest extends BaseCardTest {
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         harness.addToBattlefield(player1, new StonybrookBanneret()); // valid target so spell is playable
-        harness.addToBattlefield(player2, new Mutavault());
-        UUID targetId = harness.getPermanentId(player2, "Mutavault");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Mutavault()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -85,8 +81,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Can bounce own permanent")
     void canBounceOwnPermanent() {
-        harness.addToBattlefield(player1, new ThornbiteStaff());
-        UUID targetId = harness.getPermanentId(player1, "Thornbite Staff");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new ThornbiteStaff()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -101,8 +96,7 @@ class DisperseTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new StonybrookBanneret());
-        UUID targetId = harness.getPermanentId(player2, "Stonybrook Banneret");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new StonybrookBanneret()).getId();
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -115,5 +109,60 @@ class DisperseTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Disperse");
+    }
+
+    @Test
+    @DisplayName("Returns a permanent to its owner rather than its controller")
+    void returnsToOwnerInsteadOfController() {
+        StonybrookBanneret creature = new StonybrookBanneret();
+        creature.setOwnerId(player1.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, creature).getId();
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Stonybrook Banneret");
+        harness.assertInHand(player1, "Stonybrook Banneret");
+        harness.assertNotInHand(player2, "Stonybrook Banneret");
+    }
+
+    @Test
+    @DisplayName("Cannot target an animated land creature")
+    void cannotTargetAnimatedLand() {
+        harness.addToBattlefield(player1, new StonybrookBanneret());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Mutavault()).getId();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a nonland permanent");
+        harness.assertOnBattlefield(player2, "Mutavault");
+    }
+
+    @Test
+    @DisplayName("A second Disperse can remove the target in response")
+    void fizzlesAfterTargetIsBouncedInResponse() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new StonybrookBanneret()).getId();
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Stonybrook Banneret");
+        harness.assertInHand(player2, "Stonybrook Banneret");
+        harness.assertInGraveyard(player1, "Disperse");
+        harness.assertInGraveyard(player2, "Disperse");
+        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

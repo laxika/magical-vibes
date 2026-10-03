@@ -51,22 +51,44 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler
             return;
         }
 
-        Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
+        Card discarded = hand.get(ThreadLocalRandom.current().nextInt(hand.size()));
         gameData.discardCausedByOpponent = false;
-        graveyardService.discardCard(gameData, controllerId, discarded);
+        if (!discarded.isToken()
+                && graveyardService.findDiscardToLibraryReplacementSource(gameData, controllerId) != null) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(entry.getCard(), controllerId,
+                    List.of(new DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect(
+                            aetherRift.lifeCost(), discarded.getId(), controllerId, List.of(), true)),
+                    "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
+                    null, null, entry.getSourcePermanentId()));
+            return;
+        }
+        discardAndContinue(gameData, entry.getCard(), entry.getSourcePermanentId(), controllerId,
+                discarded.getId(), aetherRift.lifeCost(), false);
+    }
+
+    public void discardAndContinue(GameData gameData, Card sourceCard, UUID sourcePermanentId,
+                                   UUID controllerId, UUID discardedCardId, int lifeCost,
+                                   boolean applyLibraryReplacement) {
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        Card discarded = hand.stream().filter(card -> card.getId().equals(discardedCardId)).findFirst().orElse(null);
+        if (discarded == null) return;
+        hand.remove(discarded);
+        gameData.discardCausedByOpponent = false;
+        boolean enteredGraveyard = graveyardService.discardCard(gameData, controllerId, discarded,
+                applyLibraryReplacement);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(controllerId) + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id,
-                gameData.playerIdToName.get(controllerId), discarded.getName(), entry.getCard().getName());
+                gameData.playerIdToName.get(controllerId), discarded.getName(), sourceCard.getName());
         triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 
-        if (!discarded.hasType(CardType.CREATURE)) {
+        if (!enteredGraveyard || !gameQueryService.cardHasType(discarded, CardType.CREATURE, gameData, controllerId)) {
             return;
         }
 
         List<UUID> order = apnapOrder(gameData);
-        offerNextOrReturn(gameData, entry.getCard(), entry.getSourcePermanentId(),
-                discarded.getId(), controllerId, aetherRift.lifeCost(), order);
+        offerNextOrReturn(gameData, sourceCard, sourcePermanentId,
+                discarded.getId(), controllerId, lifeCost, order);
     }
 
     private void offerNextOrReturn(GameData gameData, Card sourceCard, UUID sourcePermanentId,
@@ -108,6 +130,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler
 
     public boolean canPayLife(GameData gameData, UUID playerId, int lifeCost) {
         return gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost;
     }
 

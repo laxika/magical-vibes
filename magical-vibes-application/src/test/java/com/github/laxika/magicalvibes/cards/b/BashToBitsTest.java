@@ -105,4 +105,34 @@ class BashToBitsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Bash to Bits can destroy its controller's artifact")
+    void destroysOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DarkwaterEgg());
+        harness.setHand(player1, List.of(new BashToBits()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Darkwater Egg");
+        harness.assertInGraveyard(player1, "Darkwater Egg");
+        harness.assertInGraveyard(player1, "Bash to Bits");
+    }
+
+    @Test
+    @DisplayName("Flashback requires two red mana even with six total mana")
+    void flashbackRequiresTwoRedMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarkwaterEgg());
+        harness.setGraveyard(player1, List.of(new BashToBits()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Darkwater Egg");
+        harness.assertInGraveyard(player1, "Bash to Bits");
+        assertThat(gd.stack).isEmpty();
+    }
 }

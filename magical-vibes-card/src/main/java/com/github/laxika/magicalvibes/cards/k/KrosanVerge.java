@@ -22,11 +22,13 @@ import java.util.List;
 @CardRegistration(set = "PCA", collectorNumber = "123")
 @CardRegistration(set = "MKC", collectorNumber = "271")
 @CardRegistration(set = "OTC", collectorNumber = "304")
+@CardRegistration(set = "ONC", collectorNumber = "158")
 @CardRegistration(set = "C20", collectorNumber = "285")
 @CardRegistration(set = "MIC", collectorNumber = "175")
 @CardRegistration(set = "C19", collectorNumber = "257")
 @CardRegistration(set = "WOC", collectorNumber = "163")
 @CardRegistration(set = "C18", collectorNumber = "263")
+@CardRegistration(set = "C16", collectorNumber = "306")
 public class KrosanVerge extends Card {
 
     public KrosanVerge() {

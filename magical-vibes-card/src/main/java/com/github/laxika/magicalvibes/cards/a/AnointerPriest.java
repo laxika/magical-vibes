@@ -14,7 +14,7 @@ public class AnointerPriest extends Card {
 
     public AnointerPriest() {
         // Whenever a creature token you control enters, you gain 1 life.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardIsTokenPredicate(),
                         new GainLifeEffect(1)));
 

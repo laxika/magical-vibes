@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMutation;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BruvacTheGrandiloquent.class, Millstone.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BruvacTheGrandiloquent.class, Millstone.class, GrizzlyBears.class, DarksteelMutation.class})
 class BruvacTheGrandiloquentTest extends BaseCardTest {
 
     @Test
@@ -45,6 +45,57 @@ class BruvacTheGrandiloquentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Doubles opponent self-mill regardless of who controls the mill source")
+    void doublesOpponentSelfMill() {
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setLibrary(player2, cards(6));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Mills only the available cards when the doubled amount exceeds the library")
+    void doubledMillWithShortLibrary() {
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player2, cards(3));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Does not double milling while Darksteel Mutation removes its ability")
+    void doesNotDoubleMillAfterContinuousAbilityRemoval() {
+        Permanent bruvac = harness.addToBattlefieldAndReturn(player1, new BruvacTheGrandiloquent());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player2, cards(6));
+        harness.setHand(player1, List.of(new DarksteelMutation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, bruvac.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
     private List<Card> cards(int count) {

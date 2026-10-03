@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Contempt.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({Contempt.class, GrizzlyBears.class, Mountain.class, Disenchant.class})
 class ContemptTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,7 @@ class ContemptTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Contempt");
@@ -52,6 +55,7 @@ class ContemptTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Contempt");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -70,6 +74,70 @@ class ContemptTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Destroying Contempt in response to its attack trigger still returns the attacker")
+    void destroyedAuraDoesNotPreventCreatureReturn() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castContempt(bears);
+        Permanent aura = findPermanent(player1, "Contempt");
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.castAndResolveInstant(player1, 0, aura.getId());
+            resolveAllTriggers();
+        });
+        harness.assertInGraveyard(player1, "Contempt");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Contempt");
+    }
+
+    @Test
+    @DisplayName("The end-of-combat return waits for its delayed triggered ability to resolve")
+    void returnUsesStackAtEndOfCombat() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castContempt(bears);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+        });
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Contempt");
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Contempt");
+    }
+
+    @Test
+    @DisplayName("An unenchanted attacker does not cause Contempt or its creature to return")
+    void otherCreatureAttackingDoesNotTriggerReturn() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        castContempt(enchanted);
+
+        declareAttackers(player1, List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(enchanted, attacker);
+        harness.assertOnBattlefield(player1, "Contempt");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Contempt");
     }
 
     private void castContempt(Permanent creature) {

@@ -116,6 +116,96 @@ class CacklingWitchTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Cackling Witch can target itself and pays costs before the boost resolves")
+    void targetsItselfAndPaysCostsBeforeResolution() {
+        Permanent witch = readyCacklingWitch();
+        harness.setHand(player1, List.of(new FreshVolunteers(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int basePower = gqs.getEffectivePower(gd, witch);
+
+        harness.activateAbility(player1, 0, 3, witch.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(witch.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertNotInHand(player1, "Fresh Volunteers");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gqs.getEffectivePower(gd, witch)).isEqualTo(basePower);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, witch)).isEqualTo(basePower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, witch)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent witch = readyCacklingWitch();
+        witch.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, witch.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(witch.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The black mana requirement cannot be paid with colorless mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent witch = readyCacklingWitch();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, witch.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        assertThat(witch.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The chosen X must be paid in addition to the black mana")
+    void cannotChooseUnaffordableX() {
+        Permanent witch = readyCacklingWitch();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, witch.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        assertThat(witch.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+    }
+    @Test
+    @DisplayName("The ability can be activated during an opponent's turn")
+    void activatesDuringOpponentsTurn() {
+        readyCacklingWitch();
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int basePower = gqs.getEffectivePower(gd, target);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+        harness.assertInGraveyard(player1, "Forest");
+    }
     private Permanent readyCacklingWitch() {
         Permanent witch = addCreatureReady(player1, new CacklingWitch());
         harness.forceActivePlayer(player1);

@@ -30,10 +30,8 @@ class DomineerTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, artifactCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(artifactCreature.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(artifactCreature.getId()));
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
     }
 
     @Test
@@ -74,9 +72,48 @@ class DomineerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castAndResolveSorcery(player1, 0, domineerId);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(artifactCreature.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(artifactCreature.getId()));
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+    }
+
+    @Test
+    void goesToGraveyardWhenTargetLeavesBeforeResolution() {
+        Permanent artifactCreature = addCreatureReady(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new AetherSpellbomb());
+        harness.setHand(player1, List.of(new Domineer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, artifactCreature.getId());
+        harness.activateAbility(player2, 1, null, artifactCreature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Domineer");
+        harness.assertInGraveyard(player1, "Domineer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void bouncedStolenCreatureReturnsToOwnerAndDomineerGoesToGraveyard() {
+        Permanent artifactCreature = addCreatureReady(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new AetherSpellbomb());
+        harness.setHand(player1, List.of(new Domineer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castEnchantment(player1, 0, artifactCreature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ornithopter");
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, null, artifactCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ornithopter");
+        harness.assertNotInHand(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Domineer");
+        harness.assertInGraveyard(player1, "Domineer");
     }
 }

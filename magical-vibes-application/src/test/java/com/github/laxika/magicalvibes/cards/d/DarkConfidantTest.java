@@ -78,4 +78,44 @@ class DarkConfidantTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Each Dark Confidant reveals the next card as its own trigger resolves")
+    void multipleCopiesRevealSuccessiveCards() {
+        harness.addToBattlefield(player1, new DarkConfidant());
+        harness.addToBattlefield(player1, new DarkConfidant());
+        harness.setHand(player1, List.of());
+        Card firstCard = new DimirSignet();
+        Card secondCard = new Forest();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger still resolves after Dark Confidant leaves the battlefield")
+    void triggerResolvesWithoutSourceOnBattlefield() {
+        harness.addToBattlefield(player1, new DarkConfidant());
+        harness.setHand(player1, List.of());
+        Card topCard = new DimirSignet();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }

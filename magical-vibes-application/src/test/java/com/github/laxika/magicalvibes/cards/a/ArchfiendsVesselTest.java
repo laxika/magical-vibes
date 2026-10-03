@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
 import com.github.laxika.magicalvibes.cards.y.YawgmothsAgenda;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArchfiendsVessel.class, Shock.class, YawgmothsAgenda.class, Zombify.class, RiseFromTheGrave.class})
 class ArchfiendsVesselTest extends BaseCardTest {
 
     @Test
@@ -35,8 +41,7 @@ class ArchfiendsVesselTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castFromGraveyard(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Archfiend's Vessel");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -54,8 +59,7 @@ class ArchfiendsVesselTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castSorcery(player1, 0, vessel.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Archfiend's Vessel");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -78,10 +82,63 @@ class ArchfiendsVesselTest extends BaseCardTest {
 
         var vesselPermanentId = harness.getPermanentId(player1, "Archfiend's Vessel");
         harness.castInstant(player1, 0, vesselPermanentId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Archfiend's Vessel");
         assertThat(countPermanents(player1, "Demon")).isZero();
+    }
+
+    @Test
+    @DisplayName("Returning an opponent's Vessel under your control does not trigger it")
+    void returningFromOpponentGraveyardDoesNotCreateDemon() {
+        harness.setGraveyard(player2, List.of(new ArchfiendsVessel()));
+        harness.setHand(player1, List.of(new RiseFromTheGrave()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Archfiend's Vessel");
+        harness.assertNotInGraveyard(player2, "Archfiend's Vessel");
+        assertThat(countPermanents(player1, "Demon")).isZero();
+    }
+
+    @Test
+    @DisplayName("Reanimation creates a 5/5 black flying Demon without lifelink")
+    void createdDemonHasCorrectCharacteristics() {
+        var vessel = new ArchfiendsVessel();
+        harness.setGraveyard(player1, List.of(vessel));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, vessel.getId());
+        resolveAllTriggers();
+
+        var demon = findPermanent(player1, "Demon");
+        assertThat(demon).isNotNull();
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(5);
+        assertThat(demon.getCard().getColors()).containsExactly(CardColor.BLACK);
+        assertThat(demon.getCard().getSubtypes()).containsExactly(CardSubtype.DEMON);
+        assertThat(gqs.hasKeyword(gd, demon, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, demon, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Vessel gains life when it deals combat damage")
+    void combatDamageGainsLife() {
+        addCreatureReady(player1, new ArchfiendsVessel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 }

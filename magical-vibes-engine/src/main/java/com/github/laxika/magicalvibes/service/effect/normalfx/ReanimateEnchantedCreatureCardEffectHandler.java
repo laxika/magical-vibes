@@ -51,9 +51,8 @@ public class ReanimateEnchantedCreatureCardEffectHandler implements NormalEffect
             return;
         }
 
+        aura.setChosenPermanentId(creature.getId());
         if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), entry.getControllerId(), creature)) {
-            aura.setAttachedTo(null);
-            destructionSupport.sacrificeAndLog(gameData, creature, entry.getControllerId());
             return;
         }
 

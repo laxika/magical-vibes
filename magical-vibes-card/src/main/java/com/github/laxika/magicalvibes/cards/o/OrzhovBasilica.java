@@ -20,12 +20,15 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "311")
 @CardRegistration(set = "CMD", collectorNumber = "283")
 @CardRegistration(set = "C15", collectorNumber = "298")
+@CardRegistration(set = "C16", collectorNumber = "314")
 @CardRegistration(set = "C21", collectorNumber = "308")
 @CardRegistration(set = "C20", collectorNumber = "297")
 @CardRegistration(set = "DSC", collectorNumber = "292")
 @CardRegistration(set = "AFC", collectorNumber = "253")
 @CardRegistration(set = "LCC", collectorNumber = "345")
+@CardRegistration(set = "BRC", collectorNumber = "191")
 @CardRegistration(set = "C18", collectorNumber = "271")
+@CardRegistration(set = "DRC", collectorNumber = "164")
 public class OrzhovBasilica extends Card {
 
     public OrzhovBasilica() {

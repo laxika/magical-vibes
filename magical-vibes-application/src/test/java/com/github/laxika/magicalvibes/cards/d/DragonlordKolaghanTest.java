@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonlordKolaghan.class, GrizzlyBears.class, JaceBeleren.class})
+@CardUsed({DragonlordKolaghan.class, GrizzlyBears.class, JaceBeleren.class, Divination.class, WitchbaneOrb.class})
 class DragonlordKolaghanTest extends BaseCardTest {
 
     @Test
@@ -35,11 +35,7 @@ class DragonlordKolaghanTest extends BaseCardTest {
     void matchingCreatureSpellMakesCasterLoseTenLife() {
         setUpOpponentTurn();
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -54,10 +50,7 @@ class DragonlordKolaghanTest extends BaseCardTest {
     void matchingPlaneswalkerSpellMakesCasterLoseTenLife() {
         setUpOpponentTurn();
         harness.setGraveyard(player2, List.of(new JaceBeleren()));
-        harness.setHand(player2, List.of(new JaceBeleren()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
-
-        harness.castPlaneswalker(player2, 0);
+        harness.castFromHand(player2, new JaceBeleren(), "{1}{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(10);
@@ -68,17 +61,101 @@ class DragonlordKolaghanTest extends BaseCardTest {
     void differentNameDoesNotTrigger() {
         setUpOpponentTurn();
         harness.setGraveyard(player2, List.of(new DragonlordKolaghan()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void controllersMatchingSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DragonlordKolaghan());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void matchingCardInKolaghansControllersGraveyardDoesNotTrigger() {
+        setUpOpponentTurn();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of());
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void multipleMatchingGraveyardCardsCauseOnlyOneLifeLoss() {
+        setUpOpponentTurn();
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void removingMatchingGraveyardCardAndSourceDoesNotStopTrigger() {
+        setUpOpponentTurn();
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+
+        harness.setGraveyard(player2, List.of());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void matchingSorceryDoesNotTrigger() {
+        setUpOpponentTurn();
+        harness.setGraveyard(player2, List.of(new Divination()));
+
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentsHexproofDoesNotPreventLifeLoss() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    void otherCreaturesLoseGrantedHasteWhenKolaghanLeaves() {
+        harness.addToBattlefield(player1, new DragonlordKolaghan());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.HASTE)).isFalse();
     }
 
     private void setUpOpponentTurn() {

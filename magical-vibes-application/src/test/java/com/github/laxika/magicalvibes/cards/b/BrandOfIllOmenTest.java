@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.u.UrzasBauble;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrandOfIllOmen.class, BalduvianBears.class, DarkRitual.class, UrzasBauble.class})
+@CardUsed({BrandOfIllOmen.class, BalduvianBears.class, DarkRitual.class, UrzasBauble.class, RayOfCommand.class})
 class BrandOfIllOmenTest extends BaseCardTest {
 
     private Permanent attachToOpponentCreature() {
@@ -159,5 +160,46 @@ class BrandOfIllOmenTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Brand of Ill Omen");
         harness.assertInGraveyard(player1, "Brand of Ill Omen");
+    }
+
+    @Test
+    @DisplayName("Restriction follows the enchanted creature when its controller changes")
+    void restrictionFollowsCreatureController() {
+        Permanent creature = attachToOpponentCreature();
+
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        harness.setHand(player1, List.of(new BalduvianBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.setHand(player2, List.of(new BalduvianBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger on the enchanted creature controller's upkeep")
+    void cumulativeUpkeepDoesNotTriggerOnOpponentsTurn() {
+        attachToOpponentCreature();
+        Permanent aura = findPermanent(player1, "Brand of Ill Omen");
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(aura.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Brand of Ill Omen");
     }
 }

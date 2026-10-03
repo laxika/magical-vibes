@@ -30,6 +30,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingStudyCounterExileReturn,
         PendingOpponentChoosesCardToHandRestToGraveyard,
+        PendingManifoldInsightsChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
         PendingMurmursFromBeyondChoice,
         PendingAnimalMagnetismChoice,
@@ -519,8 +520,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * payment, so the CR 605.3a tap window is open while the prompt is up.
      */
     record AlternateCastXValueChoice(UUID playerId, UUID cardId, String manaCost, int maxValue,
-                                     String prompt, String cardName, String costLabel)
+                                     String prompt, String cardName, String costLabel, int xReduction)
             implements PendingInteraction {
+
+        public AlternateCastXValueChoice(UUID playerId, UUID cardId, String manaCost, int maxValue,
+                                         String prompt, String cardName, String costLabel) {
+            this(playerId, cardId, manaCost, maxValue, prompt, cardName, costLabel, 0);
+        }
 
         @Override
         public UUID decidingPlayerId() {
@@ -1349,11 +1355,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choice of an instant or sorcery spell to exile as an activated-ability cost. */
+    /** Choice of a spell to exile as an activated-ability cost. */
     record ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
                                                 int abilityIndex, int xValue,
-                                                java.util.List<UUID> validCardIds)
+                                                java.util.List<UUID> validCardIds,
+                                                boolean anySpell, UUID targetId, Zone targetZone)
             implements PendingInteraction {
+
+        public ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                     int abilityIndex, int xValue,
+                                                     java.util.List<UUID> validCardIds) {
+            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, false, null, null);
+        }
+
+        public ExileInstantOrSorcerySpellCostChoice(UUID playerId, UUID sourcePermanentId,
+                                                     int abilityIndex, int xValue,
+                                                     java.util.List<UUID> validCardIds, boolean anySpell) {
+            this(playerId, sourcePermanentId, abilityIndex, xValue, validCardIds, anySpell, null, null);
+        }
 
         public ExileInstantOrSorcerySpellCostChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
@@ -4707,7 +4726,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean faceDown, boolean returnOnSourceLeave,
                                UUID untapPermanentId, boolean playPermissionToChooser,
                                UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
-                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect)
+                               boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect,
+                               int exiledCount)
             implements PendingInteraction, HandChoice {
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4715,7 +4735,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    int remainingCount, String prompt) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, java.util.List.of(), 0, false, false, null,
-                    false, null, 0, false, null);
+                    false, null, 0, false, null, 0);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4724,7 +4744,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    java.util.List<UUID> remainingChoosers, int cardsPerPlayer) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer, false, false, null,
-                    false, null, 0, false, null);
+                    false, null, 0, false, null, 0);
         }
 
         public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
@@ -4734,7 +4754,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                    boolean faceDown, boolean returnOnSourceLeave) {
             this(playerId, validIndices, sourcePermanentId, playPermissionControllerId,
                     remainingCount, prompt, remainingChoosers, cardsPerPlayer,
-                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null);
+                    faceDown, returnOnSourceLeave, null, false, null, 0, false, null, 0);
+        }
+
+        public ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                   UUID sourcePermanentId, UUID playPermissionControllerId,
+                                   int remainingCount, String prompt,
+                                   java.util.List<UUID> remainingChoosers, int cardsPerPlayer,
+                                   boolean faceDown, boolean returnOnSourceLeave,
+                                   UUID untapPermanentId, boolean playPermissionToChooser,
+                                   UUID playPermissionTaxSourceControllerId, int exilePlayOpponentTax,
+                                   boolean landsEnterTapped, ChosenCardAwareEffect chosenCardThenEffect) {
+            this(playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
+                    prompt, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                    untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                    exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
         }
 
         @Override

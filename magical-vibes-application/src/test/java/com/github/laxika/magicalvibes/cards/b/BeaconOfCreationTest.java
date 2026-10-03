@@ -63,4 +63,31 @@ class BeaconOfCreationTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Insect")).isZero();
     }
+
+    @Test
+    void shufflesIntoLibraryEvenWithoutAnyForests() {
+        BeaconOfCreation beacon = new BeaconOfCreation();
+        int librarySizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.castFromHand(player1, beacon, "{3}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isZero();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(librarySizeBefore + 1)
+                .containsOnlyOnce(beacon);
+        harness.assertNotInGraveyard(player1, "Beacon of Creation");
+    }
+
+    @Test
+    void countsTappedForestsPresentAtResolution() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.castFromHand(player1, new BeaconOfCreation(), "{3}{G}");
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Insect")).isZero();
+    }
 }

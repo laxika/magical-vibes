@@ -1,0 +1,29 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileControlledPermanentsInsteadOfDyingThisTurnEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class ExileControlledPermanentsInsteadOfDyingThisTurnEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameLogService gameLogService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return ExileControlledPermanentsInsteadOfDyingThisTurnEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.add(entry.getControllerId());
+        gameLogService.append(gameData, GameLog.text(
+                "Permanents you control that would be put into a graveyard this turn are exiled instead."));
+    }
+}

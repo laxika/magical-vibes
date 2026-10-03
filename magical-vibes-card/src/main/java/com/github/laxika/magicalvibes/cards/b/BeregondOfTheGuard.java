@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "9")
 @CardRegistration(set = "LTC", collectorNumber = "93")
+@CardRegistration(set = "LTC", collectorNumber = "411")
 public class BeregondOfTheGuard extends Card {
 
     public BeregondOfTheGuard() {

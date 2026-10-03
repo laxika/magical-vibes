@@ -384,7 +384,9 @@ public class TargetLegalityService {
                             && (graveyardEffect.allowZeroTargets()
                             || graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD)
                             || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect returnEffect
-                            && returnEffect.minTargets() == 0)
+                            && returnEffect.minTargets() == 0
+                            || effect instanceof ReturnCardFromGraveyardEffect returnEffect
+                            && returnEffect.upTo())
                     || effects.stream().anyMatch(effect ->
                     effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
                             && (returnEffect.source() == GraveyardSearchScope.ALL_GRAVEYARDS
@@ -402,6 +404,10 @@ public class TargetLegalityService {
                 break;
             }
             if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                if (targetCardIds.size() > 1 || targetCardIds.isEmpty() && !returnEffect.upTo()) {
+                    throw new IllegalStateException("Must select "
+                            + (returnEffect.upTo() ? "up to one" : "one") + " graveyard target");
+                }
                 for (UUID cardId : targetCardIds) {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                     if (card == null) {
@@ -1636,12 +1642,10 @@ public class TargetLegalityService {
                 .anyMatch(permanent -> permanent != null && gameQueryService.isFlagbearer(gameData, permanent))) {
             return;
         }
-        List<TargetFilter> positionFilters = card.getSpellTargets().stream()
+        List<TargetFilter> selectedPositionFilters = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .flatMap(group -> java.util.stream.IntStream.range(0, group.getMaxTargets())
                         .mapToObj(ignored -> group.getFilter(kicked)))
-                .toList();
-        List<TargetFilter> selectedPositionFilters = positionFilters.stream()
                 .limit(targetIds.size())
                 .toList();
         boolean legalFlagbearer = gameData.playerBattlefields.values().stream()
@@ -2186,11 +2190,13 @@ public class TargetLegalityService {
                 .flatMap(group -> java.util.stream.IntStream.range(0,
                                 targetPositionCount(group, targetGroupSizes))
                         .mapToObj(ignored -> group.getFilter(kicked)))
+                .limit(targetIds.size())
                 .toList();
         List<SpellTarget> perPositionGroups = targetGroups.stream()
                 .flatMap(group -> java.util.stream.IntStream.range(0,
                                 targetPositionCount(group, targetGroupSizes))
                         .mapToObj(ignored -> group))
+                .limit(targetIds.size())
                 .toList();
         int positionOffset = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() < firstGroupIndex)
@@ -2560,6 +2566,13 @@ public class TargetLegalityService {
                 }
             }
             case ALL_GRAVEYARDS -> { }
+        }
+        if (filter.minimumPoisonCounters() != null
+                && !graveyardOwnerId.equals(controllerId)
+                && gameData.playerPoisonCounters.getOrDefault(graveyardOwnerId, 0)
+                < filter.minimumPoisonCounters()) {
+            throw new IllegalStateException("Target opponent must have at least "
+                    + filter.minimumPoisonCounters() + " poison counters");
         }
         if (filter.predicate() != null
                 && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter.predicate(), card.getId(),
@@ -4922,6 +4935,7 @@ public class TargetLegalityService {
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
+            if (stackEntry.isCastFaceDown()) return false;
             int manaValue = stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                     : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());

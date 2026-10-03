@@ -97,11 +97,70 @@ class DiscreetRetreatTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("A non-outlaw spell does not consume the first outlaw trigger")
+    void nonOutlawDoesNotConsumeTrigger() {
+        attachToForest();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new OonasProwler()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An outlaw cast before the Aura enters still counts as the first outlaw")
+    void earlierOutlawPreventsTrigger() {
+        harness.setHand(player1, List.of(new OonasProwler(), new OonasProwler()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        attachToForest();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted land gives mana to its controller")
+    void opponentControlsGrantedManaAbility() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new DiscreetRetreat()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player2.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.OUTLAW), ManaColor.BLUE))
+                .isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOrAbilityManaForColor(Set.of(CardSubtype.OUTLAW), ManaColor.BLUE))
+                .isZero();
+        assertThat(forest.isTapped()).isTrue();
+    }
+
     private Permanent attachToForest() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent aura = new Permanent(new DiscreetRetreat());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DiscreetRetreat());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return forest;
     }
 

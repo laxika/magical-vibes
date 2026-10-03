@@ -44,6 +44,80 @@ class AvatarOfWoeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Nine creature cards do not reduce the casting cost")
+    void costsFullManaBelowThreshold() {
+        harness.setGraveyard(player2, IntStream.range(0, 9).<Card>mapToObj(i -> new Squire()).toList());
+
+        harness.castFromHand(player1, new AvatarOfWoe(), "{6}{B}{B}");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Avatar of Woe");
+    }
+
+    @Test
+    @DisplayName("Ten creature cards in only the opponent's graveyard reduce the cost")
+    void countsCreaturesInOpponentsGraveyardAlone() {
+        harness.setGraveyard(player2, IntStream.range(0, 10).<Card>mapToObj(i -> new Squire()).toList());
+
+        harness.castFromHand(player1, new AvatarOfWoe(), "{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avatar of Woe");
+    }
+
+    @Test
+    @DisplayName("Artifact creature cards count toward the graveyard threshold")
+    void countsArtifactCreatureCards() {
+        harness.setGraveyard(player1, IntStream.range(0, 9).<Card>mapToObj(i -> new Squire()).toList());
+        harness.setGraveyard(player2, List.of(new Dodecapod()));
+
+        harness.castFromHand(player1, new AvatarOfWoe(), "{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avatar of Woe");
+    }
+
+    @Test
+    @DisplayName("More than ten creature cards do not reduce the required black mana")
+    void reductionDoesNotRemoveColoredMana() {
+        harness.setGraveyard(player1, IntStream.range(0, 11).<Card>mapToObj(i -> new Squire()).toList());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvatarOfWoe(), "{B}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Avatar of Woe can target and destroy itself")
+    void canDestroyItself() {
+        Permanent avatar = addCreatureReady(player1, new AvatarOfWoe());
+
+        harness.activateAbility(player1, 0, null, avatar.getId());
+        assertThat(avatar.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Avatar of Woe");
+        harness.assertInGraveyard(player1, "Avatar of Woe");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Avatar cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player1, new AvatarOfWoe());
+        avatar.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(avatar.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Squire");
+    }
+
+    @Test
     @DisplayName("Tap ability destroys a target creature without allowing regeneration")
     void destroysTargetCreatureWithoutRegeneration() {
         Permanent avatar = addCreatureReady(player1, new AvatarOfWoe());

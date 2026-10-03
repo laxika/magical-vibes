@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesC
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPlanarModeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
@@ -116,6 +117,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
+
+    private final LibraryRevealSupport libraryRevealSupport;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
 
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
@@ -230,6 +235,33 @@ public class ChoiceHandlerService {
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
+        if (colorChoice.context() instanceof ChoiceContext.DrawLookReplacementOrder choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            drawService.resolveChosenNextDrawLookAtTop(gameData, choice.playerId(), Integer.parseInt(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.VentureChoice choice) {
+            ventureHandlerProvider.getObject().completeChoice(gameData, choice, colorName);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.TurnFaceUpCostChoice choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid face-up payment method");
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameServiceProvider.getObject().completeTurnFaceUpCostChoice(
+                    gameData, player, choice.permanentId(), colorName.equals("Morph cost"));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.RegenerationShieldChoice choice) {
             if (!choice.shields().containsKey(colorName)) {
                 throw new IllegalArgumentException("Invalid regeneration shield");
@@ -249,7 +281,8 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx
                 && ctx.restrictToAllowedNames()
-                && !colorChoice.options().contains(colorName)) {
+                && !colorChoice.options().contains(colorName)
+                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes())) {
             throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
@@ -2504,7 +2537,7 @@ public class ChoiceHandlerService {
 
         ChoiceContext.TextChangeToWord choiceContext =
                 new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn(),
-                        isCreatureType);
+                        isCreatureType, ctx.excludedReplacementCreatureType());
 
         List<String> remainingOptions;
         String promptType;
@@ -2516,7 +2549,8 @@ public class ChoiceHandlerService {
             promptType = "basic land type";
         } else {
             remainingOptions = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.stream()
-                    .filter(t -> !t.equals(chosenWord) && !t.equals("WALL"))
+                    .filter(t -> !t.equals(chosenWord) && (ctx.excludedReplacementCreatureType() == null
+                            || !t.equals(ctx.excludedReplacementCreatureType().name())))
                     .toList();
             promptType = "creature type";
         }
@@ -2536,7 +2570,9 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
             }
         } else if (ctx.isCreatureType()) {
-            if (!GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord) || chosenWord.equals("WALL")) {
+            if (!GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord)
+                    || ctx.excludedReplacementCreatureType() != null
+                    && chosenWord.equals(ctx.excludedReplacementCreatureType().name())) {
                 throw new IllegalArgumentException("Invalid creature type choice: " + chosenWord);
             }
         } else {
@@ -2600,7 +2636,7 @@ public class ChoiceHandlerService {
         Card card = ctx.card();
         UUID controllerId = ctx.controllerId();
 
-        Permanent perm = new Permanent(card);
+        Permanent perm = ctx.preparedPermanent() == null ? new Permanent(card) : ctx.preparedPermanent();
         perm.setChosenName(cardName);
         if (ctx.attachedTo() != null) {
             perm.setAttachedTo(ctx.attachedTo());
@@ -2629,7 +2665,7 @@ public class ChoiceHandlerService {
             }
         } else {
             battlefieldEntryService.processCreatureETBEffects(
-                    gameData, controllerId, perm.getCard(), ctx.attachedTo(), true);
+                    gameData, controllerId, perm.getCard(), ctx.attachedTo(), ctx.preparedPermanent() == null);
         }
 
         if (!gameData.interaction.isAwaitingInput()) {
@@ -2726,6 +2762,10 @@ public class ChoiceHandlerService {
                     .filter(o -> o.label().equals(chosenLabel))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
+            if (!triggerTargetCollector.hasLegalGraveyardTarget(
+                    gameData, chosen.targetFilter(), ctx.controllerId(), ctx.sourceCard())) {
+                throw new IllegalArgumentException("Mode has no legal graveyard target: " + chosenLabel);
+            }
             if (!ctx.effect().modesMayRepeat() && chosenModes.contains(chosen)) {
                 throw new IllegalArgumentException("Mode already chosen: " + chosenLabel);
             }
@@ -3280,6 +3320,14 @@ public class ChoiceHandlerService {
                     gameData.pendingEffectResolutionEntry != null
                             ? gameData.pendingEffectResolutionEntry.getControllerId()
                             : gameData.currentlyResolvingControllerId);
+        } else if (ChoiceContext.AddAnotherCounterTypeChoice.ENERGY.equals(choice)) {
+            UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
+            int amount = gameQueryService.replaceEnergyCounters(gameData, targetId, 1);
+            if (amount > 0) {
+                gameData.setPlayerEnergyCounters(targetId,
+                        gameData.playerEnergyCounters.getOrDefault(targetId, 0) + amount);
+                triggerCollectionService.checkEnergyGainTriggers(gameData, targetId, amount);
+            }
         } else {
             CounterType counterType = ctx.counterTypes().stream()
                     .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))
@@ -3567,9 +3615,10 @@ public class ChoiceHandlerService {
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (source != null && target != null && source.getCounterCount(counterType) > 0) {
-            source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
-            permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1);
+            if (permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, gameData.pendingEffectResolutionEntry, target, counterType, 1) > 0) {
+                source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -5696,25 +5745,6 @@ public class ChoiceHandlerService {
                 }
                 countersRemoved += moved;
                 if (ctx.countersPerMovedCounter() == 1) {
-                    StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-                    if (sourceEntry != null) {
-                        permanentCounterSupport.placeCounterOnPermanent(gameData, sourceEntry, to,
-                                ctx.counterType(), moved);
-                    } else {
-                        to.setCounterCount(ctx.counterType(), to.getCounterCount(ctx.counterType()) + moved);
-                        if (ctx.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                            permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                                    gameData, to, player.getId());
-                            UUID controllerId = gameQueryService.findPermanentController(gameData, to.getId());
-                            if (controllerId != null) {
-                                gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-                            }
-                            permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
-                                    gameData, to, moved, player.getId());
-                        }
-                    }
-                }
-                if (ctx.countersPerMovedCounter() == 1) {
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
                             .card(from.getCard()).text(" and puts ").text(Integer.toString(moved))
@@ -5741,7 +5771,7 @@ public class ChoiceHandlerService {
             nextIndex++;
         }
 
-        if (ctx.countersPerMovedCounter() > 1 && countersRemoved > 0 && to != null
+        if (countersRemoved > 0 && to != null
                 && !cantHaveCounter(gameData, to, ctx.counterType())) {
             int countersToPlace = countersRemoved * ctx.countersPerMovedCounter();
             StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;

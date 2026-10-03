@@ -45,4 +45,37 @@ class DespoilTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+
+    @Test
+    @DisplayName("Can destroy your own land and makes you lose life")
+    void destroysOwnLandAndCasterLosesLife() {
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.setHand(player1, List.of(new Despoil()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Rhystic Cave"));
+
+        harness.assertNotOnBattlefield(player1, "Rhystic Cave");
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not cause life loss when the target leaves before resolution")
+    void noLifeLossWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new RhysticCave());
+        harness.setHand(player1, List.of(new Despoil()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Rhystic Cave"));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Despoil");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }

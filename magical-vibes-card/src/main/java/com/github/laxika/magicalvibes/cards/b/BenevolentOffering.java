@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "C14", collectorNumber = "3")
+@CardRegistration(set = "VOC", collectorNumber = "78")
 public class BenevolentOffering extends Card {
 
     public BenevolentOffering() {

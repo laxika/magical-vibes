@@ -46,8 +46,7 @@ class DeathCloudTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
@@ -72,8 +71,7 @@ class DeathCloudTest extends BaseCardTest {
             harness.addToBattlefield(player2, new Forest());
         }
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -114,8 +112,7 @@ class DeathCloudTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new Forest());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -126,5 +123,72 @@ class DeathCloudTest extends BaseCardTest {
         assertThat(permanentCount(player1, CardType.LAND)).isEqualTo(1);
         assertThat(permanentCount(player2, CardType.CREATURE)).isEqualTo(1);
         assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Shortfalls do not reduce life loss or prevent later sacrifices")
+    void shortfallsDoNotReduceLaterEffects() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new DeathCloud(), new Peek()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Players finish choosing before simultaneous sacrifices, with creatures before lands")
+    void choicesPrecedeSimultaneousSacrifices() {
+        harness.setHand(player1, List.of(new DeathCloud()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        for (Player player : List.of(player1, player2)) {
+            harness.addToBattlefield(player, new GrizzlyBears());
+            harness.addToBattlefield(player, new GrizzlyBears());
+            harness.addToBattlefield(player, new Forest());
+            harness.addToBattlefield(player, new Forest());
+        }
+        List<UUID> firstCreature = permanentIds(player1, CardType.CREATURE, 1);
+        List<UUID> secondCreature = permanentIds(player2, CardType.CREATURE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleMultiplePermanentsChosen(player1, firstCreature);
+
+        assertThat(permanentCount(player1, CardType.CREATURE)).isEqualTo(2);
+        assertThat(permanentCount(player2, CardType.CREATURE)).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player2, secondCreature);
+
+        assertThat(permanentCount(player1, CardType.CREATURE)).isEqualTo(1);
+        assertThat(permanentCount(player2, CardType.CREATURE)).isEqualTo(1);
+        assertThat(permanentCount(player1, CardType.LAND)).isEqualTo(2);
+        assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player1, permanentIds(player1, CardType.LAND, 1));
+        assertThat(permanentCount(player1, CardType.LAND)).isEqualTo(2);
+        assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(2);
+
+        harness.handleMultiplePermanentsChosen(player2, permanentIds(player2, CardType.LAND, 1));
+        assertThat(permanentCount(player1, CardType.LAND)).isEqualTo(1);
+        assertThat(permanentCount(player2, CardType.LAND)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BogTatters.class, Swamp.class})
 class BogTattersTest extends BaseCardTest {
 
     @Test
@@ -21,14 +22,12 @@ class BogTattersTest extends BaseCardTest {
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new BogTatters());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent atkPerm = new Permanent(new BogTatters());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new BogTatters());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -47,14 +46,12 @@ class BogTattersTest extends BaseCardTest {
     @Test
     @DisplayName("Bog Tatters can be blocked when defending player does not control a Swamp")
     void canBeBlockedWhenDefenderDoesNotControlSwamp() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new BogTatters());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent atkPerm = new Permanent(new BogTatters());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new BogTatters());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -67,5 +64,26 @@ class BogTattersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled by the attacker does not prevent blocking Bog Tatters")
+    void canBeBlockedWhenOnlyAttackerControlsSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new BogTatters());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new BogTatters());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

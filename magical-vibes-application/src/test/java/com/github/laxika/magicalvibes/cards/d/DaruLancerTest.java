@@ -23,8 +23,7 @@ class DaruLancerTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new GlorySeeker());
         Permanent secondBlocker = addCreatureReady(player2, new GlorySeeker());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -68,6 +67,42 @@ class DaruLancerTest extends BaseCardTest {
         harness.turnFaceUp(player1, lancerIndex);
 
         assertThat(lancer.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void faceDownLancerTradesWithGlorySeekerWithoutFirstStrike() {
+        Permanent lancer = castFaceDownLancer();
+        lancer.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(lancer);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    void turningFaceUpBeforeCombatRestoresFirstStrike() {
+        Permanent lancer = castFaceDownLancer();
+        lancer.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GlorySeeker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lancer));
+
+        assertThat(lancer.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lancer);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(lancer.getMarkedDamage()).isZero();
     }
 
     private Permanent castFaceDownLancer() {

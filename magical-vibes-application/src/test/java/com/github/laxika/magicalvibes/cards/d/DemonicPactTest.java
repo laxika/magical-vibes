@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DemonicPact.class, GrizzlyBears.class, Disperse.class})
 class DemonicPactTest extends BaseCardTest {
 
     private static final String DAMAGE = "Demonic Pact deals 4 damage to any target and you gain 4 life";
@@ -130,5 +133,95 @@ class DemonicPactTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Damage mode can target its controller")
+    void damageModeCanTargetSelf() {
+        harness.addToBattlefield(player1, new DemonicPact());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DAMAGE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An illegal damage target prevents life gain but still consumes the mode")
+    void illegalDamageTargetStillConsumesMode() {
+        harness.addToBattlefield(player1, new DemonicPact());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DAMAGE);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThatThrownBy(() -> harness.handleListChoice(player1, DAMAGE))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, DRAW);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An opponent with one card discards that card")
+    void discardModeWithOneCard() {
+        harness.addToBattlefield(player1, new DemonicPact());
+        harness.setHand(player2, List.of(new DemonicPact()));
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DISCARD);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Demonic Pact");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing all three beneficial modes leaves only losing the game")
+    void fourthUpkeepForcesLoseMode() {
+        harness.addToBattlefield(player1, new DemonicPact());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DRAW);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DAMAGE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DISCARD);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        advanceToUpkeep(player1);
+        for (String mode : List.of(DRAW, DAMAGE, DISCARD)) {
+            assertThatThrownBy(() -> harness.handleListChoice(player1, mode))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        harness.handleListChoice(player1, LOSE);
+        harness.passBothPriorities();
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

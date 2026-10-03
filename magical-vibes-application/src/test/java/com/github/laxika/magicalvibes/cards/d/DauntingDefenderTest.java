@@ -84,10 +84,48 @@ class DauntingDefenderTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(defender.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void multipleDefendersEachPreventOneDamage() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player1, new DauntingDefender());
+        harness.addToBattlefield(player1, new DauntingDefender());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new NovaCleric());
+
+        castShock(player2, defender.getId());
+        castShock(player2, cleric.getId());
+
+        assertThat(defender.getMarkedDamage()).isZero();
+        assertThat(cleric.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(defender, cleric);
+    }
+
+    @Test
+    void alsoPreventsDamageFromYourOwnSource() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player1, new DauntingDefender());
+
+        castShock(player1, defender.getId());
+
+        assertThat(defender.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void stopsProtectingClericsAfterDefenderDies() {
+        Permanent defender = harness.addToBattlefieldAndReturn(player1, new DauntingDefender());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new NovaCleric());
+
+        castShock(player2, defender.getId());
+        castShock(player2, defender.getId());
+        castShock(player2, defender.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(defender);
+
+        castShock(player2, cleric.getId());
+
+        assertThat(cleric.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cleric);
     }
 
     private void castShock(Player player, UUID targetId) {

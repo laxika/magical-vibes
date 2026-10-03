@@ -145,4 +145,42 @@ class BloodMoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Blood Moon removes a nonbasic land's enters-tapped ability before entry")
+    void nonbasicLandEntersUntappedUnderBloodMoon() {
+        harness.addToBattlefield(player1, new BloodMoon());
+        harness.setHand(player1, List.of(new CoastalTower()));
+
+        harness.playLand(player1, 0);
+
+        Permanent tower = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(tower.isTapped()).isFalse();
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Blood Moon does not untap an already tapped nonbasic land")
+    void resolvingBloodMoonDoesNotUntapExistingLand() {
+        Permanent tower = harness.enterBattlefieldAndReturn(player1, new CoastalTower());
+        assertThat(tower.isTapped()).isTrue();
+
+        harness.castFromHand(player1, new BloodMoon(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(tower.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, tower)).containsExactly(CardSubtype.MOUNTAIN);
+    }
+
+    @Test
+    @DisplayName("Blood Moon replaces all nonbasic land subtypes, including Locus")
+    void nonbasicNonBasicLandSubtypeIsRemoved() {
+        Permanent glimmerpost = harness.addToBattlefieldAndReturn(player1, new Glimmerpost());
+        harness.addToBattlefield(player1, new BloodMoon());
+
+        assertThat(gqs.effectiveLandTypes(gd, glimmerpost)).containsExactly(CardSubtype.MOUNTAIN);
+    }
 }

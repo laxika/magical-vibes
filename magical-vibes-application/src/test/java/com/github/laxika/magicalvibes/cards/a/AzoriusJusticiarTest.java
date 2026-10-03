@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.b.Brushstrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +16,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AzoriusJusticiar.class, Brushstrider.class, AxebaneGuardian.class})
 class AzoriusJusticiarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Both detained creatures can't attack")
     void bothDetainedCreaturesCannotAttack() {
-        Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
 
         castJusticiar(List.of(bear1.getId(), bear2.getId()));
 
@@ -36,12 +38,11 @@ class AzoriusJusticiarTest extends BaseCardTest {
     @Test
     @DisplayName("Detained creature can't activate its abilities")
     void detainedCreatureCannotActivateAbilities() {
-        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        elves.setSummoningSick(false);
+        Permanent guardian = addCreatureReady(player2, new AxebaneGuardian());
 
-        castJusticiar(List.of(elves.getId()));
+        castJusticiar(List.of(guardian.getId()));
 
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
@@ -57,7 +58,7 @@ class AzoriusJusticiarTest extends BaseCardTest {
     @Test
     @DisplayName("Detain wears off at the Justiciar controller's next turn")
     void detainWearsOffAtControllersNextTurn() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
         castJusticiar(List.of(bear.getId()));
 
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
@@ -68,7 +69,7 @@ class AzoriusJusticiarTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot detain a creature you control")
     void cannotTargetOwnCreature() {
-        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new Brushstrider());
         harness.setHand(player1, List.of(new AzoriusJusticiar()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -77,15 +78,125 @@ class AzoriusJusticiarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Detained creatures cannot block")
+    void detainedCreaturesCannotBlock() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiar(List.of(first.getId(), second.getId()));
+        Permanent attacker = addCreatureReady(player1, new Brushstrider());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(1, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't block");
+    }
+
+    @Test
+    @DisplayName("An opponent's turn does not end detain")
+    void detainPersistsDuringOpponentsTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiar(List.of(creature.getId()));
+
+        gd.expireFloatingEffectsAtTurnStart(player2.getId());
+
+        assertThatThrownBy(() -> declareAttack(creature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Creatures not targeted by detain can still attack")
+    void untargetedCreatureCanAttack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiar(List.of(target.getId()));
+
+        assertThatCode(() -> declareAttack(other)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Detain resolves on the remaining target if one target leaves")
+    void remainingTargetIsDetained() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiarSpell(List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        gd.playerGraveyards.get(player2.getId()).add(first.getCard());
+
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(second))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("A target that changes to your control is not detained")
+    void targetChangingControllerIsNotDetained() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiarSpell(List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        gd.playerBattlefields.get(player1.getId()).add(first);
+
+        harness.passBothPriorities();
+
+        Permanent attacker = addCreatureReady(player2, new Brushstrider());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(first);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        assertThatCode(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Detain still resolves after Justiciar leaves")
+    void detainDoesNotDependOnSourceRemaining() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Brushstrider());
+        castJusticiarSpell(List.of(creature.getId()));
+        harness.passBothPriorities();
+        Permanent justiciar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(justiciar);
+        gd.playerGraveyards.get(player1.getId()).add(justiciar.getCard());
+
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(creature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     /** Casts the Justiciar on the given targets and resolves both the spell and its ETB trigger. */
     private void castJusticiar(List<UUID> targetIds) {
+        castJusticiarSpell(targetIds);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void castJusticiarSpell(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new AzoriusJusticiar()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, targetIds);
-        harness.passBothPriorities(); // resolve creature spell -> ETB trigger on stack
-        harness.passBothPriorities(); // resolve ETB trigger
     }
 
     /** Attempts to declare the given player2 creature as an attacker. */

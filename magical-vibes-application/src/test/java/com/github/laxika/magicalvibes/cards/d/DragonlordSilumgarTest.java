@@ -40,9 +40,8 @@ class DragonlordSilumgarTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can target a planeswalker")
     void etbGainsControlOfTargetPlaneswalker() {
-        Permanent target = new Permanent(new NicolBolasPlaneswalker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
         target.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player2.getId()).add(target);
 
         castDragonlordSilumgar(target.getId());
 
@@ -61,9 +60,7 @@ class DragonlordSilumgarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, silumgar.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, silumgar.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
@@ -78,6 +75,92 @@ class DragonlordSilumgarTest extends BaseCardTest {
         assertThatThrownBy(() -> castDragonlordSilumgar(target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or planeswalker");
+    }
+
+    @Test
+    @DisplayName("No theft if Silumgar leaves before its trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DragonlordSilumgar()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent silumgar = findPermanent(player1, "Dragonlord Silumgar");
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, silumgar.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        harness.assertInHand(player1, "Dragonlord Silumgar");
+    }
+
+    @Test
+    @DisplayName("A target that leaves before the trigger resolves is not stolen")
+    void targetLeavesBeforeTriggerResolves() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DragonlordSilumgar()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Dragonlord Silumgar");
+    }
+
+    @Test
+    @DisplayName("An already controlled creature is a legal target")
+    void canTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        castDragonlordSilumgar(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing and regaining Silumgar does not restart its theft")
+    void regainingSilumgarDoesNotRestoreTheft() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castDragonlordSilumgar(target.getId());
+        Permanent silumgar = findPermanent(player1, "Dragonlord Silumgar");
+        Permanent opposingBolas = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        opposingBolas.setCounterCount(CounterType.LOYALTY, 5);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(opposingBolas),
+                1, null, silumgar.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target, silumgar);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+
+        Permanent friendlyBolas = harness.addToBattlefieldAndReturn(player1, new NicolBolasPlaneswalker());
+        friendlyBolas.setCounterCount(CounterType.LOYALTY, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(friendlyBolas),
+                1, null, silumgar.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(silumgar).doesNotContain(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
     }
 
     private void castDragonlordSilumgar(UUID targetId) {

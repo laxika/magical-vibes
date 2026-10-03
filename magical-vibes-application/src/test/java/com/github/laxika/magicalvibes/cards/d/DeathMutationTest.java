@@ -81,6 +81,64 @@ class DeathMutationTest extends BaseCardTest {
     }
 
     @Test
+    void canDestroyOwnCreatureAndCreatesTokensForSpellController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Dodecapod());
+        cast(target);
+
+        harness.assertNotOnBattlefield(player1, "Dodecapod");
+        harness.assertInGraveyard(player1, "Dodecapod");
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    void createsNoTokensWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        harness.setHand(player1, List.of(new DeathMutation()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+        harness.assertInGraveyard(player1, "Death Mutation");
+    }
+
+    @Test
+    void destroysSaprolingTokenWithoutCreatingTokensForItsZeroManaValue() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        cast(creature);
+        Permanent token = findPermanent(player1, "Saproling");
+
+        cast(token);
+
+        assertThat(findPermanents(player1, "Saproling"))
+                .hasSize(3)
+                .doesNotContain(token);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    void createsNoTokensWhenTargetBecomesBlackBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        harness.setHand(player1, List.of(new DeathMutation()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+
+        target.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        harness.assertNotInGraveyard(player2, "Dodecapod");
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+        harness.assertInGraveyard(player1, "Death Mutation");
+    }
+
+    @Test
     void cannotTargetNoncreaturePermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BattlefieldForge());
         harness.setHand(player1, List.of(new DeathMutation()));

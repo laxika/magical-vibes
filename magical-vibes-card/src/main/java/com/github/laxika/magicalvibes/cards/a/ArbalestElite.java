@@ -24,7 +24,8 @@ public class ArbalestElite extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{W}",
-                List.of(new DealDamageToTargetCreatureEffect(3), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new DealDamageToTargetCreatureEffect(3),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{2}{W}, {T}: This creature deals 3 damage to target attacking or blocking creature. "
                         + "This creature doesn't untap during your next untap step.",
                 new PermanentPredicateTargetFilter(

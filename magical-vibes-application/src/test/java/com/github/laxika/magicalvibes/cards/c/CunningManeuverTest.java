@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.e.ErdwalIlluminator;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TurtleDuck;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CunningManeuver.class, GrizzlyBears.class, Plains.class})
+@CardUsed({CunningManeuver.class, GrizzlyBears.class, Plains.class, ErdwalIlluminator.class, TurtleDuck.class})
 class CunningManeuverTest extends BaseCardTest {
 
     @Test
@@ -70,10 +72,46 @@ class CunningManeuverTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can boost your own creature and sacrifice the resulting Clue to draw a card")
+    void ownCreatureAndClueDrawAbility() {
+        Permanent duck = harness.addToBattlefieldAndReturn(player1, new TurtleDuck());
+        Plains drawnCard = new Plains();
+        harness.setLibrary(player1, List.of(drawnCard));
+        castCunningManeuver(duck);
+
+        assertThat(duck.getEffectivePower()).isEqualTo(3);
+        assertThat(duck.getEffectiveToughness()).isEqualTo(5);
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
+        Permanent clue = findPermanent(player1, "Clue");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(clue), null, null);
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creating a Clue directly does not trigger investigate abilities")
+    void directClueCreationDoesNotInvestigate() {
+        Permanent illuminator = harness.addToBattlefieldAndReturn(player1, new ErdwalIlluminator());
+        castCunningManeuver(illuminator);
+        resolveAllTriggers();
+
+        assertThat(illuminator.getEffectivePower()).isEqualTo(4);
+        assertThat(illuminator.getEffectiveToughness()).isEqualTo(4);
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(findPermanents(player2, "Clue")).isEmpty();
+    }
+
     private void castCunningManeuver(Permanent target) {
         prepareCunningManeuver();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareCunningManeuver() {

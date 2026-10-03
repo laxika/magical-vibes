@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 @CardRegistration(set = "SLZ", collectorNumber = "153")
 @CardRegistration(set = "SLZ", collectorNumber = "274")
 @CardRegistration(set = "NCC", collectorNumber = "236")
+@CardRegistration(set = "EOC", collectorNumber = "80")
+@CardRegistration(set = "C16", collectorNumber = "100")
 public class Thrummingbird extends Card {
 
     public Thrummingbird() {

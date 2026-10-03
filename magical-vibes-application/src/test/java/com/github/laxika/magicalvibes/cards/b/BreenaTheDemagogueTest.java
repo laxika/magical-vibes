@@ -78,6 +78,120 @@ class BreenaTheDemagogueTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("An opponent attacking another opponent draws, while Breena's controller gets counters")
+    void rewardsTheAttackingOpponentRatherThanBreenasController() {
+        UUID defenderId = addThirdOpponent();
+        Permanent breena = harness.addToBattlefieldAndReturn(player1, new BreenaTheDemagogue());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setLife(player2, 10);
+        gd.playerLifeTotals.put(defenderId, 25);
+
+        declareAttackers(player2, 0, defenderId);
+        assertThat(gd.stack).hasSize(1);
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(breena.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The life comparison must still hold when the trigger resolves")
+    void doesNothingIfLifeTotalsBecomeTiedBeforeResolution() {
+        UUID otherOpponentId = addThirdOpponent();
+        Permanent breena = harness.addToBattlefieldAndReturn(player1, new BreenaTheDemagogue());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player2, 25);
+        gd.playerLifeTotals.put(otherOpponentId, 10);
+
+        declareAttackers(player1, 1, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+        gd.playerLifeTotals.put(otherOpponentId, 25);
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(breena.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking two qualifying opponents creates two triggers")
+    void triggersSeparatelyForEachQualifyingAttackedOpponent() {
+        UUID secondDefenderId = addThirdOpponent();
+        UUID lowestLifeOpponentId = addThirdOpponent();
+        harness.addToBattlefield(player1, new BreenaTheDemagogue());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 30);
+        gd.playerLifeTotals.put(secondDefenderId, 20);
+        gd.playerLifeTotals.put(lowestLifeOpponentId, 10);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(1, 2),
+                Map.of(1, player2.getId(), 2, secondDefenderId));
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Multiple creatures attacking the same opponent create only one trigger")
+    void triggersOncePerOpponentRatherThanPerCreature() {
+        UUID otherOpponentId = addThirdOpponent();
+        harness.addToBattlefield(player1, new BreenaTheDemagogue());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 25);
+        gd.playerLifeTotals.put(otherOpponentId, 10);
+
+        declareAttackers(player1, List.of(1, 2));
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Breena does not trigger with only one opponent")
+    void doesNotTriggerInTwoPlayerGame() {
+        harness.addToBattlefield(player1, new BreenaTheDemagogue());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 30);
+
+        declareAttackers(player1, 1, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attacker still draws if Breena leaves and no creature remains to receive counters")
+    void drawsWithoutAnEligibleCreatureAtResolution() {
+        UUID defenderId = addThirdOpponent();
+        harness.addToBattlefield(player1, new BreenaTheDemagogue());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setLife(player2, 10);
+        gd.playerLifeTotals.put(defenderId, 25);
+
+        declareAttackers(player2, 0, defenderId);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private UUID addThirdOpponent() {
         UUID thirdOpponentId = UUID.randomUUID();
         gd.playerIds.add(thirdOpponentId);

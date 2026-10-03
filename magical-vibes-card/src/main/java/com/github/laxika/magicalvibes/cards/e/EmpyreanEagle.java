@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "208")
 @CardRegistration(set = "FDN", collectorNumber = "239")
+@CardRegistration(set = "KHC", collectorNumber = "85")
 public class EmpyreanEagle extends Card {
 
     public EmpyreanEagle() {

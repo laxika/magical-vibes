@@ -27,8 +27,7 @@ class DisturbingMirthTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
 
         castDisturbingMirth();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -45,8 +44,7 @@ class DisturbingMirthTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         castDisturbingMirth();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -68,8 +66,7 @@ class DisturbingMirthTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, mirth.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))
                 .isNotNull();
@@ -82,13 +79,57 @@ class DisturbingMirthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Disturbing Mirth");
     }
 
+    @Test
+    void sacrificingAnotherMirthDrawsBeforeManifestingDreadAndCanManifestALand() {
+        Permanent otherMirth = harness.addToBattlefieldAndReturn(player1, new DisturbingMirth());
+        Card firstDraw = new Forest();
+        Card secondDraw = new Forest();
+        Card manifestedLand = new Forest();
+        Card graveyardCard = new Forest();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, manifestedLand, graveyardCard));
+
+        castDisturbingMirth();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, otherMirth.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherMirth);
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard().getId().equals(manifestedLand.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherMirth.getCard(), graveyardCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeItselfALandOrAnOpponentsCreatureToDraw() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        castDisturbingMirth();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void castDisturbingMirth() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DisturbingMirth()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new DisturbingMirth(), "{B}{R}");
     }
 }

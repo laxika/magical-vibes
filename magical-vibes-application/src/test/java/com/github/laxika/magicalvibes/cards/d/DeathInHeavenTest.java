@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AdiposeOffspring;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrueNameNemesis;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathInHeaven.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DeathInHeaven.class, Forest.class, GrizzlyBears.class, AdiposeOffspring.class,
+        TrueNameNemesis.class})
 class DeathInHeavenTest extends BaseCardTest {
 
     @Test
@@ -61,8 +64,93 @@ class DeathInHeavenTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(graveyardCreature.getId(), milledCreature.getId());
         assertThat(gd.getCardsExiledByPermanent(saga.getId()))
                 .containsExactlyInAnyOrder(graveyardLand, milledLand);
-        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent ->
-                permanent.getCard().getId().equals(saga.getCard().getId()));
+        harness.assertNotOnBattlefield(player1, "Death in Heaven");
+    }
+
+    @Test
+    void canTargetItsControllerAndExilesOnlyThatPlayersGraveyard() {
+        Card creature = new AdiposeOffspring();
+        Card opponentLand = new Forest();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(opponentLand));
+        Permanent saga = addSagaWithLore(0);
+
+        advanceToNextChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(saga.getId())).hasSize(2).contains(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentLand);
+    }
+
+    @Test
+    void faceDownReturnDoesNotTriggerPrintedEntersAbilities() {
+        Card creature = new AdiposeOffspring();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setLibrary(player2, List.of());
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        chooseTargetPlayer();
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
+            assertThat(permanent.getCard().getId()).isEqualTo(creature.getId());
+            assertThat(permanent.isFaceDown()).isTrue();
+        });
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void secondChapterTracksNewCardsButDoesNotReturnUnrelatedExiledCreatures() {
+        Card firstCreature = new AdiposeOffspring();
+        Card secondCreature = new AdiposeOffspring();
+        Card unrelatedCreature = new AdiposeOffspring();
+        harness.setExile(player2, List.of(unrelatedCreature));
+        harness.setGraveyard(player2, List.of(firstCreature));
+        harness.setLibrary(player2, List.of());
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        chooseTargetPlayer();
+
+        harness.setLibrary(player2, List.of(secondCreature));
+        advanceToNextChapter();
+        chooseTargetPlayer();
+        assertThat(gd.getCardsExiledByPermanent(saga.getId()))
+                .containsExactlyInAnyOrder(firstCreature, secondCreature);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void faceDownReturnDoesNotRequirePrintedAsEntersPlayerChoice() {
+        Card creature = new TrueNameNemesis();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setLibrary(player2, List.of());
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        chooseTargetPlayer();
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
+            assertThat(permanent.getCard().getId()).isEqualTo(creature.getId());
+            assertThat(permanent.isFaceDown()).isTrue();
+        });
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

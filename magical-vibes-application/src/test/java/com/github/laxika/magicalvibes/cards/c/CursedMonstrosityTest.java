@@ -79,12 +79,50 @@ class CursedMonstrosityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Cursed Monstrosity");
     }
 
+    @Test
+    @DisplayName("Targeting your own creature still triggers sacrifice and cannot use an opponent's land")
+    void ownSpellAlsoTriggersSacrifice() {
+        Permanent monstrosity = addMonstrosityWithHand(new Afflict());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, monstrosity.getId());
+
+        harness.assertNotOnBattlefield(player1, "Cursed Monstrosity");
+        harness.assertInGraveyard(player1, "Cursed Monstrosity");
+        harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Discarding a land from a mixed hand saves the creature only for that targeting event")
+    void eachTargetingEventRequiresAnotherLand() {
+        Permanent monstrosity = harness.addToBattlefieldAndReturn(player1, new CursedMonstrosity());
+        harness.setHand(player1, List.of(new Afflict(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        targetWithAfflict(monstrosity);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Cursed Monstrosity");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Afflict");
+
+        // Finish the first spell before casting a second one.
+        harness.passBothPriorities();
+        targetWithAfflict(monstrosity);
+
+        harness.assertNotOnBattlefield(player1, "Cursed Monstrosity");
+        harness.assertInGraveyard(player1, "Cursed Monstrosity");
+        harness.assertInHand(player1, "Afflict");
+    }
+
     private void targetWithAfflict(Permanent monstrosity) {
         harness.setHand(player2, List.of(new Afflict()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castInstant(player2, 0, monstrosity.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, monstrosity.getId());
     }
 
     private Permanent addMonstrosityWithHand(Card handCard) {

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalemurkLeech;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,12 +14,12 @@ import java.util.List;
 import static com.github.laxika.magicalvibes.model.ManaColor.BLACK;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DerelictAtticWidowsWalk.class, GrizzlyBears.class})
+@CardUsed({DerelictAtticWidowsWalk.class, BalemurkLeech.class})
 class DerelictAtticWidowsWalkTest extends BaseCardTest {
 
     @Test
     void derelictAtticDrawsTwoCardsAndLosesTwoLifeWhenUnlocked() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BalemurkLeech(), new BalemurkLeech()));
         int lifeBefore = gd.getLife(player1.getId());
 
         castRoom(0);
@@ -33,7 +33,7 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
     @Test
     void widowsWalkBoostsAndGrantsDeathtouchToAThatAttacksAlone() {
         castRoom(1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalemurkLeech());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         harness.passBothPriorities();
@@ -46,12 +46,13 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
     @Test
     void widowsWalkDoesNotTriggerWhenMoreThanOneCreatureAttacks() {
         castRoom(1);
-        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstAttacker = addCreatureReady(player1, new BalemurkLeech());
+        Permanent secondAttacker = addCreatureReady(player1, new BalemurkLeech());
 
         declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker)));
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, firstAttacker)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, secondAttacker)).isEqualTo(2);
@@ -62,15 +63,90 @@ class DerelictAtticWidowsWalkTest extends BaseCardTest {
     @Test
     void widowsWalkBoostAndDeathtouchWearOffAtEndOfTurn() {
         castRoom(1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalemurkLeech());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         harness.passBothPriorities();
         assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void castingWidowsWalkDoesNotDrawCardsOrLoseLife() {
+        harness.setLibrary(player1, List.of(new BalemurkLeech(), new BalemurkLeech()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castRoom(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void unlockingDerelictAtticAfterCastingWidowsWalkDrawsAndLosesLife() {
+        harness.setLibrary(player1, List.of(new BalemurkLeech(), new BalemurkLeech()));
+        Permanent room = castRoom(1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.addMana(player1, BLACK, 3);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void lockedWidowsWalkDoesNotBoostAnAttacker() {
+        harness.setLibrary(player1, List.of(new BalemurkLeech(), new BalemurkLeech()));
+        castRoom(0);
+        resolveAllTriggers();
+        Permanent attacker = addCreatureReady(player1, new BalemurkLeech());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void unlockingWidowsWalkEnablesItsAbilityWithoutRepeatingAtticsTrigger() {
+        harness.setLibrary(player1, List.of(new BalemurkLeech(), new BalemurkLeech(), new BalemurkLeech()));
+        Permanent room = castRoom(0);
+        resolveAllTriggers();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.addMana(player1, BLACK, 4);
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+
+        Permanent attacker = addCreatureReady(player1, new BalemurkLeech());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void widowsWalkDoesNotBoostAnOpponentsLoneAttacker() {
+        castRoom(1);
+        Permanent attacker = addCreatureReady(player2, new BalemurkLeech());
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(attacker.hasKeyword(Keyword.DEATHTOUCH)).isFalse();

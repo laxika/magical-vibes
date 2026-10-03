@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.c.CaptainAmericasShield;
+import com.github.laxika.magicalvibes.cards.h.HawkeyeYoungAvenger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,7 +21,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AvengersTower.class)
+@CardUsed({AvengersTower.class, CaptainAmericasShield.class, HawkeyeYoungAvenger.class})
 class AvengersTowerTest extends BaseCardTest {
 
     @Test
@@ -156,7 +158,102 @@ class AvengersTowerTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
+    }
+
+    @Test
+    void noHeroAmongTopThreeAllowsOrderingAllThreeOnBottom() {
+        addReadyTower();
+        Card first = new CaptainAmericasShield();
+        Card second = new AvengersTower();
+        Card third = new CaptainAmericasShield();
+        Card fourth = new AvengersTower();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(first, second, third);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, third, first, second);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void choosesOnlyOneOfMultipleHeroesAndPreservesBottomOrder() {
+        addReadyTower();
+        Card firstHero = new HawkeyeYoungAvenger();
+        Card shield = new CaptainAmericasShield();
+        Card secondHero = new HawkeyeYoungAvenger();
+        Card fourth = new AvengersTower();
+        harness.setLibrary(player1, List.of(firstHero, shield, secondHero, fourth));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(firstHero, secondHero);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondHero);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, shield, firstHero);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void heroRestrictedManaCannotPayForTowersNonHeroAbility() {
+        addReadyTower();
+        harness.addToBattlefield(player1, new AvengersTower());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void singleNonHeroCardStaysInLibrary() {
+        addReadyTower();
+        Card shield = new CaptainAmericasShield();
+        harness.setLibrary(player1, List.of(shield));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shield);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryResolvesWithoutDrawingOrMakingAChoice() {
+        addReadyTower();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

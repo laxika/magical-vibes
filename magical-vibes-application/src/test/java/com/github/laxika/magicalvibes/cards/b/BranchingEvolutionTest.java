@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.cards.p.Pentavus;
 import com.github.laxika.magicalvibes.cards.t.TimberlandGuide;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -28,8 +29,7 @@ class BranchingEvolutionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -45,8 +45,7 @@ class BranchingEvolutionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castCreature(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -56,13 +55,55 @@ class BranchingEvolutionTest extends BaseCardTest {
     void doublesEnterWithCounters() {
         harness.addToBattlefield(player1, new BranchingEvolution());
 
-        harness.setHand(player1, List.of(new Pentavus()));
-        harness.addMana(player1, ManaColor.COLORLESS, 7);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Pentavus(), "{7}");
         harness.passBothPriorities();
 
         Permanent pentavus = findPermanent(player1, "Pentavus");
         assertThat(pentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("two copies quadruple incoming counters")
+    void twoCopiesQuadrupleCounters() {
+        harness.addToBattlefield(player1, new BranchingEvolution());
+        harness.addToBattlefield(player1, new BranchingEvolution());
+
+        harness.castFromHand(player1, new Pentavus(), "{7}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Pentavus").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("doubles only incoming counters, leaving existing counters unchanged")
+    void leavesExistingCountersUnchanged() {
+        harness.addToBattlefield(player1, new BranchingEvolution());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.setHand(player1, List.of(new TimberlandGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0, List.of(bears.getId()));
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @CardUsed({HardenedScales.class})
+    @DisplayName("controller chooses the order of Branching Evolution and Hardened Scales")
+    void controllerChoosesReplacementOrder() {
+        harness.addToBattlefield(player1, new BranchingEvolution());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new TimberlandGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0, List.of(bears.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

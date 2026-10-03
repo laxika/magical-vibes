@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,11 +51,61 @@ class CustodiSquireTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
     }
 
+    @Test
+    void returnsAnEnchantmentAndLeavesTheOpponentsGraveyardUntouched() {
+        Card enchantment = new RuleOfLaw();
+        Card artifact = new MindStone();
+        Card opponentsCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(enchantment, artifact));
+        harness.setGraveyard(player2, List.of(opponentsCreature));
+        castCustodiSquire();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment, artifact);
+        assertThat(activeVote(player2).validCardIds()).containsExactly(enchantment.getId(), artifact.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(enchantment.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(enchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCreature);
+    }
+
+    @Test
+    void returnsTheOnlyEligibleCardWithoutRequestingAChoice() {
+        Card artifact = new MindStone();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(artifact, land));
+        castCustodiSquire();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void doesNothingWhenTheGraveyardIsEmpty() {
+        harness.setGraveyard(player1, List.of());
+        castCustodiSquire();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNothingWhenTheGraveyardContainsOnlyIneligibleCards() {
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        castCustodiSquire();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+    }
+
     private void castCustodiSquire() {
-        harness.setHand(player1, List.of(new CustodiSquire()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CustodiSquire(), "{4}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

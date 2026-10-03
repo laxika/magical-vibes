@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+
+import java.util.List;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CatharCommando.class, GloriousAnthem.class, GrizzlyBears.class, Island.class, LeoninScimitar.class})
 class CatharCommandoTest extends BaseCardTest {
 
     @Test
@@ -109,33 +114,57 @@ class CatharCommandoTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Flash permits casting on the opponent's turn outside a main phase")
+    void castsWithFlashOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new CatharCommando()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cathar Commando");
+    }
+
+    @Test
+    @DisplayName("A tapped Commando can destroy its controller's artifact")
+    void tappedCommandoCanDestroyOwnArtifact() {
+        Permanent commando = addReadyCommando(player1);
+        commando.tap();
+        Permanent target = addReadyArtifact(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Cathar Commando");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+    }
+
     private Permanent addReadyCommando(Player player) {
-        CatharCommando card = new CatharCommando();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CatharCommando());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }

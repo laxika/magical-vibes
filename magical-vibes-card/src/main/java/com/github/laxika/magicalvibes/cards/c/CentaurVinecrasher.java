@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "35")
 @CardRegistration(set = "C18", collectorNumber = "135")
+@CardRegistration(set = "EOC", collectorNumber = "94")
 public class CentaurVinecrasher extends Card {
 
     public CentaurVinecrasher() {

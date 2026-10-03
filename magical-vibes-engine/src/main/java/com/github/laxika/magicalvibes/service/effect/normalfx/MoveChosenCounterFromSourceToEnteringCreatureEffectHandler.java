@@ -38,6 +38,7 @@ public class MoveChosenCounterFromSourceToEnteringCreatureEffectHandler implemen
         }
 
         List<CounterType> availableCounterTypes = moveEffect.counterTypes().stream()
+                .filter(counterType -> counterType != CounterType.ANY && counterType != CounterType.SILVER)
                 .filter(counterType -> source.getCounterCount(counterType) > 0)
                 .toList();
         if (availableCounterTypes.isEmpty()) {
@@ -58,7 +59,8 @@ public class MoveChosenCounterFromSourceToEnteringCreatureEffectHandler implemen
         if (source.getCounterCount(counterType) <= 0) {
             return;
         }
-        source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, enteringCreature, counterType, 1);
+        if (permanentCounterSupport.placeCounterOnPermanent(gameData, entry, enteringCreature, counterType, 1) > 0) {
+            source.setCounterCount(counterType, source.getCounterCount(counterType) - 1);
+        }
     }
 }

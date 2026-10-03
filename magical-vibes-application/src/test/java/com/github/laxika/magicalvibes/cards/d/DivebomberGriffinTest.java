@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DivebomberGriffin.class)
+@CardUsed({DivebomberGriffin.class})
 class DivebomberGriffinTest extends BaseCardTest {
 
     @Test
@@ -72,6 +72,66 @@ class DivebomberGriffinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can deal lethal damage to its controller's blocking creature")
+    void canDamageOwnBlockingCreature() {
+        addCreatureReady(player1, new DivebomberGriffin());
+        Permanent blocker = addCombatCreature(player1, false, true);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(blocker);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Divebomber Griffin");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent griffin = addCreatureReady(player1, new DivebomberGriffin());
+        griffin.tap();
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        harness.assertOnBattlefield(player1, "Divebomber Griffin");
+        harness.assertNotInGraveyard(player1, "Divebomber Griffin");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself while blocking but is sacrificed before resolution")
+    void canTargetItselfWhileBlocking() {
+        Permanent griffin = addCombatCreature(player1, false, true);
+
+        harness.activateAbility(player1, 0, null, griffin.getId());
+
+        harness.assertNotOnBattlefield(player1, "Divebomber Griffin");
+        harness.assertInGraveyard(player1, "Divebomber Griffin");
+        harness.passBothPriorities();
+
+        assertThat(griffin.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that stops blocking before resolution")
+    void doesNotDamageTargetThatStopsBlockingBeforeResolution() {
+        addCreatureReady(player1, new DivebomberGriffin());
+        Permanent blocker = addCombatCreature(player2, false, true);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Divebomber Griffin");
+        harness.assertInGraveyard(player1, "Divebomber Griffin");
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking, boolean blocking) {

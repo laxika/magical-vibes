@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "93")
+@CardRegistration(set = "C16", collectorNumber = "169")
 public class SylvokExplorer extends Card {
 
     public SylvokExplorer() {

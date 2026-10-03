@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TravelPreparations;
+import com.github.laxika.magicalvibes.cards.g.GolgariBrownscale;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CultivatorColossus.class, Forest.class, Plains.class, TravelPreparations.class, GolgariBrownscale.class})
 class CultivatorColossusTest extends BaseCardTest {
 
     @Test
@@ -35,16 +38,13 @@ class CultivatorColossusTest extends BaseCardTest {
     @DisplayName("ETB puts a chosen land tapped, draws, and re-offers until declined")
     void etbPutsLandDrawsAndRepeatsUntilDeclined() {
         harness.addToBattlefield(player1, new Forest());
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 5; i++) {
-            gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player1, List.of(new TravelPreparations(), new TravelPreparations(),
+                new TravelPreparations(), new TravelPreparations(), new TravelPreparations()));
         harness.setHand(player1, List.of(new CultivatorColossus(), new Forest(), new Plains()));
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
 
@@ -71,8 +71,7 @@ class CultivatorColossusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -91,8 +90,7 @@ class CultivatorColossusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleCardChosen(player1, 0); // Forest; draw from empty library
         harness.handleCardChosen(player1, 0); // Plains; no lands left → process ends
@@ -110,16 +108,12 @@ class CultivatorColossusTest extends BaseCardTest {
     @DisplayName("P/T grows as lands are put onto the battlefield")
     void ptGrowsAsLandsEnter() {
         harness.addToBattlefield(player1, new Forest());
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 3; i++) {
-            gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player1, List.of(new TravelPreparations(), new TravelPreparations(), new TravelPreparations()));
         harness.setHand(player1, List.of(new CultivatorColossus(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 7);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent colossus = findPermanent(player1, "Cultivator Colossus");
         assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(1);
@@ -128,5 +122,51 @@ class CultivatorColossusTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, colossus)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, colossus)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land drawn by the ability can be put onto the battlefield in the next iteration")
+    void canPutNewlyDrawnLand() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Plains(), new TravelPreparations()));
+        harness.setHand(player1, List.of(new CultivatorColossus(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().hasType(CardType.LAND)).hasSize(3);
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        harness.assertInHand(player1, "Travel Preparations");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({GolgariBrownscale.class})
+    @DisplayName("The draw replacement choice is completed before the next land is chosen")
+    void dredgeChoicePrecedesNextLandChoice() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(new TravelPreparations(), new TravelPreparations(), new TravelPreparations()));
+        harness.setGraveyard(player1, List.of(new GolgariBrownscale()));
+        harness.setHand(player1, List.of(new CultivatorColossus(), new Forest(), new Plains()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertInHand(player1, "Golgari Brownscale");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

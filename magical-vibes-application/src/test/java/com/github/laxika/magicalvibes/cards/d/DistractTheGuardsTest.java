@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,11 +24,7 @@ class DistractTheGuardsTest extends BaseCardTest {
     @Test
     @DisplayName("Creates three white Human Rogue tokens")
     void createsHumanRogueTokens() {
-        harness.setHand(player1, List.of(new DistractTheGuards()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new DistractTheGuards(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -83,6 +81,70 @@ class DistractTheGuardsTest extends BaseCardTest {
         gd.combatDamageToPlayerControllerSubtypesThisTurn
                 .computeIfAbsent(player1.getId(), ignored -> ConcurrentHashMap.newKeySet())
                 .add(CardSubtype.ASSASSIN);
+    }
+
+    @Test
+    @DisplayName("Created tokens are white creatures and enter untapped under the caster's control")
+    void tokensHaveCorrectColorTypeAndController() {
+        markAssassinCombatDamage();
+        castForFreerunning();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+            assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
+        });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another player's Assassin combat damage does not enable freerunning")
+    void opponentAssassinDamageDoesNotQualify() {
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player2.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.ASSASSIN);
+
+        harness.setHand(player1, List.of(new DistractTheGuards()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+    }
+
+    @Test
+    @DisplayName("Combat damage with changeling enables freerunning")
+    void changelingCombatDamageQualifies() {
+        gd.controllersDealtCombatDamageWithChangelingThisTurn.add(player1.getId());
+
+        castForFreerunning();
+
+        assertThat(countTokens()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Combat damage with a non-Assassin noncommander does not enable freerunning")
+    void ordinaryCreatureCombatDamageDoesNotQualify() {
+        Card bear = new GrizzlyBears();
+        gd.combatDamageToPlayersThisTurn.put(bear.getId(), ConcurrentHashMap.newKeySet());
+        gd.combatDamageToPlayersThisTurn.get(bear.getId()).add(player2.getId());
+        gd.damageSourcesControlledByPlayerThisTurn
+                .computeIfAbsent(player1.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(bear.getId());
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player1.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.BEAR);
+
+        harness.setHand(player1, List.of(new DistractTheGuards()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
     }
 
     private void castForFreerunning() {

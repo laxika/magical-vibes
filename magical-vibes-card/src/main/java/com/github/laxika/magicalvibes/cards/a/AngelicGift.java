@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AngelicGift extends Card {
 
     public AngelicGift() {
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
     }
 }

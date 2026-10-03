@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,5 +57,56 @@ class DracogenesisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple Dragon spells can be cast for free in the same turn")
+    void freeCastingIsNotLimitedToOneDragonPerTurn() {
+        harness.addToBattlefield(player1, new Dracogenesis());
+        harness.setHand(player1, List.of(new DragonWhelp(), new DragonWhelp()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Dragon Whelp")).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dracogenesis in the graveyard does not make Dragon spells free")
+    void graveyardDracogenesisDoesNotGrantFreeCasting() {
+        harness.setGraveyard(player1, List.of(new Dracogenesis()));
+        harness.setHand(player1, List.of(new DragonWhelp()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Dragon Whelp");
+    }
+
+    @Test
+    @DisplayName("Free Dragon spells must still obey normal timing restrictions")
+    void freeCastingDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Dracogenesis());
+        harness.setHand(player1, List.of(new DragonWhelp()));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Dragon Whelp");
+    }
+
+    @Test
+    @DisplayName("Dracogenesis does not waive Dragon activated ability costs")
+    void dragonActivatedAbilityStillRequiresMana() {
+        harness.addToBattlefield(player1, new Dracogenesis());
+        harness.addToBattlefield(player1, new DragonWhelp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }

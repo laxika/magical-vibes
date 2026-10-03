@@ -42,6 +42,7 @@ class LoamcrafterFaunTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(firstReturned.getId(), secondReturned.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(firstReturned.getId(), secondReturned.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(firstReturned, secondReturned);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstLand, secondLand, instant);

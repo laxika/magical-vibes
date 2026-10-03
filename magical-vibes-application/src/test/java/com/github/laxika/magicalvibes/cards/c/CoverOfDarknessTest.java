@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.h.Hystrodon;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.w.WretchedAnurid;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoverOfDarkness.class, ElvishWarrior.class, Hystrodon.class, WretchedAnurid.class})
+@CardUsed({CoverOfDarkness.class, ElvishWarrior.class, Hystrodon.class, WretchedAnurid.class, Naturalize.class})
 class CoverOfDarknessTest extends BaseCardTest {
 
     @Test
@@ -83,12 +84,57 @@ class CoverOfDarknessTest extends BaseCardTest {
     }
 
     private void castCoverChoosingElf() {
+        castCoverChoosing(CardSubtype.ELF);
+    }
+
+    @Test
+    @DisplayName("Each Cover of Darkness retains its own creature type choice")
+    void separateCopiesGrantFearToDifferentTypes() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent beast = harness.addToBattlefieldAndReturn(player2, new Hystrodon());
+        castCoverChoosingElf();
+        Permanent elfCover = findPermanent(player1, "Cover of Darkness");
+        castCoverChoosing(CardSubtype.BEAST);
+
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.FEAR)).isTrue();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, elfCover.getId());
+
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beast, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Matching creatures lose granted fear when Cover of Darkness is destroyed")
+    void fearEndsWhenSourceLeavesBattlefield() {
+        Permanent ownElf = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        Permanent opponentElf = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        castCoverChoosingElf();
+        Permanent cover = findPermanent(player1, "Cover of Darkness");
+
+        assertThat(gqs.hasKeyword(gd, ownElf, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentElf, Keyword.FEAR)).isTrue();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, cover.getId());
+
+        assertThat(gqs.hasKeyword(gd, ownElf, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentElf, Keyword.FEAR)).isFalse();
+    }
+
+    private void castCoverChoosing(CardSubtype subtype) {
         harness.setHand(player1, List.of(new CoverOfDarkness()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, CardSubtype.ELF.name());
+        harness.handleListChoice(player1, subtype.name());
     }
 }

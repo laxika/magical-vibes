@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "AFC", collectorNumber = "255")
 @CardRegistration(set = "NEC", collectorNumber = "174")
 @CardRegistration(set = "FIC", collectorNumber = "412")
+@CardRegistration(set = "VOC", collectorNumber = "178")
 public class PortTown extends Card {
 
     public PortTown() {

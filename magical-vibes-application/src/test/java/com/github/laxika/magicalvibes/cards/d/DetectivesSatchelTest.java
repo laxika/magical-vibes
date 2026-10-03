@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.v.ValMaroonedSurveyor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DetectivesSatchel.class})
+@CardUsed({DetectivesSatchel.class, ValMaroonedSurveyor.class})
 class DetectivesSatchelTest extends BaseCardTest {
 
     @Test
@@ -59,6 +61,63 @@ class DetectivesSatchelTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, thopter, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    void investigatingTwiceTriggersEachInvestigationAbilityTwice() {
+        harness.addToBattlefield(player1, new ValMaroonedSurveyor());
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        castSatchel();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife + 4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 4);
+    }
+
+    @Test
+    void canActivateBeforeSacrificedCluesDrawAbilityResolves() {
+        Permanent satchel = castSatchel();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(satchel.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Thopter")).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+    }
+
+    @Test
+    void opponentsArtifactSacrificeDoesNotEnableActivation() {
+        addReadySatchel();
+        harness.enterBattlefieldAndReturn(player2, new DetectivesSatchel());
+        resolveAllTriggers();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrificed an artifact");
+        assertThat(findPermanents(player1, "Thopter")).isEmpty();
+    }
+
+    @Test
+    void artifactSacrificeFromPreviousTurnDoesNotEnableActivation() {
+        Permanent satchel = castSatchel();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrificed an artifact");
+        assertThat(satchel.isTapped()).isFalse();
+    }
+
     private Permanent addReadySatchel() {
         Permanent satchel = harness.addToBattlefieldAndReturn(player1, new DetectivesSatchel());
         satchel.setSummoningSick(false);
@@ -71,8 +130,7 @@ class DetectivesSatchelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Detective's Satchel");
     }
 }

@@ -83,6 +83,54 @@ class DivineCongregationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts creatures at resolution, including creatures that entered in response")
+    void countsCreaturesAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new DivineCongregation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Divine Congregation");
+    }
+
+    @Test
+    @DisplayName("Declining the suspended cast leaves the card exiled with no further upkeep trigger")
+    void canDeclineSuspendedCast() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new AshcoatBear());
+        DivineCongregation card = new DivineCongregation();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateHandAbility(player1, 0, null);
+
+        for (int i = 0; i < 5; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Suspend exiles Divine Congregation with five time counters and later casts it for free")
     void suspendCastsForFree() {
         harness.setLife(player1, 20);

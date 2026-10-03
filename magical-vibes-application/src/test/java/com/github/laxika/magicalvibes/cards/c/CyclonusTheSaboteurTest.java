@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.StrionicResonator;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CyclonusTheSaboteur.class, CyclonusCybertronianFighter.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({CyclonusTheSaboteur.class, CyclonusCybertronianFighter.class, GrizzlyBears.class, Mountain.class,
+        StrionicResonator.class})
 class CyclonusTheSaboteurTest extends BaseCardTest {
 
     @Test
@@ -40,6 +43,20 @@ class CyclonusTheSaboteurTest extends BaseCardTest {
     }
 
     @Test
+    void normalManaCostCastsFrontFace() {
+        harness.setHand(player1, List.of(new CyclonusTheSaboteur()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent cyclonus = findPermanent(player1, "Cyclonus, the Saboteur");
+        assertThat(cyclonus.isTransformed()).isFalse();
+    }
+
+    @Test
     void convertedCyclonusHasLivingMetal() {
         Permanent cyclonus = castConvertedCyclonus();
 
@@ -55,14 +72,7 @@ class CyclonusTheSaboteurTest extends BaseCardTest {
         Mountain drawn = new Mountain();
         harness.setLibrary(player1, List.of(drawn));
 
-        cyclonus.setSummoningSick(false);
-        cyclonus.setAttacking(true);
-        cyclonus.setAttackTarget(player2.getId());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.clearPriorityPassed();
-        gd.interaction.clearAwaitingInput();
-        harness.resolveCombatDamage();
+        dealUnblockedCombatDamage(cyclonus);
         harness.assertLife(player2, 15);
         resolveAllTriggers();
         harness.clearPriorityPassed();
@@ -71,6 +81,118 @@ class CyclonusTheSaboteurTest extends BaseCardTest {
         assertThat(cyclonus.isTransformed()).isFalse();
         assertThat(tappedMountain.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
+
+    @Test
+    void conniveCounterReachesConversionThreshold() {
+        Permanent cyclonus = addCreatureReady(player1, new CyclonusTheSaboteur());
+        cyclonus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(discarded));
+
+        dealUnblockedCombatDamage(cyclonus);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(discarded));
+
+        assertThat(cyclonus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(cyclonus.isTransformed()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+    }
+
+    @Test
+    void nonlandDiscardBelowThresholdDoesNotConvert() {
+        Permanent cyclonus = addCreatureReady(player1, new CyclonusTheSaboteur());
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(discarded));
+
+        dealUnblockedCombatDamage(cyclonus);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(discarded));
+
+        assertThat(cyclonus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(cyclonus.isTransformed()).isFalse();
+    }
+
+    @Test
+    void landDiscardDoesNotAddCounterOrConvertBelowThreshold() {
+        Permanent cyclonus = addCreatureReady(player1, new CyclonusTheSaboteur());
+        cyclonus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Mountain discarded = new Mountain();
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+
+        dealUnblockedCombatDamage(cyclonus);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(discarded));
+
+        assertThat(cyclonus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(cyclonus.isTransformed()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+    }
+
+    @Test
+    void landDiscardStillConvertsWhenPowerIsAlreadyFive() {
+        Permanent cyclonus = addCreatureReady(player1, new CyclonusTheSaboteur());
+        cyclonus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Mountain discarded = new Mountain();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        dealUnblockedCombatDamage(cyclonus);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(discarded));
+
+        assertThat(cyclonus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(cyclonus.isTransformed()).isTrue();
+    }
+
+    @Test
+    void livingMetalStopsMakingVehicleACreatureOnOpponentsTurn() {
+        Permanent cyclonus = castConvertedCyclonus();
+
+        harness.forceActivePlayer(player2);
+
+        assertThat(cyclonus.isTransformed()).isTrue();
+        assertThat(gqs.isCreature(gd, cyclonus)).isFalse();
+
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.isCreature(gd, cyclonus)).isTrue();
+    }
+
+    @Test
+    void copiedVehicleTriggerConvertsOnlyOnceAndAddsOnlyOneBeginningPhase() {
+        Permanent cyclonus = castConvertedCyclonus();
+        Permanent resonator = harness.addToBattlefieldAndReturn(player1, new StrionicResonator());
+        harness.setLibrary(player1, List.of(new Mountain(), new Mountain(), new Mountain()));
+
+        dealUnblockedCombatDamage(cyclonus);
+        var trigger = gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(resonator),
+                null, trigger.getTargetableId());
+        resolveAllTriggers();
+
+        assertThat(cyclonus.isTransformed()).isFalse();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    private void dealUnblockedCombatDamage(Permanent cyclonus) {
+        cyclonus.setSummoningSick(false);
+        cyclonus.setAttacking(true);
+        cyclonus.setAttackTarget(player2.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+        gd.interaction.clearAwaitingInput();
+        harness.resolveCombatDamage();
     }
 
     private Permanent castConvertedCyclonus() {

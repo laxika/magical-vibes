@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "220")
+@CardRegistration(set = "EOC", collectorNumber = "126")
 public class SoulOfWindgrace extends Card {
 
     public SoulOfWindgrace() {

@@ -63,13 +63,66 @@ class DaruCavalierTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new DaruCavalier());
         Permanent blocker = addCreatureReady(player2, new GlorySeeker());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    void searchTakesOnlyOneCopyRevealsItAndShuffles() {
+        castDaruCavalier();
+        DaruCavalier first = new DaruCavalier();
+        DaruCavalier second = new DaruCavalier();
+        GlorySeeker other = new GlorySeeker();
+        harness.setLibrary(player1, List.of(first, second, other));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(second, other);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("reveals Daru Cavalier")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void acceptingSearchMayFailToFindEvenWhenMatchingCardExists() {
+        castDaruCavalier();
+        DaruCavalier copy = new DaruCavalier();
+        GlorySeeker other = new GlorySeeker();
+        harness.setLibrary(player1, List.of(copy, other));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Daru Cavalier");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(copy, other);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void searchStillResolvesAfterSourceLeavesBattlefield() {
+        castDaruCavalier();
+        DaruCavalier copy = new DaruCavalier();
+        harness.setLibrary(player1, List.of(copy));
+
+        resolveAllTriggers();
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(copy);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castDaruCavalier() {

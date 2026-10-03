@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "12")
+@CardRegistration(set = "SLD", collectorNumber = "2123")
 public class EsperSentinel extends Card {
 
     public EsperSentinel() {

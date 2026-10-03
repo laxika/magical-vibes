@@ -86,6 +86,71 @@ class DarajaGriffinTest extends BaseCardTest {
         assertThat(target.getRegenerationShield()).isZero();
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        setupGriffin();
+        Permanent target = addCreatureReady(player2, new ScatheZombies());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Daraja Griffin");
+        harness.assertInGraveyard(player1, "Daraja Griffin");
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Scathe Zombies");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new DarajaGriffin());
+        griffin.setSummoningSick(true);
+        griffin.setTapped(true);
+        harness.forceActivePlayer(player1);
+        Permanent target = addCreatureReady(player2, new ScatheZombies());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Daraja Griffin");
+        harness.assertInGraveyard(player2, "Scathe Zombies");
+    }
+
+    @Test
+    @DisplayName("An illegal target does not sacrifice the Griffin")
+    void illegalTargetDoesNotPaySacrificeCost() {
+        setupGriffin();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Daraja Griffin");
+        harness.assertNotInGraveyard(player1, "Daraja Griffin");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The sacrifice remains paid when the target leaves before resolution")
+    void targetLeavingDoesNotRefundSacrifice() {
+        setupGriffin();
+        Permanent target = addCreatureReady(player2, new ScatheZombies());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Daraja Griffin");
+        harness.assertInGraveyard(player1, "Daraja Griffin");
+        harness.assertInGraveyard(player2, "Scathe Zombies");
+        assertThat(gd.stack).isEmpty();
+    }
     private void setupGriffin() {
         addCreatureReady(player1, new DarajaGriffin());
         harness.forceActivePlayer(player1);

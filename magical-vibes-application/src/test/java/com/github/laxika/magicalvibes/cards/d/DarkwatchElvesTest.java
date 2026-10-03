@@ -83,4 +83,56 @@ class DarkwatchElvesTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Darkwatch Elves");
         harness.assertInHand(player1, "Swat");
     }
+
+    @Test
+    @DisplayName("Cycling pays the discard cost before drawing")
+    void cyclingDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new DarkwatchElves()));
+        harness.setLibrary(player1, List.of(new Swat()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Darkwatch Elves");
+        harness.assertNotInHand(player1, "Darkwatch Elves");
+        harness.assertNotInHand(player1, "Swat");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Swat");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new DarkwatchElves()));
+        harness.setLibrary(player1, List.of(new Swat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Darkwatch Elves");
+        harness.assertNotInGraveyard(player1, "Darkwatch Elves");
+        harness.assertNotInHand(player1, "Swat");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent combat damage from green creatures")
+    void greenCreatureCanBlockAndDealDamage() {
+        addCreatureReady(player1, new DarkwatchElves());
+        addCreatureReady(player2, new DarkwatchElves());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Darkwatch Elves");
+        harness.assertNotOnBattlefield(player2, "Darkwatch Elves");
+        harness.assertInGraveyard(player1, "Darkwatch Elves");
+        harness.assertInGraveyard(player2, "Darkwatch Elves");
+    }
 }

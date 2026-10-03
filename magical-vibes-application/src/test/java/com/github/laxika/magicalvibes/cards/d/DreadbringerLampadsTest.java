@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreadbringerLampads.class, GrizzlyBears.class, GloriousAnthem.class})
 class DreadbringerLampadsTest extends BaseCardTest {
 
     @Test
@@ -36,9 +38,7 @@ class DreadbringerLampadsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DreadbringerLampads());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -52,11 +52,8 @@ class DreadbringerLampadsTest extends BaseCardTest {
     @DisplayName("An enchantment entering under an opponent's control does not trigger it")
     void opponentEnchantmentEntryDoesNotTrigger() {
         harness.addToBattlefield(player1, new DreadbringerLampads());
-        harness.setHand(player2, List.of(new GloriousAnthem()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
-
         harness.forceActivePlayer(player2);
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -90,6 +87,52 @@ class DreadbringerLampadsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, anthem.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Constellation can target its own source")
+    void constellationCanTargetItself() {
+        Permanent lampads = harness.addToBattlefieldAndReturn(player1, new DreadbringerLampads());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, lampads.getId());
+        harness.passBothPriorities();
+
+        assertThat(lampads.hasKeyword(Keyword.INTIMIDATE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another enchantment's entry cannot target a noncreature")
+    void allyEntryCannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new DreadbringerLampads());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, anthem.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Constellation does not grant intimidate to a target that left the battlefield")
+    void targetLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new DreadbringerLampads());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerGraveyards.get(player2.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bears.hasKeyword(Keyword.INTIMIDATE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castDreadbringerLampads(com.github.laxika.magicalvibes.model.Player player,

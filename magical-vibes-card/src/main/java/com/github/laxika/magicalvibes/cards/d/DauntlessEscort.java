@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "67")
 @CardRegistration(set = "2X2", collectorNumber = "199")
+@CardRegistration(set = "C16", collectorNumber = "192")
 public class DauntlessEscort extends Card {
 
     public DauntlessEscort() {

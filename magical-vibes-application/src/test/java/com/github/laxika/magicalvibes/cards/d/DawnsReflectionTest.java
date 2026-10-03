@@ -16,6 +16,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DawnsReflectionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Two reflections on the same land each add two mana without using the stack")
+    void multipleReflectionsAddManaIndependently() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new DawnsReflection());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new DawnsReflection());
+        firstAura.setAttachedTo(forest.getId());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Enchanted land's controller chooses each of the two additional mana colors")
     void addsTwoManaInAnyCombinationOfColors() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());

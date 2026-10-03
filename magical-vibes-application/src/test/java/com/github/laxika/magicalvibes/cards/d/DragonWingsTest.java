@@ -46,8 +46,7 @@ class DragonWingsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Dragon Wings");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Goblin Brigand"));
+        harness.assertInHand(player1, "Goblin Brigand");
     }
 
     @Test
@@ -97,7 +96,7 @@ class DragonWingsTest extends BaseCardTest {
     }
 
     @Test
-    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+    void acceptedReturnStaysInGraveyardWhenEnteringCreatureLeavesBeforeResolution() {
         harness.setGraveyard(player1, List.of(new DragonWings()));
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new WirewoodGuardian());
 
@@ -108,9 +107,39 @@ class DragonWingsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gameLogContains("Dragon Wings returns to the battlefield unattached.")).isTrue();
+        assertThat(gameLogContains("Dragon Wings returns to the battlefield")).isFalse();
         harness.assertInGraveyard(player1, "Dragon Wings");
         harness.assertNotOnBattlefield(player1, "Dragon Wings");
+    }
+
+    @Test
+    void creatureEnteringWhileAuraIsInHandDoesNotTriggerReturn() {
+        harness.setHand(player1, List.of(new DragonWings()));
+
+        harness.enterBattlefieldAndReturn(player1, new WirewoodGuardian());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Dragon Wings");
+        harness.assertNotOnBattlefield(player1, "Dragon Wings");
+    }
+
+    @Test
+    void auraMovedOutOfGraveyardBeforeResolutionCannotReturn() {
+        DragonWings wings = new DragonWings();
+        harness.setGraveyard(player1, List.of(wings));
+        harness.enterBattlefieldAndReturn(player1, new WirewoodGuardian());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(wings));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Dragon Wings");
+        harness.assertNotOnBattlefield(player1, "Dragon Wings");
+        harness.assertNotInGraveyard(player1, "Dragon Wings");
     }
 
     private void resolveMayAbility(boolean accepted) {

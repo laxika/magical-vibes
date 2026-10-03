@@ -38,8 +38,7 @@ class BionicBlowTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BionicBlow()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, 1, List.of(source.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, source.getId());
 
         assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
     }
@@ -69,6 +68,76 @@ class BionicBlowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1,
                 List.of(source.getId(), source.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("X may be zero and the creature still deals its current power in damage")
+    void zeroXStillDealsDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        cast(source, victim, 0);
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The damage target may be another creature you control")
+    void canDamageOwnCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+
+        cast(source, victim, 1);
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be chosen for the boost")
+    void cannotBoostOpponentCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BionicBlow()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The boost still resolves when the damage target leaves the battlefield")
+    void missingDamageTargetDoesNotPreventBoost() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BionicBlow()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, 1, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the boosted creature leaves the battlefield")
+    void missingSourceDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BionicBlow()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, 1, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     private void cast(Permanent source, Permanent victim, int x) {

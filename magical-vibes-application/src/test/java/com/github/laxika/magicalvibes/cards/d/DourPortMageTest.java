@@ -27,7 +27,6 @@ class DourPortMageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, bears.getId());
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -44,6 +43,7 @@ class DourPortMageTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
@@ -85,5 +85,107 @@ class DourPortMageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another creature you control");
+    }
+
+    @Test
+    void cannotTargetItself() {
+        Permanent mage = addCreatureReady(player1, new DourPortMage());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mage.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("another creature you control");
+    }
+
+    @Test
+    void doesNotDrawWhenOnlyMageLeaves() {
+        Permanent mage = addCreatureReady(player1, new DourPortMage());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DourPortMage()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, mage));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWhenOpponentsCreatureLeaves() {
+        addCreatureReady(player1, new DourPortMage());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DourPortMage()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, bears));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void drawsWhenAnotherCreatureIsExiled() {
+        addCreatureReady(player1, new DourPortMage());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        DourPortMage drawnCard = new DourPortMage();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, bears));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void drawsWhenAnotherCreatureGoesToLibrary() {
+        addCreatureReady(player1, new DourPortMage());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DourPortMage()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToLibraryTop(gd, bears));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears.getCard());
+    }
+
+    @Test
+    void drawsForEachSeparateDeparture() {
+        addCreatureReady(player1, new DourPortMage());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DourPortMage(), new DourPortMage()));
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToExile(gd, first);
+            harness.getPermanentRemovalService().removePermanentToExile(gd, second);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void drawsOnlyOnceForMultipleSimultaneousDepartures() {
+        addCreatureReady(player1, new DourPortMage());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DourPortMage(), new DourPortMage()));
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().beginPermanentLeaveBatch(gd);
+            try {
+                harness.getPermanentRemovalService().removePermanentToExile(gd, first);
+                harness.getPermanentRemovalService().removePermanentToExile(gd, second);
+            } finally {
+                harness.getPermanentRemovalService().endPermanentLeaveBatch(gd);
+            }
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

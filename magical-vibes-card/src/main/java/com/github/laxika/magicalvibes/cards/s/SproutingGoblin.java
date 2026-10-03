@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "145")
+@CardRegistration(set = "EOC", collectorNumber = "90")
 public class SproutingGoblin extends Card {
 
     public SproutingGoblin() {

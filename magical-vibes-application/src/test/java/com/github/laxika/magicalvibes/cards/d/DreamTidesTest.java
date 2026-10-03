@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CloudElemental;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.cards.u.UktabiOrangutan;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreamTides.class, CloudElemental.class, UktabiOrangutan.class, Quicksand.class})
+@CardUsed({DreamTides.class, CloudElemental.class, UktabiOrangutan.class, Quicksand.class, IvoryMask.class})
 class DreamTidesTest extends BaseCardTest {
 
     @Test
@@ -29,7 +29,7 @@ class DreamTidesTest extends BaseCardTest {
         Permanent orangutan = addTapped(player1, new UktabiOrangutan());
         Permanent quicksand = addTapped(player1, new Quicksand());
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(cloudElemental.isTapped()).isTrue();
         assertThat(orangutan.isTapped()).isTrue();
@@ -133,6 +133,92 @@ class DreamTidesTest extends BaseCardTest {
         assertThat(player1Creature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Only tapped nongreen creatures are offered, and a subset may be chosen")
+    void choosesSubsetOfEligibleCreatures() {
+        harness.addToBattlefield(player1, new DreamTides());
+        Permanent chosen = addTapped(player1, new CloudElemental());
+        Permanent unchosen = addTapped(player1, new CloudElemental());
+        Permanent green = addTapped(player1, new UktabiOrangutan());
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new CloudElemental());
+        Permanent land = addTapped(player1, new Quicksand());
+
+        advanceToUpkeep(player1);
+        land.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(chosen.isTapped()).isFalse();
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(green.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isFalse();
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untapped lands can fund the payment during resolution with an empty mana pool")
+    void manaAbilitiesCanFundPaymentDuringResolution() {
+        harness.addToBattlefield(player1, new DreamTides());
+        Permanent creature = addTapped(player1, new CloudElemental());
+        harness.addToBattlefield(player1, new Quicksand());
+        harness.addToBattlefield(player1, new Quicksand());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+        harness.tapPermanent(player1, 2);
+        harness.tapPermanent(player1, 3);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The untap restriction applies to the opponent's creatures too")
+    void opponentCreaturesStayTappedThroughUntap() {
+        harness.addToBattlefield(player1, new DreamTides());
+        Permanent creature = addTapped(player2, new CloudElemental());
+        Permanent land = addTapped(player2, new Quicksand());
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Player shroud does not prevent the nontargeting upkeep ability")
+    void playerShroudDoesNotPreventUpkeepPayment() {
+        harness.addToBattlefield(player1, new DreamTides());
+        harness.addToBattlefield(player2, new IvoryMask());
+        Permanent creature = addTapped(player2, new CloudElemental());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(creature.getId()));
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
@@ -140,13 +226,4 @@ class DreamTidesTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
-    }
 }

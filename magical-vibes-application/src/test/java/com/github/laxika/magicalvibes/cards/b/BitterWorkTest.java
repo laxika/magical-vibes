@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DayOfBlackSun;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BitterWork.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BitterWork.class, Forest.class, GrizzlyBears.class, DayOfBlackSun.class})
 class BitterWorkTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class BitterWorkTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setPowerModifier(2);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card(), new Card()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         harness.passBothPriorities();
@@ -46,7 +46,7 @@ class BitterWorkTest extends BaseCardTest {
         Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
         secondAttacker.setPowerModifier(2);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card(), new Card()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker),
@@ -63,7 +63,7 @@ class BitterWorkTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BitterWork());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Card()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
@@ -102,5 +102,145 @@ class BitterWorkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    void drawStillResolvesWhenAttackerPowerDrops() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1)));
+        attacker.setPowerModifier(0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotDrawForOpponentsAttack() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setPowerModifier(2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void exhaustCannotBeActivatedTwice() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void exhaustCanBeActivatedDuringYourCombat() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void exhaustCannotTargetOpponentsLand() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+    }
+
+    @Test
+    void earthbendedLandReturnsTappedAfterDying() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, land));
+        harness.assertInGraveyard(player1, "Forest");
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void earthbendedLandReturnsTappedAfterExile() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, land));
+        harness.assertNotOnBattlefield(player1, "Forest");
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.findExiledCard(land.getCard().getId())).isNull();
+    }
+
+    @Test
+    void earthbendReturnSurvivesDayOfBlackSunRemovingAbilities() {
+        harness.addToBattlefield(player1, new BitterWork());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new DayOfBlackSun()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 }

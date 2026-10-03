@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +39,7 @@ class BloodbraidMarauderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .containsExactly(llanowarElves);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof LlanowarElves
                 && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
@@ -66,11 +65,147 @@ class BloodbraidMarauderTest extends BaseCardTest {
         addCreatureReady(player1, new BloodbraidMarauder());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cascadeStillResolvesAfterDeliriumIsLost() {
+        LlanowarElves hit = new LlanowarElves();
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.setLibrary(player1, List.of(hit));
+        castMarauder();
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(hit);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit
+                && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    void gainingDeliriumAfterCastingDoesNotCreateCascade() {
+        LlanowarElves hit = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Mountain(), new Shock()));
+        harness.setLibrary(player1, List.of(hit));
+        castMarauder();
+
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+    }
+
+    @Test
+    void fourCardsWithOnlyThreeCardTypesDoNotEnableDelirium() {
+        LlanowarElves hit = new LlanowarElves();
+        harness.setGraveyard(player1,
+                List.of(new GrizzlyBears(), new LlanowarElves(), new Mountain(), new Shock()));
+        harness.setLibrary(player1, List.of(hit));
+        castMarauder();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotEnableDelirium() {
+        LlanowarElves hit = new LlanowarElves();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, fourCardTypes());
+        harness.setLibrary(player1, List.of(hit));
+        castMarauder();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+    }
+
+    @Test
+    void cascadeSkipsEqualManaValueAndBottomsSkippedCards() {
+        Mountain land = new Mountain();
+        GrizzlyBears equalManaValue = new GrizzlyBears();
+        LlanowarElves hit = new LlanowarElves();
+        Shock untouched = new Shock();
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.setLibrary(player1, List.of(land, equalManaValue, hit, untouched));
+        castMarauder();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(hit);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3).startsWith(untouched)
+                .containsExactlyInAnyOrder(untouched, land, equalManaValue);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Bloodbraid Marauder");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bloodbraid Marauder");
+    }
+
+    @Test
+    void decliningCascadeBottomsTheHitAndSkippedCards() {
+        Mountain land = new Mountain();
+        LlanowarElves hit = new LlanowarElves();
+        Shock untouched = new Shock();
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.setLibrary(player1, List.of(land, hit, untouched));
+        castMarauder();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3).startsWith(untouched)
+                .containsExactlyInAnyOrder(untouched, land, hit);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == hit);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bloodbraid Marauder");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void cascadeWithNoQualifyingCardReturnsTheWholeLibrary() {
+        Mountain land = new Mountain();
+        GrizzlyBears creature = new GrizzlyBears();
+        Millstone artifact = new Millstone();
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.setLibrary(player1, List.of(land, creature, artifact));
+        castMarauder();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, creature, artifact);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bloodbraid Marauder");
+    }
+
+    @Test
+    void cascadeWithAnEmptyLibraryStillAllowsMarauderToResolve() {
+        harness.setGraveyard(player1, fourCardTypes());
+        harness.setLibrary(player1, List.of());
+        castMarauder();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bloodbraid Marauder");
     }
 
     private void castMarauder() {

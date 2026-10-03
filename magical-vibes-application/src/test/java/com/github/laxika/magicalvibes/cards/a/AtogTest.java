@@ -45,7 +45,6 @@ class AtogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore);
@@ -96,5 +95,54 @@ class AtogTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstArtifact);
         assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore + 2);
         assertThat(gqs.getEffectiveToughness(gd, atog)).isEqualTo(toughnessBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Artifact is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        int powerBefore = gqs.getEffectivePower(gd, atog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, atog);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, atog)).isEqualTo(toughnessBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, atog)).isEqualTo(toughnessBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Atog can activate repeatedly and its boosts accumulate")
+    void repeatedActivationsDoNotRequireTappingOrHaste() {
+        Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
+        atog.tap();
+        atog.setSummoningSick(true);
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+        int powerBefore = gqs.getEffectivePower(gd, atog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, atog);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstArtifact.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, atog)).isEqualTo(toughnessBefore + 2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, atog)).isEqualTo(powerBefore + 4);
+        assertThat(gqs.getEffectiveToughness(gd, atog)).isEqualTo(toughnessBefore + 4);
+        assertThat(atog.isTapped()).isTrue();
     }
 }

@@ -22,8 +22,8 @@ import java.util.List;
 public class AngelsFeather extends Card {
 
     public AngelsFeather() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE), List.of(new GainLifeEffect(1))),
-                "Gain 1 life?"));
+        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
+                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
+                        List.of(new MayEffect(new GainLifeEffect(1), "Gain 1 life?"))));
     }
 }

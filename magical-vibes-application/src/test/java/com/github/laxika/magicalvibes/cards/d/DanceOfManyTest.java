@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,15 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DanceOfMany.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({DanceOfMany.class, FountainOfYouth.class, GrizzlyBears.class, RayOfCommand.class, DoublingSeason.class})
 class DanceOfManyTest extends BaseCardTest {
 
     private void castDanceCopying(UUID targetId) {
         harness.setHand(player1, List.of(new DanceOfMany()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castEnchantment(player1, 0, targetId);
-        harness.passBothPriorities(); // enchantment resolves, ETB trigger goes on stack
-        harness.passBothPriorities(); // ETB trigger resolves -> token copy created
+        resolveAllTriggers();
     }
 
     private Permanent tokenCopy(Player player) {
@@ -102,8 +102,7 @@ class DanceOfManyTest extends BaseCardTest {
     @Test
     @DisplayName("A target that leaves before the ETB ability resolves produces no token")
     void targetLeavingBeforeEtbResolutionProducesNoToken() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DanceOfMany()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castEnchantment(player1, 0, target.getId());
@@ -212,10 +211,65 @@ class DanceOfManyTest extends BaseCardTest {
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dance));
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(tokenCopy(player1)).isNotNull();
         assertThat(danceOfMany(player1)).isNull();
+    }
+
+    @Test
+    @DisplayName("Leaving exiles every token created by a doubled copy ability")
+    void leavingExilesAllDoubledTokens() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, danceOfMany(player1)));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Either doubled token leaving sacrifices Dance and exiles the other token")
+    void firstDoubledTokenLeavingExilesRemainingToken() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        List<Permanent> tokens = findPermanents(player1, "Grizzly Bears");
+        assertThat(tokens).hasSize(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, tokens.getFirst()));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dance of Many");
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dance controls its sacrifice trigger when an opponent controls the token")
+    void tokenLeavingTriggerBelongsToEnchantmentController() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        Permanent token = tokenCopy(player1);
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, token.getId());
+        assertThat(tokenCopy(player2)).isNotNull();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, token));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Dance of Many");
     }
 }

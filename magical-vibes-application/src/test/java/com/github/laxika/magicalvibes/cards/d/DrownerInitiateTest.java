@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,12 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({DrownerInitiate.class, BriarberryCohort.class, SafeholdSentry.class})
 class DrownerInitiateTest extends BaseCardTest {
 
-    private static void trimDeck(List<Card> deck) {
-        while (deck.size() > 10) {
-            deck.removeFirst();
-        }
-    }
-
     @Test
     @DisplayName("Blue spell cast, pay {1}, target opponent mills two cards")
     void blueSpellPayMillsOpponent() {
@@ -34,15 +27,17 @@ class DrownerInitiateTest extends BaseCardTest {
         harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        trimDeck(deck);
+        harness.setLibrary(player2, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
+        deck = gd.playerDecks.get(player2.getId());
         int deckSizeBefore = deck.size();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -55,6 +50,9 @@ class DrownerInitiateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
 
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -77,15 +75,17 @@ class DrownerInitiateTest extends BaseCardTest {
         harness.castFromHand(player2, new BriarberryCohort(), "{1}{U}");
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        trimDeck(deck);
+        harness.setLibrary(player1, deck.subList(Math.max(0, deck.size() - 10), deck.size()));
+        deck = gd.playerDecks.get(player1.getId());
         int deckSizeBefore = deck.size();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-
-        harness.handlePermanentChosen(player1, player1.getId()); // target self
-        harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -97,7 +97,6 @@ class DrownerInitiateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DrownerInitiate());
         harness.castFromHand(player1, new SafeholdSentry(), "{1}{W}");
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -112,11 +111,47 @@ class DrownerInitiateTest extends BaseCardTest {
 
         harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Payment can use mana obtained after the trigger is put on the stack")
+    void manaAddedAfterTriggerCanPay() {
+        harness.addToBattlefield(player1, new DrownerInitiate());
+        harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        int before = gd.playerDecks.get(player2.getId()).size();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(before - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A library with one card mills only that card")
+    void millsRemainingCardInShortLibrary() {
+        harness.addToBattlefield(player1, new DrownerInitiate());
+        Card remaining = new SafeholdSentry();
+        harness.setLibrary(player2, List.of(remaining));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player1, new BriarberryCohort(), "{1}{U}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
     }
 }

@@ -13,7 +13,7 @@ public class AkkiLavarunner extends Card {
         setBackFaceCard(new TokTokVolcanoBorn());
 
         // Includes combat and noncombat damage, but only to an opponent.
-        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new TransformToBackFaceEffect());
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, new TransformToBackFaceEffect(true));
     }
 
     @Override

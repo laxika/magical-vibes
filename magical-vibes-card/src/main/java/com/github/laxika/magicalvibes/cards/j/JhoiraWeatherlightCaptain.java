@@ -12,6 +12,8 @@ import java.util.List;
 @CardRegistration(set = "DOM", collectorNumber = "197")
 @CardRegistration(set = "SLD", collectorNumber = "1276")
 @CardRegistration(set = "2XM", collectorNumber = "203")
+@CardRegistration(set = "EOC", collectorNumber = "118")
+@CardRegistration(set = "BRC", collectorNumber = "126")
 public class JhoiraWeatherlightCaptain extends Card {
 
     public JhoiraWeatherlightCaptain() {

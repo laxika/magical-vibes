@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.m.MindlessAutomaton;
+import com.github.laxika.magicalvibes.cards.r.RagMan;
 import com.github.laxika.magicalvibes.cards.s.Stupor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Dodecapod.class, FuneralCharm.class, Stupor.class, MindlessAutomaton.class})
+@CardUsed({Dodecapod.class, FuneralCharm.class, Stupor.class, MindlessAutomaton.class, RagMan.class})
 class DodecapodTest extends BaseCardTest {
 
     @Test
@@ -47,8 +48,7 @@ class DodecapodTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
 
         Permanent dodecapod = findPermanent(player1, "Dodecapod");
@@ -81,5 +81,39 @@ class DodecapodTest extends BaseCardTest {
 
         Permanent dodecapod = findPermanent(player1, "Dodecapod");
         assertThat(dodecapod.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Enters with two counters when an opponent's ability discards it at random")
+    void entersWhenDiscardedByOpponentAbility() {
+        addCreatureReady(player2, new RagMan());
+        harness.setHand(player1, List.of(new Dodecapod()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dodecapod");
+        harness.assertNotInHand(player1, "Dodecapod");
+        harness.assertNotInGraveyard(player1, "Dodecapod");
+        assertThat(findPermanent(player1, "Dodecapod")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Goes to the graveyard when its owner's spell causes the discard")
+    void goesToGraveyardWhenDiscardedByOwnSpell() {
+        harness.setHand(player1, List.of(new FuneralCharm(), new Dodecapod()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Dodecapod");
+        harness.assertInGraveyard(player1, "Dodecapod");
+        harness.assertNotInHand(player1, "Dodecapod");
     }
 }

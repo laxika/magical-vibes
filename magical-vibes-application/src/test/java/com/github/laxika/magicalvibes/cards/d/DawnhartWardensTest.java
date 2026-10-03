@@ -18,8 +18,7 @@ class DawnhartWardensTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void endTurn() {
@@ -74,5 +73,99 @@ class DawnhartWardensTest extends BaseCardTest {
         endTurn();
 
         assertThat(wardens.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Coven does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wardens.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Coven is checked again when the trigger resolves")
+    void losingDistinctPowerPreventsBoost() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        elves.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(wardens.getPowerModifier()).isZero();
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(elves.getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent creatures cannot supply missing coven powers")
+    void opponentsCreaturesDoNotCountForCoven() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wardens.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost includes creatures present at resolution, but not later arrivals")
+    void boostUsesCreaturesPresentAtResolution() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(wardens.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isZero();
+        assertThat(afterResolution.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Meeting coven after combat begins does not create a trigger")
+    void meetingCovenTooLateDoesNotTrigger() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(wardens.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Coven uses modified powers, not just printed powers")
+    void modifiedPowersEnableCoven() {
+        Permanent wardens = harness.addToBattlefieldAndReturn(player1, new DawnhartWardens());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent smallerBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        smallerBears.setPowerModifier(-1);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(wardens.getPowerModifier()).isEqualTo(1);
+        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(smallerBears.getPowerModifier()).isZero();
     }
 }

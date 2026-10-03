@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "150")
+@CardRegistration(set = "EOC", collectorNumber = "89")
 public class MoraugFuryOfAkoum extends Card {
 
     public MoraugFuryOfAkoum() {

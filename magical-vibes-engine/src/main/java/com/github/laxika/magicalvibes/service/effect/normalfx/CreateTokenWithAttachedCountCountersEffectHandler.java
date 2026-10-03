@@ -33,6 +33,7 @@ public class CreateTokenWithAttachedCountCountersEffectHandler implements Normal
         Permanent source = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        boolean sourceHasLeft = source == null;
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
@@ -40,7 +41,8 @@ public class CreateTokenWithAttachedCountCountersEffectHandler implements Normal
             return;
         }
 
-        int counterAmount = countAttachedAurasAndEquipment(gameData, source.getId(), e.excludedAttachedPermanentId());
+        int counterAmount = sourceHasLeft ? entry.getEventValue()
+                : countAttachedAurasAndEquipment(gameData, source.getId(), e.excludedAttachedPermanentId());
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
         entry.getCreatedPermanentIds().addAll(createdIds);
@@ -48,12 +50,13 @@ public class CreateTokenWithAttachedCountCountersEffectHandler implements Normal
             return;
         }
 
-        Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
-        if (token == null || gameQueryService.cantHaveCounters(gameData, token)) {
-            return;
+        for (UUID createdId : createdIds) {
+            Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+            if (token != null && !gameQueryService.cantHaveCounters(gameData, token)) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, token, e.counterType(), counterAmount);
+            }
         }
-        permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, token, e.counterType(), counterAmount);
     }
 
     private int countAttachedAurasAndEquipment(GameData gameData, UUID sourceId, UUID excludedId) {

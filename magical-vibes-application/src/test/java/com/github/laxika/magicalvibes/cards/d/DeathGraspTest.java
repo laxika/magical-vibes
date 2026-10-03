@@ -16,6 +16,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DeathGrasp.class, AngelfireCrusader.class, GarrukWildspeaker.class})
 class DeathGraspTest extends BaseCardTest {
+    @Test
+    @DisplayName("X zero deals no damage and gains no life")
+    void zeroXDoesNotChangeLife() {
+        harness.setHand(player1, List.of(new DeathGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Death Grasp");
+    }
+
+    @Test
+    @DisplayName("Targeting yourself gains life before checking for a loss at zero life")
+    void canTargetSelfAndSurviveDamageExceedingLifeTotal() {
+        harness.setHand(player1, List.of(new DeathGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setLife(player1, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 2);
+        assertThat(gd.gameResult).isNull();
+        harness.assertInGraveyard(player1, "Death Grasp");
+    }
+
+    @Test
+    @DisplayName("Life gained is not capped by the target creature's toughness")
+    void gainsFullXWhenDamageExceedsCreatureToughness() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelfireCrusader());
+        harness.setHand(player1, List.of(new DeathGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.setLife(player1, 10);
+
+        harness.castAndResolveSorcery(player1, 0, 5, creature.getId());
+
+        harness.assertInGraveyard(player2, "Angelfire Crusader");
+        harness.assertLife(player1, 15);
+    }
 
     @Test
     @DisplayName("Deals X damage to target player and controller gains X life")

@@ -82,10 +82,8 @@ class DivineTransformationTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(aura.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(aura.getId()));
+        harness.assertInGraveyard(player1, "Divine Transformation");
+        harness.assertNotOnBattlefield(player1, "Divine Transformation");
     }
 
     // ===== Targeting restriction =====
@@ -130,5 +128,43 @@ class DivineTransformationTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Divine Transformations each grant their own +3/+3 boost")
+    void multipleAurasStackTheirBoosts() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DivineTransformation(), new DivineTransformation()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.WHITE, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.castEnchantment(player1, 0, bears.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
+        assertThat(findPermanents(player1, "Divine Transformation"))
+                .hasSize(2)
+                .allMatch(aura -> bears.getId().equals(aura.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Divine Transformation goes to the graveyard when its enchanted creature leaves")
+    void auraGoesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DivineTransformation()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Divine Transformation");
+        harness.assertNotOnBattlefield(player1, "Divine Transformation");
+        harness.assertNotInGraveyard(player2, "Divine Transformation");
     }
 }

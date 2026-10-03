@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbbeyGargoyles.class, Aggravate.class, GrizzlyBears.class, JayemdaeTome.class})
+@CardUsed({AbbeyGargoyles.class, Aggravate.class, EverlastingTorment.class, GrizzlyBears.class, JayemdaeTome.class})
 class AggravateTest extends BaseCardTest {
 
     @Test
@@ -69,10 +71,7 @@ class AggravateTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Aggravate()));
-        harness.addMana(player1, ManaColor.RED, 5);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        castAggravate(player2.getId());
         assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -99,10 +98,50 @@ class AggravateTest extends BaseCardTest {
         assertThat(ownBear.isMustAttackThisTurn()).isTrue();
     }
 
+    @Test
+    @DisplayName("Damage dealt as -1/-1 counters still requires the damaged creature to attack")
+    void counterDamageStillForcesAttack() {
+        harness.addToBattlefield(player1, new EverlastingTorment());
+        Permanent enemyBear = addCreatureReady(player2, new GrizzlyBears());
+
+        castAggravate(player2.getId());
+
+        assertThat(enemyBear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(enemyBear.getMarkedDamage()).isZero();
+        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick creatures take damage but cannot be required to attack")
+    void creaturesUnableToAttackCanStayBack() {
+        Permanent tappedBear = addCreatureReady(player2, new GrizzlyBears());
+        tappedBear.tap();
+        Permanent sickBear = addCreatureReady(player2, new GrizzlyBears());
+        sickBear.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        castAggravate(player2.getId());
+
+        assertThat(tappedBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(sickBear.getMarkedDamage()).isEqualTo(1);
+        declareAttackers(player2, List.of());
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not required to attack")
+    void laterCreatureIsUnaffected() {
+        castAggravate(player2.getId());
+
+        Permanent laterBear = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(laterBear.getMarkedDamage()).isZero();
+        assertThat(laterBear.isMustAttackThisTurn()).isFalse();
+    }
+
     private void castAggravate(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Aggravate()));
         harness.addMana(player1, ManaColor.RED, 5);
-        harness.castInstant(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetPlayerId);
     }
 }

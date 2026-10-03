@@ -31,4 +31,35 @@ class CopperTabletTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
     }
+
+    @Test
+    @DisplayName("A tapped Tablet still deals damage during the opponent's upkeep")
+    void tappedTabletStillDealsDamage() {
+        harness.addToBattlefieldAndReturn(player1, new CopperTablet()).setTapped(true);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Tablets controlled by both players each damage the active player")
+    void multipleTabletsDamageOnlyActivePlayer() {
+        harness.addToBattlefield(player1, new CopperTablet());
+        harness.addToBattlefield(player2, new CopperTablet());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
 }

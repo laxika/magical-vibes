@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BladedAmbassador.class})
 class BladedAmbassadorTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,58 @@ class BladedAmbassadorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, ambassador, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Oil and mana are paid before indestructible resolves")
+    void paysCostsBeforeResolution() {
+        Permanent ambassador = harness.enterBattlefieldAndReturn(player1, new BladedAmbassador());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ambassador.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.hasKeyword(gd, ambassador, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, ambassador, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activation needs mana and leaves the oil counter when payment is impossible")
+    void cannotActivateWithoutMana() {
+        Permanent ambassador = harness.enterBattlefieldAndReturn(player1, new BladedAmbassador());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ambassador.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, ambassador, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Ambassador can activate and protects only itself")
+    void tappedSummoningSickAmbassadorProtectsOnlyItself() {
+        Permanent other = harness.enterBattlefieldAndReturn(player1, new BladedAmbassador());
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new BladedAmbassador());
+        Permanent opponent = harness.enterBattlefieldAndReturn(player2, new BladedAmbassador());
+        source.setSummoningSick(true);
+        source.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(other.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(opponent.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private Permanent addAmbassadorReady(Player player) {

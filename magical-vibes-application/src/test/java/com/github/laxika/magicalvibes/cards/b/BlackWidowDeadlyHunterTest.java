@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SedgeScorpion;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlackWidowDeadlyHunter.class, Forest.class, GrizzlyBears.class})
+@CardUsed({BlackWidowDeadlyHunter.class, Forest.class, GrizzlyBears.class, SedgeScorpion.class})
 class BlackWidowDeadlyHunterTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,7 @@ class BlackWidowDeadlyHunterTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
+        harness.addToBattlefield(player1, new BlackWidowDeadlyHunter());
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 
         resolveCombat();
@@ -45,6 +47,60 @@ class BlackWidowDeadlyHunterTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void anotherDeathtouchCreatureTriggersWhileBlackWidowDoesNotAttack() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addToBattlefield(player1, new BlackWidowDeadlyHunter());
+        addCreatureReady(player1, new SedgeScorpion()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void eachDeathtouchCreatureDealingDamageTriggersSeparately() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addCreatureReady(player1, new BlackWidowDeadlyHunter()).setAttacking(true);
+        addCreatureReady(player1, new SedgeScorpion()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsDeathtouchCreatureDoesNotTriggerBlackWidow() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addToBattlefield(player1, new BlackWidowDeadlyHunter());
+        addCreatureReady(player2, new SedgeScorpion()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

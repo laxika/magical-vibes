@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DevilsPlay.class, GrizzlyBears.class, SerraAngel.class, LilianaOfTheVeil.class})
 class DevilsPlayTest extends BaseCardTest {
 
     // ===== Casting from hand =====
@@ -42,8 +47,7 @@ class DevilsPlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 5, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -56,8 +60,7 @@ class DevilsPlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 2, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -71,8 +74,7 @@ class DevilsPlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Serra Angel");
-        harness.castSorcery(player1, 0, 3, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, targetId);
 
         harness.assertOnBattlefield(player2, "Serra Angel");
     }
@@ -84,8 +86,7 @@ class DevilsPlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -97,8 +98,7 @@ class DevilsPlayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.setLife(player2, 20);
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Devil's Play");
@@ -193,5 +193,65 @@ class DevilsPlayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canDamageItsController() {
+        harness.setHand(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertInGraveyard(player1, "Devil's Play");
+    }
+
+    @Test
+    @DisplayName("Damage removes loyalty from a planeswalker")
+    void damagesPlaneswalker() {
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        UUID targetId = liliana.getId();
+
+        harness.castAndResolveSorcery(player1, 0, 2, targetId);
+
+        harness.assertOnBattlefield(player2, "Liliana of the Veil");
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flashback requires enough mana to pay the chosen X")
+    void flashbackRequiresManaForX() {
+        harness.setGraveyard(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, 2, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Devil's Play");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell when its only target leaves the battlefield")
+    void flashbackExilesWithIllegalTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castFlashback(player1, 0, 2, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Devil's Play");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Devil's Play"));
     }
 }

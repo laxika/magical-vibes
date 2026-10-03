@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "261")
 @CardRegistration(set = "TMT", collectorNumber = "184")
+@CardRegistration(set = "EOC", collectorNumber = "157")
 public class EscapeTunnel extends Card {
 
     public EscapeTunnel() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DreadShade.class})
 class DreadShadeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Dread Shade puts it on the stack")
@@ -45,8 +45,6 @@ class DreadShadeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Dread Shade");
     }
-
-    // ===== Activate ability =====
 
     @Test
     @DisplayName("Activating ability puts BoostSelf on the stack with self as target")
@@ -141,8 +139,8 @@ class DreadShadeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Dread Shade is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without effect if Dread Shade is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addDreadShadeReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -157,8 +155,6 @@ class DreadShadeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Validation errors =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
@@ -170,13 +166,75 @@ class DreadShadeTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new DreadShade());
+        shade.setSummoningSick(true);
+        shade.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(4);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple pending activations boost only their source")
+    void pendingActivationsBoostOnlyTheirSource() {
+        Permanent shade = addDreadShadeReady(player1);
+        Permanent otherShade = harness.addToBattlefieldAndReturn(player1, new DreadShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(shade.getPowerModifier()).isZero();
+        assertThat(harness.getGameData().stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(5);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(5);
+        assertThat(otherShade.getPowerModifier()).isZero();
+        assertThat(otherShade.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A pending ability does not boost the source after it leaves and reenters")
+    void pendingAbilityDoesNotBoostNewPermanent() {
+        Permanent original = addDreadShadeReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, original.getCard());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Nonblack mana cannot pay the activation cost")
+    void cannotActivateWithNonblackMana() {
+        addDreadShadeReady(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 
     private Permanent addDreadShadeReady(Player player) {
-        DreadShade card = new DreadShade();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new DreadShade());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

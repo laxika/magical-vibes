@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "28")
 @CardRegistration(set = "LTC", collectorNumber = "111")
+@CardRegistration(set = "LTC", collectorNumber = "430")
 public class RapaciousGuest extends Card {
 
     public RapaciousGuest() {

@@ -164,9 +164,7 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
         log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
                 reorderedToBottom ? "bottom" : "top");
 
-        for (int i = 0; i < interaction.drawAfterReorder(); i++) {
-            drawService.resolveDrawCard(gameData, reorderDeckOwnerId);
-        }
+        drawService.resolveDrawCards(gameData, reorderDeckOwnerId, interaction.drawAfterReorder());
 
         if (reorderedToBottom && !gameData.pendingLibraryBottomReorders.isEmpty()) {
             warpWorldService.beginNextPendingLibraryBottomReorder(gameData);

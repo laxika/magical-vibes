@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "MAR", collectorNumber = "53")
 @CardRegistration(set = "NEC", collectorNumber = "12")
 @CardRegistration(set = "NEC", collectorNumber = "48")
+@CardRegistration(set = "EOC", collectorNumber = "69")
 public class CyberdriveAwakener extends Card {
 
     public CyberdriveAwakener() {

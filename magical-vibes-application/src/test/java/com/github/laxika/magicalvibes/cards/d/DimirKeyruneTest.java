@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DimirKeyrune.class})
 class DimirKeyruneTest extends BaseCardTest {
 
     @Test
@@ -66,10 +69,78 @@ class DimirKeyruneTest extends BaseCardTest {
         assertThat(keyrune.isCantBeBlocked()).isFalse();
     }
 
+    @Test
+    @DisplayName("A newly entered noncreature Keyrune can tap for blue mana")
+    void newlyEnteredKeyruneCanProduceBlueMana() {
+        Permanent keyrune = harness.addToBattlefieldAndReturn(player1, new DimirKeyrune());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(keyrune.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Animating a newly entered Keyrune prevents paying its tap cost")
+    void newlyAnimatedKeyruneCannotTapForMana() {
+        Permanent keyrune = harness.addToBattlefieldAndReturn(player1, new DimirKeyrune());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, keyrune)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(keyrune.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated ready Keyrune retains its mana ability")
+    void animatedKeyruneCanStillProduceMana() {
+        Permanent keyrune = addReadyKeyrune(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, keyrune)).isTrue();
+        assertThat(keyrune.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated animation works while tapped and does not stack power or toughness")
+    void tappedKeyruneCanAnimateRepeatedly() {
+        Permanent keyrune = addReadyKeyrune(player1);
+        keyrune.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, keyrune)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, keyrune)).isEqualTo(2);
+        assertThat(keyrune.isCantBeBlocked()).isTrue();
+        assertThat(keyrune.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
     private Permanent addReadyKeyrune(Player player) {
-        Permanent permanent = new Permanent(new DimirKeyrune());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DimirKeyrune());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

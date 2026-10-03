@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LTC", collectorNumber = "5")
 @CardRegistration(set = "LTC", collectorNumber = "85")
+@CardRegistration(set = "LTC", collectorNumber = "448")
 public class AragornKingOfGondor extends Card {
 
     public AragornKingOfGondor() {

@@ -87,7 +87,8 @@ class SearchLibraryEffectHandlerTest {
     @BeforeEach
     void setUp() {
         support = new LibrarySearchSupport(gameLogService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
+                gameQueryService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

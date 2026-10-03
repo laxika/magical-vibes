@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlAndRegisterDelayedRevealEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "15")
+@CardRegistration(set = "KHC", collectorNumber = "44")
 public class SyntheticDestiny extends Card {
 
     public SyntheticDestiny() {

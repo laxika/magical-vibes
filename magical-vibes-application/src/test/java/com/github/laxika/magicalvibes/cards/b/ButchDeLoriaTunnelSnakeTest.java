@@ -69,4 +69,83 @@ class ButchDeLoriaTunnelSnakeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, butch.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void attackWithoutOtherRoguesOrSnakesDoesNotBoostItself() {
+        Permanent butch = addCreatureReady(player1, new ButchDeLoriaTunnelSnake());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SkeletalSnake());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(butch.getPowerModifier()).isZero();
+        assertThat(butch.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void creatureThatIsBothRogueAndSnakeCountsOnlyOnce() {
+        Permanent butch = addCreatureReady(player1, new ButchDeLoriaTunnelSnake());
+        Permanent snake = addCreatureReady(player1, new SkeletalSnake());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, snake.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, snake, CardSubtype.SNAKE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, snake, CardSubtype.ROGUE)).isTrue();
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(butch.getPowerModifier()).isEqualTo(1);
+        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void attackCountsRoguesWhenTriggerResolvesAndBoostStaysFixedAfterward() {
+        Permanent butch = addCreatureReady(player1, new ButchDeLoriaTunnelSnake());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondBear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, null, bear.getId());
+        resolveAllTriggers();
+
+        assertThat(butch.getPowerModifier()).isEqualTo(1);
+        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, null, secondBear.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, secondBear, CardSubtype.ROGUE)).isTrue();
+        assertThat(butch.getPowerModifier()).isEqualTo(1);
+        assertThat(butch.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void canGrantMenaceAndRogueToOpponentsCreaturePermanently() {
+        addCreatureReady(player1, new ButchDeLoriaTunnelSnake());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(target.getCounterCount(CounterType.MENACE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.ROGUE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.BEAR)).isTrue();
+    }
 }

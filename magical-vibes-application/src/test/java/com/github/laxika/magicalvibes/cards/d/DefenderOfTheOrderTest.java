@@ -38,7 +38,6 @@ class DefenderOfTheOrderTest extends BaseCardTest {
         assertThat(laterEnvoy.getEffectiveToughness()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownEnvoy.getEffectivePower()).isEqualTo(0);
@@ -81,13 +80,34 @@ class DefenderOfTheOrderTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Defender of the Order").getEffectiveToughness()).isEqualTo(4);
     }
 
+    @Test
+    void boostWaitsForTriggerResolutionAndIncludesCreaturesPresentThen() {
+        Permanent ownEnvoy = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        Permanent defender = castFaceDown();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(defender));
+
+        assertThat(defender.isFaceDown()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(2);
+        assertThat(defender.getEffectiveToughness()).isEqualTo(4);
+
+        Permanent arrivingEnvoy = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ownEnvoy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(arrivingEnvoy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(defender.getEffectiveToughness()).isEqualTo(6);
+    }
+
     private Permanent castFaceDown() {
         DefenderOfTheOrder card = new DefenderOfTheOrder();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))

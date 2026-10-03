@@ -30,8 +30,7 @@ class DAvenantArcherTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(attacker.getId()));
+        harness.assertNotOnBattlefield(player2, "Tundra Wolves");
         harness.assertInGraveyard(player2, "Tundra Wolves");
     }
 
@@ -119,6 +118,51 @@ class DAvenantArcherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped");
+    }
+
+    @Test
+    @DisplayName("Ability fizzles if its target stops blocking before resolution")
+    void abilityFizzlesIfTargetStopsBlockingBeforeResolution() {
+        addArcherReady(player1);
+        Permanent blocker = addCombatCreature(player2, false, true);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Tundra Wolves");
+        harness.assertNotInGraveyard(player2, "Tundra Wolves");
+    }
+
+    @Test
+    @DisplayName("An attacking Archer can tap to damage itself without leaving combat")
+    void attackingArcherCanTargetItself() {
+        Permanent archer = addArcherReady(player1);
+        archer.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, archer.getId());
+        harness.passBothPriorities();
+
+        assertThat(archer.isTapped()).isTrue();
+        assertThat(archer.isAttacking()).isTrue();
+        assertThat(archer.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "D'Avenant Archer");
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the Archer leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent archer = addArcherReady(player1);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(archer);
+        gd.playerGraveyards.get(player1.getId()).add(archer.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Tundra Wolves");
+        harness.assertNotOnBattlefield(player2, "Tundra Wolves");
     }
 
     private Permanent addArcherReady(Player player) {

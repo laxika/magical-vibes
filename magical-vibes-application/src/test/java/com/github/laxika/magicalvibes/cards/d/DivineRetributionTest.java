@@ -43,8 +43,7 @@ class DivineRetributionTest extends BaseCardTest {
         addAttacker(new FemerefScouts());
 
         prepareCast();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         harness.assertInGraveyard(player2, "Divine Retribution");
@@ -56,8 +55,7 @@ class DivineRetributionTest extends BaseCardTest {
         Permanent target = addAttacker(new FemerefScouts());
 
         prepareCast();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Femeref Scouts");
@@ -70,8 +68,7 @@ class DivineRetributionTest extends BaseCardTest {
         addAttacker(new FemerefScouts());
 
         prepareCast();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         harness.assertInGraveyard(player1, "Ekundu Griffin");
     }
@@ -103,6 +100,51 @@ class DivineRetributionTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Divine Retribution");
+    }
+
+    @Test
+    @DisplayName("Does not count creatures that are not attacking")
+    void ignoresNonAttackingCreatures() {
+        Permanent target = addAttacker(new FemerefScouts());
+        addCreatureReady(player1, new FemerefScouts());
+        addCreatureReady(player2, new FemerefScouts());
+
+        prepareCast();
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not resolve when the target stops attacking")
+    void targetStopsAttackingBeforeResolution() {
+        Permanent target = addAttacker(new FemerefScouts());
+        addAttacker(new FemerefScouts());
+
+        prepareCast();
+        harness.castInstant(player2, 0, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Divine Retribution");
+    }
+
+    @Test
+    @DisplayName("The attacking player may target their own attacking creature")
+    void canTargetOwnAttacker() {
+        Permanent target = addAttacker(new FemerefScouts());
+        addAttacker(new FemerefScouts());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DivineRetribution()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Divine Retribution");
     }
 
     @Test

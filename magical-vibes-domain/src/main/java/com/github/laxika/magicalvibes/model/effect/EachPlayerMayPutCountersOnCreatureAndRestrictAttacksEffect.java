@@ -10,11 +10,21 @@ import java.util.UUID;
  * who does gets an attack restriction against the effect controller until that controller's next turn.
  */
 public record EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(
-        CounterType counterType, int count, List<UUID> remainingPlayerIds, UUID sourceControllerId)
+        CounterType counterType, int count, List<UUID> remainingPlayerIds, UUID sourceControllerId, CardEffect acceptedFollowUp)
         implements CardEffect {
 
     public EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(CounterType counterType, int count) {
-        this(counterType, count, List.of(), null);
+        this(counterType, count, List.of(), null, null);
+    }
+
+    public EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(CounterType counterType, int count,
+            List<UUID> remainingPlayerIds, UUID sourceControllerId) {
+        this(counterType, count, remainingPlayerIds, sourceControllerId, null);
+    }
+
+    public EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(CounterType counterType, int count,
+            CardEffect acceptedFollowUp) {
+        this(counterType, count, List.of(), null, acceptedFollowUp);
     }
 
     public EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenDraw
 @CardRegistration(set = "CMD", collectorNumber = "51")
 @CardRegistration(set = "CMM", collectorNumber = "105")
 @CardRegistration(set = "CMM", collectorNumber = "491")
+@CardRegistration(set = "C16", collectorNumber = "93")
 public class MindsAglow extends Card {
 
     public MindsAglow() {

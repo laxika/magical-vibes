@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlistenerElf;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,17 +21,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
-@CardUsed({ConversionChamber.class, RodOfRuin.class, GrizzlyBears.class})
+@CardUsed({ConversionChamber.class, PorcelainLegionnaire.class, GlistenerElf.class})
 class ConversionChamberTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
     @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        ConversionChamber card = new ConversionChamber();
+    @DisplayName("A newly entered noncreature Chamber can use its tap ability")
+    void newlyEnteredChamberCanActivate() {
+        Permanent chamber = harness.enterBattlefieldAndReturn(player1, new ConversionChamber());
+        Card artifact = new PorcelainLegionnaire();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(2);
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(chamber.isTapped()).isTrue();
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Porcelain Legionnaire");
     }
 
     
@@ -43,7 +50,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Activating first ability exiles artifact from controller's graveyard and adds charge counter")
     void firstAbilityExilesArtifactAndAddsCounter() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -52,11 +59,11 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod removed from graveyard
-        harness.assertNotInGraveyard(player1, "Rod of Ruin");
+        harness.assertNotInGraveyard(player1, "Porcelain Legionnaire");
 
         // Rod is in player's exiled cards
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+                .anyMatch(c -> c.getName().equals("Porcelain Legionnaire"));
 
         // Charge counter added
         assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
@@ -66,7 +73,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability can exile artifact from opponent's graveyard")
     void firstAbilityExilesFromOpponentGraveyard() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>());
         harness.setGraveyard(player2, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -76,11 +83,11 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rod removed from opponent's graveyard
-        harness.assertNotInGraveyard(player2, "Rod of Ruin");
+        harness.assertNotInGraveyard(player2, "Porcelain Legionnaire");
 
         // Rod is in opponent's exiled cards (cards owned by graveyard owner)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Rod of Ruin"));
+                .anyMatch(c -> c.getName().equals("Porcelain Legionnaire"));
 
         // Charge counter still added to chamber
         assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
@@ -90,7 +97,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability does NOT imprint on source permanent")
     void firstAbilityDoesNotImprint() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -106,7 +113,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability rejects non-artifact card as target")
     void firstAbilityRejectsNonArtifact() {
         Permanent chamber = addChamberReady(player1);
-        Card bears = new GrizzlyBears();
+        Card bears = new GlistenerElf();
         harness.setGraveyard(player1, new ArrayList<>(List.of(bears)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -120,7 +127,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability rejects target not in any graveyard")
     void firstAbilityRejectsTargetNotInGraveyard() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -135,7 +142,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability fizzles if target removed from graveyard before resolution")
     void firstAbilityFizzlesIfTargetRemoved() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -155,7 +162,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("First ability taps the artifact")
     void firstAbilityTaps() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -169,7 +176,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Cannot activate first ability without enough mana")
     void cannotActivateFirstAbilityWithoutMana() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -183,8 +190,8 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Multiple activations accumulate charge counters")
     void multipleActivationsAccumulateCounters() {
         Permanent chamber = addChamberReady(player1);
-        Card rod1 = new RodOfRuin();
-        Card rod2 = new RodOfRuin();
+        Card rod1 = new PorcelainLegionnaire();
+        Card rod2 = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod1, rod2)));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -288,7 +295,7 @@ class ConversionChamberTest extends BaseCardTest {
         chamber.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
 
         int chamberIndex = gd.playerBattlefields.get(player1.getId()).indexOf(chamber);
@@ -304,7 +311,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Full flow: exile artifact, then create token")
     void fullFlowExileThenCreateToken() {
         Permanent chamber = addChamberReady(player1);
-        Card rod = new RodOfRuin();
+        Card rod = new PorcelainLegionnaire();
         harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -331,13 +338,89 @@ class ConversionChamberTest extends BaseCardTest {
                         && p.getCard().hasType(CardType.ARTIFACT));
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("The charge counter is paid before the token ability resolves")
+    void counterIsPaidAtActivation() {
+        Permanent chamber = addChamberReady(player1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Golem");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getCard().getName()).isEqualTo("Golem");
+                    assertThat(token.getCard().getPower()).isEqualTo(3);
+                    assertThat(token.getCard().getToughness()).isEqualTo(3);
+                    assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+                    assertThat(token.getCard().getColors()).isEmpty();
+                    assertThat(token.getCard().getSubtypes())
+                            .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
+                });
+        harness.assertNotOnBattlefield(player2, "Golem");
+    }
+
+    @Test
+    @DisplayName("The exile ability requires a target even when there are no artifacts in graveyards")
+    void firstAbilityRequiresTarget() {
+        Permanent chamber = addChamberReady(player1);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(chamber.isTapped()).isFalse();
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Exiling the target still happens when the Chamber leaves before resolution")
+    void exileResolvesWithoutSource() {
+        Permanent chamber = addChamberReady(player1);
+        Card artifact = new PorcelainLegionnaire();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, chamber));
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Porcelain Legionnaire");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact);
+        harness.assertInGraveyard(player1, "Conversion Chamber");
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The token ability resolves after the Chamber leaves the battlefield")
+    void tokenResolvesWithoutSource() {
+        Permanent chamber = addChamberReady(player1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, chamber));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Conversion Chamber");
+        harness.assertOnBattlefield(player1, "Golem");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
 
     private Permanent addChamberReady(Player player) {
-        ConversionChamber card = new ConversionChamber();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ConversionChamber());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

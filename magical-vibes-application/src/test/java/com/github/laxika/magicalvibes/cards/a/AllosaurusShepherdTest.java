@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AllosaurusShepherd.class, Counterspell.class, GrizzlyBears.class,
-        LlanowarElves.class, Shock.class})
+        LlanowarElves.class, Shock.class, DressDown.class})
 class AllosaurusShepherdTest extends BaseCardTest {
 
     @Test
@@ -33,8 +34,7 @@ class AllosaurusShepherdTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, shepherd.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Allosaurus Shepherd");
         harness.assertInGraveyard(player2, "Counterspell");
@@ -53,8 +53,7 @@ class AllosaurusShepherdTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         harness.assertInGraveyard(player2, "Counterspell");
@@ -68,8 +67,7 @@ class AllosaurusShepherdTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Shock");
         harness.assertOnBattlefield(player1, "Allosaurus Shepherd");
@@ -106,5 +104,87 @@ class AllosaurusShepherdTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, shepherd)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
         assertThat(gqs.effectiveCreatureSubtypes(gd, elves)).doesNotContain(CardSubtype.DINOSAUR);
+    }
+
+    @Test
+    @DisplayName("Losing its abilities removes the Shepherd's green-spell protection")
+    void losingAbilitiesRemovesCounterProtection() {
+        harness.addToBattlefield(player1, new AllosaurusShepherd());
+        harness.addToBattlefield(player2, new DressDown());
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The Shepherd does not protect an opponent's green spells")
+    void doesNotProtectOpponentsGreenSpells() {
+        harness.addToBattlefield(player2, new AllosaurusShepherd());
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elves.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Elves entering after resolution are not transformed")
+    void doesNotTransformLaterElves() {
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new AllosaurusShepherd());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent elves = findPermanent(player1, "Llanowar Elves");
+        assertThat(gqs.getEffectivePower(gd, shepherd)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, elves))
+                .contains(CardSubtype.ELF, CardSubtype.DRUID)
+                .doesNotContain(CardSubtype.DINOSAUR);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Shepherd dies and preserves the Elves' types")
+    void abilityResolvesAfterSourceDies() {
+        Permanent shepherd = harness.addToBattlefieldAndReturn(player1, new AllosaurusShepherd());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, shepherd.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Allosaurus Shepherd");
+        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(5);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, elves))
+                .contains(CardSubtype.ELF, CardSubtype.DRUID, CardSubtype.DINOSAUR);
     }
 }

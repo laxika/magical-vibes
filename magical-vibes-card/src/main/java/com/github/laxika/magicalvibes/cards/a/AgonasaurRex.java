@@ -27,21 +27,14 @@ public class AgonasaurRex extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
-        addHandActivatedAbility(new ActivatedAbility(
-                false,
-                "{2}{G}",
-                List.of(
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGET,
-                                creatureOrVehicle),
-                        new DrawCardEffect(1)),
-                "Cycling {2}{G} ({2}{G}, Discard this card: Draw a card.)",
-                new PermanentPredicateTargetFilter(creatureOrVehicle, "Target must be a creature or Vehicle"),
-                null,
-                null,
-                null,
-                List.of(),
-                0,
-                1));
+        addCycling("{2}{G}");
+        addEffect(com.github.laxika.magicalvibes.model.EffectSlot.ON_SELF_CYCLED,
+                new com.github.laxika.magicalvibes.model.effect.MayEffect(
+                        com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
+                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                        CounterType.PLUS_ONE_PLUS_ONE, 2, creatureOrVehicle),
+                                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
+                                        GrantScope.TARGET, creatureOrVehicle)),
+                        "Put two +1/+1 counters on target creature or Vehicle and grant trample and indestructible?"));
     }
 }

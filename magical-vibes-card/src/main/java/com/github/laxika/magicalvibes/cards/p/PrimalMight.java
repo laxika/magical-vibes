@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "197")
+@CardRegistration(set = "M21", collectorNumber = "377")
 @CardRegistration(set = "OTP", collectorNumber = "32")
 @CardRegistration(set = "SOC", collectorNumber = "283")
 public class PrimalMight extends Card {

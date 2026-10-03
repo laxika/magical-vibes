@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({Diminish.class, GrizzlyBears.class, FountainOfYouth.class, TreetopVillage.class})
 class DiminishTest extends BaseCardTest {
 
     
@@ -53,8 +55,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Grizzly Bears is normally 2/2 — after Diminish it should be 1/1
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
@@ -78,8 +79,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Base becomes 1/1, modifiers still apply: 1 + 2 = 3
         assertThat(bear.getEffectivePower()).isEqualTo(3);
@@ -99,8 +99,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         // Base becomes 1/1, counters still apply: 1 + 2 = 3
         assertThat(bear.getEffectivePower()).isEqualTo(3);
@@ -115,8 +114,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getEffectivePower()).isEqualTo(1);
@@ -140,8 +138,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bear.getEffectivePower()).isEqualTo(1);
@@ -198,8 +195,7 @@ class DiminishTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Diminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, village.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, village.getId());
 
         // Per layer 7b: Diminish has later timestamp, overrides animation's 3/3 → 1/1
         assertThat(village.getEffectivePower()).isEqualTo(1);
@@ -223,8 +219,7 @@ class DiminishTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Diminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, perm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, perm.getId());
 
         // Diminish overrides the permanently animated 5/5 → 1/1
         assertThat(perm.getEffectivePower()).isEqualTo(1);
@@ -243,8 +238,7 @@ class DiminishTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Diminish()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, village.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, village.getId());
 
         assertThat(village.getEffectivePower()).isEqualTo(1);
 
@@ -267,8 +261,7 @@ class DiminishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -276,10 +269,33 @@ class DiminishTest extends BaseCardTest {
     }
 
     private Permanent addVillageReady(Player player) {
-        TreetopVillage card = new TreetopVillage();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TreetopVillage());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("A later animation overrides Diminish without losing trample or land type")
+    void laterAnimationOverridesDiminish() {
+        Permanent village = addVillageReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Diminish()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, village.getId());
+
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, village, com.github.laxika.magicalvibes.model.Keyword.TRAMPLE)).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, village)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, village)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, village)).isTrue();
+        assertThat(gqs.isLand(gd, village)).isTrue();
     }
 }

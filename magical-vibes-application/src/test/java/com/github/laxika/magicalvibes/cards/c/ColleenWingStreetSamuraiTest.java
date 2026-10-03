@@ -29,8 +29,7 @@ class ColleenWingStreetSamuraiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         assertThat(colleen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
@@ -47,8 +46,7 @@ class ColleenWingStreetSamuraiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(colleen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
@@ -61,10 +59,62 @@ class ColleenWingStreetSamuraiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(colleen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    void targetingColleenTriggersAndCanKeepTheTopCard() {
+        Permanent colleen = harness.addToBattlefieldAndReturn(player1, new ColleenWingStreetSamurai());
+        GiantGrowth top = new GiantGrowth();
+        GrizzlyBears bottom = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top, bottom));
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, colleen.getId());
+
+        assertThat(colleen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, bottom);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void opponentCastingSpellTargetingYourCreatureDoesNotTrigger() {
+        Permanent colleen = harness.addToBattlefieldAndReturn(player1, new ColleenWingStreetSamurai());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, colleen.getId());
+
+        assertThat(colleen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    void scryStillResolvesAfterColleenDiesInResponse() {
+        Permanent colleen = harness.addToBattlefieldAndReturn(player1, new ColleenWingStreetSamurai());
+        GiantGrowth top = new GiantGrowth();
+        GrizzlyBears bottom = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top, bottom));
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, colleen.getId());
+        harness.castAndResolveInstant(player2, 0, colleen.getId());
+        harness.assertInGraveyard(player1, "Colleen Wing, Street Samurai");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom, top);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.DauthiEmbrace;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.t.ThalakosSentry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfProtectionShadow.class, CanopySpider.class, DauthiEmbrace.class, Fireslinger.class,
+@CardUsed({CircleOfProtectionShadow.class, CanopySpider.class, DauthiEmbrace.class, DarkBanishing.class, Fireslinger.class,
         ThalakosSentry.class})
 class CircleOfProtectionShadowTest extends BaseCardTest {
 
@@ -101,6 +104,84 @@ class CircleOfProtectionShadowTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage from another shadow creature")
+    void onlyChosenCreatureIsPrevented() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent chosen = addReadyShadowCreature(player2);
+        Permanent other = addReadyShadowCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        chosen.setAttacking(true);
+        other.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("One activation prevents only the next damage event")
+    void laterDamageFromSameSourceIsNotPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent fireslinger = addCreatureReady(player2, new Fireslinger());
+        harness.addToBattlefield(player2, new DauthiEmbrace());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, 1, null, fireslinger.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, fireslinger.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        fireslinger.setTapped(false);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Uses last known shadow when the chosen creature leaves before dealing damage")
+    void preventsPendingDamageAfterChosenCreatureIsDestroyed() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent fireslinger = addCreatureReady(player2, new Fireslinger());
+        harness.addToBattlefield(player2, new DauthiEmbrace());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, 1, null, fireslinger.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, fireslinger.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castInstant(player1, 0, fireslinger.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Fireslinger");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
     }
 
     private Permanent addReadyCircle(Player player) {

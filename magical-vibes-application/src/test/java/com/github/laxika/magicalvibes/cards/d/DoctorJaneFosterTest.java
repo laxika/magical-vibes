@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoctorJaneFoster.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DoctorJaneFoster.class, GrizzlyBears.class, HillGiant.class, Plains.class, TrainedArmodon.class})
 class DoctorJaneFosterTest extends BaseCardTest {
 
     @Test
@@ -60,13 +61,92 @@ class DoctorJaneFosterTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(eligible.getId());
     }
 
+    @Test
+    @DisplayName("Targets a mana value three creature but not a land or an opponent's creature")
+    void includesManaValueThreeAndExcludesOtherGraveyardCards() {
+        Card eligible = new TrainedArmodon();
+        Card land = new Plains();
+        Card opponentCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(eligible, land));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        castDoctorJaneFoster();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        chooseTarget(eligible);
+
+        harness.assertInHand(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Life gained after choosing the target changes the return destination")
+    void checksLifeGainAtResolution() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        castDoctorJaneFoster();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not change the return destination")
+    void opponentLifeGainDoesNotReanimate() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
+
+        castDoctorJaneFoster();
+        chooseTarget(target);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not return another card when the chosen target leaves the graveyard")
+    void missingTargetDoesNotReturnAnotherCreature() {
+        Card target = new GrizzlyBears();
+        Card other = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(target, other));
+        castDoctorJaneFoster();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotInHand(player1, "Trained Armodon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters normally when there are no legal graveyard targets")
+    void entersWithoutLegalTargets() {
+        harness.setGraveyard(player1, List.of(new HillGiant()));
+
+        castDoctorJaneFoster();
+
+        harness.assertOnBattlefield(player1, "Doctor Jane Foster");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castDoctorJaneFoster() {
         harness.forceActivePlayer(player1);
-        harness.setHand(player1, List.of(new DoctorJaneFoster()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DoctorJaneFoster(), "{3}{W}");
         harness.passBothPriorities();
     }
 

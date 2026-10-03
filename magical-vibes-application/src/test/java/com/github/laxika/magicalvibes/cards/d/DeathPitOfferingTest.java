@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Fecundity;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,10 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathPitOffering.class, GrizzlyBears.class})
+@CardUsed({DeathPitOffering.class, GrizzlyBears.class, Opalescence.class, Fecundity.class})
 class DeathPitOfferingTest extends BaseCardTest {
 
-    // ===== ETB: sacrifice all creatures you control =====
 
     @Test
     @DisplayName("ETB sacrifices all creatures you control")
@@ -58,7 +58,6 @@ class DeathPitOfferingTest extends BaseCardTest {
                 .hasSize(1);
     }
 
-    // ===== Static effect: +2/+2 to creatures you control =====
 
     @Test
     @DisplayName("Creatures you control get +2/+2")
@@ -109,7 +108,24 @@ class DeathPitOfferingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, offering)).isEqualTo(6);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Animated Fecundity sees every creature sacrificed simultaneously")
+    void animatedFecunditySeesAllSacrificedCreatures() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new Fecundity());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castAndResolveOffering();
+
+        harness.assertNotOnBattlefield(player1, "Fecundity");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Death Pit Offering");
+        harness.assertOnBattlefield(player1, "Opalescence");
+        assertThat(gd.stack)
+                .filteredOn(entry -> entry.getCard() instanceof Fecundity)
+                .hasSize(3);
+    }
 
     private void castAndResolveOffering() {
         harness.castFromHand(player1, new DeathPitOffering(), "{2}{B}{B}");

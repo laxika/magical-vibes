@@ -79,6 +79,47 @@ class CurseOfShallowGravesTest extends BaseCardTest {
         assertThat(findTokens(player2)).isEmpty();
     }
 
+    @Test
+    @DisplayName("The Curse's controller can receive the Zombie when attacking enchanted opponent")
+    void curseControllerMayCreateZombie() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfShallowGraves());
+        curse.setAttachedTo(player2.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(findTokens(player1)).hasSize(1);
+        assertThat(findTokens(player1).getFirst().isTapped()).isTrue();
+        assertThat(findTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An attack split between enchanted player and their planeswalker creates one Zombie")
+    void mixedAttackCreatesOneZombie() {
+        placeCurseOnPlayer1();
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(0, 1),
+                Map.of(0, player1.getId(), 1, planeswalker.getId()));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(findTokens(player2)).hasSize(1);
+        assertThat(findTokens(player1)).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void placeCurseOnPlayer1() {
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfShallowGraves());
         curse.setAttachedTo(player1.getId());

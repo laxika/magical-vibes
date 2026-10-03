@@ -139,6 +139,76 @@ class ArcboundReclaimerTest extends BaseCardTest {
         assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void canRecoverANoncreatureArtifactAndPaysTheCounterBeforeResolution() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Card artifact = new Skullclamp();
+        Card previousTop = new CrazedGoblin();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setLibrary(player1, List.of(previousTop));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+
+        assertThat(reclaimer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(previousTop);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact, previousTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    void cannotRecoverTwoArtifactsWithOneActivation() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Card first = new Skullclamp();
+        Card second = new DarksteelGargoyle();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(reclaimer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void modularTransfersAllCountersPresentAtDeath() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+        gargoyle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyReclaimer(reclaimer);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void modularConfirmationDescribesPlusOnePlusOneCounters() {
+        Permanent reclaimer = addCreatureReady(player1, new ArcboundReclaimer());
+        reclaimer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyReclaimer(reclaimer);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice.description()).contains("+1/+1").doesNotContain("-1/-1");
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void destroyReclaimer(Permanent reclaimer) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

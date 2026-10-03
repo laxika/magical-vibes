@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DragonBellMonk.class, GrizzlyBears.class, Shock.class})
 class DragonBellMonkTest extends BaseCardTest {
 
     private Permanent addMonk() {
-        harness.addToBattlefield(player1, new DragonBellMonk());
+        Permanent monk = harness.addToBattlefieldAndReturn(player1, new DragonBellMonk());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return monk;
     }
 
     @Test
@@ -39,8 +41,7 @@ class DragonBellMonkTest extends BaseCardTest {
                 .count();
         assertThat(triggeredOnStack).isEqualTo(1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(3);
@@ -71,8 +72,7 @@ class DragonBellMonkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
 
@@ -82,5 +82,55 @@ class DragonBellMonkTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Vigilance: attacking does not tap Dragon Bell Monk")
+    void attackingDoesNotTap() {
+        Permanent monk = addCreatureReady(player1, new DragonBellMonk());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(monk.isAttacking()).isTrue();
+        assertThat(monk.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prowess: an opponent's noncreature spell does not pump the monk")
+    void opponentSpellDoesNotPump() {
+        Permanent monk = addMonk();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prowess: each noncreature spell adds a boost before that spell resolves")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent monk = addMonk();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        resolveAllTriggers();
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 }

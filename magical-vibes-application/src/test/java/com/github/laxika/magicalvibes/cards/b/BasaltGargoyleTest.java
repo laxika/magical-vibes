@@ -81,6 +81,51 @@ class BasaltGargoyleTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Basalt Gargoyle");
     }
 
+    @Test
+    @DisplayName("Echo waits through the opponent's upkeep")
+    void echoWaitsForControllersUpkeep() {
+        castAndResolveGargoyle();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Basalt Gargoyle");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Basalt Gargoyle");
+        harness.assertInGraveyard(player1, "Basalt Gargoyle");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Gargoyle can activate its toughness ability")
+    void toughnessAbilityDoesNotRequireTappingOrHaste() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new BasaltGargoyle());
+        gargoyle.tap();
+        gargoyle.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gargoyle.getToughnessModifiers()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getPowerModifiers()).isZero();
+        assertThat(gargoyle.getToughnessModifiers()).isEqualTo(1);
+        assertThat(gargoyle.isTapped()).isTrue();
+    }
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotPutEchoRegistrationOnStack() {
+        harness.castFromHand(player1, new BasaltGargoyle(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Basalt Gargoyle");
+        assertThat(gd.stack).isEmpty();
+    }
     private void castAndResolveGargoyle() {
         harness.castFromHand(player1, new BasaltGargoyle(), "{2}{R}");
         harness.passBothPriorities();

@@ -455,6 +455,22 @@ public class StackResolutionService {
                     entry.getXValue(), entry.isKicked(), entry.getRepeatedAdditionalCosts(),
                     entry.getConvokeCreatureIds().size(), entry);
         }
+        if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
+            return;
+        }
+        if (entry.isSuspendHasteOnEntry()) {
+            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
+                    new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
+                            Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                            com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                    permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+        }
+        if (entry.isAlternateCost() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
+                    entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),
+                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));
+        }
     }
 
     private boolean beginDirectTriggeredModal(GameData gameData, StackEntry entry) {
@@ -924,10 +940,10 @@ public class StackResolutionService {
         // Aura fizzles if its target is no longer on the battlefield
         } else if (characteristics.isAuraThatRequiresAttachment() && entry.getTargetId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-            if (target == null) {
+            if (target == null || targetLegalityService.isTargetIllegalOnResolution(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.builder()
                         .card(characteristics)
-                        .text(" fizzles (enchanted creature no longer exists).")
+                        .text(" fizzles (Aura target is no longer legal).")
                         .build());
                 disposeFizzledPermanentSpell(gameData, entry, card);
 
@@ -1268,6 +1284,9 @@ public class StackResolutionService {
         perm.setCounterCount(CounterType.LOYALTY, startingLoyalty);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        if (gameQueryService.findPermanentById(gameData, perm.getId()) != null) {
+            permanentCounterSupport.notifyCountersPlaced(gameData, entry, perm, startingLoyalty, CounterType.LOYALTY);
+        }
         permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
                 gameData, controllerId, startingLoyalty);
 
@@ -1323,6 +1342,7 @@ public class StackResolutionService {
                 && targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
+            triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" fizzles (illegal target).")
@@ -1335,7 +1355,7 @@ public class StackResolutionService {
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
             if (isNonCopySpell(entry)) {
-                Card dispositionCard = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
+                Card dispositionCard = entry.getPhysicalCard();
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
                     triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
@@ -1368,7 +1388,7 @@ public class StackResolutionService {
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    Card cardToExile = entry.isCastWithAdventure() ? entry.getPhysicalCard() : entry.getCard();
+                    Card cardToExile = entry.getPhysicalCard();
                     removeCardFromRestartedSourceZone(gameData, entry, cardToExile);
                     exileService.exileCard(gameData, entry.getOwnerId(), cardToExile);
                 }
@@ -1379,8 +1399,7 @@ public class StackResolutionService {
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
                 if (isNonCopySpell(entry)) {
-                    exileService.exileCard(gameData, entry.getOwnerId(), entry.isCastWithAdventure()
-                            ? entry.getPhysicalCard() : entry.getCard());
+                    exileService.exileCard(gameData, entry.getOwnerId(), entry.getPhysicalCard());
                 }
                 return;
             }
@@ -1513,6 +1532,9 @@ public class StackResolutionService {
         gameData.spellColorOverrides.remove(physicalCard.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
+        if (entry.isSpellMovedDuringResolution()) {
+            return;
+        }
         ExileSpellEffect exileSpellEffect = entry.getEffectsToResolve().stream()
                 .filter(ExileSpellEffect.class::isInstance)
                 .map(ExileSpellEffect.class::cast)

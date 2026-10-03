@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MindSpring;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Demilich.class, CounselOfTheSoratami.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Demilich.class, CounselOfTheSoratami.class, GrizzlyBears.class, Shock.class, MindSpring.class})
 class DemilichTest extends BaseCardTest {
 
     @Test
@@ -112,5 +113,124 @@ class DemilichTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrderElementsOf(exiledForCost);
+    }
+
+    @Test
+    void mayDeclineToTargetAnEligibleCard() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void decliningCopyLeavesOriginalExiled() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(counsel);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayGraveyardCostWithCreatureCards() {
+        Demilich demilich = new Demilich();
+        harness.setGraveyard(player1, List.of(demilich,
+                new Shock(), new Shock(), new Shock(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    void fourInstantsAllowCastingFromGraveyardWithoutMana() {
+        for (int i = 0; i < 4; i++) {
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+        }
+        Demilich demilich = new Demilich();
+        gd.playerGraveyards.get(player1.getId()).addFirst(demilich);
+
+        harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Demilich");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    void canChoosePositiveXWhenCastingPaidCopy() {
+        MindSpring mindSpring = new MindSpring();
+        harness.setGraveyard(player1, List.of(mindSpring));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(mindSpring.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(mindSpring);
+    }
+
+    @Test
+    void opponentGraveyardCardsAreNotEligibleAttackTargets() {
+        Shock ownCard = new Shock();
+        Shock opponentCard = new Shock();
+        harness.setGraveyard(player1, List.of(ownCard, new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+    }
+
+    @Test
+    void cannotCastCopyWithoutPayingItsManaCost() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(counsel);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,5 +95,65 @@ class BuoyancyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Buoyancy can be cast during the opponent's end step")
+    void flashAllowsCastingOnOpponentsTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setHand(player1, List.of(new Buoyancy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Buoyancy");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Buoyancy").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Buoyancy grants flying only to its enchanted creature")
+    void onlyEnchantedCreatureGainsFlying() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent otherFriendly = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new Buoyancy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherFriendly, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Buoyancy goes to its owner's graveyard when its enchanted creature dies")
+    void auraGoesToGraveyardWhenEnchantedCreatureDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new Buoyancy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Buoyancy");
+        harness.assertNotOnBattlefield(player1, "Buoyancy");
+        harness.assertNotInGraveyard(player2, "Buoyancy");
     }
 }

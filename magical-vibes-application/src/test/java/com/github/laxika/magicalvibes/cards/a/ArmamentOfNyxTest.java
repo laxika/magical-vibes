@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HopefulEidolon;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,20 +19,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArmamentOfNyx.class, FountainOfYouth.class, GrizzlyBears.class,
+        HopefulEidolon.class, LightningBolt.class, ProdigalPyromancer.class})
 class ArmamentOfNyxTest extends BaseCardTest {
 
     private Permanent attachArmament(Permanent creature) {
-        Permanent armament = new Permanent(new ArmamentOfNyx());
+        Permanent armament = harness.addToBattlefieldAndReturn(player1, new ArmamentOfNyx());
         armament.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(armament);
         return armament;
     }
 
     @Test
     @DisplayName("Enchantment creature enchanted with Armament of Nyx has double strike")
     void enchantmentCreatureGetsDoubleStrike() {
-        Permanent eidolon = new Permanent(new HopefulEidolon());
-        gd.playerBattlefields.get(player1.getId()).add(eidolon);
+        Permanent eidolon = harness.addToBattlefieldAndReturn(player1, new HopefulEidolon());
 
         attachArmament(eidolon);
 
@@ -41,10 +43,8 @@ class ArmamentOfNyxTest extends BaseCardTest {
     @DisplayName("Enchantment creature enchanted with Armament of Nyx deals double strike damage")
     void enchantmentCreatureDealsDoubleStrikeDamage() {
         harness.setLife(player2, 20);
-        Permanent eidolon = new Permanent(new HopefulEidolon());
-        eidolon.setSummoningSick(false);
+        Permanent eidolon = addCreatureReady(player1, new HopefulEidolon());
         eidolon.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(eidolon);
         attachArmament(eidolon);
         int power = gqs.getEffectivePower(gd, eidolon);
 
@@ -62,10 +62,8 @@ class ArmamentOfNyxTest extends BaseCardTest {
     @DisplayName("Non-enchantment creature enchanted with Armament of Nyx deals no damage")
     void nonEnchantmentCreatureDealsNoDamage() {
         harness.setLife(player2, 20);
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
         attachArmament(bears);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -83,14 +81,13 @@ class ArmamentOfNyxTest extends BaseCardTest {
     @Test
     @DisplayName("Damage to a non-enchantment creature enchanted with Armament of Nyx is not prevented")
     void damageToNonEnchantmentCreatureStillApplies() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attachArmament(bears);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -108,5 +105,59 @@ class ArmamentOfNyxTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Armament of Nyx resolves attached to an opponent's creature")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ArmamentOfNyx()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent armament = findPermanent(player1, "Armament of Nyx");
+        assertThat(armament.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, bears, false)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage dealt by the enchanted creature to a player is prevented")
+    void preventsActivatedAbilityDamageToPlayer() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachArmament(pyromancer);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage dealt by the enchanted creature to a creature is prevented")
+    void preventsActivatedAbilityDamageToCreature() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        attachArmament(pyromancer);
+        Permanent eidolon = harness.addToBattlefieldAndReturn(player2, new HopefulEidolon());
+
+        harness.activateAbility(player1, 0, null, eidolon.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hopeful Eidolon");
+    }
+
+    @Test
+    @DisplayName("Double strike ends when Armament of Nyx leaves the battlefield")
+    void doubleStrikeEndsWhenAuraLeaves() {
+        Permanent eidolon = harness.addToBattlefieldAndReturn(player1, new HopefulEidolon());
+        Permanent armament = attachArmament(eidolon);
+        assertThat(gqs.hasKeyword(gd, eidolon, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(armament);
+
+        assertThat(gqs.hasKeyword(gd, eidolon, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

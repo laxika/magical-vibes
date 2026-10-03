@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
@@ -15,17 +16,16 @@ import java.util.List;
 public class AngelicSkirmisher extends Card {
 
     public AngelicSkirmisher() {
-        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("First strike", grantToCreaturesYouControl(Keyword.FIRST_STRIKE)),
                 new ChooseOneEffect.ChooseOneOption("Vigilance", grantToCreaturesYouControl(Keyword.VIGILANCE)),
                 new ChooseOneEffect.ChooseOneOption("Lifelink", grantToCreaturesYouControl(Keyword.LIFELINK))
-        )));
+        ))));
     }
 
     private static List<CardEffect> grantToCreaturesYouControl(Keyword keyword) {
         return List.of(
-                new GrantKeywordEffect(keyword, GrantScope.OWN_CREATURES),
-                new GrantKeywordEffect(keyword, GrantScope.SELF)
+                new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES)
         );
     }
 }

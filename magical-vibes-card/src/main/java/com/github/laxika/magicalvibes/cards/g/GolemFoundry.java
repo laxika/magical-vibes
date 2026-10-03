@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "160")
+@CardRegistration(set = "EOC", collectorNumber = "138")
 public class GolemFoundry extends Card {
 
     public GolemFoundry() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -61,6 +62,14 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        PendingInteraction.LibraryReorder reorder = gd.interaction
+                .activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.cards().indexOf(second), reorder.cards().indexOf(first))));
+
         assertThat(gd.playerDecks.get(player2.getId()).subList(0, 2)).containsExactly(second, first);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
@@ -80,5 +89,83 @@ class DrafnasRestorationTest extends BaseCardTest {
         List<UUID> targets = List.of(ownArtifact.getId(), opponentArtifact.getId());
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, targets))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The caster chooses their own library order during resolution")
+    void choosesOwnLibraryOrderDuringResolution() {
+        Card first = new LeoninScimitar();
+        Card second = new FountainOfYouth();
+        Card existingTop = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(existingTop));
+        harness.setHand(player1, List.of(new DrafnasRestoration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        PendingInteraction.LibraryReorder reorder = gd.interaction
+                .activeInteraction(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.cards().indexOf(first), reorder.cards().indexOf(second))));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, existingTop);
+    }
+
+    @Test
+    @DisplayName("Zero artifact targets still requires a target player")
+    void zeroArtifactTargetsStillTargetsPlayer() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new DrafnasRestoration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Drafna's Restoration");
+    }
+
+    @Test
+    @DisplayName("The caster may choose no artifacts")
+    void canChooseNoArtifacts() {
+        Card artifact = new LeoninScimitar();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new DrafnasRestoration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Drafna's Restoration");
+    }
+
+    @Test
+    @DisplayName("Only artifact targets still in the graveyard are returned")
+    void returnsOnlyRemainingLegalArtifact() {
+        Card removed = new LeoninScimitar();
+        Card remaining = new FountainOfYouth();
+        harness.setGraveyard(player2, List.of(removed, remaining));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new DrafnasRestoration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player2, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(removed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

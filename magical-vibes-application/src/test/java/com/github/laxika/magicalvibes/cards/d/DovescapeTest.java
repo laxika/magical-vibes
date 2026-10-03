@@ -93,4 +93,48 @@ class DovescapeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Vision Skeins");
         harness.assertInGraveyard(player2, "Dovin's Veto");
     }
+    @Test
+    @DisplayName("Each Dovescape creates Birds even after the first trigger counters the spell")
+    void multipleDovescapesCreateBirdsForTheSameCaster() {
+        harness.addToBattlefield(player1, new Dovescape());
+        harness.addToBattlefield(player2, new Dovescape());
+        harness.castFromHand(player1, new VisionSkeins(), "{1}{U}");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(4);
+        assertThat(findPermanents(player2, "Bird")).isEmpty();
+        harness.assertInGraveyard(player1, "Vision Skeins");
+    }
+
+    @Test
+    @DisplayName("Includes the chosen X in mana value when countering an X spell")
+    void counteredXSpellCreatesBirdsIncludingChosenX() {
+        harness.addToBattlefield(player1, new Dovescape());
+        harness.setHand(player1, List.of(new Demonfire(), new MistralCharger()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, 4, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(5);
+        assertThat(findPermanents(player2, "Bird")).isEmpty();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Demonfire");
+    }
+
+    @Test
+    @DisplayName("An X spell cast with X zero creates Birds for its fixed mana cost")
+    void zeroXStillCountsTheFixedManaCost() {
+        harness.addToBattlefield(player1, new Dovescape());
+        harness.setHand(player1, List.of(new Demonfire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(1);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Demonfire");
+    }
 }

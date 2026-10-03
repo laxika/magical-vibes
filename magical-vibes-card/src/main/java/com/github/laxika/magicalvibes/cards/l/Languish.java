@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 @CardRegistration(set = "GNT", collectorNumber = "31")
 @CardRegistration(set = "LTC", collectorNumber = "202")
 @CardRegistration(set = "HOC", collectorNumber = "187")
+@CardRegistration(set = "C16", collectorNumber = "114")
 public class Languish extends Card {
 
     public Languish() {

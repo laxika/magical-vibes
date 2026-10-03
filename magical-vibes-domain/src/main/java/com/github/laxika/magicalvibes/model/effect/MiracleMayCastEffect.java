@@ -5,9 +5,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * you may cast it by paying [cost] rather than its mana cost." Resolution queues a may-cast
  * prompt that pays the snapshotted miracle cost and casts from hand (ignoring type-based timing).
  */
-public record MiracleMayCastEffect(String miracleCost) implements CardEffect {
+public record MiracleMayCastEffect(String miracleCost, int xReduction) implements CardEffect {
+
+    public MiracleMayCastEffect(String miracleCost) {
+        this(miracleCost, 0);
+    }
 
     public MiracleMayCastEffect() {
-        this(null);
+        this(null, 0);
     }
 }

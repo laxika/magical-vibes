@@ -58,10 +58,50 @@ class CyberdriveAwakenerTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, ownArtifact)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, ownArtifact)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Animated artifacts gain flying from the Awakener")
+    void animatedArtifactsHaveFlying() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+
+        castCyberdrive();
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Artifacts entering after the animation resolves are not animated")
+    void laterArtifactsAreNotAnimated() {
+        castCyberdrive();
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        Permanent creature = addCreatureReady(player1, new Memnite());
+
+        assertThat(gqs.isCreature(gd, artifact)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enter trigger selects noncreature artifacts when it resolves")
+    void artifactsEnteringBeforeTriggerResolvesAreAnimated() {
+        harness.setHand(player1, List.of(new CyberdriveAwakener()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
+        assertThat(gqs.isCreature(gd, artifact)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(4);
     }
 
     private void castCyberdrive() {

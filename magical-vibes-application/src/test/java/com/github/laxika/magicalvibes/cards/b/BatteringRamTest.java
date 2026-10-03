@@ -33,6 +33,20 @@ class BatteringRamTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Battering Ram does not gain banding during its opponent's combat")
+    void doesNotGainBandingOnOpponentsTurn() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, ram, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
     @DisplayName("Battering Ram's banding grant expires at end of combat")
     void bandingExpiresAtEndOfCombat() {
         Permanent ram = addCreatureReady(player1, new BatteringRam());
@@ -82,8 +96,43 @@ class BatteringRamTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wall.getCard());
+    }
+
+    @Test
+    @DisplayName("End-of-combat Wall destruction uses the stack and allows a response")
+    void wallSurvivesUntilDelayedDestructionTriggerResolves() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+        ram.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
+        assertThat(gd.stack).anyMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wall.getCard());
+    }
+
+    @Test
+    @DisplayName("Removing Battering Ram before its block trigger resolves does not save the Wall")
+    void wallIsDestroyedEvenIfRamLeavesBeforeTriggerResolves() {
+        Permanent ram = addCreatureReady(player1, new BatteringRam());
+        ram.setAttacking(true);
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, ram);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(wall.getCard());

@@ -33,8 +33,7 @@ class DocSamsonSuperPsychiatristTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimberlandGuide()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
@@ -54,8 +53,7 @@ class DocSamsonSuperPsychiatristTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TimberlandGuide()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0, List.of(opponentBears.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -70,5 +68,48 @@ class DocSamsonSuperPsychiatristTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Does not add a counter when an opponent puts counters on your permanent")
+    void doesNotAddCountersPlacedByOpponent() {
+        Permanent doc = harness.addToBattlefieldAndReturn(player1, new DocSamsonSuperPsychiatrist());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new TimberlandGuide()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0, List.of(doc.getId()));
+        resolveAllTriggers();
+
+        assertThat(doc.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Adds the extra counter when its controller puts counters on Doc Samson itself")
+    void addsCountersToItself() {
+        Permanent doc = harness.addToBattlefieldAndReturn(player1, new DocSamsonSuperPsychiatrist());
+        harness.setHand(player1, List.of(new TimberlandGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, List.of(doc.getId()));
+        resolveAllTriggers();
+
+        assertThat(doc.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Produces no mana when its power is zero")
+    void producesNoManaAtZeroPower() {
+        Permanent doc = addCreatureReady(player1, new DocSamsonSuperPsychiatrist());
+        doc.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(doc.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

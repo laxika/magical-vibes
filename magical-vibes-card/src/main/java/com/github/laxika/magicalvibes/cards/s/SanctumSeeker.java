@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "120")
 @CardRegistration(set = "LCC", collectorNumber = "209")
+@CardRegistration(set = "VOC", collectorNumber = "136")
 public class SanctumSeeker extends Card {
 
     public SanctumSeeker() {

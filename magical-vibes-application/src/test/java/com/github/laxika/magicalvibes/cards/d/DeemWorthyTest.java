@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeemWorthy.class, GrizzlyBears.class, SerraAngel.class})
 class DeemWorthyTest extends BaseCardTest {
-
-    // ===== Main spell: 7 damage to target creature =====
 
     @Test
     @DisplayName("Deals 7 damage to target creature, destroying a 4/4")
@@ -26,8 +26,7 @@ class DeemWorthyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Serra Angel");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Serra Angel");
         harness.assertInGraveyard(player2, "Serra Angel");
@@ -45,8 +44,6 @@ class DeemWorthyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Cycling reflexive trigger: may deal 2 damage to target creature, then draw =====
-
     @Test
     @DisplayName("Cycling deals 2 damage to target creature, destroying a 2/2, and draws a card")
     void cyclingDeals2ToCreatureAndDraws() {
@@ -58,17 +55,20 @@ class DeemWorthyTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.activateHandAbility(player1, 0, targetId);
         harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        // The cycling draw still happens: Deem Worthy discarded, the library card drawn.
+        harness.assertNotInHand(player1, "Serra Angel");
+        harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Deem Worthy");
         harness.assertInHand(player1, "Serra Angel");
     }
 
     @Test
-    @DisplayName("Cycling may be declined: no target deals no damage but still draws")
+    @DisplayName("Cycling with no creatures available still draws")
     void cyclingWithoutTargetStillDraws() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeemWorthy()));
         harness.setLibrary(player1, List.of(new SerraAngel()));
         addCyclingMana(player1);
@@ -76,9 +76,50 @@ class DeemWorthyTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        // Declining the reflexive trigger leaves the creature unharmed.
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
         // The cycling draw still resolves.
+        harness.assertInHand(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Losing the cycling damage target does not stop the separate draw ability")
+    void cyclingStillDrawsWhenDamageTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeemWorthy()));
+        harness.setLibrary(player1, List.of(new SerraAngel()));
+        harness.setHand(player2, List.of(new DeemWorthy()));
+        addCyclingMana(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateHandAbility(player1, 0, targetId);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deem Worthy");
+        harness.assertInHand(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("The cycling damage may be declined when its trigger resolves")
+    void cyclingDamageCanBeDeclinedAtResolution() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeemWorthy()));
+        harness.setLibrary(player1, List.of(new SerraAngel()));
+        addCyclingMana(player1);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.activateHandAbility(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Serra Angel");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Serra Angel");
     }
 

@@ -39,4 +39,52 @@ class BlackPantherClawsOfBastTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Black Panther, Claws of Bast"));
     }
+
+    @Test
+    @DisplayName("Black Panther gets its own counter when attacking alone and gains life for its damage")
+    void lonePantherGetsCounterAndLifelink() {
+        Permanent panther = addCreatureReady(player1, new BlackPantherClawsOfBast());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(panther.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature attacking alone does not receive a counter")
+    void opponentsLoneAttackerDoesNotTrigger() {
+        Permanent panther = addCreatureReady(player1, new BlackPantherClawsOfBast());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(panther.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The lone attacker receives another counter in a later combat")
+    void countersAccumulateAcrossCombats() {
+        addCreatureReady(player1, new BlackPantherClawsOfBast());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+        resolveCombat();
+        bears.untap();
+        bears.setAttacking(false);
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }

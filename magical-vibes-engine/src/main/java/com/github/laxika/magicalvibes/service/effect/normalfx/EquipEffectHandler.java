@@ -71,6 +71,9 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
+        if (target.getId().equals(oldAttachedTo)) {
+            return;
+        }
 
         equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(target.getId());

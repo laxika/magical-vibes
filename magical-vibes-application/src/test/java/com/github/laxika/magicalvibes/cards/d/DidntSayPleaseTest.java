@@ -38,10 +38,9 @@ class DidntSayPleaseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -63,13 +62,59 @@ class DidntSayPleaseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, avatar.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, avatar.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Avatar of Might");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 3);
+    }
+
+    @Test
+    @DisplayName("The countered spell enters the graveyard before the milled cards")
+    void countersBeforeMillingWithShortLibrary() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLibrary(player1, List.of(first, second));
+        prepareCaster();
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(bears, first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isSameAs(bears);
+        harness.assertInGraveyard(player2, "Didn't Say Please");
+    }
+
+    @Test
+    @DisplayName("Does not mill again when its target has already been countered")
+    void missingTargetDoesNotMill() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new DidntSayPlease(), new DidntSayPlease()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 }

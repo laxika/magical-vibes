@@ -56,8 +56,7 @@ class DrossHarvesterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(harvester.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 12);
     }
@@ -74,6 +73,55 @@ class DrossHarvesterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Does not lose life during the opponent's end step")
+    void doesNotLoseLifeAtOpponentsEndStep() {
+        harness.addToBattlefield(player1, new DrossHarvester());
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Gains life when another creature its controller controls dies")
+    void gainsLifeWhenAlliedCreatureDies() {
+        harness.addToBattlefield(player1, new DrossHarvester());
+        Permanent flayedNim = harness.addToBattlefieldAndReturn(player1, new FlayedNim());
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new ElectrostaticBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, flayedNim.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Flayed Nim");
+        harness.assertLife(player1, 12);
+    }
+
+    @Test
+    @DisplayName("Each Harvester sees both deaths when two Harvesters kill each other")
+    void gainsLifeForSimultaneousDeathsIncludingItself() {
+        addCreatureReady(player1, new DrossHarvester());
+        addCreatureReady(player2, new DrossHarvester());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Dross Harvester");
+        harness.assertNotOnBattlefield(player2, "Dross Harvester");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
     }
 
     @Test

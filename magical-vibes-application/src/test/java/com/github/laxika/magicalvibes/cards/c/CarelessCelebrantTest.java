@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.ArastaOfTheEndlessWeb;
+import com.github.laxika.magicalvibes.cards.e.ElspethSunsNemesis;
 import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CarelessCelebrant.class, FlameJavelin.class, LlanowarElves.class})
+@CardUsed({CarelessCelebrant.class, FlameJavelin.class, LlanowarElves.class,
+        ArastaOfTheEndlessWeb.class, ElspethSunsNemesis.class})
 class CarelessCelebrantTest extends BaseCardTest {
 
     @Test
@@ -59,7 +63,62 @@ class CarelessCelebrantTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 5);
 
         UUID celebrantId = harness.getPermanentId(player1, "Careless Celebrant");
-        harness.castInstant(player2, 0, celebrantId);
+        harness.castAndResolveInstant(player2, 0, celebrantId);
+    }
+
+    @Test
+    @DisplayName("Death trigger deals exactly two damage to a surviving creature")
+    void deathTriggerDealsExactlyTwoDamage() {
+        harness.addToBattlefield(player1, new CarelessCelebrant());
+        harness.addToBattlefield(player2, new ArastaOfTheEndlessWeb());
+        UUID targetId = harness.getPermanentId(player2, "Arasta of the Endless Web");
+
+        killCelebrantWithFlameJavelin();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Arasta of the Endless Web");
+        assertThat(gqs.findPermanentById(gd, targetId).getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Death trigger damages an opposing planeswalker but cannot target your planeswalker")
+    void deathTriggerTargetsOnlyOpposingPlaneswalker() {
+        harness.addToBattlefield(player1, new CarelessCelebrant());
+        harness.addToBattlefield(player1, new ElspethSunsNemesis());
+        harness.addToBattlefield(player2, new ElspethSunsNemesis());
+        UUID ownId = harness.getPermanentId(player1, "Elspeth, Sun's Nemesis");
+        UUID targetId = harness.getPermanentId(player2, "Elspeth, Sun's Nemesis");
+        int loyaltyBefore = gqs.findPermanentById(gd, targetId).getCounterCount(CounterType.LOYALTY);
+
+        killCelebrantWithFlameJavelin();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(targetId).doesNotContain(ownId);
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, targetId).getCounterCount(CounterType.LOYALTY))
+                .isEqualTo(loyaltyBefore - 2);
+        assertThat(gqs.findPermanentById(gd, ownId).getCounterCount(CounterType.LOYALTY))
+                .isEqualTo(loyaltyBefore);
+    }
+
+    @Test
+    @DisplayName("Death trigger with no legal opposing permanent has no target and deals no damage")
+    void deathTriggerWithNoLegalTarget() {
+        harness.addToBattlefield(player1, new CarelessCelebrant());
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        killCelebrantWithFlameJavelin();
+
+        harness.assertInGraveyard(player1, "Careless Celebrant");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

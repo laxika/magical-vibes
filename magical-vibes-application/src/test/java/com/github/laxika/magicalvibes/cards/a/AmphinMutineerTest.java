@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AmphinMutineer.class, GrizzlyBears.class})
+@CardUsed({AmphinMutineer.class, GrizzlyBears.class, SolemnSimulacrum.class})
 class AmphinMutineerTest extends BaseCardTest {
 
     @Test
@@ -58,7 +59,7 @@ class AmphinMutineerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Encore creates a hasty attacking token and sacrifices it at the next end step")
+    @DisplayName("Encore creates an untapped hasty token and sacrifices it at the next end step")
     void encoreCreatesAndSacrificesToken() {
         harness.setGraveyard(player1, List.of(new AmphinMutineer()));
         addManaForEncore();
@@ -66,20 +67,135 @@ class AmphinMutineerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanent(player1, "Amphin Mutineer");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Amphin Mutineer")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing no ETB target leaves an available creature alone and creates no token")
+    void mayChooseNoTarget() {
+        harness.addToBattlefield(player2, new SolemnSimulacrum());
+
+        harness.castFromHand(player1, new AmphinMutineer(), "{3}{U}");
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Amphin Mutineer");
+        harness.assertOnBattlefield(player2, "Solemn Simulacrum");
+        assertThat(findPermanents(player1, "Salamander Warrior")).isEmpty();
+        assertThat(findPermanents(player2, "Salamander Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling your own creature gives you the replacement token")
+    void canExileOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SolemnSimulacrum());
+        harness.setHand(player1, List.of(new AmphinMutineer()));
+        addManaForCast();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Solemn Simulacrum");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Solemn Simulacrum"));
+        assertThat(findPermanents(player1, "Salamander Warrior")).hasSize(1);
+        assertThat(findPermanents(player2, "Salamander Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Encore exiles its source as a cost before any token is created")
+    void encoreExilesSourceOnActivation() {
+        harness.setGraveyard(player1, List.of(new AmphinMutineer()));
+        addManaForEncore();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Amphin Mutineer"));
+        assertThat(findPermanents(player1, "Amphin Mutineer")).isEmpty();
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Amphin Mutineer")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Encore cannot be activated during upkeep")
+    void encoreRequiresSorceryTiming() {
+        harness.setGraveyard(player1, List.of(new AmphinMutineer()));
+        addManaForEncore();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Encore copy triggers the copied exile ability")
+    void encoreCopyExilesCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SolemnSimulacrum());
+        harness.setGraveyard(player1, List.of(new AmphinMutineer()));
+        addManaForEncore();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Amphin Mutineer")).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Solemn Simulacrum");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Solemn Simulacrum"));
+        assertThat(findPermanents(player2, "Salamander Warrior")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Encore sacrifice uses the stack and leaves a response window at the end step")
+    void encoreSacrificeCanBeRespondedTo() {
+        harness.setGraveyard(player1, List.of(new AmphinMutineer()));
+        addManaForEncore();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Amphin Mutineer")).hasSize(1);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(findPermanents(player1, "Amphin Mutineer")).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Amphin Mutineer")).isEmpty();
     }

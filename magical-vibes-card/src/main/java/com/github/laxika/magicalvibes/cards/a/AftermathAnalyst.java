@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "148")
+@CardRegistration(set = "EOC", collectorNumber = "91")
 public class AftermathAnalyst extends Card {
 
     public AftermathAnalyst() {

@@ -57,8 +57,7 @@ class DaxosBlessedByTheSunTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
@@ -85,5 +84,54 @@ class DaxosBlessedByTheSunTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Toughness decreases immediately when a white permanent dies")
+    void toughnessDecreasesWhenWhitePermanentDies() {
+        Permanent daxos = addCreatureReady(player1, new DaxosBlessedByTheSun());
+        addCreatureReady(player1, new SavannahLions());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThat(gqs.getEffectiveToughness(gd, daxos)).isEqualTo(3);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Savannah Lions"));
+
+        assertThat(gqs.getEffectiveToughness(gd, daxos)).isEqualTo(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when Daxos himself dies")
+    void excludesOwnDeath() {
+        addCreatureReady(player1, new DaxosBlessedByTheSun());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Daxos, Blessed by the Sun"));
+
+        harness.assertInGraveyard(player1, "Daxos, Blessed by the Sun");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when an opponent's creature dies")
+    void excludesOpponentsDeath() {
+        addCreatureReady(player1, new DaxosBlessedByTheSun());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

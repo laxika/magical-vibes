@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BatteringCraghorn;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherCharge.class, AvenSoulgazer.class, BatteringCraghorn.class, ElspethKnightErrant.class})
+@CardUsed({AetherCharge.class, AvenSoulgazer.class, BatteringCraghorn.class, ElspethKnightErrant.class, Shock.class})
 class AetherChargeTest extends BaseCardTest {
 
     @Test
@@ -103,6 +107,44 @@ class AetherChargeTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Beast still deals damage if it leaves before the trigger resolves")
+    void beastLeavingDoesNotStopDamage() {
+        addCharge();
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Battering Craghorn"));
+        harness.assertInGraveyard(player1, "Battering Craghorn");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Each Aether Charge triggers independently for the same Beast")
+    void multipleChargesTriggerIndependently() {
+        addCharge();
+        addCharge();
+        harness.castFromHand(player1, new BatteringCraghorn(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 16);
     }
 
     private void addCharge() {

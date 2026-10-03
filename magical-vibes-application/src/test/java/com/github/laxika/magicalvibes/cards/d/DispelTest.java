@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Dispel.class, GrizzlyBears.class, LlanowarElves.class, MightOfOaks.class})
 class DispelTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class DispelTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertInGraveyard(player2, "Dispel");
@@ -55,5 +56,51 @@ class DispelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, elves.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter an instant controlled by its own controller")
+    void countersOwnInstant() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might, new Dispel()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, might.getId());
+
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player1, "Dispel");
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does nothing when its target was already countered")
+    void targetLeavesStackBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might, new Dispel()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Dispel()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, might.getId());
+
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player1, "Dispel");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dispel");
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
     }
 }

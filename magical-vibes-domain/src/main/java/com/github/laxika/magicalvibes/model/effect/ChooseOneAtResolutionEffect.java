@@ -10,6 +10,10 @@ public record ChooseOneAtResolutionEffect(ChooseOneEffect choice) implements Car
 
     @Override
     public TargetSpec targetSpec() {
+        if (choice.options().stream().flatMap(option -> option.effects().stream())
+                .noneMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+            return TargetSpec.NONE;
+        }
         return TargetSpec.benign(TargetPredicates.permanent());
     }
 

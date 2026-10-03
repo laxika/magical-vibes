@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DestructiveTampering.class, Millstone.class, GrizzlyBears.class, AirElemental.class})
 class DestructiveTamperingTest extends BaseCardTest {
 
     private void castSpell(int modeIndex, UUID targetId) {
@@ -31,14 +32,13 @@ class DestructiveTamperingTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Destroy target artifact")
+    @CardUsed({DestructiveTampering.class, Millstone.class, GrizzlyBears.class})
     class DestroyArtifactMode {
 
         @Test
         @DisplayName("Destroys target artifact")
         void destroysArtifact() {
-            harness.addToBattlefield(player2, new Millstone());
-
-            Permanent millstone = findPermanent(player2, "Millstone");
+            Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
             castSpell(0, millstone.getId());
 
             harness.assertNotOnBattlefield(player2, "Millstone");
@@ -48,9 +48,7 @@ class DestructiveTamperingTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a non-artifact permanent")
         void cannotTargetNonArtifact() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-
-            Permanent bears = findPermanent(player2, "Grizzly Bears");
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             harness.setHand(player1, List.of(new DestructiveTampering()));
             harness.addMana(player1, ManaColor.COLORLESS, 2);
             harness.addMana(player1, ManaColor.RED, 1);
@@ -62,7 +60,33 @@ class DestructiveTamperingTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Creatures without flying can't block this turn")
+    @CardUsed({DestructiveTampering.class, GrizzlyBears.class, AirElemental.class})
     class CantBlockMode {
+        @Test
+        @DisplayName("Creatures entering after resolution cannot block")
+        void laterGroundCreatureCannotBlock() {
+            Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            castSpell(1, null);
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            attacker.setAttacking(true);
+            prepareDeclareBlockers();
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Restriction applies to the caster's creatures too")
+        void castersGroundCreatureCannotBlock() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            attacker.setSummoningSick(false);
+            castSpell(1, null);
+            attacker.setAttacking(true);
+            prepareDeclareBlockers(player2);
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                    .isInstanceOf(IllegalStateException.class);
+        }
 
         @Test
         @DisplayName("Ground creatures cannot block")
@@ -75,10 +99,7 @@ class DestructiveTamperingTest extends BaseCardTest {
             castSpell(1, null);
 
             attacker.setAttacking(true);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-            harness.clearPriorityPassed();
-            harness.beginBlockerDeclarationInput();
+            prepareDeclareBlockers();
 
             assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                     .isInstanceOf(IllegalStateException.class);
@@ -95,10 +116,7 @@ class DestructiveTamperingTest extends BaseCardTest {
             castSpell(1, null);
 
             attacker.setAttacking(true);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-            harness.clearPriorityPassed();
-            harness.beginBlockerDeclarationInput();
+            prepareDeclareBlockers();
 
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

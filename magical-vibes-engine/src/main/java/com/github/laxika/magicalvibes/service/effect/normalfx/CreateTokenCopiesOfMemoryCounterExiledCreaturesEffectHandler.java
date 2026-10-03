@@ -47,13 +47,16 @@ public class CreateTokenCopiesOfMemoryCounterExiledCreaturesEffectHandler implem
         List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(entry.getControllerId()))
                 .toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
+                        && opponentIds.contains(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        || (gameQueryService.isBattle(gameData, permanent)
+                        && opponentIds.contains(permanent.getProtectorPlayerId())))
                 .map(Permanent::getId)
                 .toList();
         playerInputService.beginAnyTargetChoice(
                 gameData, entry.getControllerId(), planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the next token to attack.");
+                "Choose the player, planeswalker, or battle for the next token to attack.");
     }
 }

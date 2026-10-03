@@ -58,8 +58,7 @@ class CursedRoninTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GiveNoGround()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, ronin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ronin.getId());
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
@@ -69,6 +68,50 @@ class CursedRoninTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Multiple blockers cause only one bushido trigger, which expires at end of turn")
+    void multipleBlockersGiveOneTemporaryBonus() {
+        Permanent ronin = addCreatureReady(player1, new CursedRonin());
+        addCreatureReady(player2, new HumbleBudoka());
+        addCreatureReady(player2, new HumbleBudoka());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The pump can be activated while tapped and summoning sick and uses the stack")
+    void pumpDoesNotRequireTapOrHaste() {
+        Permanent ronin = addCreatureReady(player1, new CursedRonin());
+        ronin.setSummoningSick(true);
+        ronin.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ronin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(2);
+        assertThat(ronin.isTapped()).isTrue();
     }
 
     @Test

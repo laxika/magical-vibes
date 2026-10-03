@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "185")
+@CardRegistration(set = "M21", collectorNumber = "307")
 public class GarruksHarbinger extends Card {
 
     public GarruksHarbinger() {

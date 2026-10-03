@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "MM2", collectorNumber = "232")
 @CardRegistration(set = "2XM", collectorNumber = "293")
 @CardRegistration(set = "SLD", collectorNumber = "2381")
+@CardRegistration(set = "C16", collectorNumber = "275")
 public class Sunforger extends Card {
 
     public Sunforger() {

@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -15,6 +17,9 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -205,6 +210,11 @@ public final class TextChangeTransformer {
         return BASIC_LAND_WORDS.get(word);
     }
 
+    /** The creature type denoted by a text-change word, or null for other words. */
+    public static CardSubtype creatureTypeForWord(String word) {
+        return CREATURE_TYPE_WORDS.get(word);
+    }
+
     private static Substitution resolve(TextReplacement replacement) {
         CardColor fromColor = COLOR_WORDS.get(replacement.fromWord());
         CardColor toColor = COLOR_WORDS.get(replacement.toWord());
@@ -230,6 +240,29 @@ public final class TextChangeTransformer {
             return null;
         }
         return switch (effect) {
+            case ExileAllPermanentsEffect exile -> {
+                PermanentPredicate filter = apply(exile.filter(), substitution);
+                yield filter == exile.filter() ? exile : new ExileAllPermanentsEffect(filter,
+                        exile.trackWithSource(), exile.returnOneAtEachUpkeep(), exile.ownerMayPlayWhileExiled(),
+                        exile.perpetualCastCostIncrease(), exile.perpetualEnterTapped(),
+                        exile.controllerMayPlayWhileExiled(), exile.controllerMaySpendAnyManaType());
+            }
+            case ChangeColorTextEffect change -> {
+                CardSubtype excluded = replaceSubtype(change.excludedReplacementCreatureType(), substitution);
+                yield excluded == change.excludedReplacementCreatureType() ? change
+                        : new ChangeColorTextEffect(change.colorWordsAllowed(), change.landTypesAllowed(),
+                        change.canTargetSpell(), change.untilEndOfTurn(), change.creatureTypesAllowed(), excluded);
+            }
+            case BoostTargetCreatureEffect boost -> {
+                DynamicAmount power = apply(boost.powerBoost(), substitution);
+                DynamicAmount toughness = apply(boost.toughnessBoost(), substitution);
+                PermanentPredicate filter = apply(boost.filter(), substitution);
+                DynamicAmount castTimeXValue = apply(boost.castTimeXValue(), substitution);
+                yield power == boost.powerBoost() && toughness == boost.toughnessBoost()
+                        && filter == boost.filter() && castTimeXValue == boost.castTimeXValue() ? boost
+                        : new BoostTargetCreatureEffect(power, toughness, filter, boost.duration(),
+                        boost.targetGroup(), castTimeXValue);
+            }
             case ProtectionFromColorsEffect protection -> {
                 Set<CardColor> colors = replaceColor(protection.colors(), substitution);
                 yield colors == protection.colors() ? protection
@@ -318,6 +351,15 @@ public final class TextChangeTransformer {
             }
             default -> effect;
         };
+    }
+
+    private static DynamicAmount apply(DynamicAmount amount, Substitution substitution) {
+        if (amount instanceof PermanentCount count) {
+            PermanentPredicate filter = apply(count.filter(), substitution);
+            return filter == count.filter() ? count : new PermanentCount(filter, count.scope(),
+                    count.excludeSource(), count.declaredAttackersOnly());
+        }
+        return amount;
     }
 
     private static Condition apply(Condition condition, Substitution substitution) {

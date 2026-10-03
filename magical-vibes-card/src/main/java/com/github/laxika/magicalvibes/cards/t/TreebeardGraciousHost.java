@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "73")
 @CardRegistration(set = "LTC", collectorNumber = "153")
+@CardRegistration(set = "LTC", collectorNumber = "483")
 public class TreebeardGraciousHost extends Card {
 
     public TreebeardGraciousHost() {

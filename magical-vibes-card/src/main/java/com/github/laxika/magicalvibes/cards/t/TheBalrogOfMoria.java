@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LTC", collectorNumber = "46")
 @CardRegistration(set = "LTC", collectorNumber = "129")
+@CardRegistration(set = "LTC", collectorNumber = "449")
 public class TheBalrogOfMoria extends Card {
 
     public TheBalrogOfMoria() {

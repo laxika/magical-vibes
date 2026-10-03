@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CourageousGoblin.class})
 class CourageousGoblinTest extends BaseCardTest {
 
     @Test
@@ -85,6 +87,47 @@ class CourageousGoblinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counts its own modified power when checking the attack condition")
+    void countsItsOwnPowerFour() {
+        Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
+        goblin.setPowerModifier(2);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not count a creature with power four controlled by the opponent")
+    void doesNotCountOpponentsCreature() {
+        Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
+        Permanent opposingGoblin = addCreatureReady(player2, new CourageousGoblin());
+        opposingGoblin.setPowerModifier(2);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Power three is below the attack condition's threshold")
+    void doesNotBoostAtPowerThree() {
+        Permanent goblin = addCreatureReady(player1, new CourageousGoblin());
+        goblin.setPowerModifier(1);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isFalse();
     }
 

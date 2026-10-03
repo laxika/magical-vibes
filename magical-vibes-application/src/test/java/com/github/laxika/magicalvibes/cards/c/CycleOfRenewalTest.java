@@ -1,19 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CycleOfRenewal.class, Forest.class, Island.class, Mountain.class, Plains.class, GrizzlyBears.class})
+@CardUsed({CycleOfRenewal.class, Forest.class, Island.class, Mountain.class, Plains.class, CatOwl.class})
 class CycleOfRenewalTest extends BaseCardTest {
 
     @Test
@@ -33,7 +30,7 @@ class CycleOfRenewalTest extends BaseCardTest {
         Card plains = new Plains();
         Card forest = new Forest();
         Card island = new Island();
-        Card otherCard = new GrizzlyBears();
+        Card otherCard = new CatOwl();
         setLibrary(plains, forest, island, otherCard);
         castSpell();
 
@@ -47,8 +44,8 @@ class CycleOfRenewalTest extends BaseCardTest {
         assertThat(search.params().remainingCount()).isEqualTo(2);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(landToSacrifice.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -64,7 +61,7 @@ class CycleOfRenewalTest extends BaseCardTest {
     @DisplayName("A nonland permanent cannot be sacrificed")
     void sacrificeChoiceContainsOnlyLands() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CatOwl());
         castSpell();
 
         harness.passBothPriorities();
@@ -80,13 +77,13 @@ class CycleOfRenewalTest extends BaseCardTest {
     void searchFindsAvailableBasicLands() {
         Permanent landToSacrifice = harness.addToBattlefieldAndReturn(player1, new Forest());
         Card plains = new Plains();
-        Card nonbasicLand = new CycleOfRenewal();
-        setLibrary(plains, nonbasicLand);
+        Card nonland = new CycleOfRenewal();
+        setLibrary(plains, nonland);
         castSpell();
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, landToSacrifice.getId());
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(plains.getId()) && permanent.isTapped());
@@ -94,20 +91,65 @@ class CycleOfRenewalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Without a land, the spell does not search")
-    void noLandToSacrificeDoesNothing() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        setLibrary(new Plains(), new Island());
+    @DisplayName("Without a land to sacrifice, the spell still searches")
+    void noLandToSacrificeStillSearches() {
+        harness.addToBattlefield(player1, new CatOwl());
+        Card plains = new Plains();
+        Card island = new Island();
+        setLibrary(plains, island);
         castSpell();
-
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerDecks.get(player1.getId()))
-                .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Plains", "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().hasType(CardType.LAND));
+                .filteredOn(permanent -> permanent.getCard() == plains || permanent.getCard() == island)
+                .hasSize(2)
+                .allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("The search may stop after finding one land even when more are available")
+    void canChooseOnlyOneLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Card plains = new Plains();
+        Card island = new Island();
+        setLibrary(plains, island);
+        castSpell();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(plains);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("Finding zero lands still sacrifices the chosen land")
+    void canChooseZeroLands() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Card plains = new Plains();
+        Card island = new Island();
+        setLibrary(plains, island);
+        castSpell();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(land.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, island);
     }
 
     private void castSpell() {
@@ -117,8 +159,6 @@ class CycleOfRenewalTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

@@ -110,4 +110,59 @@ class DescendantOfSoramaroTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Shows the top card privately when the controller has one card in hand")
+    void looksAtOneCardPrivately() {
+        addCreatureReady(player1, new DescendantOfSoramaro());
+        Card topCard = new ArabaMothrider();
+        Card secondCard = new ArabaMothrider();
+        harness.setHand(player1, List.of(new ArabaMothrider()));
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining(topCard.getId().toString())).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining(topCard.getId().toString())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("Does nothing with an empty library even with cards in hand")
+    void doesNothingWithEmptyLibrary() {
+        addCreatureReady(player1, new DescendantOfSoramaro());
+        harness.setHand(player1, List.of(new ArabaMothrider(), new ArabaMothrider()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent descendant = harness.addToBattlefieldAndReturn(player1, new DescendantOfSoramaro());
+        descendant.setSummoningSick(true);
+        descendant.setTapped(true);
+        Card topCard = new ArabaMothrider();
+        Card secondCard = new ArabaMothrider();
+        harness.setHand(player1, List.of(new ArabaMothrider(), new ArabaMothrider()));
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
+        assertThat(descendant.isTapped()).isTrue();
+    }
 }

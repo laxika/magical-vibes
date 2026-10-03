@@ -49,9 +49,13 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
         }
 
         int manaValue = chosenEntry.card().getManaValue();
+        gameData.exiledCardsWithAlaundoCastAbility.add(chosenCardId);
+        if (chosenEntry.card().getHandActivatedAbilities().stream()
+                .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
+            gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
+        }
         if (manaValue > 0) {
             gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
-            gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
             gameLogService.append(gameData,
                     GameLog.cardThen(chosenEntry.card(), " gets " + manaValue + " time counters."));
         }

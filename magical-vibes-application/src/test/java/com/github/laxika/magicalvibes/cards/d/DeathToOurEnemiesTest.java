@@ -24,8 +24,7 @@ class DeathToOurEnemiesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfFlame()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(death.getCounterCount(CounterType.PLAN)).isEqualTo(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -55,8 +54,7 @@ class DeathToOurEnemiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         for (int i = 0; i < 4; i++) {
-            harness.castSorcery(player1, 0, 0);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 0);
             if (i < 3) {
                 harness.passBothPriorities();
             }
@@ -71,13 +69,48 @@ class DeathToOurEnemiesTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, bear.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
         harness.handleXValueChosen(player1, 3);
         harness.handleXValueChosen(player1, 4);
 
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        harness.passBothPriorities();
+
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(bear.getCard());
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotAdvancePlan() {
+        Permanent death = harness.addToBattlefieldAndReturn(player1, new DeathToOurEnemies());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new RiteOfFlame()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        assertThat(death.getCounterCount(CounterType.PLAN)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void removingPlanCountersDoesNotStopAlreadyTriggeredSacrifice() {
+        Permanent death = harness.addToBattlefieldAndReturn(player1, new DeathToOurEnemies());
+        death.setCounterCount(CounterType.PLAN, 3);
+        harness.setHand(player1, List.of(new RiteOfFlame()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(death.getCounterCount(CounterType.PLAN)).isEqualTo(4);
+        death.setCounterCount(CounterType.PLAN, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(death);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(death.getCard());
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeathbloomThallid.class, WrathOfGod.class})
 class DeathbloomThallidTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Deathbloom Thallid puts it on the battlefield")
@@ -33,8 +33,6 @@ class DeathbloomThallidTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Deathbloom Thallid");
     }
 
-    // ===== Death trigger =====
-
     @Test
     @DisplayName("When Deathbloom Thallid dies, a Saproling token is created")
     void deathTriggerCreatesToken() {
@@ -43,8 +41,7 @@ class DeathbloomThallidTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath — Deathbloom Thallid dies
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
 
@@ -70,8 +67,7 @@ class DeathbloomThallidTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
-        harness.passBothPriorities(); // Resolve Wrath
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities(); // Resolve death trigger
 
         Permanent token = findPermanent(player1, "Saproling");
@@ -83,5 +79,26 @@ class DeathbloomThallidTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SAPROLING);
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getKeywords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's dying Thallid creates a token for that opponent")
+    void opponentsDeathTriggerCreatesTokenForOpponent() {
+        harness.addToBattlefield(player2, new DeathbloomThallid());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player2, "Deathbloom Thallid");
+        assertThat(harness.getGameData().stack).hasSize(1);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DregsOfSorrow.class, BogWraith.class, GrizzlyBears.class, HillGiant.class, Swamp.class})
+@CardUsed({DregsOfSorrow.class, BogWraith.class, Boomerang.class, GrizzlyBears.class, HillGiant.class,
+        Regeneration.class, Swamp.class})
 class DregsOfSorrowTest extends BaseCardTest {
 
     @Test
@@ -46,8 +49,7 @@ class DregsOfSorrowTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size() - 1;
 
-        harness.castSorcery(player1, 0, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
@@ -120,8 +122,7 @@ class DregsOfSorrowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DregsOfSorrow()));
         harness.addMana(player1, ManaColor.BLACK, 6); // X=1: {1}{4}{B} = 6
 
-        harness.castSorcery(player1, 0, 1, List.of(ownCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, ownCreature.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -136,5 +137,61 @@ class DregsOfSorrowTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, List.of(swamp.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creatures");
+    }
+
+    @Test
+    @DisplayName("Draws no cards when the only target leaves before resolution")
+    void doesNotDrawWhenAllTargetsAreIllegal() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DregsOfSorrow()));
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.setLibrary(player1, List.of(new Swamp(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, 1, List.of(bears.getId()));
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dregs of Sorrow");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice for X=2")
+    void cannotChooseDuplicateTargets() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DregsOfSorrow()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 2,
+                List.of(bears.getId(), bears.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Regeneration prevents destruction but does not reduce the number of cards drawn")
+    void drawsXWhenOneCreatureRegenerates() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Regeneration());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new DregsOfSorrow()));
+        harness.setLibrary(player1, List.of(new Swamp(), new Swamp()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, 2, List.of(bears.getId(), giant.getId()));
+        harness.activateAbility(player2, 2, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(bears.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }

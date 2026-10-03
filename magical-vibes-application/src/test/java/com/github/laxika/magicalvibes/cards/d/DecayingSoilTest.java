@@ -47,8 +47,7 @@ class DecayingSoilTest extends BaseCardTest {
         var bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities(); // resolve Shock and put the death trigger on the stack
+        harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities(); // resolve the death trigger and show the may-pay prompt
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -71,8 +70,7 @@ class DecayingSoilTest extends BaseCardTest {
         var bears = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -176,6 +174,123 @@ class DecayingSoilTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(dyingCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(dyingCard.getId()));
+    }
+
+    @Test
+    @DisplayName("A creature becoming the seventh graveyard card does not trigger threshold")
+    void seventhCardDoesNotEnableItsOwnDeathTrigger() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        harness.addToBattlefield(player1, new DecayingSoil());
+        var dyingCard = new GrizzlyBears();
+        Permanent dyingPermanent = harness.addToBattlefieldAndReturn(player1, dyingCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        putIntoGraveyard(dyingPermanent);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7)
+                .anyMatch(card -> card.getId().equals(dyingCard.getId()));
+    }
+
+    @Test
+    @DisplayName("An existing death trigger resolves after threshold is lost")
+    void returnTriggerSurvivesLosingThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addToBattlefield(player1, new DecayingSoil());
+        var dyingCard = new GrizzlyBears();
+        Permanent dyingPermanent = harness.addToBattlefieldAndReturn(player1, dyingCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        putIntoGraveyard(dyingPermanent);
+        harness.inMutationScope(() -> {
+            for (int i = 0; i < 2; i++) {
+                var card = gd.playerGraveyards.get(player1.getId()).getFirst();
+                harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, card.getId());
+            }
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(dyingCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(dyingCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Upkeep with an empty graveyard does not require a choice")
+    void emptyGraveyardAtUpkeepDoesNothing() {
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player1, new DecayingSoil());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Decaying Soil does not exile a card during its opponent's upkeep")
+    void opponentsUpkeepDoesNotExile() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new DecayingSoil());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Upkeep automatically exiles the only graveyard card")
+    void upkeepExilesOnlyCard() {
+        var card = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addToBattlefield(player1, new DecayingSoil());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(card.getId());
+    }
+
+    @Test
+    @DisplayName("Payment cannot return a creature card that has left the graveyard")
+    void paymentDoesNotReturnCardThatLeftGraveyard() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addToBattlefield(player1, new DecayingSoil());
+        var dyingCard = new GrizzlyBears();
+        Permanent dyingPermanent = harness.addToBattlefieldAndReturn(player1, dyingCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        putIntoGraveyard(dyingPermanent);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, dyingCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(dyingCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(dyingCard.getId()));
     }
 
     private void putIntoGraveyard(Permanent permanent) {

@@ -155,4 +155,70 @@ class CauterySliverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Sliver creature");
     }
+
+    @Test
+    void opponentSliverCanPreventDamageToItsController() {
+        addCreatureReady(player1, new CauterySliver());
+        Permanent sliver = addCreatureReady(player2, new SinewSliver());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(sliver);
+
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void damageAbilityCanTargetPlaneswalker() {
+        addCreatureReady(player1, new CauterySliver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        target.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    void preventionShieldPreventsDamageToSliverCreature() {
+        addCreatureReady(player1, new CauterySliver());
+        addCreatureReady(player1, new CauterySliver());
+        Permanent target = addCreatureReady(player2, new SinewSliver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void tappedSummoningSickSliverCanActivateDamageAbility() {
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new CauterySliver());
+        sliver.setSummoningSick(true);
+        sliver.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sliver);
+    }
 }

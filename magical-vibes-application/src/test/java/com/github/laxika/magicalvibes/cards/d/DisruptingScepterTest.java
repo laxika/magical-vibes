@@ -204,9 +204,43 @@ class DisruptingScepterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("A noncreature Scepter can tap on the turn it enters")
+    void canActivateNewlyEnteredScepter() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new DisruptingScepter());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(scepter.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A second activation resolves harmlessly after the first empties the target's hand")
+    void handEmptiedBeforeResolution() {
+        addReadyScepter(player1);
+        addReadyScepter(player1);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
     private Permanent addReadyScepter(Player player) {
-        Permanent scepter = harness.addToBattlefieldAndReturn(player, new DisruptingScepter());
-        scepter.setSummoningSick(false);
-        return scepter;
+        return addCreatureReady(player, new DisruptingScepter());
     }
 }

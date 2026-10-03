@@ -36,8 +36,53 @@ class CallTheCoppercoatsTest extends BaseCardTest {
     void cannotTargetYourself() {
         harness.setHand(player1, List.of(new CallTheCoppercoats()));
         harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void createsNoTokensWhenTargetOpponentControlsNoCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        cast(List.of(player2.getId()), 1);
+
+        assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
+    }
+
+    @Test
+    void countsCreaturesAtResolutionRatherThanWhenCast() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CallTheCoppercoats()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, List.of(player2.getId()));
+
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(2);
+    }
+
+    @Test
+    void cannotChooseTheSameOpponentTwice() {
+        harness.setHand(player1, List.of(new CallTheCoppercoats()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(player2.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void choosingNoTargetsStillRequiresTheFullBaseCost() {
+        harness.setHand(player1, List.of(new CallTheCoppercoats()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -45,7 +90,6 @@ class CallTheCoppercoatsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CallTheCoppercoats()));
         harness.addMana(player1, ManaColor.WHITE, whiteMana);
         harness.addMana(player1, ManaColor.COLORLESS, whiteMana + 1);
-        harness.castInstant(player1, 0, targetPlayerIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetPlayerIds);
     }
 }

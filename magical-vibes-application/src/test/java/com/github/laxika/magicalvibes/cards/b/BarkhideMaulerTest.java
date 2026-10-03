@@ -39,4 +39,40 @@ class BarkhideMaulerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Barkhide Mauler");
         harness.assertInHand(player1, "Forest");
     }
+
+    @Test
+    void cyclingDiscardsAsACostAndDrawsOnlyOnResolution() {
+        harness.setHand(player1, List.of(new BarkhideMauler()));
+        harness.setLibrary(player1, List.of(new Forest(), new BarkhideMauler()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Barkhide Mauler");
+        harness.assertInGraveyard(player1, "Barkhide Mauler");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingGenericCostCanBePaidWithColoredMana() {
+        harness.setHand(player1, List.of(new BarkhideMauler()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Barkhide Mauler");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
 }

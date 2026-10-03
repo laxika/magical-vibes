@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KrovikanHorror;
 import com.github.laxika.magicalvibes.cards.o.Oppression;
+import com.github.laxika.magicalvibes.cards.p.Purelace;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BogWraith.class, CircleOfProtectionBlack.class, Corrupt.class, CryptRats.class, GiantGrowth.class, GrizzlyBears.class, KrovikanHorror.class, Oppression.class, Swamp.class})
+@CardUsed({BogWraith.class, CircleOfProtectionBlack.class, Corrupt.class, CryptRats.class, GiantGrowth.class, GrizzlyBears.class, KrovikanHorror.class, Oppression.class, Purelace.class, Swamp.class})
 class CircleOfProtectionBlackTest extends BaseCardTest {
 
     private static final String CRYPT_RATS_MANA_COST = "{2}{B}";
@@ -216,6 +217,81 @@ class CircleOfProtectionBlackTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlack.class, KrovikanHorror.class})
+    @DisplayName("A sacrificed black source can be chosen while its damage ability is on the stack")
+    void choosesSacrificedSourceReferencedByStackAbility() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent horror = addCreatureReady(player2, new KrovikanHorror());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.handlePermanentChosen(player2, horror.getId());
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(horror.getId());
+        harness.handlePermanentChosen(player1, horror.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlack.class, BogWraith.class, Purelace.class})
+    @DisplayName("Damage from a chosen source that becomes white is not prevented")
+    void rechecksChosenSourceColorWhenDamageIsDealt() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent source = addCreatureReady(player2, new BogWraith());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.setHand(player1, List.of(new Purelace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.sourceId().equals(source.getId()));
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlack.class, CryptRats.class})
+    @DisplayName("A zero-damage activation leaves the shield for the next positive damage event")
+    void zeroDamageDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent rats = addReadyBlackDamageSource(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rats.getId());
+
+        harness.activateAbility(player2, 0, 0, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.sourceId().equals(rats.getId()));
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, 1, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 

@@ -30,8 +30,7 @@ class DaringEscapeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
@@ -52,8 +51,7 @@ class DaringEscapeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -75,5 +73,72 @@ class DaringEscapeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opposing creature while the caster scries to the bottom")
+    void targetsOpponentAndScriesCastersLibrary() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears topCard = new GrizzlyBears();
+        FountainOfYouth nextCard = new FountainOfYouth();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new DaringEscape()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(topCard);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Daring Escape");
+    }
+
+    @Test
+    @DisplayName("Still boosts and grants first strike when the caster's library is empty")
+    void resolvesWithEmptyLibrary() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new DaringEscape()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(1);
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Daring Escape");
+    }
+
+    @Test
+    @DisplayName("Does not scry if its only target leaves before resolution")
+    void doesNotScryWhenTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new DaringEscape()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        bear.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Daring Escape");
     }
 }

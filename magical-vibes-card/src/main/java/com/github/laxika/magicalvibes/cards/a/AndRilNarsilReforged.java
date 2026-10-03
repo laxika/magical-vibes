@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "HOC", collectorNumber = "40")
 @CardRegistration(set = "HOC", collectorNumber = "80")
+@CardRegistration(set = "LTC", collectorNumber = "491")
+@CardRegistration(set = "LTC", collectorNumber = "535")
 public class AndRilNarsilReforged extends Card {
 
     public AndRilNarsilReforged() {

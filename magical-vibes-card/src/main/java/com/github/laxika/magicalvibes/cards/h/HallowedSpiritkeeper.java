@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "C14", collectorNumber = "8")
+@CardRegistration(set = "VOC", collectorNumber = "88")
 public class HallowedSpiritkeeper extends Card {
 
     public HallowedSpiritkeeper() {

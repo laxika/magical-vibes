@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,8 +35,7 @@ class AgentFrankHorriganTest extends BaseCardTest {
         Permanent bears = addCreatureWithCounter();
         castHorrigan();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         proliferateOn(bears);
         proliferateOn(bears);
 
@@ -52,10 +51,74 @@ class AgentFrankHorriganTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         proliferateOn(bears);
-        proliferateOn(bears);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> proliferateOn(bears));
 
         assertThat(horrigan.isAttacking()).isTrue();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Indestructible persists after combat and expires on the next turn")
+    void indestructibleLastsOnlyForTheTurnItAttacked() {
+        Permanent horrigan = addCreatureReady(player1, new AgentFrankHorrigan());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(horrigan.isAttacking()).isFalse();
+        assertThat(gqs.hasKeyword(gd, horrigan, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, horrigan, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering finishes after two independent proliferate choices")
+    void enteringFinishesAfterTwoIndependentChoices() {
+        Permanent opponent = addCreatureReady(player2, new AgentFrankHorrigan());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        castHorrigan();
+        resolveAllTriggers();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> proliferateOn(opponent));
+
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking proliferates every existing player counter kind exactly twice")
+    void attackingProliferatesPlayerCountersExactlyTwice() {
+        addCreatureReady(player1, new AgentFrankHorrigan());
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+        gd.playerRadCounters.put(player2.getId(), 2);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId())));
+
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
+    @Test
+    @DisplayName("Entering with no counters available completes without a choice")
+    void enteringWithNoCountersCompletes() {
+        castHorrigan();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Agent Frank Horrigan");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addCreatureWithCounter() {
@@ -65,11 +128,7 @@ class AgentFrankHorriganTest extends BaseCardTest {
     }
 
     private void castHorrigan() {
-        harness.setHand(player1, List.of(new AgentFrankHorrigan()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AgentFrankHorrigan(), "{5}{B}{G}");
     }
 
     private void proliferateOn(Permanent permanent) {

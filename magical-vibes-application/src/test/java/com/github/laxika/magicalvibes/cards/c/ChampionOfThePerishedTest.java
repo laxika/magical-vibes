@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NoWayOut;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChampionOfThePerished.class, Gravecrawler.class, GrizzlyBears.class})
+@CardUsed({ChampionOfThePerished.class, Gravecrawler.class, GrizzlyBears.class, NoWayOut.class})
 class ChampionOfThePerishedTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class ChampionOfThePerishedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChampionOfThePerished());
 
         Permanent champion = gd.playerBattlefields.get(player1.getId()).getFirst();
-        castCreature(player1, new Gravecrawler(), ManaColor.BLACK, 1);
+        castCreature(player1, new Gravecrawler(), "{B}");
 
         assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
@@ -39,7 +40,7 @@ class ChampionOfThePerishedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChampionOfThePerished());
 
         Permanent champion = gd.playerBattlefields.get(player1.getId()).getFirst();
-        castCreature(player1, new GrizzlyBears(), ManaColor.GREEN, 2);
+        castCreature(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -53,10 +54,7 @@ class ChampionOfThePerishedTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Gravecrawler()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new Gravecrawler(), "{B}");
         harness.passBothPriorities();
 
         assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -68,16 +66,58 @@ class ChampionOfThePerishedTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChampionOfThePerished());
 
         Permanent champion = gd.playerBattlefields.get(player1.getId()).getFirst();
-        castCreature(player1, new Gravecrawler(), ManaColor.BLACK, 1);
-        castCreature(player1, new Gravecrawler(), ManaColor.BLACK, 1);
+        castCreature(player1, new Gravecrawler(), "{B}");
+        castCreature(player1, new Gravecrawler(), "{B}");
 
         assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    private void castCreature(Player player, Card card, ManaColor manaColor, int amount) {
-        harness.setHand(player, List.of(card));
-        harness.addMana(player, manaColor, amount);
-        harness.castCreature(player, 0);
+    @Test
+    @DisplayName("Does not trigger for its own entry")
+    void doesNotTriggerForItself() {
+        harness.castFromHand(player1, new ChampionOfThePerished(), "{B}");
+        harness.passBothPriorities();
+
+        Permanent champion = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gd.stack).isEmpty();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A second Champion triggers only the Champion already on the battlefield")
+    void secondChampionTriggersFirstChampion() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ChampionOfThePerished());
+        harness.castFromHand(player1, new ChampionOfThePerished(), "{B}");
+        harness.passBothPriorities();
+
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Zombie token entering triggers the Champion")
+    void zombieTokenTriggersChampion() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new ChampionOfThePerished());
+        harness.setHand(player1, List.of(new NoWayOut()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private void castCreature(Player player, Card card, String manaCost) {
+        harness.castFromHand(player, card, manaCost);
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

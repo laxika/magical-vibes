@@ -28,8 +28,7 @@ class BarrelDownSokenzanTest extends BaseCardTest {
         Permanent nonMountain = addCreatureReady(player1, new ArashiTheSkyAsunder());
         Permanent opposingMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
-        castBarrelDownSokenzan(target);
-        harness.passBothPriorities();
+        castAndResolveBarrelDownSokenzan(target);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -55,8 +54,7 @@ class BarrelDownSokenzanTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new ArashiTheSkyAsunder());
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
 
-        castBarrelDownSokenzan(target);
-        harness.passBothPriorities();
+        castAndResolveBarrelDownSokenzan(target);
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(mountain);
@@ -72,8 +70,7 @@ class BarrelDownSokenzanTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new ArashiTheSkyAsunder());
         Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
-        castBarrelDownSokenzan(target);
-        harness.passBothPriorities();
+        castAndResolveBarrelDownSokenzan(target);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -91,8 +88,7 @@ class BarrelDownSokenzanTest extends BaseCardTest {
         Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setHand(player2, List.of());
 
-        castBarrelDownSokenzan(target);
-        harness.passBothPriorities();
+        castAndResolveBarrelDownSokenzan(target);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -120,10 +116,58 @@ class BarrelDownSokenzanTest extends BaseCardTest {
                 .hasMessage("Target must be a creature");
     }
 
-    private void castBarrelDownSokenzan(Permanent target) {
+    @Test
+    @DisplayName("Tapped Mountains can all be returned to deal lethal damage")
+    void returnsAllTappedMountainsAndDealsLethalDamage() {
+        Permanent target = addCreatureReady(player2, new ArashiTheSkyAsunder());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        first.tap();
+        second.tap();
+        third.tap();
+
+        castAndResolveBarrelDownSokenzan(target);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second, third);
+        assertThat(gd.playerHands.get(player1.getId())).contains(first.getCard(), second.getCard(), third.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the Mountains from being returned")
+    void targetLeavingBeforeResolutionPreventsSweep() {
+        Permanent target = addCreatureReady(player2, new ArashiTheSkyAsunder());
+        Permanent retainedMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
         harness.setHand(player1, List.of(new BarrelDownSokenzan()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new BarrelDownSokenzan()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId(), second.getId(), third.getId()));
+        if (!gd.stack.isEmpty()) harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(retainedMountain);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(retainedMountain.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Barrel Down Sokenzan");
+    }
+    private void castAndResolveBarrelDownSokenzan(Permanent target) {
+        harness.setHand(player1, List.of(new BarrelDownSokenzan()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

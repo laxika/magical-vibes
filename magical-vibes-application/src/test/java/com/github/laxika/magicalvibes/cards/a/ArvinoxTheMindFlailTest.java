@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.s.SowerOfTemptation;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArvinoxTheMindFlail.class, Forest.class, GrizzlyBears.class, Shock.class, SowerOfTemptation.class})
+@CardUsed({ArvinoxTheMindFlail.class, Forest.class, GrizzlyBears.class, GiantGrowth.class, SowerOfTemptation.class})
 class ArvinoxTheMindFlailTest extends BaseCardTest {
 
     @Test
@@ -109,7 +109,7 @@ class ArvinoxTheMindFlailTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), exiled));
 
         resolveEndStep(player1);
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, arvinox);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, arvinox));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -119,6 +119,150 @@ class ArvinoxTheMindFlailTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(exiled.getId()));
+    }
+
+    @Test
+    void cannotCastExiledInstant() {
+        harness.addToBattlefield(player1, new ArvinoxTheMindFlail());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card instant = new GiantGrowth();
+        harness.setLibrary(player2, List.of(instant));
+        resolveEndStep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, instant.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void permanentSpellsStillRequireNormalTiming() {
+        harness.addToBattlefield(player1, new ArvinoxTheMindFlail());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(creature));
+        resolveEndStep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayStillLookAtExiledLandAfterArvinoxLeaves() {
+        Permanent arvinox = harness.addToBattlefieldAndReturn(player1, new ArvinoxTheMindFlail());
+        harness.setLibrary(player2, List.of(new Forest()));
+        resolveEndStep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, arvinox));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"name\":\"Forest\"")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"name\":\"Forest\"")).isEmpty();
+    }
+
+    @Test
+    void newControllerCannotCastCardsExiledByPreviousController() {
+        Permanent arvinox = createCreatureArvinox();
+        Card exiled = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(exiled));
+        resolveEndStep(player1);
+        stealArvinox(arvinox);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, exiled.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void lookPermissionStaysWithPreviousController() {
+        Permanent arvinox = createCreatureArvinox();
+        harness.setLibrary(player2, List.of(new Forest()));
+        resolveEndStep(player1);
+        stealArvinox(arvinox);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"name\":\"Forest\"")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"name\":\"Forest\"")).isEmpty();
+    }
+
+    @Test
+    void pendingTriggerStillExilesAndGrantsPermissionAfterSourceLeaves() {
+        Permanent arvinox = harness.addToBattlefieldAndReturn(player1, new ArvinoxTheMindFlail());
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(creature));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, arvinox));
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+    }
+
+    @Test
+    void stopsBeingCreatureWhenStolenPermanentReturnsToOwner() {
+        Permanent arvinox = createCreatureArvinox();
+        Permanent sower = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof SowerOfTemptation)
+                .findFirst().orElseThrow();
+        assertThat(gqs.isCreature(gd, arvinox)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sower));
+
+        assertThat(gqs.isCreature(gd, arvinox)).isFalse();
+        assertThat(gqs.isEnchantment(gd, arvinox)).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsEndStep() {
+        Permanent arvinox = harness.addToBattlefieldAndReturn(player1, new ArvinoxTheMindFlail());
+        Card bottom = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(bottom));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(arvinox.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(bottom);
+    }
+
+    private Permanent createCreatureArvinox() {
+        Permanent arvinox = harness.addToBattlefieldAndReturn(player1, new ArvinoxTheMindFlail());
+        harness.setHand(player1, List.of(new SowerOfTemptation(), new SowerOfTemptation(),
+                new SowerOfTemptation()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        for (int i = 0; i < 3; i++) {
+            Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            castAndResolveSower(bear.getId());
+        }
+        return arvinox;
+    }
+
+    private void stealArvinox(Permanent arvinox) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new SowerOfTemptation()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castCreature(player2, 0, 0, arvinox.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(arvinox);
     }
 
     private void castAndResolveSower(UUID targetId) {
@@ -132,6 +276,6 @@ class ArvinoxTheMindFlailTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
     }
 }

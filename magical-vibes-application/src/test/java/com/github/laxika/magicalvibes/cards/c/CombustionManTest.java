@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CombustionMan.class, GarrukWildspeaker.class, GrizzlyBears.class})
+@CardUsed({CombustionMan.class, GarrukWildspeaker.class, GrizzlyBears.class, Mountain.class})
 class CombustionManTest extends BaseCardTest {
 
     @Test
@@ -46,6 +47,116 @@ class CombustionManTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void canDestroyNoncreaturePermanent() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        resolveDamageChoice(player2, false);
+
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void ownPermanentControllerMakesChoiceAndTakesDamage() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        resolveDamageChoice(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void acceptingPreventedDamageStillSavesPermanent() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        gd.preventAllDamageByCreatures = true;
+
+        queueAttackTrigger(combustionMan, target);
+        resolveDamageChoice(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void usesPowerAtResolutionInsteadOfPowerAtAttack() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        combustionMan.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        resolveDamageChoice(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertLife(player2, 13);
+    }
+
+    @Test
+    void zeroPowerAllowsControllerToSavePermanentWithoutDamage() {
+        Permanent combustionMan = addReadyCombustionMan();
+        combustionMan.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        resolveDamageChoice(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void sourceLeavingBattlefieldDoesNotRemoveDamageChoice() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        combustionMan.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, combustionMan));
+        resolveDamageChoice(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInGraveyard(player1, "Combustion Man");
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void removedTargetDoesNotOfferDamageChoice() {
+        Permanent combustionMan = addReadyCombustionMan();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        queueAttackTrigger(combustionMan, target);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertLife(player2, 20);
+    }
+
+    private void queueAttackTrigger(Permanent combustionMan, Permanent target) {
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(combustionMan);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(attackerIndex)));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+    }
+
+    private void resolveDamageChoice(Player controller, boolean accepted) {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(controller, accepted);
+        });
     }
 
     private Permanent addReadyCombustionMan() {

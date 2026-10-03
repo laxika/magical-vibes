@@ -33,7 +33,6 @@ class AvenWindreaderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Windreader");
 
         harness.passBothPriorities();
 
@@ -208,6 +207,55 @@ class AvenWindreaderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Windreader can activate its ability")
+    void activateWhileTappedAndSummoningSick() {
+        var windreader = harness.addToBattlefieldAndReturn(player1, new AvenWindreader());
+        windreader.tap();
+        windreader.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(windreader.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability reveals the top card at resolution, not at activation")
+    void revealUsesTopCardAtResolution() {
+        harness.addToBattlefield(player1, new AvenWindreader());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        var originalTop = new Werebear();
+        var nextCard = new Forest();
+        harness.setLibrary(player2, List.of(originalTop, nextCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gameLogContains("reveals")).isFalse();
+
+        harness.setLibrary(player2, List.of(nextCard, originalTop));
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(gameLogContains("reveals Werebear")).isFalse();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard, originalTop);
+    }
+
+    @Test
+    @DisplayName("Generic mana alone cannot pay the blue activation cost")
+    void activateWithoutBlueMana() {
+        harness.addToBattlefield(player1, new AvenWindreader());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
     }
 }
 

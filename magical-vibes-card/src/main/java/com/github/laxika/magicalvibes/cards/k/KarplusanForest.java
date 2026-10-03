@@ -21,6 +21,9 @@ import java.util.List;
 @CardRegistration(set = "DMU", collectorNumber = "250")
 @CardRegistration(set = "BLC", collectorNumber = "314")
 @CardRegistration(set = "M3C", collectorNumber = "351")
+@CardRegistration(set = "EOC", collectorNumber = "164")
+@CardRegistration(set = "C16", collectorNumber = "305")
+@CardRegistration(set = "DRC", collectorNumber = "163")
 public class KarplusanForest extends Card {
 
     public KarplusanForest() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeepchannelDuelist.class, CoralMerfolk.class, GrizzlyBears.class})
+@CardUsed({DeepchannelDuelist.class, CoralMerfolk.class, GrizzlyBears.class, MerrowCommerce.class})
 class DeepchannelDuelistTest extends BaseCardTest {
 
     @Test
@@ -83,7 +84,7 @@ class DeepchannelDuelistTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
@@ -93,8 +94,76 @@ class DeepchannelDuelistTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Can target and untap itself")
+    void untapsItselfAtEndStep() {
+        Permanent duelist = addDuelist(player1);
+        duelist.tap();
+
+        advanceToEndStep();
+        harness.handlePermanentChosen(player1, duelist.getId());
         harness.passBothPriorities();
+
+        assertThat(duelist.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A noncreature Merfolk permanent is a legal end-step target")
+    void canTargetKindredMerfolkEnchantment() {
+        addDuelist(player1);
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        commerce.tap();
+
+        advanceToEndStep();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(commerce.getId());
+    }
+
+    @Test
+    @DisplayName("An owned non-Merfolk creature is not a legal end-step target")
+    void cannotTargetControlledNonMerfolk() {
+        addDuelist(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToEndStep();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).doesNotContain(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Two Duelists boost each other")
+    void duelistsBoostEachOther() {
+        Permanent first = addDuelist(player1);
+        Permanent second = addDuelist(player1);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The untap trigger resolves after its source leaves the battlefield")
+    void untapsAfterSourceLeaves() {
+        Permanent duelist = addDuelist(player1);
+        Permanent merfolk = addMerfolk(player1);
+        merfolk.tap();
+
+        advanceToEndStep();
+        harness.handlePermanentChosen(player1, merfolk.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(duelist);
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(1);
     }
 
     private Permanent addDuelist(Player player) {

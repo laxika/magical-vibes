@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AvenFogbringer;
 import com.github.laxika.magicalvibes.cards.e.Envelop;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -81,12 +80,55 @@ class CunningWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Exiles Cunning Wish even with no cards outside the game")
+    void emptyOutsideGamePool() {
+        setSideboard();
+
+        CunningWish wish = castCunningWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
+    @Test
+    @DisplayName("Instants in exile are not outside the game")
+    void doesNotRetrieveExiledInstants() {
+        Card instant = new Envelop();
+        harness.setExile(player1, List.of(instant));
+        setSideboard();
+
+        CunningWish wish = castCunningWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(instant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(instant, wish);
+    }
+
+    @Test
+    @DisplayName("Reveals and takes exactly one eligible instant, including another Cunning Wish")
+    void choosesExactlyOneInstant() {
+        Card instant = new Envelop();
+        Card otherWish = new CunningWish();
+        setSideboard(instant, otherWish);
+
+        CunningWish wish = castCunningWish();
+        assertThat(pendingSearch().params().cards()).containsExactly(instant, otherWish);
+        choose(otherWish);
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherWish);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(instant);
+        assertThat(gameLogContains("reveals Cunning Wish")).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish).doesNotContain(otherWish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
     private CunningWish castCunningWish() {
         CunningWish wish = new CunningWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, wish, "{2}{U}");
         harness.passBothPriorities();
         return wish;
     }

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,14 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DemonWall.class, GrizzlyBears.class})
+@CardUsed({DemonWall.class})
 class DemonWallTest extends BaseCardTest {
 
     @Test
     @DisplayName("Demon Wall cannot attack while it has no counters")
     void cannotAttackWithoutCounters() {
         Permanent wall = addReadyDemonWall();
-        addOpponentBlocker();
         beginDeclareAttackers();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(wall))))
@@ -36,7 +34,6 @@ class DemonWallTest extends BaseCardTest {
     void canAttackWithAnyCounter() {
         Permanent wall = addReadyDemonWall();
         wall.setCounterCount(CounterType.CHARGE, 1);
-        addOpponentBlocker();
         beginDeclareAttackers();
 
         gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
@@ -56,11 +53,86 @@ class DemonWallTest extends BaseCardTest {
 
         assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
-        addOpponentBlocker();
         beginDeclareAttackers();
         gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
 
         assertThat(wall.isAttacking()).isTrue();
+    }
+
+    @Test
+    void cannotAttackAfterLastCounterIsRemoved() {
+        Permanent wall = addReadyDemonWall();
+        wall.setCounterCount(CounterType.CHARGE, 1);
+        wall.setCounterCount(CounterType.CHARGE, 0);
+        beginDeclareAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(wall))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void counterDoesNotOverrideSummoningSickness() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new DemonWall());
+        wall.setSummoningSick(true);
+        wall.setCounterCount(CounterType.CHARGE, 1);
+        beginDeclareAttackers();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(indexOf(wall))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new DemonWall());
+        wall.setSummoningSick(true);
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, indexOf(wall), null, null);
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    void menaceRejectsOneBlocker() {
+        Permanent wall = addReadyDemonWall();
+        wall.setCounterCount(CounterType.CHARGE, 1);
+        harness.addToBattlefield(player2, new DemonWall());
+        beginDeclareAttackers();
+        gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    void menaceAllowsTwoBlockers() {
+        Permanent wall = addReadyDemonWall();
+        wall.setCounterCount(CounterType.CHARGE, 1);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DemonWall());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DemonWall());
+        beginDeclareAttackers();
+        gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(first.isBlocking()).isTrue();
+        assertThat(second.isBlocking()).isTrue();
     }
 
     private Permanent addReadyDemonWall() {
@@ -69,15 +141,11 @@ class DemonWallTest extends BaseCardTest {
         return wall;
     }
 
-    private void addOpponentBlocker() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-    }
-
     private void beginDeclareAttackers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 
     private int indexOf(Permanent permanent) {

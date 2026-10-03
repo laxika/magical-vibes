@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "277")
 @CardRegistration(set = "PIP", collectorNumber = "805")
 @CardRegistration(set = "FIC", collectorNumber = "409")
+@CardRegistration(set = "C16", collectorNumber = "311")
 public class NomadOutpost extends Card {
 
     public NomadOutpost() {

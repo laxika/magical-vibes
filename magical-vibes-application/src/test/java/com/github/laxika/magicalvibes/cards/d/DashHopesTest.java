@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.k.KavuPredator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DashHopes.class, KavuPredator.class})
+@CardUsed({DashHopes.class, KavuPredator.class, EverybodyLives.class})
 class DashHopesTest extends BaseCardTest {
 
     @Test
@@ -77,7 +78,57 @@ class DashHopesTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Dash Hopes");
     }
 
-    private KavuPredator castTargetSpell() {
+    @Test
+    @DisplayName("Remaining players may still pay after Dash Hopes has been countered")
+    void bothPlayersMayPay() {
+        castTargetSpell();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInGraveyard(player2, "Dash Hopes");
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player1, "Kavu Predator");
+    }
+
+    @Test
+    @DisplayName("Skips an ineligible player but offers payment to the next player")
+    void skipsPlayerWithInsufficientLife() {
+        harness.setLife(player1, 4);
+        castTargetSpell();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 4);
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player1, "Kavu Predator");
+        harness.assertInGraveyard(player2, "Dash Hopes");
+    }
+
+    @Test
+    @DisplayName("Players who cannot lose life cannot pay to counter Dash Hopes")
+    void cannotPayWhenLifeLossIsProhibited() {
+        harness.castFromHand(player1, new EverybodyLives(), "{1}{W}");
+        harness.passBothPriorities();
+        castTargetSpell();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Kavu Predator");
+        harness.assertInGraveyard(player2, "Dash Hopes");
+    }
+
+    private void castTargetSpell() {
         KavuPredator predator = new KavuPredator();
         harness.castFromHand(player1, predator, "{1}{G}");
 
@@ -86,6 +137,5 @@ class DashHopesTest extends BaseCardTest {
 
         harness.passPriority(player1);
         harness.castInstant(player2, 0, predator.getId());
-        return predator;
     }
 }

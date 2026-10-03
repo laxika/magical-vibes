@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DispersingOrb.class, Island.class, ElvishWarrior.class})
 class DispersingOrbTest extends BaseCardTest {
@@ -21,8 +22,7 @@ class DispersingOrbTest extends BaseCardTest {
     void sacrificesPermanentAndReturnsTarget() {
         addOrb();
         Permanent sacrificeTarget = harness.addToBattlefieldAndReturn(player1, new Island());
-        harness.addToBattlefield(player2, new ElvishWarrior());
-        Permanent target = findPermanent(player2, "Elvish Warrior");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
         addAbilityMana();
 
         activate(target);
@@ -90,8 +90,7 @@ class DispersingOrbTest extends BaseCardTest {
     @DisplayName("The Orb itself may be sacrificed as the cost")
     void maySacrificeItself() {
         addOrb();
-        harness.addToBattlefield(player2, new ElvishWarrior());
-        Permanent target = findPermanent(player2, "Elvish Warrior");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
         addAbilityMana();
 
         activate(target);
@@ -99,6 +98,64 @@ class DispersingOrbTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Dispersing Orb");
         harness.assertInHand(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("The Orb can return itself by sacrificing another permanent")
+    void canReturnItself() {
+        Permanent orb = addOrb();
+        Permanent sacrificeTarget = harness.addToBattlefieldAndReturn(player1, new Island());
+        addAbilityMana();
+
+        activate(orb);
+        harness.handlePermanentChosen(player1, sacrificeTarget.getId());
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertOnBattlefield(player1, "Dispersing Orb");
+        harness.assertNotInHand(player1, "Dispersing Orb");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dispersing Orb");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(orb);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during the opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        addOrb();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        addAbilityMana();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passPriority(player2);
+
+        activate(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dispersing Orb");
+        harness.assertInHand(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the blue mana in the activation cost")
+    void cannotActivateWithoutBlueMana() {
+        addOrb();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> activate(target)).isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dispersing Orb");
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        harness.assertNotInGraveyard(player1, "Dispersing Orb");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
     }
 
     private Permanent addOrb() {

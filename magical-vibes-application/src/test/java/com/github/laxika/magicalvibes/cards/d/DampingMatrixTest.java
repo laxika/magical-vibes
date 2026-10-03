@@ -113,6 +113,58 @@ class DampingMatrixTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Also blocks the Matrix controller's non-mana abilities")
+    void blocksControllersAbilities() {
+        addDampingMatrix(player1);
+        harness.addToBattlefield(player1, new BottleGnomes());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated")
+                .hasMessageContaining("Damping Matrix");
+
+        harness.assertOnBattlefield(player1, "Bottle Gnomes");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not stop an ability activated before the Matrix entered")
+    void allowsAlreadyActivatedAbilityToResolve() {
+        harness.addToBattlefield(player1, new BottleGnomes());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+
+        addDampingMatrix(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 3);
+        harness.assertInGraveyard(player1, "Bottle Gnomes");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An animated land's non-mana ability is blocked while its mana ability remains usable")
+    void blocksLandAbilityAfterBecomingArtifactCreature() {
+        addDampingMatrix(player1);
+        addCreatureReady(player2, new StalkingStones());
+        harness.addMana(player2, ManaColor.COLORLESS, 12);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated")
+                .hasMessageContaining("Damping Matrix");
+
+        int manaBefore = gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS);
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS))
+                .isEqualTo(manaBefore + 1);
+    }
+
     private Permanent addDampingMatrix(Player player) {
         return harness.addToBattlefieldAndReturn(player, new DampingMatrix());
     }

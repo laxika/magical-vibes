@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
+import com.github.laxika.magicalvibes.cards.s.SkysovereignConsulFlagship;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Blizzard.class, SnowCoveredForest.class, AdarkarWastes.class,
-        KjeldoranSkyknight.class, BalduvianBears.class})
+        KjeldoranSkyknight.class, BalduvianBears.class, SkysovereignConsulFlagship.class})
 class BlizzardTest extends BaseCardTest {
 
     @Test
@@ -148,5 +149,63 @@ class BlizzardTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blizzard);
         harness.assertInGraveyard(player1, "Blizzard");
+    }
+
+    @Test
+    @DisplayName("An opponent's snow land does not enable casting")
+    void opponentsSnowLandDoesNotEnableCasting() {
+        harness.addToBattlefield(player2, new SnowCoveredForest());
+        harness.setHand(player1, List.of(new Blizzard()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A flying Vehicle that is not a creature untaps normally")
+    void noncreatureFlyingVehicleUntaps() {
+        harness.addToBattlefield(player1, new Blizzard());
+        Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new SkysovereignConsulFlagship());
+        vehicle.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(vehicle.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep costs six mana on the third upkeep")
+    void thirdUpkeepCostsSixMana() {
+        Permanent blizzard = harness.addToBattlefieldAndReturn(player1, new Blizzard());
+
+        for (int age = 1; age <= 3; age++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            assertThat(blizzard.getCounterCount(CounterType.AGE)).isEqualTo(age);
+            harness.addMana(player1, ManaColor.COLORLESS, age * 2);
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(blizzard);
+        }
+    }
+
+    @Test
+    @DisplayName("Fliers untap after Blizzard is sacrificed")
+    void flyingCreaturesUntapAfterBlizzardLeaves() {
+        harness.addToBattlefield(player1, new Blizzard());
+        Permanent flier = addCreatureReady(player1, new KjeldoranSkyknight());
+        flier.tap();
+
+        advanceToUpkeep(player1);
+        assertThat(flier.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Blizzard");
+
+        harness.performUntapStep(player1);
+
+        assertThat(flier.isTapped()).isFalse();
     }
 }

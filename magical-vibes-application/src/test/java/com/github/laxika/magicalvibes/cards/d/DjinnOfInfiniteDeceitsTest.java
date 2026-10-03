@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DjinnOfInfiniteDeceits.class, GrizzlyBears.class, HillGiant.class, KrenkoMobBoss.class})
@@ -60,5 +61,86 @@ class DjinnOfInfiniteDeceitsTest extends BaseCardTest {
                 player1, 0, 0, List.of(own.getId(), opponent.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("You can't activate this ability during combat.");
+    }
+
+    @Test
+    @DisplayName("Two creatures with the same controller can be targeted but do not exchange control")
+    void sameControllerTargetsDoNothing() {
+        addCreatureReady(player1, new DjinnOfInfiniteDeceits());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DjinnOfInfiniteDeceits());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DjinnOfInfiniteDeceits());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    @DisplayName("The Djinn can exchange itself and the targets can be supplied in reverse controller order")
+    void exchangesItselfWithOpponentTargetFirst() {
+        Permanent source = addCreatureReady(player1, new DjinnOfInfiniteDeceits());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DjinnOfInfiniteDeceits());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(opponent.getId(), source.getId()));
+        assertThat(source.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(source).doesNotContain(opponent);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponent).doesNotContain(source);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The exchange does nothing when one target leaves before resolution")
+    void missingTargetPreventsEntireExchange() {
+        Permanent source = addCreatureReady(player1, new DjinnOfInfiniteDeceits());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DjinnOfInfiniteDeceits());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DjinnOfInfiniteDeceits());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opponent.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        gd.playerGraveyards.get(player2.getId()).add(opponent.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source, own);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(own);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source leaves the battlefield")
+    void sourceLeavingDoesNotPreventExchange() {
+        Permanent source = addCreatureReady(player1, new DjinnOfInfiniteDeceits());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DjinnOfInfiniteDeceits());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DjinnOfInfiniteDeceits());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opponent.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponent).doesNotContain(own);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(own).doesNotContain(opponent);
+    }
+
+    @Test
+    @DisplayName("The two targets must be distinct creatures")
+    void rejectsDuplicateTargets() {
+        Permanent source = addCreatureReady(player1, new DjinnOfInfiniteDeceits());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(source.getId(), source.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -46,8 +46,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Pardic Lancer");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
@@ -91,8 +90,7 @@ class DawnOfTheDeadTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).hasSize(1);
 
@@ -119,11 +117,67 @@ class DawnOfTheDeadTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Pardic Lancer");
         harness.assertNotOnBattlefield(player1, "Pardic Lancer");
+        harness.assertLife(player1, 19);
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target is required even when you intend to decline the return")
+    void mustChooseTargetBeforeDecidingWhetherToReturnIt() {
+        Card creature = new PardicLancer();
+        harness.addToBattlefield(player1, new DawnOfTheDead());
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Neither ability triggers during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Card creature = new PardicLancer();
+        harness.addToBattlefield(player1, new DawnOfTheDead());
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Pardic Lancer");
+        harness.assertNotOnBattlefield(player1, "Pardic Lancer");
+    }
+
+    @Test
+    @DisplayName("Losing the return target does not stop the separate life-loss ability")
+    void lifeLossStillResolvesWhenReturnTargetLeavesGraveyard() {
+        Card creature = new PardicLancer();
+        harness.addToBattlefield(player1, new DawnOfTheDead());
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertNotOnBattlefield(player1, "Pardic Lancer");
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 }

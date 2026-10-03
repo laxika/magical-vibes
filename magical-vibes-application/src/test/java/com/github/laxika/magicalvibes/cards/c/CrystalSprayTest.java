@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,19 +23,17 @@ class CrystalSprayTest extends BaseCardTest {
     @Test
     @DisplayName("Changes a color word and draws a card")
     void changesColorWordAndDrawsCard() {
-        harness.addToBattlefield(player2, new CrimsonAcolyte());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrimsonAcolyte());
         harness.setHand(player1, List.of(new CrystalSpray()));
         harness.setLibrary(player1, List.of(new Plains()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Crimson Acolyte");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent target = findPermanent(player2, "Crimson Acolyte");
         assertThat(target.getTextReplacements()).containsExactly(new TextReplacement("red", "green", true));
         harness.assertInHand(player1, "Plains");
     }
@@ -80,18 +79,16 @@ class CrystalSprayTest extends BaseCardTest {
     @Test
     @DisplayName("The text change wears off at end of turn")
     void textChangeWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player2, new CrimsonAcolyte());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrimsonAcolyte());
         harness.setHand(player1, List.of(new CrystalSpray()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Crimson Acolyte");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent target = findPermanent(player2, "Crimson Acolyte");
         assertThat(target.getTextReplacements()).hasSize(1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -116,5 +113,67 @@ class CrystalSprayTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Replaces the color word in both printed protection and the activated ability")
+    void changesEveryColorWordInPrintedAbilities() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new CrimsonAcolyte());
+        harness.setHand(player1, List.of(new CrystalSpray()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, source, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, source, CardColor.RED)).isFalse();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getProtectionFromColorsUntilEndOfTurn()).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasProtectionFrom(gd, recipient, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Changing a basic land type changes the land's intrinsic mana ability")
+    void changedPlainsProducesBlueMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new CrystalSpray()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        harness.handleListChoice(player1, "PLAINS");
+        harness.handleListChoice(player1, "ISLAND");
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.assertInHand(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("A word absent from the target can be chosen and the card is still drawn")
+    void absentWordStillDrawsCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrimsonAcolyte());
+        harness.setHand(player1, List.of(new CrystalSpray()));
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.GREEN)).isFalse();
+        harness.assertInHand(player1, "Plains");
     }
 }

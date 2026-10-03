@@ -26,6 +26,6 @@ public class AnzragsRampage extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestToExile(
                         new ArtifactsPutIntoGraveyardFromBattlefieldThisTurn(),
-                        new CardTypePredicate(CardType.CREATURE), true, true)));
+                        new CardTypePredicate(CardType.CREATURE), true, true).withExileBeforeChoosing()));
     }
 }

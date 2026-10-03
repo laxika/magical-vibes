@@ -19,11 +19,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Decomposition.class, FeralShadow.class, IronTuskElephant.class})
 class DecompositionTest extends BaseCardTest {
 
-    private Permanent enchant(Permanent creature) {
-        Permanent aura = new Permanent(new Decomposition());
+    private void enchant(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Decomposition());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-        return aura;
     }
 
     @Test
@@ -120,5 +118,78 @@ class DecompositionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, elephant.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a black creature");
+    }
+
+    @Test
+    @DisplayName("The Aura controller's upkeep does not trigger the opposing creature's cumulative upkeep")
+    void auraControllersUpkeepDoesNotChargeOpponent() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        enchant(shadow);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shadow.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Two Decompositions grant separate cumulative upkeeps sharing the creature's age counters")
+    void multipleAurasShareAgeCounters() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        enchant(shadow);
+        enchant(shadow);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(shadow.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertLife(player2, 19);
+
+        harness.passBothPriorities();
+        assertThat(shadow.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(shadow);
+    }
+
+    @Test
+    @DisplayName("Decomposition also drains its controller when their own enchanted creature dies")
+    void ownEnchantedCreatureDeathDrainsItsController() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        enchant(shadow);
+
+        shadow.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Feral Shadow");
+        harness.assertInGraveyard(player1, "Decomposition");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Insufficient life cannot pay cumulative upkeep and the death ability still drains 2 life")
+    void insufficientLifeSacrificesWithoutPartialPayment() {
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+        enchant(shadow);
+        shadow.setCounterCount(CounterType.AGE, 3);
+        harness.setLife(player2, 3);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(shadow.getCounterCount(CounterType.AGE)).isEqualTo(4);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Feral Shadow");
+        harness.assertInGraveyard(player1, "Decomposition");
+        harness.assertLife(player2, 1);
+        harness.assertLife(player1, 20);
     }
 }

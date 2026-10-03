@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DefensiveManeuvers.class, ElvishWarrior.class, GlorySeeker.class, AvianChangeling.class})
+@CardUsed({DefensiveManeuvers.class, ElvishWarrior.class, GlorySeeker.class})
 class DefensiveManeuversTest extends BaseCardTest {
 
     @Test
@@ -35,6 +35,7 @@ class DefensiveManeuversTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(AvianChangeling.class)
     @DisplayName("A Changeling counts as the chosen creature type")
     void changelingCountsAsChosenType() {
         Permanent changeling = addCreatureReady(player2, new AvianChangeling());
@@ -74,6 +75,34 @@ class DefensiveManeuversTest extends BaseCardTest {
 
         assertThat(elf.getPowerModifier()).isZero();
         assertThat(elf.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature matches its second creature type")
+    void boostsCreatureMatchingItsSecondType() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent soldier = addCreatureReady(player2, new GlorySeeker());
+
+        castDefensiveManeuvers(player1);
+        harness.handleListChoice(player1, "WARRIOR");
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(7);
+        assertThat(soldier.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated resolutions add their toughness bonuses")
+    void bonusesFromRepeatedResolutionsStack() {
+        Permanent elf = addCreatureReady(player2, new ElvishWarrior());
+
+        castDefensiveManeuvers(player1);
+        harness.handleListChoice(player1, "ELF");
+        castDefensiveManeuvers(player1);
+        harness.handleListChoice(player1, "WARRIOR");
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(11);
     }
 
     private void castDefensiveManeuvers(Player caster) {

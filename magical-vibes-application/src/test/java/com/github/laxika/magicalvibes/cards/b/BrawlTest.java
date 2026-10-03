@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AlabasterWall;
 import com.github.laxika.magicalvibes.cards.c.CharmedGriffin;
 import com.github.laxika.magicalvibes.cards.c.CragSaurian;
 import com.github.laxika.magicalvibes.cards.c.CateranSlaver;
+import com.github.laxika.magicalvibes.cards.r.RamosianRally;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Brawl.class, AlabasterWall.class, CharmedGriffin.class, CragSaurian.class, CateranSlaver.class})
+@CardUsed({Brawl.class, AlabasterWall.class, CharmedGriffin.class, CragSaurian.class, CateranSlaver.class, RamosianRally.class})
 class BrawlTest extends BaseCardTest {
 
     @Test
@@ -71,13 +72,14 @@ class BrawlTest extends BaseCardTest {
     @DisplayName("The granted ability expires at end of turn")
     void grantedAbilityExpiresAtEndOfTurn() {
         addCreatureReady(player1, new CharmedGriffin());
+        Permanent target = addCreatureReady(player2, new AlabasterWall());
         castBrawl();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -89,6 +91,66 @@ class BrawlTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The granted tap ability cannot be activated by a summoning-sick creature")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = addCreatureReady(player1, new CharmedGriffin());
+        source.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new AlabasterWall());
+        castBrawl();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature can target itself with the granted ability")
+    void creatureCanDamageItself() {
+        Permanent source = addCreatureReady(player1, new CharmedGriffin());
+        castBrawl();
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Charmed Griffin");
+        harness.assertInGraveyard(player1, "Charmed Griffin");
+    }
+
+    @Test
+    @DisplayName("Damage uses the creature's power at resolution rather than activation")
+    void powerIsEvaluatedAtResolution() {
+        addCreatureReady(player1, new CharmedGriffin());
+        Permanent target = addCreatureReady(player2, new CateranSlaver());
+        castBrawl();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castFromHand(player1, new RamosianRally(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Cateran Slaver");
+    }
+
+    @Test
+    @DisplayName("The granted ability still deals damage after its source dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent source = addCreatureReady(player1, new CharmedGriffin());
+        Permanent target = addCreatureReady(player2, new AlabasterWall());
+        addCreatureReady(player2, new CharmedGriffin());
+        castBrawl();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, source.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Charmed Griffin");
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
 
     private void castBrawl() {

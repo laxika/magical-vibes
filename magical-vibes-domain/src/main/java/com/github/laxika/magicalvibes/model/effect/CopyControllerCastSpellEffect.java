@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,7 +44,10 @@ public record CopyControllerCastSpellEffect(
         boolean markSourceOncePerTurnOnAccept,
         boolean startingLoyaltyFromX,
         boolean permanentSpellToken,
-        boolean sacrificeAtEndStep
+        boolean sacrificeAtEndStep,
+        List<CardSubtype> additionalSubtypes,
+        Integer powerOverride,
+        Integer toughnessOverride
 ) implements CardEffect {
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
@@ -113,9 +118,20 @@ public record CopyControllerCastSpellEffect(
                 markSourceOncePerTurnOnAccept, false);
     }
 
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
+            Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean markSourceOncePerTurnOnAccept,
+            boolean startingLoyaltyFromX, boolean permanentSpellToken, boolean sacrificeAtEndStep) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
+                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept,
+                startingLoyaltyFromX, permanentSpellToken, sacrificeAtEndStep, List.of(), null, null);
+    }
+
     public CopyControllerCastSpellEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);
         additionalTypes = additionalTypes == null ? Set.of() : Set.copyOf(additionalTypes);
         removedSupertypes = removedSupertypes == null ? Set.of() : Set.copyOf(removedSupertypes);
+        additionalSubtypes = additionalSubtypes == null ? List.of() : List.copyOf(additionalSubtypes);
     }
 }

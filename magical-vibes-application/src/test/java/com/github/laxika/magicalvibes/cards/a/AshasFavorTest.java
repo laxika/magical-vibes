@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,21 +15,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AshasFavor.class, GrizzlyBears.class, FountainOfYouth.class})
 class AshasFavorTest extends BaseCardTest {
-
-    // ===== Resolving attaches to target =====
 
     @Test
     @DisplayName("Resolving Asha's Favor attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new AshasFavor()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -38,36 +37,28 @@ class AshasFavorTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Keywords =====
-
     @Test
     @DisplayName("Enchanted creature has flying, first strike, and vigilance")
     void enchantedCreatureHasKeywords() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new AshasFavor());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new AshasFavor());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isTrue();
     }
 
-    // ===== Effects stop when removed =====
-
     @Test
     @DisplayName("Creature loses all keywords when Asha's Favor is removed")
     void keywordsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new AshasFavor());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new AshasFavor());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.FLYING)).isTrue();
 
@@ -78,29 +69,59 @@ class AshasFavorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.VIGILANCE)).isFalse();
     }
 
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Asha's Favor does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
-        Permanent auraPerm = new Permanent(new AshasFavor());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new AshasFavor());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 
-    // ===== Targeting restriction =====
+    @Test
+    @DisplayName("Asha's Favor can enchant an opponent's creature and grants it all three keywords")
+    void canEnchantOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AshasFavor()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Asha's Favor");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Asha's Favor goes to the graveyard if its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AshasFavor()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof AshasFavor);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AshasFavor);
+    }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent with Asha's Favor")

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CaterwaulingBoggart;
+import com.github.laxika.magicalvibes.cards.t.Tarfire;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,9 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AuntiesHovel.class, Forest.class, CaterwaulingBoggart.class,
+        AmoeboidChangeling.class, Tarfire.class})
 class AuntiesHovelTest extends BaseCardTest {
-
-    // ===== Enters tapped (cannot reveal) =====
 
     @Test
     @DisplayName("Enters tapped when you have no Goblin card in hand")
@@ -25,13 +27,11 @@ class AuntiesHovelTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent land = findLand(player1);
         assertThat(land.isTapped()).isTrue();
     }
-
-    // ===== Reveal choice =====
 
     @Test
     @DisplayName("Revealing a Goblin lets it enter untapped")
@@ -40,7 +40,7 @@ class AuntiesHovelTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent land = findLand(player1);
@@ -54,14 +54,12 @@ class AuntiesHovelTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent land = findLand(player1);
         assertThat(land.isTapped()).isTrue();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for black mana produces one black")
@@ -85,12 +83,53 @@ class AuntiesHovelTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A changeling in hand can be revealed as a Goblin")
+    void entersUntappedWhenRevealingChangeling() {
+        AmoeboidChangeling changeling = new AmoeboidChangeling();
+        harness.setHand(player1, List.of(new AuntiesHovel(), changeling));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findLand(player1).isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(changeling);
+    }
+
+    @Test
+    @DisplayName("A noncreature Goblin card can be revealed and stays in hand")
+    void entersUntappedWhenRevealingKindredInstant() {
+        Tarfire tarfire = new Tarfire();
+        harness.setHand(player1, List.of(new AuntiesHovel(), tarfire));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findLand(player1).isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(tarfire);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin card cannot be revealed")
+    void entersTappedWhenOnlyOpponentHasGoblin() {
+        harness.setHand(player1, List.of(new AuntiesHovel()));
+        harness.setHand(player2, List.of(new CaterwaulingBoggart()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+    }
 
     private Permanent addLandReady(Player player) {
-        Permanent perm = new Permanent(new AuntiesHovel());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AuntiesHovel());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

@@ -689,6 +689,7 @@ public class CombatBlockService {
                 );
                 // Block triggers reference "that creature" but don't target — they can't fizzle
                 blockTrigger.setTriggeringPermanentId(attacker.getId());
+                blockTrigger.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, attacker.getId()));
                 blockTrigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
                 blockTrigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, attacker));
                 blockTrigger.setNonTargeting(true);
@@ -1022,6 +1023,7 @@ public class CombatBlockService {
                 needsAttackerTarget ? attacker.getId() : blocker.getId(),
                 blocker.getId());
         trigger.setTriggeringPermanentId(attacker.getId());
+        trigger.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, attacker.getId()));
         trigger.setNonTargeting(true);
         gameData.stack.add(trigger);
     }
@@ -2025,6 +2027,8 @@ public class CombatBlockService {
                     );
                     // "That creature" wording references a blocker without targeting it.
                     trigger.setNonTargeting(true);
+                    trigger.setTriggeringPermanentId(blocker.getId());
+                    trigger.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, blocker.getId()));
                     trigger.setCombatOpponentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, blocker));
                     trigger.setCombatOpponentToughnessAtTrigger(gameQueryService.getEffectiveToughness(gameData, blocker));
                     gameData.stack.add(trigger);
@@ -2731,9 +2735,7 @@ public class CombatBlockService {
                             gameData, blocker, requirement.blockerFilter())) {
                         continue;
                     }
-                    int usage = blockerUsage.getOrDefault(blockerIdx, 0);
-                    if (usage >= getMaxBlocksForCreature(gameData, blocker, defenderBattlefield)
-                            || !canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                    if (!canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
                             defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                         continue;
                     }

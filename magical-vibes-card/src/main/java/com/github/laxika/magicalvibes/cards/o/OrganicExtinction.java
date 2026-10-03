@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "76")
 @CardRegistration(set = "NEC", collectorNumber = "8")
 @CardRegistration(set = "NEC", collectorNumber = "43")
+@CardRegistration(set = "EOC", collectorNumber = "66")
 public class OrganicExtinction extends Card {
 
     public OrganicExtinction() {

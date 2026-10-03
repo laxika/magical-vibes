@@ -131,6 +131,37 @@ class CutTheTethersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Declining for one Spirit does not prevent paying for the next with colored mana")
+    void decliningThenPayingWithColoredMana() {
+        Permanent first = addCreatureReady(player2, new LanternKami());
+        Permanent second = addCreatureReady(player2, new LanternKami());
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        castCutTheTethers();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Lantern Kami");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId).containsExactly(second.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(first.getId()));
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Spirits in hand are unaffected when there are no Spirits on the battlefield")
+    void spiritsInHandAreUnaffected() {
+        harness.setHand(player2, List.of(new LanternKami()));
+        castCutTheTethers();
+
+        harness.assertInHand(player2, "Lantern Kami");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     /** Player 2 owns the Lantern Kami; player 1 takes control of it with Blind with Anger. */
     private Permanent stealPlayer2Spirit() {
         Permanent spirit = addCreatureReady(player2, new LanternKami());
@@ -138,8 +169,7 @@ class CutTheTethersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BlindWithAnger()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, spirit.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spirit.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(spirit.getId()));

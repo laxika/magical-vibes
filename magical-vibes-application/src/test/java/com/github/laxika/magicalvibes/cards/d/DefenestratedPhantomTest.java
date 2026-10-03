@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DefenestratedPhantom.class, Shock.class, DoomBlade.class})
+@CardUsed({DefenestratedPhantom.class, Shock.class, Murder.class, SoulSummons.class})
 class DefenestratedPhantomTest extends BaseCardTest {
 
     @Test
@@ -58,12 +60,87 @@ class DefenestratedPhantomTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new DoomBlade()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, phantom.getId());
+
+        harness.assertInGraveyard(player1, "Defenestrated Phantom");
+    }
+
+    @Test
+    @DisplayName("Ward still counters after the disguised creature turns face up")
+    void wardStillCountersAfterTurningFaceUp() {
+        Permanent phantom = castDisguisedPhantom();
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, phantom.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(phantom));
+        assertThat(phantom.isFaceDown()).isFalse();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Defenestrated Phantom");
+        harness.assertInGraveyard(player2, "Murder");
+    }
+
+    @Test
+    @DisplayName("Paying ward allows the opposing spell to resolve")
+    void payingWardAllowsShockToResolve() {
+        Permanent phantom = castDisguisedPhantom();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player2, 0, phantom.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Defenestrated Phantom");
+    }
+
+    @Test
+    @DisplayName("Ward does not trigger for its controller's spell")
+    void ownSpellDoesNotTriggerWard() {
+        Permanent phantom = castDisguisedPhantom();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, phantom.getId());
+
+        harness.assertInGraveyard(player1, "Defenestrated Phantom");
+    }
+
+    @Test
+    @CardUsed({DefenestratedPhantom.class, SoulSummons.class, Shock.class})
+    @DisplayName("Manifesting a disguise card does not grant ward")
+    void manifestedPhantomDoesNotHaveWard() {
+        harness.setHand(player1, List.of(new SoulSummons()));
+        harness.setLibrary(player1, List.of(new DefenestratedPhantom()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent phantom = findPermanent(player1, "Defenestrated Phantom");
+        assertThat(phantom.isManifested()).isTrue();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, phantom.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Defenestrated Phantom");
+    }
+
+    private Permanent castDisguisedPhantom() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DefenestratedPhantom()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Defenestrated Phantom");
     }
 }

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "274")
 @CardRegistration(set = "SLD", collectorNumber = "439")
 @CardRegistration(set = "C15", collectorNumber = "309")
+@CardRegistration(set = "C16", collectorNumber = "327")
 @CardRegistration(set = "DSC", collectorNumber = "300")
 @CardRegistration(set = "AFC", collectorNumber = "263")
 @CardRegistration(set = "C20", collectorNumber = "316")

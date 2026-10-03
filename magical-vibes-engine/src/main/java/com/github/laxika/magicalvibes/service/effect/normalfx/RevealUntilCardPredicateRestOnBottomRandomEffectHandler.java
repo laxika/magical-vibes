@@ -42,6 +42,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
     private final PredicateEvaluationService predicateEvaluationService;
     private final AttackLegalityService attackLegalityService;
     private final PlayerInputService playerInputService;
+    private final EquipSupport equipSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -102,7 +103,8 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
         gameLogService.append(gameData, GameLog.text(
                 playerName + " reveals " + revealedNames + " from the top of their library."));
 
-        boolean toBattlefield = typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD;
+        boolean toBattlefield = typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD
+                || typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT;
         Permanent permanent = null;
         boolean entryBlocked = foundCard != null && toBattlefield
                 && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, foundCard, Zone.LIBRARY);
@@ -127,6 +129,12 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             if (toBattlefield) {
                 permanent = new Permanent(foundCard, Zone.LIBRARY);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+                if (typedEffect.destination() == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT) {
+                    Permanent host = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                    if (host != null) {
+                        equipSupport.attachEquipment(gameData, permanent, host);
+                    }
+                }
                 gameLogService.append(gameData, GameLog.entersBattlefieldUnder(foundCard, playerName));
 
                 if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {

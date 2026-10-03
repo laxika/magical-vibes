@@ -23,7 +23,7 @@ class DazzlingReflectionTest extends BaseCardTest {
     @DisplayName("Gains life equal to the target creature's power immediately")
     void gainsLifeEqualToTargetCreaturePower() {
         harness.setLife(player1, 20);
-        Permanent target = addReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         castDazzlingReflection(target.getId());
 
@@ -34,7 +34,7 @@ class DazzlingReflectionTest extends BaseCardTest {
     @DisplayName("Prevents the target creature's next noncombat damage")
     void preventsTargetCreaturesNextNoncombatDamage() {
         harness.setLife(player1, 20);
-        Permanent pyromancer = addReady(player2, new ProdigalPyromancer());
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
         castDazzlingReflection(pyromancer.getId());
 
         harness.forceActivePlayer(player2);
@@ -49,7 +49,7 @@ class DazzlingReflectionTest extends BaseCardTest {
     @DisplayName("Prevents the target creature's next combat damage")
     void preventsTargetCreaturesNextCombatDamage() {
         harness.setLife(player1, 20);
-        Permanent attacker = addReady(player2, creatureWithPower(4));
+        Permanent attacker = addCreatureReady(player2, creatureWithPower(4));
         castDazzlingReflection(attacker.getId());
 
         attacker.setAttacking(true);
@@ -63,8 +63,8 @@ class DazzlingReflectionTest extends BaseCardTest {
     @DisplayName("A different creature's damage is not prevented and the shield remains")
     void doesNotPreventDamageFromDifferentCreature() {
         harness.setLife(player1, 20);
-        Permanent target = addReady(player2, creatureWithPower(4));
-        Permanent other = addReady(player2, creatureWithPower(2));
+        Permanent target = addCreatureReady(player2, creatureWithPower(4));
+        Permanent other = addCreatureReady(player2, creatureWithPower(2));
         castDazzlingReflection(target.getId());
 
         other.setAttacking(true);
@@ -86,19 +86,63 @@ class DazzlingReflectionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses the creature's power at resolution rather than casting")
+    void usesPowerAtResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DazzlingReflection()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        target.setPowerModifier(3);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    @DisplayName("An absent target gives no life and creates no prevention shield")
+    void absentTargetDoesNotResolve() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DazzlingReflection()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the first damage event is prevented, with no additional life gain")
+    void secondDamageEventIsNotPrevented() {
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setLife(player1, 20);
+        castDazzlingReflection(pyromancer.getId());
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        pyromancer.setTapped(false);
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
     private void castDazzlingReflection(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new DazzlingReflection()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private Card creatureWithPower(int power) {

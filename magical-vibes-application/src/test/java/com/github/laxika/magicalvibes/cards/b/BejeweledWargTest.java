@@ -55,8 +55,37 @@ class BejeweledWargTest extends BaseCardTest {
         assertThat(ownWolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void modeAndTargetAreChosenBeforeTriggerResolution() {
+        Permanent warg = addCreatureReady(player1, new BejeweledWarg());
+        warg.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on target Wolf you control");
+        harness.handlePermanentChosen(player1, warg.getId());
+        resolveAllTriggers();
+
+        assertThat(warg.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void counterModeCanTargetTheAttackingWargItself() {
+        Permanent warg = addCreatureReady(player1, new BejeweledWarg());
+        warg.setAttacking(true);
+
+        resolveCombatAndTrigger();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on target Wolf you control");
+        harness.handlePermanentChosen(player1, warg.getId());
+        resolveAllTriggers();
+
+        assertThat(warg.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -25,6 +25,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "534")
 @CardRegistration(set = "SLD", collectorNumber = "1143")
 @CardRegistration(set = "MOC", collectorNumber = "338")
+@CardRegistration(set = "DRC", collectorNumber = "119")
 public class SaheeliSublimeArtificer extends Card {
 
     public SaheeliSublimeArtificer() {

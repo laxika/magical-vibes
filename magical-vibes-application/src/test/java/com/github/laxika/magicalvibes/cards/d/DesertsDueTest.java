@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DesertsDueTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Gives target creature -2/-2 when its controller controls no Deserts")
+    @DisplayName("Gives target creature -2/-2 when the spell controller controls no Deserts")
     void givesBaseMinusTwoMinusTwo() {
         Permanent target = addCreatureReady(player2, new DuskdaleWurm());
         castDesertsDue(target);
@@ -58,14 +58,59 @@ class DesertsDueTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, java.util.List.of(new DesertsDue()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void ignoresOpponentsDesertsAndCanTargetOwnCreature() {
+        harness.addToBattlefield(player2, new DesertOfTheFervent());
+        Permanent target = addCreatureReady(player1, new DuskdaleWurm());
+
+        castDesertsDue(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    void countsDesertsAtResolutionAndDoesNotRecalculateAfterward() {
+        Permanent initialDesert = harness.addToBattlefieldAndReturn(player1, new DesertOfTheFervent());
+        Permanent target = addCreatureReady(player2, new DuskdaleWurm());
+        harness.setHand(player1, java.util.List.of(new DesertsDue()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(initialDesert);
+        harness.addToBattlefield(player1, new DesertOfTheFervent());
+        harness.addToBattlefield(player1, new DesertOfTheFervent());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+
+        harness.addToBattlefield(player1, new DesertOfTheFervent());
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void putsCreatureWithZeroToughnessIntoGraveyard() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new DesertOfTheFervent());
+        }
+        Permanent target = addCreatureReady(player2, new DuskdaleWurm());
+
+        castDesertsDue(target);
+
+        harness.assertNotOnBattlefield(player2, "Duskdale Wurm");
+        harness.assertInGraveyard(player2, "Duskdale Wurm");
     }
 
     private void castDesertsDue(Permanent target) {

@@ -19,6 +19,6 @@ public class AngelsGrace extends Card {
     public AngelsGrace() {
         addEffect(EffectSlot.SPELL, new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
                 new CantLoseGameEffect(),
-                new DamageLifeFloorEffect(1, LifeFloorCondition.ALWAYS))));
+                new DamageLifeFloorEffect(1, LifeFloorCondition.LIFE_AT_LEAST_FLOOR))));
     }
 }

@@ -101,4 +101,41 @@ class BurrentonBombardierTest extends BaseCardTest {
         harness.assertInHand(player1, "Burrenton Bombardier");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Reinforce requires a target before any costs are paid")
+    void reinforceRequiresTarget() {
+        harness.setHand(player1, List.of(new BurrentonBombardier()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Burrenton Bombardier");
+        harness.assertNotInGraveyard(player1, "Burrenton Bombardier");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reinforce accepts generic mana and places counters only on resolution")
+    void reinforceResolvesAfterCostsWithMixedMana() {
+        harness.setHand(player1, List.of(new BurrentonBombardier()));
+        Permanent targetCreature = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, targetCreature.getId());
+
+        harness.assertNotInHand(player1, "Burrenton Bombardier");
+        harness.assertInGraveyard(player1, "Burrenton Bombardier");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(targetCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }

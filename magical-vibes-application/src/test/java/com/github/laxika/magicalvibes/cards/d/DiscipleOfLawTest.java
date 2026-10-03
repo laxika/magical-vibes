@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.Acridian;
+import com.github.laxika.magicalvibes.cards.f.FieryMantle;
 import com.github.laxika.magicalvibes.cards.f.FireAnts;
 import com.github.laxika.magicalvibes.cards.s.ShowerOfSparks;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiscipleOfLaw.class, Acridian.class, FireAnts.class, ShowerOfSparks.class})
+@CardUsed({DiscipleOfLaw.class, Acridian.class, FireAnts.class, ShowerOfSparks.class, FieryMantle.class})
 class DiscipleOfLawTest extends BaseCardTest {
 
     @Test
@@ -66,8 +67,7 @@ class DiscipleOfLawTest extends BaseCardTest {
     @DisplayName("Protection from red prevents damage from red sources")
     void protectionFromRedPreventsDamage() {
         Permanent disciple = harness.addToBattlefieldAndReturn(player2, new DiscipleOfLaw());
-        Permanent fireAnts = harness.addToBattlefieldAndReturn(player1, new FireAnts());
-        fireAnts.setSummoningSick(false);
+        addCreatureReady(player1, new FireAnts());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -87,5 +87,54 @@ class DiscipleOfLawTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Disciple of Law");
         harness.assertInHand(player1, "Acridian");
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents even its controller's red Aura from targeting Disciple of Law")
+    void protectionFromRedPreventsOwnAuraTargeting() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DiscipleOfLaw());
+        harness.setHand(player1, List.of(new FieryMantle()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as an activation cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new DiscipleOfLaw()));
+        harness.setLibrary(player1, List.of(new Acridian()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Disciple of Law");
+        harness.assertNotInHand(player1, "Disciple of Law");
+        harness.assertNotInHand(player1, "Acridian");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Acridian");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and does not discard when the cost cannot be paid")
+    void cyclingCannotBeActivatedWithOnlyOneMana() {
+        harness.setHand(player1, List.of(new DiscipleOfLaw()));
+        harness.setLibrary(player1, List.of(new Acridian()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Disciple of Law");
+        harness.assertNotInGraveyard(player1, "Disciple of Law");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

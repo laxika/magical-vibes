@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HaveForDinner;
+import com.github.laxika.magicalvibes.cards.h.HopefulVigil;
+import com.github.laxika.magicalvibes.cards.c.CandyTrail;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DevouringSugarmaw.class, HaveForDinner.class})
+@CardUsed({DevouringSugarmaw.class, HaveForDinner.class, HopefulVigil.class, CandyTrail.class})
 class DevouringSugarmawTest extends BaseCardTest {
 
     @Test
@@ -72,6 +74,95 @@ class DevouringSugarmawTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(sugarmaw.isTapped()).isTrue();
+    }
+
+    @Test
+    void sacrificingNontokenArtifactLeavesSugarmawUntapped() {
+        Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
+        harness.addToBattlefield(player1, new CandyTrail());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Candy Trail");
+        harness.assertNotOnBattlefield(player1, "Candy Trail");
+        assertThat(sugarmaw.isTapped()).isFalse();
+    }
+
+    @Test
+    void sacrificingNontokenEnchantmentLeavesSugarmawUntapped() {
+        Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
+        harness.addToBattlefield(player1, new HopefulVigil());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Hopeful Vigil");
+        harness.assertNotOnBattlefield(player1, "Hopeful Vigil");
+        assertThat(sugarmaw.isTapped()).isFalse();
+    }
+
+    @Test
+    void sacrificingHumanTokenLeavesFoodAndSugarmawUntapped() {
+        castCreatureFaceAfterAdventure();
+        Permanent sugarmaw = findPermanent(player1, "Devouring Sugarmaw");
+        Permanent human = findPermanent(player1, "Human");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, human.getId());
+
+        harness.assertNotOnBattlefield(player1, "Human");
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(sugarmaw.isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotTriggerSugarmaw() {
+        Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(sugarmaw.isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentsArtifactCannotBeSacrificedForSugarmaw() {
+        Permanent sugarmaw = harness.addToBattlefieldAndReturn(player1, new DevouringSugarmaw());
+        harness.addToBattlefield(player2, new CandyTrail());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(sugarmaw.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Candy Trail");
+    }
+
+    @Test
+    void adventureFoodCanBeSacrificedToGainThreeLife() {
+        harness.setHand(player1, List.of(new DevouringSugarmaw()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.setLife(player1, 10);
+        Permanent food = findPermanent(player1, "Food");
+        int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(food);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, foodIndex, null, null);
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertOnBattlefield(player1, "Human");
     }
 
     private DevouringSugarmaw castCreatureFaceAfterAdventure() {

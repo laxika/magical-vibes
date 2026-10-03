@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.e.EnduringInnocence;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -18,23 +14,23 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CynicalLoner.class, GrizzlyBears.class})
+@CardUsed({CynicalLoner.class, EnduringInnocence.class})
 class CynicalLonerTest extends BaseCardTest {
 
     @Test
     void acceptedSurvivalSearchPutsCardIntoGraveyard() {
         Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
         loner.tap();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CynicalLoner()));
 
         advanceToPostcombatMain();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cynical Loner");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -42,21 +38,20 @@ class CynicalLonerTest extends BaseCardTest {
     void declinedSurvivalSearchLeavesLibraryUnchanged() {
         Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
         loner.tap();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CynicalLoner()));
 
         advanceToPostcombatMain();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertNotInGraveyard(player1, "Cynical Loner");
     }
 
     @Test
     void untappedLonerDoesNotTriggerSurvival() {
         harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CynicalLoner()));
 
         advanceToPostcombatMain();
 
@@ -66,14 +61,12 @@ class CynicalLonerTest extends BaseCardTest {
 
     @Test
     void cannotBeBlockedByGlimmer() {
-        Permanent blocker = new Permanent(glimmerCreature());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new EnduringInnocence());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        Permanent loner = new Permanent(new CynicalLoner());
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
         loner.setSummoningSick(false);
         loner.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(loner);
 
         prepareBlockers();
 
@@ -86,14 +79,12 @@ class CynicalLonerTest extends BaseCardTest {
 
     @Test
     void canBeBlockedByNonGlimmer() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CynicalLoner());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        Permanent loner = new Permanent(new CynicalLoner());
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
         loner.setSummoningSick(false);
         loner.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(loner);
 
         prepareBlockers();
 
@@ -104,14 +95,83 @@ class CynicalLonerTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private Card glimmerCreature() {
-        Card glimmer = new Card();
-        glimmer.setName("Glimmer");
-        glimmer.setType(CardType.CREATURE);
-        glimmer.setSubtypes(List.of(CardSubtype.GLIMMER));
-        glimmer.setPower(1);
-        glimmer.setToughness(1);
-        return glimmer;
+    @Test
+    void untappingBeforeResolutionStopsSurvivalSearch() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
+        loner.tap();
+        harness.setLibrary(player1, List.of(new CynicalLoner()));
+
+        advanceToPostcombatMain();
+        assertThat(gd.stack).hasSize(1);
+        loner.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Cynical Loner");
+    }
+
+    @Test
+    void survivalUsesTappedStatusWhenSourceLeavesBattlefield() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
+        loner.tap();
+        harness.setLibrary(player1, List.of(new EnduringInnocence()));
+
+        advanceToPostcombatMain();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, loner);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Enduring Innocence");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void acceptedSurvivalWithEmptyLibraryFinishesWithoutChoosingCard() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
+        loner.tap();
+        harness.setLibrary(player1, List.of());
+
+        advanceToPostcombatMain();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void survivalDoesNotTriggerDuringOpponentsSecondMainPhase() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player2, new CynicalLoner());
+        loner.tap();
+
+        advanceToPostcombatMain();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void survivalDoesNotTriggerDuringThirdMainPhase() {
+        Permanent loner = harness.addToBattlefieldAndReturn(player1, new CynicalLoner());
+        loner.tap();
+
+        advanceToPostcombatMain();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        gd.additionalCombatMainPhasePairs = 1;
+        harness.passBothPriorities();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void advanceToPostcombatMain() {

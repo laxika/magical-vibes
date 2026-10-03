@@ -120,10 +120,65 @@ class AlluringScentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A blocker entering after resolution must still block")
+    void blockerEnteringAfterResolutionMustBlock() {
+        Permanent attacker = addCreatureReady(player2, new GoldenBear());
+        castAlluringScent(attacker.getId());
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new GoldenBear());
+
+        prepareDeclareBlockers(player2);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An affected nonattacking creature imposes no blocking requirement")
+    void nonattackingTargetDoesNotForceBlocks() {
+        Permanent target = addCreatureReady(player2, new GoldenBear());
+        Permanent attacker = addCreatureReady(player2, new GoldenBear());
+        Permanent blocker = addCreatureReady(player1, new GoldenBear());
+        castAlluringScent(target.getId());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blockers may split between two affected attackers")
+    void blockersMaySplitBetweenAffectedAttackers() {
+        Permanent attacker1 = addCreatureReady(player2, new GoldenBear());
+        Permanent attacker2 = addCreatureReady(player2, new GoldenBear());
+        Permanent blocker1 = addCreatureReady(player1, new GoldenBear());
+        Permanent blocker2 = addCreatureReady(player1, new GoldenBear());
+        castAlluringScent(attacker1.getId());
+        castAlluringScent(attacker2.getId());
+        attacker1.setAttacking(true);
+        attacker2.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(blocker1.isBlocking()).isTrue();
+        assertThat(blocker2.isBlocking()).isTrue();
+    }
     private void castAlluringScent(UUID targetId) {
         prepareAlluringScent();
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     private void prepareAlluringScent() {

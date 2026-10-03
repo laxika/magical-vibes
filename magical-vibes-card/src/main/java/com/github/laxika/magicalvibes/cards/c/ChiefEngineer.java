@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "47")
+@CardRegistration(set = "C16", collectorNumber = "86")
 public class ChiefEngineer extends Card {
 
     public ChiefEngineer() {

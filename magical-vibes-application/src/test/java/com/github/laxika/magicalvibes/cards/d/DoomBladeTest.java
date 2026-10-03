@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MassOfGhouls;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.w.WarpathGhoul;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DoomBlade.class, BottleGnomes.class, GrizzlyBears.class, MassOfGhouls.class})
+@CardUsed({DoomBlade.class, Ornithopter.class, RuneclawBear.class, WarpathGhoul.class, HowlingMine.class, DarksteelColossus.class})
 class DoomBladeTest extends BaseCardTest {
 
     
@@ -28,7 +31,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Doom Blade targeting a nonblack creature puts it on stack")
     void castingPutsOnStack() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -39,7 +42,6 @@ class DoomBladeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Doom Blade");
         assertThat(entry.getTargetId()).isEqualTo(bears.getId());
     }
 
@@ -47,9 +49,9 @@ class DoomBladeTest extends BaseCardTest {
     @DisplayName("Cannot target a black creature")
     void cannotTargetBlackCreature() {
         // Add a nonblack creature as valid target so spell is playable
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
 
-        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
+        Permanent blackCreature = harness.addToBattlefieldAndReturn(player2, new WarpathGhoul());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -62,7 +64,7 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an artifact creature (unlike Terror)")
     void canTargetArtifactCreature() {
-        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -77,23 +79,22 @@ class DoomBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Doom Blade destroys target creature and moves it to graveyard")
     void resolvingDestroysTargetCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
         harness.assertInGraveyard(player1, "Doom Blade");
     }
 
     @Test
     @DisplayName("Doom Blade fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -105,5 +106,95 @@ class DoomBladeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Doom Blade");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by the caster")
+    void destroysOwnCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Doom Blade");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreature() {
+        harness.addToBattlefield(player2, new RuneclawBear());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("A creature that gains black before resolution becomes an illegal target")
+    void targetGainingBlackSurvives() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.inMutationScope(() -> bears.getGrantedColors().add(CardColor.BLACK));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Doom Blade");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Doom Blade allows regeneration")
+    void regenerationPreventsDestruction() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        bears.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player2, "Runeclaw Bear");
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Doom Blade");
+    }
+
+    @Test
+    @DisplayName("Destroys a colorless artifact creature")
+    void destroysArtifactCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertInGraveyard(player1, "Doom Blade");
+    }
+
+    @Test
+    @DisplayName("An indestructible creature can be targeted but survives")
+    void indestructibleCreatureSurvives() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DarksteelColossus());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player2, "Darksteel Colossus");
+        harness.assertNotInGraveyard(player2, "Darksteel Colossus");
+        harness.assertInGraveyard(player1, "Doom Blade");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }

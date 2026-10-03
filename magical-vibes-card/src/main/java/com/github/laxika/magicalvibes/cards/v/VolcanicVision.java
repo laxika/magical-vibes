@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "DTK", collectorNumber = "167")
 @CardRegistration(set = "DDS", collectorNumber = "19")
 @CardRegistration(set = "C21", collectorNumber = "182")
+@CardRegistration(set = "C16", collectorNumber = "137")
 public class VolcanicVision extends Card {
 
     public VolcanicVision() {

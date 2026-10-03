@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
@@ -114,6 +116,7 @@ public class TurnCleanupService {
         gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
+        expirePhasingRestrictionsAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
                 gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
@@ -138,6 +141,17 @@ public class TurnCleanupService {
         for (ExpireControlAtEndOfNextTurn expiration : expirations) {
             gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
         }
+    }
+
+    /** Releases Teferi's mass phase-out restriction after the controller's next turn ends. */
+    private void expirePhasingRestrictionsAtEndOfNextTurn(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            return;
+        }
+        gameData.drainDelayedActions(PhasedOutUntilEndOfNextTurn.class,
+                action -> activePlayerId.equals(action.controllerId())
+                        && gameData.turnNumber > action.registeredTurnNumber());
     }
 
     /**
@@ -347,6 +361,7 @@ public class TurnCleanupService {
         gameData.clearDelayedActions(DelayedWatchedCreatureAttack.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
         gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamage.class);
+        gameData.clearDelayedActions(DelayedControllerDamageMultiplication.class);
         gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
         gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
         gameData.clearDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class);
@@ -373,6 +388,7 @@ public class TurnCleanupService {
         gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
+        gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
@@ -392,6 +408,7 @@ public class TurnCleanupService {
         gameData.creaturesCantAttackThisTurn = false;
         gameData.creaturesCantAttackThisCombat = false;
         gameData.playersWhoCantGainLifeThisTurn.clear();
+        gameData.playersWhoCantLoseLifeThisTurn.clear();
         gameData.combatDamageToCreaturesDoublingsThisTurn = 0;
         gameData.controllerDamageDoublingsThisTurn.clear();
         gameData.permanentDamageDoublingsThisTurn.clear();
@@ -567,6 +584,7 @@ public class TurnCleanupService {
                 !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
         gameData.exileCastPermissionsUntilEndOfTurn.clear();
         gameData.foretoldCardCastPermissionsThisTurn.clear();
+        gameData.playersWhoForetoldThisTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;

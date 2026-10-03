@@ -14,8 +14,8 @@ public class AcrobaticCheerleader extends Card {
 
     public AcrobaticCheerleader() {
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
-                new SurvivalTriggerEffect(new ConditionalEffect(
-                        new SourceIsTapped(),
-                        new PutCountersOnSelfEffect(CounterType.FLYING))));
+                new ConditionalEffect(new SourceIsTapped(),
+                        new com.github.laxika.magicalvibes.model.effect.OnceOnlyTriggerEffect(
+                                new PutCountersOnSelfEffect(CounterType.FLYING))));
     }
 }

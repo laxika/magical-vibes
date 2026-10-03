@@ -6,7 +6,17 @@ package com.github.laxika.magicalvibes.model.effect;
  * a turn and skips subsequent events for that source until the turn clears. A keyed wrapper can
  * track multiple independent once-per-turn abilities on the same source.
  */
-public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key) implements CardEffect {
+public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
+                                      boolean firstTokenCreation) implements CardEffect {
+
+    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key) {
+        this(wrapped, markOnAcceptance, key, false);
+    }
+
+    /** Triggers for the controller's first token creation event, including events before entry. */
+    public static OncePerTurnTriggerEffect firstTokenCreation(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, null, true);
+    }
 
     @Override
     public TargetSpec targetSpec() {

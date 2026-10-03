@@ -50,8 +50,9 @@ class DeepAnalysisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
-                harness.getPermanentId(player2, "Grizzly Bears")))
+        var creatureId = harness.getPermanentId(player2, "Hydromorph Guardian");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -72,5 +73,60 @@ class DeepAnalysisTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Deep Analysis");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Deep Analysis"));
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not pay the flashback life cost")
+    void normalCastDoesNotPayLife() {
+        harness.setHand(player1, List.of(new DeepAnalysis()));
+        harness.setLibrary(player1, List.of(new DeepAnalysis(), new DeepAnalysis()));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Deep Analysis");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be cast with fewer than three life")
+    void flashbackRequiresEnoughLife() {
+        harness.setGraveyard(player1, List.of(new DeepAnalysis()));
+        harness.setLife(player1, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot pay flashback life cost");
+
+        harness.assertLife(player1, 2);
+        harness.assertInGraveyard(player1, "Deep Analysis");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback pays life when cast, before the spell resolves")
+    void flashbackPaysLifeBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new DeepAnalysis()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new DeepAnalysis(), new DeepAnalysis()));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 7);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.assertLife(player1, 7);
     }
 }

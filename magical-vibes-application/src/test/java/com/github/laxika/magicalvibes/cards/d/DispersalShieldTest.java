@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Stomp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DispersalShield.class, Blaze.class, GiantSpider.class, GrizzlyBears.class,
-        Ornithopter.class, SerraAngel.class})
+        Ornithopter.class, SerraAngel.class, BonecrusherGiant.class, Stomp.class})
 class DispersalShieldTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class DispersalShieldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spell.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Dispersal Shield");
@@ -50,8 +51,7 @@ class DispersalShieldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spell.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Serra Angel");
@@ -86,8 +86,7 @@ class DispersalShieldTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spell.getId());
 
         harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertInGraveyard(player2, "Dispersal Shield");
@@ -107,10 +106,67 @@ class DispersalShieldTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 3, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spell.getId());
 
         harness.assertInGraveyard(player1, "Blaze");
         harness.assertInGraveyard(player2, "Dispersal Shield");
+    }
+
+    @Test
+    @DisplayName("Does not use opponents' permanents to determine the threshold")
+    void ignoresOpponentsPermanents() {
+        harness.addToBattlefield(player1, new SerraAngel());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.castFromHand(player1, spell, "{1}{G}");
+        harness.setHand(player2, List.of(new DispersalShield()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Dispersal Shield");
+    }
+
+    @Test
+    @DisplayName("Does not counter an X spell whose announced mana value exceeds the threshold")
+    void doesNotCounterXSpellAboveThreshold() {
+        harness.addToBattlefield(player2, new GiantSpider());
+        Blaze spell = new Blaze();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setHand(player2, List.of(new DispersalShield()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, 4, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Blaze");
+        harness.assertInGraveyard(player2, "Dispersal Shield");
+    }
+
+    @Test
+    @DisplayName("Uses the Adventure spell's mana value rather than its permanent face's mana value")
+    void countersAdventureUsingAdventureManaValue() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        BonecrusherGiant spell = new BonecrusherGiant();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new DispersalShield()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        harness.assertInGraveyard(player1, "Bonecrusher Giant");
+        harness.assertInGraveyard(player2, "Dispersal Shield");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

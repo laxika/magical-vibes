@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -109,5 +110,52 @@ class DeepwoodLegateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Deepwood Legate");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate and expire at end of turn")
+    void repeatedBoostsExpireAtEndOfTurn() {
+        Permanent legate = harness.addToBattlefieldAndReturn(player1, new DeepwoodLegate());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, legate)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, legate)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, legate)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, legate)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The alternate cost does not allow casting during combat")
+    void alternateCostDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DeepwoodLegate()));
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The land condition is not checked again when the spell resolves")
+    void alternateCostConditionOnlyNeededWhenCasting() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DeepwoodLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Deepwood Legate");
     }
 }

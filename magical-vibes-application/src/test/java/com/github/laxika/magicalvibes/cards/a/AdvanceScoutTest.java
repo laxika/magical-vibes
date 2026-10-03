@@ -25,7 +25,7 @@ class AdvanceScoutTest extends BaseCardTest {
         Permanent otherCreature = addCreatureReady(player2, new MoggFanatic());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
@@ -39,11 +39,10 @@ class AdvanceScoutTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new MoggFanatic());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
@@ -56,8 +55,57 @@ class AdvanceScoutTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new LotusPetal());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new AdvanceScout());
+        scout.setSummoningSick(true);
+        scout.tap();
+        Permanent target = addCreatureReady(player1, new MoggFanatic());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(scout.isTapped()).isTrue();
+    }
+
+    @Test
+    void canActivateRepeatedlyForDifferentCreatures() {
+        Permanent scout = addCreatureReady(player1, new AdvanceScout());
+        Permanent first = addCreatureReady(player1, new MoggFanatic());
+        Permanent second = addCreatureReady(player2, new MoggFanatic());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(scout.isTapped()).isFalse();
+    }
+
+    @Test
+    void abilityResolvesAfterScoutLeavesBattlefield() {
+        Permanent scout = addCreatureReady(player1, new AdvanceScout());
+        Permanent target = addCreatureReady(player1, new MoggFanatic());
+        addCreatureReady(player1, new MoggFanatic());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 2, null, scout.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scout);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
     }
 }

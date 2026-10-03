@@ -1,12 +1,18 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AllIsDust;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartbeatOfSpring;
 import com.github.laxika.magicalvibes.cards.m.MoxOpal;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.m.Meteorite;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
 import com.github.laxika.magicalvibes.cards.o.OmegaMyr;
+import com.github.laxika.magicalvibes.cards.s.SoulSculptor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,13 +28,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         ChaoticTransformation.class,
+        AllIsDust.class,
+        Bitterblossom.class,
+        CombatResearch.class,
         Forest.class,
         FountainOfYouth.class,
         GrizzlyBears.class,
         HeartbeatOfSpring.class,
         MoxOpal.class,
+        MarchOfTheMachines.class,
+        MindStone.class,
+        Meteorite.class,
         NicolBolasPlaneswalker.class,
-        OmegaMyr.class
+        OmegaMyr.class,
+        SoulSculptor.class
 })
 class ChaoticTransformationTest extends BaseCardTest {
 
@@ -52,9 +65,8 @@ class ChaoticTransformationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChaoticTransformation()));
         addManaForChaoticTransformation();
 
-        harness.castSorcery(player1, 0,
+        harness.castAndResolveSorcery(player1, 0,
                 List.of(artifact.getId(), creature.getId(), enchantment.getId(), planeswalker.getId(), land.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactlyInAnyOrder(artifactCard, creatureCard, enchantmentCard, planeswalkerCard, landCard);
@@ -73,8 +85,7 @@ class ChaoticTransformationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChaoticTransformation()));
         addManaForChaoticTransformation();
 
-        harness.castSorcery(player1, 0, List.of(artifactCreature.getId(), artifactCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(artifactCreature.getId(), artifactCreature.getId()));
 
         harness.assertNotOnBattlefield(player2, "Omega Myr");
         assertThat(countPermanents(player2, "Mox Opal")).isEqualTo(1);
@@ -100,11 +111,164 @@ class ChaoticTransformationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChaoticTransformation()));
         addManaForChaoticTransformation();
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void snapshotsAllTargetTypesBeforeAnyTargetLeavesTheBattlefield() {
+        Permanent animation = harness.addToBattlefieldAndReturn(player2, new MarchOfTheMachines());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Card replacementCreature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(new HeartbeatOfSpring(), replacementCreature));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(animation.getId(), artifact.getId()));
+
+        harness.assertOnBattlefield(player2, "Heartbeat of Spring");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(animation.getCard(), artifact.getCard());
+    }
+
+    @Test
+    void controllerChoosesReplacementOrderForMultipleExiledPermanents() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new OmegaMyr(), new GrizzlyBears(), new MoxOpal()));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(artifact.getId(), creature.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(artifact.getCard(), creature.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void stopsAtSharedKindredTypeEvenWhenTheRevealedCardCannotEnterTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Bitterblossom());
+        Card kindredSorcery = new AllIsDust();
+        Card enchantment = new HeartbeatOfSpring();
+        harness.setLibrary(player2, List.of(kindredSorcery, enchantment));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(kindredSorcery, enchantment);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+    }
+
+    @Test
+    void revealedAuraEntersAttachedToAChosenLegalCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HeartbeatOfSpring());
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new CombatResearch()));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, host.getId());
+        harness.assertOnBattlefield(player2, "Combat Research");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Combat Research"))
+                .singleElement().satisfies(p -> assertThat(p.getAttachedTo()).isEqualTo(host.getId()));
+    }
+
+    @Test
+    void shufflesAllRevealedCardsBackWhenThereIsNoMatchingCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card land = new Forest();
+        Card sorcery = new ChaoticTransformation();
+        harness.setLibrary(player2, List.of(land, sorcery));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(land, sorcery);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+    }
+
+    @Test
+    void exilesTheTargetEvenWhenItsControllersLibraryIsEmpty() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+    }
+
+    @Test
+    void eachControllerUsesTheirOwnLibrary() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new MoxOpal()));
+        harness.setLibrary(player2, List.of(new OmegaMyr()));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(artifact.getId(), creature.getId()));
+
+        harness.assertOnBattlefield(player1, "Mox Opal");
+        harness.assertOnBattlefield(player2, "Omega Myr");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(artifact.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void creatureTargetBecomesIllegalWhenItBecomesOnlyAnEnchantment() {
+        addCreatureReady(player2, new SoulSculptor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card libraryCard = new HeartbeatOfSpring();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castSorcery(player1, 0, List.of(target.getId()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Chaotic Transformation");
+    }
+
+    @Test
+    void revealedNoncreatureArtifactTriggersItsEnterAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setLibrary(player2, List.of(new Meteorite()));
+        harness.setHand(player1, List.of(new ChaoticTransformation()));
+        addManaForChaoticTransformation();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(target.getId()));
+
+        harness.assertOnBattlefield(player2, "Meteorite");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
     }
 
     private void addManaForChaoticTransformation() {

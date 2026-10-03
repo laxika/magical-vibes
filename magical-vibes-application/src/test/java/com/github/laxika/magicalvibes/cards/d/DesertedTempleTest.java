@@ -79,4 +79,54 @@ class DesertedTempleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+
+    @Test
+    @DisplayName("An untapped land can be targeted and tapped for mana before resolution")
+    void untappedTargetCanProduceManaBeforeResolution() {
+        Permanent temple = harness.addToBattlefieldAndReturn(player1, new DesertedTemple());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.tapPermanent(player1, 1);
+        assertThat(forest.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untapping a land that is already untapped still pays the activation costs")
+    void alreadyUntappedLandRemainsUntapped() {
+        Permanent temple = harness.addToBattlefieldAndReturn(player1, new DesertedTemple());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Temple cannot activate its untap ability")
+    void cannotActivateUntapAbilityWhileTapped() {
+        Permanent temple = harness.addToBattlefieldAndReturn(player1, new DesertedTemple());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, temple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(temple.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }

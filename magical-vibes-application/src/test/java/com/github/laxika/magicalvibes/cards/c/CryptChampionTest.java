@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.o.OcularHalo;
 import com.github.laxika.magicalvibes.cards.r.RakdosIckspitter;
 import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -113,14 +112,61 @@ class CryptChampionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Crypt Champion");
     }
 
+    @Test
+    @DisplayName("Survives with red mana spent even when both graveyards are empty")
+    void survivesWithRedManaAndEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        castCryptChampion(true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Crypt Champion");
+        harness.assertNotInGraveyard(player1, "Crypt Champion");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still returns creatures and sacrifices the Champion")
+    void enteringWithoutBeingCastReturnsCreaturesAndSacrificesChampion() {
+        Card ownCreature = new RakdosIckspitter();
+        Card opponentCreature = new MinisterOfImpediments();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(opponentCreature));
+
+        harness.enterBattlefieldAndReturn(player1, new CryptChampion());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, ownCreature.getName()).getCard()).isSameAs(ownCreature);
+        assertThat(findPermanent(player2, opponentCreature.getName()).getCard()).isSameAs(opponentCreature);
+        harness.assertNotOnBattlefield(player1, "Crypt Champion");
+        harness.assertInGraveyard(player1, "Crypt Champion");
+    }
+
+    @Test
+    @DisplayName("The return and sacrifice abilities resolve separately with priority between them")
+    void enterAbilitiesResolveSeparately() {
+        Card ownCreature = new RakdosIckspitter();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of());
+
+        castCryptChampion(false);
+        harness.passBothPriorities();
+
+        boolean championStillOnBattlefield = gd.playerBattlefields.get(player1.getId()).stream()
+                .anyMatch(permanent -> permanent.getCard() instanceof CryptChampion);
+        boolean creatureStillInGraveyard = gd.playerGraveyards.get(player1.getId()).contains(ownCreature);
+        assertThat(championStillOnBattlefield || creatureStillInGraveyard).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, ownCreature.getName()).getCard()).isSameAs(ownCreature);
+        harness.assertNotOnBattlefield(player1, "Crypt Champion");
+        harness.assertInGraveyard(player1, "Crypt Champion");
+    }
+
     private void castCryptChampion(boolean spendRedMana) {
-        harness.setHand(player1, List.of(new CryptChampion()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, spendRedMana ? 2 : 3);
-        if (spendRedMana) {
-            harness.addMana(player1, ManaColor.RED, 1);
-        }
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CryptChampion(), spendRedMana ? "{2}{B}{R}" : "{3}{B}");
         harness.passBothPriorities();
     }
 }

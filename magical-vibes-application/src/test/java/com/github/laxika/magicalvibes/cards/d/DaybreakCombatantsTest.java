@@ -65,15 +65,48 @@ class DaybreakCombatantsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can be cast without a creature to target")
+    @DisplayName("Can be cast onto an empty battlefield and target itself with its ETB")
     void castWithoutTarget() {
-        harness.setHand(player1, List.of(new DaybreakCombatants()));
-        addManaForDaybreakCombatants();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DaybreakCombatants(), "{2}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Daybreak Combatants");
+        Permanent combatants = findPermanent(player1, "Daybreak Combatants");
+        harness.handlePermanentChosen(player1, combatants.getId());
+        harness.passBothPriorities();
+
+        assertThat(combatants.getEffectivePower()).isEqualTo(4);
+        assertThat(combatants.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can attack the turn it enters with its self-targeted boost")
+    void canAttackImmediately() {
+        harness.castFromHand(player1, new DaybreakCombatants(), "{2}{R}");
+        harness.passBothPriorities();
+        Permanent combatants = findPermanent(player1, "Daybreak Combatants");
+        harness.handlePermanentChosen(player1, combatants.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+
+        assertThat(combatants.isTapped()).isTrue();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("ETB still boosts its target if Daybreak Combatants leaves before resolution")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castDaybreakCombatants(bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

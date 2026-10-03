@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.p.PreyUpon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,8 +28,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BellowingFiend.class, ChandraHopesBeacon.class, GrizzlyBears.class, HillGiant.class,
-        InvasionOfInnistrad.class, PreyUpon.class})
+@CardUsed({BellowingFiend.class, ChandraHopesBeacon.class, GrizzlyBears.class, AirElemental.class,
+        InvasionOfInnistrad.class, PreyUpon.class, WindDrake.class, RayOfCommand.class})
 class BellowingFiendTest extends BaseCardTest {
 
     @Test
@@ -37,7 +40,7 @@ class BellowingFiendTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 30);
 
-        blockAttacker(player2, new GrizzlyBears(), 0);
+        blockAttacker(player2, new WindDrake(), 0);
 
         resolveCombat();
         resolveAllTriggers();
@@ -108,7 +111,7 @@ class BellowingFiendTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        blockAttacker(player2, new HillGiant(), 0);
+        blockAttacker(player2, new AirElemental(), 0);
 
         resolveCombat();
         resolveAllTriggers();
@@ -117,8 +120,33 @@ class BellowingFiendTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Bellowing Fiend"));
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Hill Giant"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof AirElemental);
+    }
+
+    @Test
+    @DisplayName("Uses the damaged creature's current controller when the trigger resolves")
+    void followsDamagedCreatureAfterControlChanges() {
+        Permanent fiend = addCreatureReady(player1, new BellowingFiend());
+        fiend.setAttacking(true);
+        blockAttacker(player2, new AirElemental(), 0);
+        Permanent elemental = findPermanent(player2, "Air Elemental");
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player1, 0, elemental.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elemental);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     /**
@@ -176,10 +204,8 @@ class BellowingFiendTest extends BaseCardTest {
 
     /** Adds {@code blockerCard} to {@code blocker}'s battlefield blocking the attacker at {@code attackerIndex}. */
     private void blockAttacker(Player blocker, Card blockerCard, int attackerIndex) {
-        Permanent perm = new Permanent(blockerCard);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(blocker, blockerCard);
         perm.setBlocking(true);
         perm.addBlockingTarget(attackerIndex);
-        gd.playerBattlefields.get(blocker.getId()).add(perm);
     }
 }

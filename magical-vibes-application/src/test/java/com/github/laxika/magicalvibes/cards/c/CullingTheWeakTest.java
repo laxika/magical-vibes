@@ -109,6 +109,27 @@ class CullingTheWeakTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(counterspell);
     }
 
+    @Test
+    void canSacrificeTappedCreatureWithoutSacrificingOtherCreatures() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Carnophage());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new Carnophage());
+        sacrifice.setTapped(true);
+        harness.setHand(player1, List.of(new CullingTheWeak()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrifice.getOriginalCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(survivor);
+    }
+
     private Permanent setupAndCast() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Carnophage());
 

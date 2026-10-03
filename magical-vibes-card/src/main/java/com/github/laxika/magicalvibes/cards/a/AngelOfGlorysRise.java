@@ -25,6 +25,7 @@ public class AngelOfGlorysRise extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.CREATURE), new CardSubtypePredicate(CardSubtype.HUMAN))))
                 .returnAll(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

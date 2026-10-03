@@ -95,6 +95,7 @@ public class GraveyardReturnSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final GraveyardService graveyardService;
@@ -107,6 +108,7 @@ public class GraveyardReturnSupport {
     private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final MakeChosenPermanentAttackingEffectHandler makeChosenPermanentAttackingEffectHandler;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -378,6 +380,10 @@ public class GraveyardReturnSupport {
         if (effect.loseLifeEqualToManaValue()) {
             applyLifeLossEqualToManaValue(gameData, entry, controllerId, targetCard);
         }
+        if (returnedPermanent != null && effect.enterAttacking()) {
+            makeChosenPermanentAttackingEffectHandler.resolve(gameData, entry,
+                    new com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect(returnedPermanent.getId()));
+        }
     }
 
     private boolean matchesReturnCardFilter(GameData gameData, StackEntry entry,
@@ -439,7 +445,7 @@ public class GraveyardReturnSupport {
                 || predicateEvaluationService.matchesCardPredicate(
                 card, effect.filter(), sourceCardId, gameData, cardOwnerId,
                 entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
-                entry.getXValue());
+                entry.getXValue(), entry.getSourcePermanentSnapshot());
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {
@@ -1662,6 +1668,30 @@ public class GraveyardReturnSupport {
         }
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         beforeEntry.accept(permanent);
+        if (!losesAllAbilities) {
+            var nameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (nameEffect != null) {
+                switch (nameEffect.handAccess()) {
+                    case LOOK_AT_OPPONENT_HAND -> cardRevealService.lookAtOpponentHand(gameData, controllerId);
+                    case REVEAL_OPPONENT_HAND -> gameData.playerIds.stream()
+                            .filter(playerId -> !playerId.equals(controllerId))
+                            .forEach(playerId -> cardRevealService.revealHandToAllPlayers(gameData, playerId));
+                    case NONE -> { }
+                }
+                if (playerInputService.beginCardNameChoice(gameData, controllerId, card,
+                        nameEffect.excludedTypes(), nameEffect.handAccess()
+                        == com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND,
+                        nameEffect.nonbasicLandOnly(), permanent.getAttachedTo(), nameEffect.requiredType(), null,
+                        permanent)) {
+                    if (enterAttacking) permanent.setAttacking(true);
+                    return permanent;
+                }
+            }
+        }
+
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (enterAttacking) {
             permanent.setAttacking(true);

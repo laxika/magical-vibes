@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,10 +16,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BogardanFirefiend.class, FountainOfYouth.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({BogardanFirefiend.class, FountainOfYouth.class, GrizzlyBears.class, WrathOfGod.class,
+        Terror.class, Unsummon.class})
 class BogardanFirefiendTest extends BaseCardTest {
 
     /**
@@ -290,6 +295,48 @@ class BogardanFirefiendTest extends BaseCardTest {
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Bogardan Firefiend")
                 && e.getTargetId().equals(bearsId));
+    }
+
+    @Test
+    @DisplayName("Noncombat death must target the controller's creature when it is the only legal target")
+    void destroyedFirefiendMustDamageOwnOnlyCreature() {
+        Permanent firefiend = harness.addToBattlefieldAndReturn(player1, new BogardanFirefiend());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, firefiend.getId());
+
+        harness.assertInGraveyard(player1, "Bogardan Firefiend");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactly(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning Firefiend to hand does not trigger its death ability")
+    void returningToHandDoesNotTrigger() {
+        Permanent firefiend = harness.addToBattlefieldAndReturn(player1, new BogardanFirefiend());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, firefiend.getId());
+
+        harness.assertInHand(player1, "Bogardan Firefiend");
+        harness.assertNotInGraveyard(player1, "Bogardan Firefiend");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
 

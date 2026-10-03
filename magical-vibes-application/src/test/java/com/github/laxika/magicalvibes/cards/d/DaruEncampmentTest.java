@@ -128,6 +128,62 @@ class DaruEncampmentTest extends BaseCardTest {
         assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness);
     }
 
+    @Test
+    @DisplayName("A tapped Encampment cannot activate either ability")
+    void tappedSourceCannotActivate() {
+        Permanent encampment = addEncampmentReady(player1);
+        Permanent soldier = addCreatureReady(player1, new GlorySeeker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        encampment.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, soldier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost resolves even if the Encampment leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent encampment = addEncampmentReady(player1);
+        Permanent soldier = addCreatureReady(player1, new GlorySeeker());
+        int power = soldier.getEffectivePower();
+        int toughness = soldier.getEffectiveToughness();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, soldier.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, encampment);
+        harness.passBothPriorities();
+
+        assertThat(soldier.getEffectivePower()).isEqualTo(power + 1);
+        assertThat(soldier.getEffectiveToughness()).isEqualTo(toughness + 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Soldier that leaves and returns is not the original target")
+    void returnedSoldierIsNotBoosted() {
+        addEncampmentReady(player1);
+        GlorySeeker card = new GlorySeeker();
+        Permanent soldier = addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, soldier.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, soldier);
+        gd.playerHands.get(player1.getId()).remove(card);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        int power = returned.getEffectivePower();
+        int toughness = returned.getEffectiveToughness();
+        harness.passBothPriorities();
+
+        assertThat(returned.getEffectivePower()).isEqualTo(power);
+        assertThat(returned.getEffectiveToughness()).isEqualTo(toughness);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addEncampmentReady(com.github.laxika.magicalvibes.model.Player player) {
         Permanent encampment = harness.addToBattlefieldAndReturn(player, new DaruEncampment());
         encampment.setSummoningSick(false);

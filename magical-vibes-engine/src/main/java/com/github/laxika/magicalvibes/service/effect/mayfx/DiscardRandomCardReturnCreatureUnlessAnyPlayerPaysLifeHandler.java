@@ -49,6 +49,13 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
                 .findFirst()
                 .orElseThrow();
 
+        if (effect.discardReplacementChoice()) {
+            effectHandler.discardAndContinue(gameData, ability.sourceCard(), ability.sourcePermanentId(),
+                    effect.returnControllerId(), effect.discardedCardId(), effect.lifeCost(), accepted);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost())) {
             lifeSupport.applyLifePayment(gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName());
             log.info("Game {} - {} pays {} life to prevent {}'s discarded creature from returning",

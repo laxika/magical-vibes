@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "248")
+@CardRegistration(set = "C16", collectorNumber = "246")
 public class CauldronOfSouls extends Card {
 
     public CauldronOfSouls() {

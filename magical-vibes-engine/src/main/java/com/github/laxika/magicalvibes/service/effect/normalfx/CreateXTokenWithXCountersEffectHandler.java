@@ -50,12 +50,13 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
             return;
         }
 
-        Permanent token = gameQueryService.findPermanentById(gameData, createdIds.getLast());
-        if (token == null || gameQueryService.cantHaveCounters(gameData, token)) {
-            return;
+        for (UUID tokenId : createdIds) {
+            Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
+            if (token == null || gameQueryService.cantHaveCounters(gameData, token)) {
+                continue;
+            }
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, token, e.counterType(), counterAmount);
         }
-
-        permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, token, e.counterType(), counterAmount);
     }
 }

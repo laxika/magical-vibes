@@ -93,10 +93,93 @@ class CharixTheRagingIsleTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, charix)).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("Opponent can target Charix by paying the spell cost and the additional two mana")
+    void opponentCanPayTargetingTax() {
+        Permanent charix = addReady(player1);
+        prepareOpponentCast(new LightningBolt(), ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, charix.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(charix.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Charix can activate while summoning sick and gets no boost without Islands")
+    void activatesWithoutIslandsWhileSummoningSick() {
+        Permanent charix = harness.addToBattlefieldAndReturn(player1, new CharixTheRagingIsle());
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, charix)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, charix)).isEqualTo(17);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Charix counts Islands on resolution and keeps that boost when the count changes")
+    void countsIslandsAtResolution() {
+        Permanent charix = addReady(player1);
+        harness.addToBattlefield(player1, new Island());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, charix)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, charix)).isEqualTo(15);
+
+        harness.addToBattlefield(player1, new Island());
+
+        assertThat(gqs.getEffectivePower(gd, charix)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, charix)).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Multiple Charix activations add their boosts together")
+    void multipleActivationsAreCumulative() {
+        Permanent charix = addReady(player1);
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, charix)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, charix)).isEqualTo(13);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Charix dies when its Island-based toughness reduction reduces toughness to zero")
+    void diesWithSeventeenIslands() {
+        Permanent charix = addReady(player1);
+        for (int i = 0; i < 17; i++) {
+            harness.addToBattlefield(player1, new Island());
+        }
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(charix);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(charix.getCard());
+    }
+
     private Permanent addReady(Player player) {
-        Permanent permanent = new Permanent(new CharixTheRagingIsle());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CharixTheRagingIsle());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

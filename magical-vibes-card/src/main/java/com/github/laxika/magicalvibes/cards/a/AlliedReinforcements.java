@@ -15,7 +15,7 @@ public class AlliedReinforcements extends Card {
 
     public AlliedReinforcements() {
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
-                2, "Knight", 2, 2, CardColor.WHITE,
+                2, "Knight Ally Token", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.KNIGHT, CardSubtype.ALLY), Set.of(), Set.of()));
     }
 }

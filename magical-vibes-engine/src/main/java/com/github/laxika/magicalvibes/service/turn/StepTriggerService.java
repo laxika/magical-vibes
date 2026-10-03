@@ -287,6 +287,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -703,6 +704,8 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(EchoAtNextUpkeep.class)) {
             List<EchoAtNextUpkeep> pendingEchoes = gameData.drainDelayedActions(EchoAtNextUpkeep.class);
             for (EchoAtNextUpkeep action : pendingEchoes) {
+                Permanent echoSource = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (echoSource == null || gameQueryService.hasLostAllAbilities(gameData, echoSource)) continue;
                 UUID controllerId = gameQueryService.findPermanentController(gameData, action.permanentId());
                 if (controllerId == null) {
                     continue;
@@ -1931,7 +1934,9 @@ public class StepTriggerService {
         if (!gameData.exiledCardTimeCounters.isEmpty()) {
             List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
             for (Card card : new ArrayList<>(exiledCards)) {
-                if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())) {
+                if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
+                        && card.getHandActivatedAbilities().stream()
+                        .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                     continue;
                 }
                 Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
@@ -2017,7 +2022,9 @@ public class StepTriggerService {
         // Suspended cards may also trigger during every player's upkeep.
         for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
             Card card = exiledEntry.card();
-            if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())) {
+            if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
+                    && card.getHandActivatedAbilities().stream()
+                    .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                 continue;
             }
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
@@ -2215,6 +2222,11 @@ public class StepTriggerService {
                     continue;
                 }
                 if (!predicateEvaluationService.matchesPermanentPredicate(gameData, perm, grant.filter())) {
+                    continue;
+                }
+                Permanent grantSource = gameQueryService.findPermanentById(gameData, granted.sourcePermanentId());
+                if (grantSource == null || !gameQueryService.grantedAbilitySurvivesRemoval(
+                        gameData, perm, grantSource.getTimestamp())) {
                     continue;
                 }
 
@@ -3683,15 +3695,17 @@ public class StepTriggerService {
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
         for (DelayedEndOfCombatTrigger delayedTrigger : delayedTriggers) {
-            gameData.stack.add(new StackEntry(
+            StackEntry delayedEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     delayedTrigger.sourceCard(),
                     delayedTrigger.controllerId(),
                     delayedTrigger.sourceCard().getName() + "'s end-of-combat ability",
                     new ArrayList<>(List.of(delayedTrigger.effect())),
-                    (UUID) null,
+                    delayedTrigger.affectedPermanentId(),
                     delayedTrigger.sourcePermanentId()
-            ));
+            );
+            delayedEntry.setNonTargeting(delayedTrigger.affectedPermanentId() != null);
+            gameData.stack.add(delayedEntry);
 
             gameLogService.append(gameData, GameLog.cardThen(
                     delayedTrigger.sourceCard(), "'s end-of-combat ability triggers."));
@@ -3926,7 +3940,21 @@ public class StepTriggerService {
             return;
         }
 
-        processPendingExileReturns(gameData, matching);
+        for (PendingExileReturn pending : matching) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, pending.card(),
+                    pending.controllerId(), pending.card().getName() + "'s delayed return ability",
+                    new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect(pending))));
+            entry.setNonTargeting(true);
+            entry.setTriggeringCardId(pending.card().getId());
+            entry.setTriggeringCardExileEntryVersion(
+                    gameData.exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
+            gameData.stack.add(entry);
+        }
+    }
+
+    /** Applies the scheduled return and obtains an attack choice when necessary. */
+    public void resolvePendingExileReturn(GameData gameData, PendingExileReturn pending) {
+        processPendingExileReturns(gameData, List.of(pending));
     }
 
     public void resolvePendingExileReturnAttackTarget(GameData gameData, UUID attackTargetId,
@@ -4564,8 +4592,19 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(ReturnExiledCardToHandAtNextEndStep.class)) {
             List<ReturnExiledCardToHandAtNextEndStep> pending =
                     gameData.drainDelayedActions(ReturnExiledCardToHandAtNextEndStep.class);
+            Map<UUID, List<ReturnExiledCardToHandAtNextEndStep>> groups = new LinkedHashMap<>();
             for (ReturnExiledCardToHandAtNextEndStep action : pending) {
-                var exiled = gameData.findExiledCard(action.cardId());
+                groups.computeIfAbsent(action.groupId() == null ? action.cardId() : action.groupId(),
+                        ignored -> new ArrayList<>()).add(action);
+            }
+            for (List<ReturnExiledCardToHandAtNextEndStep> group : groups.values()) {
+                ReturnExiledCardToHandAtNextEndStep action = group.getFirst();
+                List<CardEffect> returns = group.stream()
+                        .filter(member -> gameData.findExiledCard(member.cardId()) != null)
+                        .map(member -> (CardEffect) new ReturnExiledCardToHandEffect(member.cardId(), member.ownerId()))
+                        .toList();
+                var exiled = group.stream().map(member -> gameData.findExiledCard(member.cardId()))
+                        .filter(java.util.Objects::nonNull).findFirst().orElse(null);
                 if (exiled == null) {
                     log.info("Game {} - Delayed next-end-step exile-to-hand return for card {} skipped (no longer in exile)",
                             gameData.id, action.cardId());
@@ -4575,8 +4614,7 @@ public class StepTriggerService {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
                         sourceCard.getName() + "'s delayed ability — return exiled card to hand",
-                        new ArrayList<>(List.of(new ReturnExiledCardToHandEffect(
-                                action.cardId(), action.ownerId())))));
+                        new ArrayList<>(returns)));
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s delayed ability triggers."));
             }
         }
@@ -5688,7 +5726,7 @@ public class StepTriggerService {
                             log.info("Game {} - {} end-step morbid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
-                            && conditional.wrapped() instanceof MayEffect) {
+                            && conditional.wrapped() instanceof MayEffect may) {
                         // Intervening-if "you may" (CR 603.4), e.g. Sygg, River Cutthroat: only
                         // trigger if the condition holds at the beginning of the end step. The
                         // ConditionalEffect wrapper is pushed intact so resolution re-checks the
@@ -5699,13 +5737,15 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                             continue;
                         }
+                        UUID endStepTargetId = may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
+                                ? activePlayerId : null;
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                null,
+                                endStepTargetId,
                                 perm.getId()
                         ));
                         gameLogService.append(gameData,
@@ -6122,11 +6162,8 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof GainControlIfSubtypesDealtCombatDamageEffect subtypeEffect) {
-                        // Intervening-if: check if any opponent was dealt combat damage by enough
-                        // creatures of the required subtype this turn
-                        boolean conditionMet = false;
+                        List<com.github.laxika.magicalvibes.model.filter.PermanentPredicate> qualifyingControllers = new ArrayList<>();
                         for (UUID opponentId : gameData.orderedPlayerIds) {
-                            if (opponentId.equals(activePlayerId)) continue;
                             int count = 0;
                             for (var dmgEntry : gameData.combatDamageToPlayersThisTurn.entrySet()) {
                                 UUID permId = dmgEntry.getKey();
@@ -6139,21 +6176,20 @@ public class StepTriggerService {
                                 }
                             }
                             if (count >= subtypeEffect.threshold()) {
-                                conditionMet = true;
-                                break;
+                                qualifyingControllers.add(new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(opponentId));
                             }
                         }
-                        if (!conditionMet) {
+                        if (qualifyingControllers.isEmpty()) {
                             log.info("Game {} - {} end-step trigger skipped (no opponent dealt combat damage by {} or more {}s)",
                                     gameData.id, perm.getCard().getName(), subtypeEffect.threshold(),
                                     subtypeEffect.subtype().getDisplayName());
                             continue;
                         }
-                        // Condition met — queue for targeting with GainControlOfTargetEffect.
-                        // The card's targetFilter restricts to nonland opponent permanents.
                         gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId,
-                                new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
+                                new ArrayList<>(List.of(GainControlOfTargetEffect.withTargetPredicate(
+                                        ControlDuration.PERMANENT,
+                                        new PermanentAnyOfPredicate(qualifyingControllers)))),
                                 perm.getId()));
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof GainedLifeThisTurn) {
@@ -6241,8 +6277,8 @@ public class StepTriggerService {
                                 null,
                                 perm.getId()
                         );
+                        entry.setSourcePermanentSnapshot(new Permanent(perm));
                         if (effect instanceof DamageDealingEffect) {
-                            entry.setSourcePermanentSnapshot(new Permanent(perm));
                             if (perm.isAttached()) {
                                 UUID enchantedPermanentControllerId =
                                         gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
@@ -6304,8 +6340,7 @@ public class StepTriggerService {
 
         // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
         // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
-        // Blight). The ability is controlled by the enchanted permanent's controller, so the stack
-        // entry's controller is that player even though the Aura keeps its own controller.
+        // Blight). The Aura's controller controls its own triggered abilities.
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerEndStepEffects =
                     perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED);
@@ -6320,8 +6355,7 @@ public class StepTriggerService {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect
-                                ? auraOwnerId : enchantedPermanentControllerId,
+                        auraOwnerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),

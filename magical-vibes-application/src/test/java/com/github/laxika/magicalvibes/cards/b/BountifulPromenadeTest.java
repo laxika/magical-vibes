@@ -38,6 +38,38 @@ class BountifulPromenadeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enters tapped even when put onto the battlefield without a land play")
+    void entersTappedWithoutLandPlay() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new BountifulPromenade());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped without a land play when its controller has two opponents")
+    void entersUntappedWithoutLandPlayWithTwoOpponents() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new BountifulPromenade());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void producesManaOnTurnItEnters() {
+        addThirdPlayer();
+        playBountifulPromenade();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findPermanent(player1, "Bountiful Promenade").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingForGreenProducesMana() {
         addReadyBountifulPromenade();
@@ -61,13 +93,12 @@ class BountifulPromenadeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BountifulPromenade()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadyBountifulPromenade() {
-        Permanent permanent = new Permanent(new BountifulPromenade());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new BountifulPromenade());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VedalkenGhoul;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrasticRevelation.class, VedalkenGhoul.class})
 class DrasticRevelationTest extends BaseCardTest {
 
     private void addCost() {
@@ -22,8 +25,6 @@ class DrasticRevelationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Drastic Revelation puts it on the stack")
@@ -52,20 +53,17 @@ class DrasticRevelationTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Discards existing hand, draws seven, then discards three at random")
     void discardsHandDrawsSevenThenDiscardsThree() {
         // Two extra cards in hand alongside the spell; a fresh 7-card library to draw from.
-        harness.setHand(player1, List.of(new DrasticRevelation(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DrasticRevelation(), new VedalkenGhoul(), new VedalkenGhoul()));
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul(),
+                new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul()));
         addCost();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Discard hand (the 2 leftover cards), draw 7, discard 3 at random => hand of 4.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -88,17 +86,63 @@ class DrasticRevelationTest extends BaseCardTest {
     void emptyHandStillDrawsAndDiscards() {
         harness.setHand(player1, List.of(new DrasticRevelation()));
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul(),
+                new VedalkenGhoul(), new VedalkenGhoul(), new VedalkenGhoul()));
         addCost();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // No leftover hand to discard; draw 7, discard 3 => hand of 4.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         // Graveyard: 3 random discards + the spell = 4.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Original hand is discarded before drawing and opponent's zones are unchanged")
+    void discardsOriginalCardsBeforeDrawingAndOnlyAffectsController() {
+        VedalkenGhoul original = new VedalkenGhoul();
+        VedalkenGhoul opponentCard = new VedalkenGhoul();
+        List<VedalkenGhoul> drawnCards = java.util.stream.IntStream.range(0, 7)
+                .mapToObj(i -> new VedalkenGhoul()).toList();
+        List<VedalkenGhoul> opponentLibrary = List.of(new VedalkenGhoul());
+        harness.setHand(player1, List.of(new DrasticRevelation(), original));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.setLibrary(player1, drawnCards);
+        harness.setLibrary(player2, opponentLibrary);
+        addCost();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4)
+                .containsOnlyElementsOf(drawnCards).doesNotContain(original);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(original);
+        assertThat(gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(drawnCards::contains).toList()).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("With fewer than three cards available, discards all drawn cards before losing")
+    void shortLibraryStillDiscardsBeforeControllerLoses() {
+        VedalkenGhoul first = new VedalkenGhoul();
+        VedalkenGhoul second = new VedalkenGhoul();
+        harness.setHand(player1, List.of(new DrasticRevelation()));
+        harness.setLibrary(player1, List.of(first, second));
+        addCost();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(first, second);
+        harness.assertInGraveyard(player1, "Drastic Revelation");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

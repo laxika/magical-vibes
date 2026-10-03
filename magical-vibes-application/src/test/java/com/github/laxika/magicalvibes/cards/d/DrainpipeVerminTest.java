@@ -1,42 +1,38 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.a.AxebaneStag;
+import com.github.laxika.magicalvibes.cards.c.CentaurHealer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DrainpipeVermin.class, AxebaneStag.class, CentaurHealer.class})
 class DrainpipeVerminTest extends BaseCardTest {
 
     // "When this creature dies, you may pay {B}. If you do, target player discards a card."
 
     /**
-     * Puts Drainpipe Vermin on the battlefield blocking a lethal 5/5 attacker and advances to
+     * Puts Drainpipe Vermin on the battlefield blocking a lethal Axebane Stag attacker and advances to
      * combat damage so it dies, leaving the death trigger awaiting its target choice.
      */
     private void killInCombat() {
-        Permanent vermin = new Permanent(new DrainpipeVermin());
+        Permanent vermin = harness.addToBattlefieldAndReturn(player1, new DrainpipeVermin());
         vermin.setSummoningSick(false);
         vermin.setBlocking(true);
         vermin.addBlockingTarget(0);
-        gd.playerBattlefields.get(player1.getId()).add(vermin);
 
-        GrizzlyBears bearsCard = new GrizzlyBears();
-        bearsCard.setPower(5);
-        bearsCard.setToughness(5);
-        Permanent attacker = new Permanent(bearsCard);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new AxebaneStag());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -48,7 +44,7 @@ class DrainpipeVerminTest extends BaseCardTest {
     @Test
     @DisplayName("Dies, target opponent chosen, pay {B} makes them discard a card")
     void diesPayTargetOpponentDiscards() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, List.of(new AxebaneStag(), new CentaurHealer()));
 
         killInCombat();
 
@@ -71,7 +67,7 @@ class DrainpipeVerminTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the {B} payment makes no one discard")
     void declinePaymentNoDiscard() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, List.of(new AxebaneStag(), new CentaurHealer()));
 
         killInCombat();
 
@@ -87,7 +83,7 @@ class DrainpipeVerminTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may target themselves")
     void mayTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player1, List.of(new AxebaneStag(), new CentaurHealer()));
 
         killInCombat();
 
@@ -100,5 +96,44 @@ class DrainpipeVerminTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Payment remains optional when the target has an empty hand")
+    void canPayWithEmptyTargetHand() {
+        harness.setHand(player2, List.of());
+
+        killInCombat();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting without black mana does not cause a discard")
+    void cannotPayWithBlueMana() {
+        harness.setHand(player2, List.of(new AxebaneStag(), new CentaurHealer()));
+
+        killInCombat();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

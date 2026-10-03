@@ -82,11 +82,87 @@ class DreadLinnormTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    void adventureCanTargetOpponentsCreatureAndHexproofExpires() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new DreadLinnorm()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureResolves() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        DreadLinnorm card = new DreadLinnorm();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dread Linnorm");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void cannotBeBlockedAtPowerThreeBoundary() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent linnorm = addCreatureReady(player1, new DreadLinnorm());
+        prepareBlockers(linnorm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countersCanRaiseBlockerAbovePowerRestriction() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent linnorm = addCreatureReady(player1, new DreadLinnorm());
+        prepareBlockers(linnorm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutCastPermission() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        DreadLinnorm card = new DreadLinnorm();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAdventure(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dread Linnorm");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
     private void prepareBlockers(Permanent linnorm) {
         linnorm.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
     }
 }

@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TectonicEdge;
+import com.github.laxika.magicalvibes.cards.w.WalkingAtlas;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CausticCrawler.class, Forest.class, GrizzlyBears.class, TectonicEdge.class, WalkingAtlas.class})
 class CausticCrawlerTest extends BaseCardTest {
 
     @Test
@@ -84,6 +88,57 @@ class CausticCrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    @DisplayName("Landfall can target Caustic Crawler itself")
+    void landfallCanTargetItself() {
+        Permanent crawler = addCrawler();
+        harness.setHand(player1, List.of(new TectonicEdge()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, crawler.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(crawler.getEffectivePower()).isEqualTo(3);
+        assertThat(crawler.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Landfall puts a creature with zero toughness into its owner's graveyard")
+    void landfallKillsOneToughnessCreature() {
+        addCrawler();
+        Permanent atlas = harness.addToBattlefieldAndReturn(player2, new WalkingAtlas());
+        harness.setHand(player1, List.of(new TectonicEdge()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, atlas.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Walking Atlas");
+        harness.assertInGraveyard(player2, "Walking Atlas");
+    }
+
+    @Test
+    @DisplayName("Each Crawler triggers independently and their reductions accumulate")
+    void multipleCrawlersGiveSeparateCumulativeReductions() {
+        Permanent target = addCrawler();
+        addCrawler();
+        harness.setHand(player1, List.of(new TectonicEdge()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addCrawler() {

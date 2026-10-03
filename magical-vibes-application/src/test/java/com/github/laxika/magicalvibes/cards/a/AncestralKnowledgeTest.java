@@ -43,14 +43,14 @@ class AncestralKnowledgeTest extends BaseCardTest {
     void exilesAnyNumberRestOnTop() {
         List<Card> cards = castAndLookAtFourCards();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         // The pick repeats over what is left instead of ending after one exile.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
@@ -70,7 +70,7 @@ class AncestralKnowledgeTest extends BaseCardTest {
     void mayExileNothing() {
         List<Card> cards = castAndLookAtFourCards();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
 
@@ -89,7 +89,7 @@ class AncestralKnowledgeTest extends BaseCardTest {
         List<Card> cards = castAndLookAtFourCards();
 
         for (int i = 0; i < cards.size(); i++) {
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
             if (i < cards.size() - 1) {
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             }
@@ -109,8 +109,8 @@ class AncestralKnowledgeTest extends BaseCardTest {
                 new Abeyance(), new Alms(), new Abjure(), new Abduction(), new Abeyance(),
                 new Alms(), new Abjure(), new Abduction(), new Abeyance(), new Alms()));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(9));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, 9);
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
@@ -182,5 +182,87 @@ class AncestralKnowledgeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knowledge);
         harness.assertInGraveyard(player1, "Ancestral Knowledge");
+    }
+
+    @Test
+    @DisplayName("An empty library finishes the enters ability without asking for a choice")
+    void emptyLibraryNeedsNoChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new AncestralKnowledge(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Ancestral Knowledge");
+    }
+
+    @Test
+    @DisplayName("Exiling the top ten leaves deeper cards untouched and does not inspect them")
+    void exilingTopTenLeavesDeeperCardsUntouched() {
+        List<Card> cards = castAndLookAt(List.of(
+                new Abeyance(), new Alms(), new Abjure(), new Abduction(), new Abeyance(),
+                new Alms(), new Abjure(), new Abduction(), new Abeyance(), new Alms(),
+                new Abjure(), new Abduction()));
+
+        for (int i = 0; i < 10; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyElementsOf(cards.subList(0, 10).stream().map(Card::getId).toList());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(cards.get(10).getId(), cards.get(11).getId());
+    }
+
+    @Test
+    @DisplayName("A single unexiled card returns to the top without a reorder prompt")
+    void singleRemainingCardReturnsToTop() {
+        List<Card> cards = castAndLookAtFourCards();
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(cards.get(3).getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(cards.get(0).getId(), cards.get(1).getId(), cards.get(2).getId());
+    }
+
+    @Test
+    @DisplayName("Declining upkeep shuffles only the controller's library after the sacrifice")
+    void declinedUpkeepResolvesShuffleTrigger() {
+        Permanent knowledge = harness.addToBattlefieldAndReturn(player1, new AncestralKnowledge());
+        List<Card> cards = List.of(new Abeyance(), new Alms(), new Abjure());
+        Card opponentCard = new Abduction();
+        harness.setLibrary(player1, cards);
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knowledge);
+        harness.assertInGraveyard(player1, "Ancestral Knowledge");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrderElementsOf(cards.stream().map(Card::getId).toList());
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getId)
+                .containsExactly(opponentCard.getId());
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains(player1.getUsername() + " shuffles their library."))
+                .noneMatch(log -> log.contains(player2.getUsername() + " shuffles their library."));
     }
 }

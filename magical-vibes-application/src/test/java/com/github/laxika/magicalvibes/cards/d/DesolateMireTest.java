@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,5 +52,22 @@ class DesolateMireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Any colored mana can pay the generic activation cost")
+    void canPayGenericCostWithColoredMana(ManaColor color) {
+        Permanent mire = harness.addToBattlefieldAndReturn(player1, new DesolateMire());
+        harness.addMana(player1, color, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        for (ManaColor poolColor : ManaColor.values()) {
+            int expected = poolColor == ManaColor.WHITE || poolColor == ManaColor.BLACK ? 1 : 0;
+            assertThat(gd.playerManaPools.get(player1.getId()).get(poolColor)).isEqualTo(expected);
+        }
+        assertThat(mire.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

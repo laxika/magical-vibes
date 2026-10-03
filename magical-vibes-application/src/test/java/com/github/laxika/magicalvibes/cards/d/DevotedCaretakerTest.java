@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
 import com.github.laxika.magicalvibes.cards.e.EngulfingFlames;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.k.KirtarsWrath;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.v.VolcanicSpray;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DevotedCaretaker.class, AvenFlock.class, EngulfingFlames.class, Firebolt.class, Plains.class})
+@CardUsed({DevotedCaretaker.class, AvenFlock.class, EngulfingFlames.class, Firebolt.class, Plains.class,
+        KirtarsWrath.class, VolcanicSpray.class})
 class DevotedCaretakerTest extends BaseCardTest {
 
     @Test
@@ -37,9 +40,7 @@ class DevotedCaretakerTest extends BaseCardTest {
         assertThat(plains.getProtectionFromCardTypes())
                 .contains(CardType.INSTANT, CardType.SORCERY);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(plains.getProtectionFromCardTypes()).doesNotContain(CardType.INSTANT, CardType.SORCERY);
     }
@@ -96,5 +97,104 @@ class DevotedCaretakerTest extends BaseCardTest {
         UUID opponentPermanentId = harness.getPermanentId(player2, "Plains");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, opponentPermanentId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Devoted Caretaker can protect itself in response to a lethal sorcery")
+    void protectsItselfInResponseToSorcery() {
+        Permanent caretaker = addCreatureReady(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new Firebolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player2, 0, 0, caretaker.getId());
+        harness.activateAbility(player1, 0, 0, null, caretaker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Devoted Caretaker");
+        assertThat(caretaker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Firebolt");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection gained in response makes an instant's target illegal")
+    void protectsAgainstInstantAlreadyOnStack() {
+        Permanent caretaker = addCreatureReady(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new EngulfingFlames()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, caretaker.getId());
+        harness.activateAbility(player1, 0, 0, null, caretaker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Devoted Caretaker");
+        assertThat(caretaker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Engulfing Flames");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Devoted Caretaker cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        UUID caretakerId = harness.getPermanentId(player1, "Devoted Caretaker");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, caretakerId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Devoted Caretaker cannot activate its tap ability again")
+    void cannotActivateWhileTapped() {
+        Permanent caretaker = addCreatureReady(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, 0, null, caretaker.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, caretaker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection from sorcery spells does not prevent untargeted destruction")
+    void protectionDoesNotStopUntargetedDestruction() {
+        Permanent caretaker = addCreatureReady(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, caretaker.getId());
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new KirtarsWrath(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Devoted Caretaker");
+        harness.assertInGraveyard(player1, "Devoted Caretaker");
+    }
+
+    @Test
+    @DisplayName("Protection from sorcery spells prevents untargeted sorcery damage")
+    void preventsUntargetedSorceryDamage() {
+        Permanent caretaker = addCreatureReady(player1, new DevotedCaretaker());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, 0, null, caretaker.getId());
+        harness.passBothPriorities();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new VolcanicSpray(), "{1}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Devoted Caretaker");
+        assertThat(caretaker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
     }
 }

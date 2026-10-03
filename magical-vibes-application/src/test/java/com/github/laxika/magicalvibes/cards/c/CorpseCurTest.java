@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AlphaTyrranax;
 import com.github.laxika.magicalvibes.cards.b.BlightMamba;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GoldenUrn;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,132 +14,135 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CorpseCur.class, BlightMamba.class, ContagiousNim.class, AlphaTyrranax.class, GoldenUrn.class})
 class CorpseCurTest extends BaseCardTest {
 
-    /**
-     * Casts Corpse Cur and resolves it onto the battlefield, then accepts the may ability.
-     */
-    private void castAndAcceptMay() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new CorpseCur()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
+    private void castCorpseCur() {
+        harness.castFromHand(player1, new CorpseCur(), "{4}");
+        harness.passBothPriorities();
     }
 
-    // ===== ETB may ability =====
+    private void resolveTarget(Card target, boolean accept) {
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, accept);
+    }
 
     @Test
-    @DisplayName("Resolving Corpse Cur triggers may ability prompt")
     void resolvingTriggersMayPrompt() {
-        harness.setGraveyard(player1, List.of(new BlightMamba()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new CorpseCur()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-
+        Card target = new BlightMamba();
+        harness.setGraveyard(player1, List.of(target));
+        castCorpseCur();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
-    @DisplayName("Declining may ability does not return anything")
     void decliningMaySkipsAbility() {
-        harness.setGraveyard(player1, List.of(new BlightMamba()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new CorpseCur()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → may on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
-
+        Card target = new BlightMamba();
+        harness.setGraveyard(player1, List.of(target));
+        castCorpseCur();
+        resolveTarget(target, false);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Blight Mamba");
+        harness.assertNotInHand(player1, "Blight Mamba");
     }
 
-    // ===== Graveyard return =====
-
     @Test
-    @DisplayName("Returns creature with infect from graveyard to hand")
     void returnsInfectCreatureFromGraveyardToHand() {
-        harness.setGraveyard(player1, List.of(new BlightMamba()));
-        castAndAcceptMay();
-
-        // Inner effect resolved inline → graveyard choice
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
-
+        Card target = new BlightMamba();
+        harness.setGraveyard(player1, List.of(target));
+        castCorpseCur();
+        resolveTarget(target, true);
         harness.assertInHand(player1, "Blight Mamba");
         harness.assertNotInGraveyard(player1, "Blight Mamba");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Chooses specific infect creature when multiple are in graveyard")
     void choosesSpecificInfectCreature() {
-        harness.setGraveyard(player1, List.of(new BlightMamba(), new ContagiousNim()));
-        castAndAcceptMay();
-
-        // Choose Contagious Nim (index 1)
-        harness.handleGraveyardCardChosen(player1, 1);
-
-        harness.assertInHand(player1, "Contagious Nim");
-        harness.assertInGraveyard(player1, "Blight Mamba");
-        harness.assertNotInGraveyard(player1, "Contagious Nim");
+        Card other = new BlightMamba();
+        Card target = new ContagiousNim();
+        harness.setGraveyard(player1, List.of(other, target));
+        castCorpseCur();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(other.getId(), target.getId());
+        resolveTarget(target, true);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
     }
 
-    // ===== Filtering =====
-
     @Test
-    @DisplayName("Cannot return creature without infect")
     void cannotReturnCreatureWithoutInfect() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new BlightMamba()));
-        castAndAcceptMay();
-
-        // Index 0 is Grizzly Bears (no infect) — not a valid choice
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        Card invalid = new AlphaTyrranax();
+        Card target = new BlightMamba();
+        harness.setGraveyard(player1, List.of(invalid, target));
+        castCorpseCur();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(invalid.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("No effect if graveyard has no creature cards with infect")
     void noEffectWithNoInfectCreaturesInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HolyDay()));
-        castAndAcceptMay();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature card with infect"));
+        Card creature = new AlphaTyrranax();
+        Card artifact = new GoldenUrn();
+        harness.setGraveyard(player1, List.of(creature, artifact));
+        castCorpseCur();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, artifact);
     }
 
     @Test
-    @DisplayName("No effect if graveyard is empty")
     void noEffectWithEmptyGraveyard() {
-        castAndAcceptMay();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature card with infect"));
+        castCorpseCur();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Corpse Cur");
     }
 
     @Test
-    @DisplayName("Player can decline graveyard choice")
-    void playerCanDeclineGraveyardChoice() {
-        harness.setGraveyard(player1, List.of(new BlightMamba()));
-        castAndAcceptMay();
-
-        harness.handleGraveyardCardChosen(player1, -1);
-
+    void cannotDeclineRequiredTargetSelection() {
+        Card target = new BlightMamba();
+        harness.setGraveyard(player1, List.of(target));
+        castCorpseCur();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveTarget(target, false);
         harness.assertInGraveyard(player1, "Blight Mamba");
-        harness.assertNotInHand(player1, "Blight Mamba");
+    }
+
+    @Test
+    void cannotTargetOpponentsGraveyard() {
+        Card opposing = new BlightMamba();
+        harness.setGraveyard(player2, List.of(opposing));
+        castCorpseCur();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposing);
+    }
+
+    @Test
+    void removedTargetDoesNotReturnAnotherCreature() {
+        Card target = new BlightMamba();
+        Card other = new ContagiousNim();
+        harness.setGraveyard(player1, List.of(target, other));
+        castCorpseCur();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
     }
 }

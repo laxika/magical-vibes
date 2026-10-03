@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.Cinderbones;
+import com.github.laxika.magicalvibes.cards.p.Plumeveil;
 import com.github.laxika.magicalvibes.cards.p.PucasMischief;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BriarberryCohort.class, Cinderbones.class, PucasMischief.class})
+@CardUsed({BriarberryCohort.class, Cinderbones.class, Plumeveil.class, PucasMischief.class})
 class BriarberryCohortTest extends BaseCardTest {
 
     @Test
@@ -51,6 +53,20 @@ class BriarberryCohortTest extends BaseCardTest {
     void boostWithAnotherBlueCreature() {
         Permanent cohort = addCreatureReady(player1, new BriarberryCohort());
         addCreatureReady(player1, new BriarberryCohort());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A newly entered multicolored blue creature immediately grants the boost")
+    void boostWithNewMulticoloredBlueCreature() {
+        Permanent cohort = addCreatureReady(player1, new BriarberryCohort());
+
+        assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Plumeveil());
 
         assertThat(gqs.getEffectivePower(gd, cohort)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, cohort)).isEqualTo(2);
@@ -114,6 +130,20 @@ class BriarberryCohortTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Briarberry Cohort")
+    void flyingCreatureCanBlock() {
+        addCreatureReady(player1, new BriarberryCohort());
+        Permanent blocker = addCreatureReady(player2, new Plumeveil());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(0);
     }
 
 }

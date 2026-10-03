@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "245")
+@CardRegistration(set = "BRC", collectorNumber = "146")
 public class LithoformEngine extends Card {
 
     public LithoformEngine() {

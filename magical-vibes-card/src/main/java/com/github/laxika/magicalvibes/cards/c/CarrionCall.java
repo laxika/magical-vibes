@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "115")
+@CardRegistration(set = "ONC", collectorNumber = "106")
 public class CarrionCall extends Card {
 
     public CarrionCall() {

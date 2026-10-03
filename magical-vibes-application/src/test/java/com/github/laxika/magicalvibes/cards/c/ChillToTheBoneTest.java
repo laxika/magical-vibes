@@ -29,8 +29,7 @@ class ChillToTheBoneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChillToTheBone()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0, scoundrel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, scoundrel.getId());
 
         harness.assertNotOnBattlefield(player2, "Krovikan Scoundrel");
         harness.assertInGraveyard(player2, "Krovikan Scoundrel");
@@ -79,5 +78,40 @@ class ChillToTheBoneTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(scoundrel);
         harness.assertNotInGraveyard(player2, "Krovikan Scoundrel");
         harness.assertInGraveyard(player1, "Chill to the Bone");
+    }
+
+    @Test
+    @DisplayName("Can destroy a nonsnow creature controlled by the caster")
+    void destroysOwnNonsnowCreature() {
+        Permanent scoundrel = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        harness.setHand(player1, List.of(new ChillToTheBone()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, scoundrel.getId());
+
+        harness.assertNotOnBattlefield(player1, "Krovikan Scoundrel");
+        harness.assertInGraveyard(player1, "Krovikan Scoundrel");
+        harness.assertInGraveyard(player1, "Chill to the Bone");
+    }
+
+    @Test
+    @DisplayName("A spell whose target was destroyed in response does not destroy another creature")
+    void targetDestroyedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        harness.setHand(player1, List.of(new ChillToTheBone(), new ChillToTheBone()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
+        harness.assertInGraveyard(player2, "Krovikan Scoundrel");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof ChillToTheBone)
+                .hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }

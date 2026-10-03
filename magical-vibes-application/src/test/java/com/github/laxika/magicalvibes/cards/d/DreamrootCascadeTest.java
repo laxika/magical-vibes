@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,11 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DreamrootCascade.class, Mountain.class, DelugeVirtuoso.class})
 class DreamrootCascadeTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("Enters tapped when you control zero other lands")
@@ -26,7 +24,7 @@ class DreamrootCascadeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isTrue();
@@ -41,7 +39,7 @@ class DreamrootCascadeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isTrue();
@@ -57,7 +55,7 @@ class DreamrootCascadeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isFalse();
@@ -74,7 +72,7 @@ class DreamrootCascadeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isFalse();
@@ -84,15 +82,14 @@ class DreamrootCascadeTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            Permanent creature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(creature);
+            harness.addToBattlefield(player1, new DelugeVirtuoso());
         }
 
         harness.setHand(player1, List.of(new DreamrootCascade()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isTrue();
@@ -109,7 +106,7 @@ class DreamrootCascadeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent cascade = findCascade(player1);
         assertThat(cascade.isTapped()).isTrue();
@@ -118,7 +115,7 @@ class DreamrootCascadeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addCascadeReady(player1);
+        addCreatureReady(player1, new DreamrootCascade());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -129,7 +126,7 @@ class DreamrootCascadeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue mana produces one blue")
     void tappingProducesBlueMana() {
-        addCascadeReady(player1);
+        addCreatureReady(player1, new DreamrootCascade());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -137,19 +134,35 @@ class DreamrootCascadeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    private Permanent addCascadeReady(Player player) {
-        Permanent perm = new Permanent(new DreamrootCascade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Tapped basic and nonbasic lands both count toward the land check")
+    void tappedBasicAndNonbasicLandsCount() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.addToBattlefieldAndReturn(player1, new DreamrootCascade()).tap();
+        harness.setHand(player1, List.of(new DreamrootCascade()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanents(player1, "Dreamroot Cascade"))
+                .hasSize(2)
+                .anySatisfy(cascade -> assertThat(cascade.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Entering from another zone also checks other lands")
+    void enteringWithoutLandPlayChecksOtherLands() {
+        addBasicLand(player1);
+
+        Permanent cascade = harness.enterBattlefieldAndReturn(player1, new DreamrootCascade());
+
+        assertThat(cascade.isTapped()).isTrue();
     }
 
     private void addBasicLand(Player player) {
-        com.github.laxika.magicalvibes.model.Card land = new com.github.laxika.magicalvibes.cards.m.Mountain();
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new Mountain());
     }
-
     private Permanent findCascade(Player player) {
         return findPermanent(player, "Dreamroot Cascade");
     }

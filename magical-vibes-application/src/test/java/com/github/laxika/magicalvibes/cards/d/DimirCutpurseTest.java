@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpelunkers;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DimirCutpurse.class, Forest.class, GoblinSpelunkers.class})
+@CardUsed({DimirCutpurse.class, Forest.class, GoblinSpelunkers.class, LastGasp.class})
 class DimirCutpurseTest extends BaseCardTest {
 
     @Test
@@ -96,6 +98,38 @@ class DimirCutpurseTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void triggerSurvivesSourceRemovalAndDrawWaitsForChosenDiscard() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new LastGasp(), new GoblinSpelunkers(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent cutpurse = addAttackingCutpurse(player1);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, cutpurse.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cutpurse.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(GoblinSpelunkers.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(Forest.class::isInstance);
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private Permanent addAttackingCutpurse(com.github.laxika.magicalvibes.model.Player player) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BastionOfRemembrance;
 import com.github.laxika.magicalvibes.cards.n.NyxbornMarauder;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AniktheaHandOfErebos.class, NyxbornMarauder.class, SongOfTheDryads.class, GrizzlyBears.class})
+@CardUsed({AniktheaHandOfErebos.class, NyxbornMarauder.class, SongOfTheDryads.class, GrizzlyBears.class, BastionOfRemembrance.class})
 class AniktheaHandOfErebosTest extends BaseCardTest {
 
     @Test
@@ -53,7 +54,7 @@ class AniktheaHandOfErebosTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(marauder.getId()));
         harness.passBothPriorities();
 
-        Permanent token = tokenNamed("Nyxborn Marauder");
+        Permanent token = findPermanent(player1, "Nyxborn Marauder");
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(3);
@@ -86,11 +87,78 @@ class AniktheaHandOfErebosTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Nyxborn Marauder"));
     }
 
-    private Permanent tokenNamed(String name) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("A copied noncreature enchantment is a Zombie creature and retains its enters ability")
+    void noncreatureEnchantmentBecomesZombieCreature() {
+        BastionOfRemembrance bastion = new BastionOfRemembrance();
+        harness.setGraveyard(player1, List.of(bastion));
+        harness.enterBattlefieldAndReturn(player1, new AniktheaHandOfErebos());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bastion.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Bastion of Remembrance");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().hasType(CardType.ENCHANTMENT)).isTrue();
+        assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(token.getCard().getPower()).isEqualTo(3);
+        assertThat(token.getCard().getToughness()).isEqualTo(3);
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
+        assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Bastion of Remembrance");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bastion.getId()));
+    }
+
+    @Test
+    @DisplayName("The enters trigger can choose zero targets even with eligible cards")
+    void entersCanChooseZeroTargetsAndExcludesOpponentsGraveyard() {
+        BastionOfRemembrance ownCard = new BastionOfRemembrance();
+        BastionOfRemembrance opposingCard = new BastionOfRemembrance();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard));
+        harness.enterBattlefieldAndReturn(player1, new AniktheaHandOfErebos());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(ownCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bastion of Remembrance");
+        harness.assertInGraveyard(player2, "Bastion of Remembrance");
+        harness.assertNotOnBattlefield(player1, "Bastion of Remembrance");
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger can choose zero targets")
+    void attackingCanChooseZeroTargets() {
+        addCreatureReady(player1, new AniktheaHandOfErebos());
+        harness.setGraveyard(player1, List.of(new BastionOfRemembrance()));
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bastion of Remembrance");
+        harness.assertNotOnBattlefield(player1, "Bastion of Remembrance");
+    }
+
+    @Test
+    @DisplayName("No token is created when the selected card leaves the graveyard before resolution")
+    void missingTargetCreatesNoToken() {
+        BastionOfRemembrance bastion = new BastionOfRemembrance();
+        harness.setGraveyard(player1, List.of(bastion));
+        harness.enterBattlefieldAndReturn(player1, new AniktheaHandOfErebos());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bastion.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bastion of Remembrance");
+        assertThat(gd.exiledCards).isEmpty();
     }
 }

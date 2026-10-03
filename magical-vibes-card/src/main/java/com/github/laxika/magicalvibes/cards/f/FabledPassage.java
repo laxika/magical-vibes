@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "246")
+@CardRegistration(set = "M21", collectorNumber = "386")
 @CardRegistration(set = "BLB", collectorNumber = "252")
 @CardRegistration(set = "ELD", collectorNumber = "244")
 @CardRegistration(set = "SOC", collectorNumber = "130")
@@ -25,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1534")
 @CardRegistration(set = "TLE", collectorNumber = "57")
 @CardRegistration(set = "TMC", collectorNumber = "67")
+@CardRegistration(set = "EOC", collectorNumber = "60")
 public class FabledPassage extends Card {
 
     public FabledPassage() {

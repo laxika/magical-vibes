@@ -17,7 +17,7 @@ public class Aetherling extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(FlickerEffect.exileSelfReturnAtEndStep()),
+                List.of(FlickerEffect.exileSelfReturnAtEndStepUnderOwnerControl(false)),
                 "{U}: Exile Aetherling. Return it to the battlefield under its owner's control at the beginning of the next end step."
         ));
         addActivatedAbility(new ActivatedAbility(

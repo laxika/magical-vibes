@@ -72,10 +72,70 @@ class AvatarOfFuryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(6);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Can cast Avatar of Fury at full cost without opposing lands")
+    void canCastAtFullCost() {
+        harness.castFromHand(player1, new AvatarOfFury(), "{6}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avatar of Fury");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The reduction still applies when an opponent controls more than seven lands")
+    void canCastWithEightOpponentLands() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player2, new RhysticCave());
+        }
+
+        harness.castFromHand(player1, new AvatarOfFury(), "{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avatar of Fury");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opposing nonland permanents do not count toward the land threshold")
+    void nonlandPermanentsDoNotCount() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player2, new RhysticCave());
+        }
+        harness.addToBattlefield(player2, new AvatarOfFury());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvatarOfFury(), "{R}{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Repeated activations work while tapped and summoning sick and expire together")
+    void repeatedActivationsWhileTappedAndSummoningSick() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player1, new AvatarOfFury());
+        avatar.setSummoningSick(true);
+        avatar.tap();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(7);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(6);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, avatar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, avatar)).isEqualTo(6);
     }
 }

@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AssaultSuit;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Desolation.class, Forest.class, Mountain.class, Plains.class})
+@CardUsed({Desolation.class, Forest.class, Mountain.class, Plains.class, AssaultSuit.class, MishrasFactory.class})
 class DesolationTest extends BaseCardTest {
 
     @Test
@@ -225,6 +228,119 @@ class DesolationTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player1, "Desolation");
+    }
+
+    @Test
+    @DisplayName("Tapping several lands still requires only one sacrifice")
+    void severalLandTapsRequireOnlyOneSacrifice() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player1, 2);
+        harness.tapPermanent(player1, 3);
+        resolveEndStep(player1);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(findPermanent(player1, "Plains").getId()));
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land tapped for mana in response to the end-step trigger counts")
+    void landTappedInResponseCounts() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setLife(player1, 20);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Chosen lands remain until all players choose, then Plains damage follows")
+    void sacrificesWaitForAllChoices() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.tapPermanent(player1, 1);
+        harness.tapPermanent(player2, 0);
+
+        resolveEndStep(player1);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(findPermanent(player1, "Plains").getId()));
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(findPermanent(player2, "Plains").getId()));
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player2, "Plains");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Land taps from the previous turn do not require another sacrifice")
+    void landTapTrackingResetsBetweenTurns() {
+        harness.addToBattlefield(player1, new Desolation());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 1);
+
+        resolveEndStep(player1);
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(findPermanent(player1, "Mountain").getId()));
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+        resolveEndStep(player2);
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated land equipped with Assault Suit cannot be sacrificed")
+    void cannotSacrificeProtectedAnimatedLand() {
+        harness.addToBattlefield(player1, new Desolation());
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.addToBattlefield(player1, new AssaultSuit());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, null, factory.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 1);
+
+        resolveEndStep(player1);
+
+        harness.assertOnBattlefield(player1, "Mishra's Factory");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void resolveEndStep(Player activePlayer) {

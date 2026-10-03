@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.Repulse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenalishEmissary.class, Forest.class})
+@CardUsed({BenalishEmissary.class, Forest.class, Repulse.class})
 class BenalishEmissaryTest extends BaseCardTest {
 
     @Test
@@ -92,6 +93,50 @@ class BenalishEmissaryTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Benalish Emissary");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A kicked Emissary can destroy its controller's land")
+    void kickedCanDestroyOwnLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new BenalishEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Benalish Emissary");
+    }
+
+    @Test
+    @DisplayName("The kicked ETB still destroys its target after Emissary returns to hand")
+    void kickedTriggerResolvesAfterSourceLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new BenalishEmissary()));
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        addKickedMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Benalish Emissary"));
+
+        harness.assertInHand(player1, "Benalish Emissary");
+        harness.assertNotOnBattlefield(player1, "Benalish Emissary");
+        harness.assertOnBattlefield(player2, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 
     private void addBaseMana() {

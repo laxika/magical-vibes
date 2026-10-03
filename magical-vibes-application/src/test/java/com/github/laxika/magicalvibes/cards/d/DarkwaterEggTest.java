@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AetherBurst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -75,10 +76,54 @@ class DarkwaterEggTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Darkwater Egg");
         assertThat(gd.stack).hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInHand(player2, "Dusk Imp");
+    }
+
+    @Test
+    void manaAndDrawWaitUntilAbilityResolves() {
+        harness.addToBattlefield(player1, new DarkwaterEgg());
+        harness.setHand(player1, java.util.List.of());
+        harness.setLibrary(player1, java.util.List.of(new DuskImp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Darkwater Egg");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dusk Imp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateDuringOpponentsTurnWithColoredManaPayingGenericCost() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new DarkwaterEgg());
+        harness.setHand(player1, java.util.List.of());
+        harness.setLibrary(player1, java.util.List.of(new DuskImp()));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Darkwater Egg");
+        harness.assertInHand(player1, "Dusk Imp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

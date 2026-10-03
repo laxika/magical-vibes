@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
+import com.github.laxika.magicalvibes.cards.s.SimicAscendancy;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CytoplastRootKin.class, MistralCharger.class})
+@CardUsed({CytoplastRootKin.class, MistralCharger.class, Solemnity.class, SimicAscendancy.class})
 class CytoplastRootKinTest extends BaseCardTest {
 
     @Test
@@ -154,13 +156,68 @@ class CytoplastRootKinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Graft leaves the source counter intact when the entering creature cannot receive counters")
+    void graftDoesNotRemoveCounterWhenPlacementIsForbidden() {
+        Permanent rootKin = castRootKin();
+        harness.castFromHand(player1, new Solemnity(), "{2}{W}");
+        resolveAllTriggers();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent charger = findPermanent(player1, "Mistral Charger");
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability leaves the target counter intact when Root-Kin cannot receive counters")
+    void activatedAbilityDoesNotRemoveCounterWhenPlacementIsForbidden() {
+        Permanent rootKin = castRootKin();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.castFromHand(player1, new Solemnity(), "{2}{W}");
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(rootKin),
+                null,
+                charger.getId());
+        resolveAllTriggers();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Self-targeting while summoning sick moves no counter and triggers no counter-placement ability")
+    void activatedAbilityCanTargetItselfWhileSummoningSick() {
+        Permanent rootKin = castRootKin();
+        harness.castFromHand(player1, new SimicAscendancy(), "{G}{U}");
+        resolveAllTriggers();
+        Permanent ascendancy = findPermanent(player1, "Simic Ascendancy");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(rootKin),
+                null,
+                rootKin.getId());
+        resolveAllTriggers();
+
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(ascendancy.getCounterCount(CounterType.GROWTH)).isZero();
+    }
+
     private Permanent castRootKin() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castFromHand(player1, new CytoplastRootKin(), "{2}{G}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Cytoplast Root-Kin");
     }
 }

@@ -25,8 +25,7 @@ class BattlePlanTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     @Test
@@ -99,5 +98,89 @@ class BattlePlanTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Battle Plan");
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Battle Plan does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new BattlePlan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(bears.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling discards as a cost before the search resolves")
+    void basicLandcyclingDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new BattlePlan()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Battle Plan");
+        harness.assertInGraveyard(player1, "Battle Plan");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling may fail to find even when a basic land is available")
+    void basicLandcyclingMayFailToFind() {
+        Card forest = new Forest();
+        harness.setHand(player1, List.of(new BattlePlan()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Battle Plan");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling resolves with an empty library")
+    void basicLandcyclingWithEmptyLibrary() {
+        harness.setHand(player1, List.of(new BattlePlan()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Battle Plan");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Basic landcycling requires red mana and does not discard on failed payment")
+    void basicLandcyclingRequiresRedMana() {
+        harness.setHand(player1, List.of(new BattlePlan()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Battle Plan");
+        harness.assertNotInGraveyard(player1, "Battle Plan");
+        assertThat(gd.stack).isEmpty();
     }
 }

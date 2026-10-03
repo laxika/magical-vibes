@@ -38,6 +38,21 @@ class BattlegrowthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Successive Battlegrowth spells add counters only to the targeted tapped creature")
+    void successiveCastsAccumulateCountersOnTappedTarget() {
+        Permanent target = addCreatureReady(player2, new AlphaMyr());
+        Permanent other = addCreatureReady(player2, new AlphaMyr());
+        target.tap();
+
+        cast(target);
+        cast(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Battlegrowth cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());

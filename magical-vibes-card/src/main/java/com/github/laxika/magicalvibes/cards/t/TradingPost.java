@@ -26,7 +26,9 @@ import java.util.Set;
 @CardRegistration(set = "MSC", collectorNumber = "224")
 @CardRegistration(set = "MSC", collectorNumber = "455")
 @CardRegistration(set = "C14", collectorNumber = "279")
+@CardRegistration(set = "C16", collectorNumber = "278")
 @CardRegistration(set = "LTC", collectorNumber = "288")
+@CardRegistration(set = "BRC", collectorNumber = "169")
 public class TradingPost extends Card {
 
     public TradingPost() {

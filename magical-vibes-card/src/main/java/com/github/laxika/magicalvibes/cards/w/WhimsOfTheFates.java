@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.WhimsOfTheFatesEffect;
 
 @CardRegistration(set = "BNG", collectorNumber = "115")
+@CardRegistration(set = "C16", collectorNumber = "139")
 public class WhimsOfTheFates extends Card {
 
     public WhimsOfTheFates() {

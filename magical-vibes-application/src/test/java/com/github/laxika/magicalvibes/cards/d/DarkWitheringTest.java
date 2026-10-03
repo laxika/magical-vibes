@@ -84,6 +84,48 @@ class DarkWitheringTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(darkWithering);
     }
 
+    @Test
+    @DisplayName("Can destroy its controller's nonblack creature")
+    void destroysOwnNonblackCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        castDarkWithering(target, 2, 4);
+
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Madness cannot cast Dark Withering when only black creatures are available")
+    void madnessWithoutLegalTargetPutsCardInGraveyard() {
+        harness.addToBattlefield(player2, new DrudgeReavers());
+        DarkWithering darkWithering = discardViaMindstab();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(darkWithering);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(darkWithering);
+        harness.assertOnBattlefield(player2, "Drudge Reavers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unpayable madness cost puts Dark Withering into its graveyard")
+    void madnessWithoutBlackManaPutsCardInGraveyard() {
+        harness.addToBattlefield(player2, new AshcoatBear());
+        DarkWithering darkWithering = discardViaMindstab();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(darkWithering);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(darkWithering);
+        harness.assertOnBattlefield(player2, "Ashcoat Bear");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castDarkWithering(Permanent target, int blackMana, int genericMana) {
         harness.setHand(player1, List.of(new DarkWithering()));
         harness.addMana(player1, ManaColor.BLACK, blackMana);

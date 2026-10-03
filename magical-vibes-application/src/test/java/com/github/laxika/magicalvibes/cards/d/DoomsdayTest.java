@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
@@ -27,8 +28,7 @@ class DoomsdayTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.setHand(player1, List.of(new Doomsday()));
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -244,5 +244,31 @@ class DoomsdayTest extends BaseCardTest {
         assertThat(library).containsExactly(shock);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .doesNotContain(shock);
+    }
+
+    @Test
+    @CardUsed(MindlockOrb.class)
+    @DisplayName("A prohibited library search still searches the graveyard and exiles the library")
+    void prohibitedLibrarySearchOnlyKeepsGraveyardCards() {
+        Card libraryCard = new Shock();
+        Card graveyardCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.addToBattlefield(player2, new MindlockOrb());
+        harness.setLife(player1, 7);
+
+        cast();
+
+        PendingInteraction.DoomsdayChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DoomsdayChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(graveyardCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).allMatch(Doomsday.class::isInstance);
+        harness.assertLife(player1, 3);
     }
 }

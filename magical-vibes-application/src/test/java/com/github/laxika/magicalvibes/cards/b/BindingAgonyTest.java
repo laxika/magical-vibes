@@ -37,8 +37,7 @@ class BindingAgonyTest extends BaseCardTest {
 
         int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
 
@@ -62,8 +61,7 @@ class BindingAgonyTest extends BaseCardTest {
 
         int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore - 3);
@@ -98,8 +96,7 @@ class BindingAgonyTest extends BaseCardTest {
         int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, otherCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, otherCreature.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore);
@@ -144,8 +141,7 @@ class BindingAgonyTest extends BaseCardTest {
         int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, enchantedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchantedCreature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(controllerLifeBefore - 2);
@@ -163,15 +159,13 @@ class BindingAgonyTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new UnyaroBeeSting()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, enchantedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, enchantedCreature.getId());
 
         int player1LifeBefore = gd.playerLifeTotals.get(player1.getId());
         int player2LifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player1, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castInstant(player1, 0, enchantedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchantedCreature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(enchantedCreature.getId()));
@@ -184,8 +178,7 @@ class BindingAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Binding Agony cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player2.getId()).add(forest);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.setHand(player1, List.of(new BindingAgony()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -193,5 +186,69 @@ class BindingAgonyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Lethal spell damage still triggers after the creature and Aura leave the battlefield")
+    void lethalSpellDamageStillDealsDamage() {
+        Permanent creature = addCreatureReady(player2, new BenevolentUnicorn());
+        harness.setHand(player1, List.of(new BindingAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Benevolent Unicorn");
+        harness.assertInGraveyard(player2, "Benevolent Unicorn");
+        harness.assertNotOnBattlefield(player1, "Binding Agony");
+        harness.assertInGraveyard(player1, "Binding Agony");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("No ability triggers when the enchanted creature receives no damage")
+    void noTriggerWhenDamageIsReducedToZero() {
+        Permanent creature = addCreatureReady(player2, new CrashOfRhinos());
+        addCreatureReady(player2, new BenevolentUnicorn());
+        addCreatureReady(player2, new BenevolentUnicorn());
+        harness.setHand(player1, List.of(new BindingAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new UnyaroBeeSting()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Binding Agony on the same creature triggers independently")
+    void multipleAurasEachDealDamage() {
+        Permanent creature = addCreatureReady(player2, new CrashOfRhinos());
+        harness.setHand(player1, List.of(new BindingAgony(), new BindingAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.assertLife(player2, lifeBefore - 6);
     }
 }

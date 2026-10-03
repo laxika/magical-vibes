@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RedistributePlayerLifeTotalsEffect;
 
 @CardRegistration(set = "CHK", collectorNumber = "41")
+@CardRegistration(set = "C16", collectorNumber = "75")
 public class ReverseTheSands extends Card {
 
     public ReverseTheSands() {

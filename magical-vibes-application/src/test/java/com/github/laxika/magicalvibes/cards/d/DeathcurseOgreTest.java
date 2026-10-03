@@ -59,6 +59,31 @@ class DeathcurseOgreTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
+    @Test
+    @DisplayName("An opposing Ogre's noncombat death waits for resolution and does not trigger surviving Ogres")
+    void opposingOgreDiesOutsideCombat() {
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 8);
+        harness.addToBattlefield(player1, new DeathcurseOgre());
+        Permanent dyingOgre = harness.addToBattlefieldAndReturn(player2, new DeathcurseOgre());
+
+        dyingOgre.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Deathcurse Ogre");
+        harness.assertOnBattlefield(player1, "Deathcurse Ogre");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 8);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 9);
+        harness.assertLife(player2, 5);
+        assertThat(gd.stack).isEmpty();
+    }
+
     /**
      * Deathcurse Ogre (3/3) attacks and is blocked by a 5/5, so it dies to combat damage.
      */

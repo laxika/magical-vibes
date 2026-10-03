@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "70")
 @CardRegistration(set = "SLD", collectorNumber = "2215")
 @CardRegistration(set = "PIO", collectorNumber = "309")
+@CardRegistration(set = "C16", collectorNumber = "205")
 public class IroasGodOfVictory extends Card {
 
     public IroasGodOfVictory() {

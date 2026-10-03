@@ -91,13 +91,62 @@ class DesculptingBlastTest extends BaseCardTest {
                 .hasMessageContaining("nonland");
     }
 
+    @Test
+    @DisplayName("Returning your own attacker creates exactly one Drone for you")
+    void returnsOwnAttacker() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setAttacking(true);
+
+        castAt(target);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(findPermanents(player1, "Drone")).hasSize(1);
+        assertThat(findPermanents(player2, "Drone")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Checks whether the target is attacking at resolution")
+    void noDroneWhenTargetStopsAttackingBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        target.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Drone")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates no Drone when the only target leaves before resolution")
+    void noDroneWhenTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Drone")).isEmpty();
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     private void castAt(Permanent target) {
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    private void prepareCast() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new DesculptingBlast()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
     }
 }

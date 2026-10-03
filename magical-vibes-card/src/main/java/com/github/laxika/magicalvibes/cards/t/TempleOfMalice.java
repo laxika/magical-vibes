@@ -22,6 +22,8 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "835")
 @CardRegistration(set = "PIP", collectorNumber = "1049")
 @CardRegistration(set = "DSC", collectorNumber = "310")
+@CardRegistration(set = "VOC", collectorNumber = "186")
+@CardRegistration(set = "BRC", collectorNumber = "208")
 public class TempleOfMalice extends Card {
 
     public TempleOfMalice() {

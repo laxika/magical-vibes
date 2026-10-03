@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.ScourFromExistence;
+import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,16 +15,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarksteelMonolith.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({DarksteelMonolith.class, GrizzlyBears.class, MindStone.class, ScourFromExistence.class,
+        WalkingBallista.class})
 class DarksteelMonolithTest extends BaseCardTest {
-
-    private Card colorlessInstant() {
-        Card card = new Card();
-        card.setName("Colorless Instant");
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{2}");
-        return card;
-    }
 
     @Test
     @DisplayName("Casts a colorless spell from hand for free")
@@ -55,6 +48,7 @@ class DarksteelMonolithTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindStone(), new MindStone()));
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -64,13 +58,70 @@ class DarksteelMonolithTest extends BaseCardTest {
     @DisplayName("Can be used during an opponent's turn")
     void canBeUsedDuringOpponentsTurn() {
         harness.addToBattlefield(player1, new DarksteelMonolith());
-        harness.setHand(player1, List.of(colorlessInstant()));
+        harness.setHand(player1, List.of(new ScourFromExistence()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Darksteel Monolith"));
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent cannot use Monolith's alternative cost")
+    void opponentCannotUseAlternativeCost() {
+        harness.addToBattlefield(player2, new DarksteelMonolith());
+        harness.setHand(player1, List.of(new MindStone()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Monolith supplies its own free cast each turn")
+    void eachMonolithSuppliesIndependentFreeCast() {
+        harness.addToBattlefield(player1, new DarksteelMonolith());
+        harness.addToBattlefield(player1, new DarksteelMonolith());
+        harness.setHand(player1, List.of(new MindStone(), new MindStone(), new MindStone()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The free cast resets on the opponent's next turn")
+    void freeCastResetsOnNextTurn() {
+        harness.addToBattlefield(player1, new DarksteelMonolith());
+        harness.setHand(player1, List.of(new MindStone(), new ScourFromExistence()));
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Mind Stone"));
+
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A spell cast for zero cannot choose a positive X")
+    void cannotChoosePositiveXWithAlternativeCost() {
+        harness.addToBattlefield(player1, new DarksteelMonolith());
+        harness.setHand(player1, List.of(new WalkingBallista()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 3))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

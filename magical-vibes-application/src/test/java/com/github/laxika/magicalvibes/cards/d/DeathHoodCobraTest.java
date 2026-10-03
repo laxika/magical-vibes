@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.s.SpinedThopter;
+import com.github.laxika.magicalvibes.cards.t.ThunderingTanadon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +18,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeathHoodCobra.class, ThunderingTanadon.class, SpinedThopter.class})
 class DeathHoodCobraTest extends BaseCardTest {
-
-    // ===== Reach ability =====
 
     @Test
     @DisplayName("Activating reach ability puts it on the stack")
@@ -31,7 +33,6 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Death-Hood Cobra");
         assertThat(entry.getTargetId()).isEqualTo(cobra.getId());
     }
 
@@ -68,8 +69,6 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.REACH)).isFalse();
     }
 
-    // ===== Deathtouch ability =====
-
     @Test
     @DisplayName("Activating deathtouch ability puts it on the stack")
     void activatingDeathtouchPutsOnStack() {
@@ -82,7 +81,6 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Death-Hood Cobra");
         assertThat(entry.getTargetId()).isEqualTo(cobra.getId());
     }
 
@@ -119,8 +117,6 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isFalse();
     }
 
-    // ===== Both abilities =====
-
     @Test
     @DisplayName("Can activate both abilities to gain both reach and deathtouch")
     void canActivateBothAbilities() {
@@ -137,8 +133,6 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.REACH)).isTrue();
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isTrue();
     }
-
-    // ===== Activation constraints =====
 
     @Test
     @DisplayName("Activating ability does NOT tap Death-Hood Cobra")
@@ -174,10 +168,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Death-Hood Cobra");
     }
-
-    // ===== Deathtouch combat interaction =====
 
     @Test
     @DisplayName("Death-Hood Cobra with deathtouch kills blocker regardless of toughness")
@@ -193,9 +184,7 @@ class DeathHoodCobraTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isTrue();
 
         // Set up combat with a large blocker
-        harness.addToBattlefield(player2, new DeathHoodCobra());
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getLast();
-        blocker.setSummoningSick(false);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ThunderingTanadon());
 
         cobra.setAttacking(true);
         blocker.setBlocking(true);
@@ -211,11 +200,9 @@ class DeathHoodCobraTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(blocker.getId()));
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Death-Hood Cobra is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without granting reach to a replacement Cobra when its source leaves")
+    void abilityDoesNotAffectReplacementCobra() {
         addCobraReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -223,18 +210,78 @@ class DeathHoodCobraTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
 
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.REACH)).isFalse();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Both abilities can be activated while summoning sick and tapped")
+    void bothAbilitiesWorkWhileSummoningSickAndTapped() {
+        Permanent cobra = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
+        cobra.setSummoningSick(true);
+        cobra.tap();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cobra, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(cobra.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Both keyword grants affect only the Cobra whose abilities were activated")
+    void keywordGrantsAffectOnlyTheirSource() {
+        Permanent cobra = addCobraReady(player1);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DeathHoodCobra());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cobra, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cobra, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Reach permits blocking a flying creature only after the ability resolves")
+    void reachAllowsBlockingFlyingCreature() {
+        Permanent cobra = addCobraReady(player1);
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new SpinedThopter());
+        flyer.setAttacking(true);
+        assertThat(bls.canBlockAttacker(gd, cobra, flyer,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(bls.canBlockAttacker(gd, cobra, flyer,
+                gd.playerBattlefields.get(player1.getId()))).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, cobra, flyer,
+                gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
 
     private Permanent addCobraReady(Player player) {
-        Permanent perm = new Permanent(new DeathHoodCobra());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new DeathHoodCobra());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

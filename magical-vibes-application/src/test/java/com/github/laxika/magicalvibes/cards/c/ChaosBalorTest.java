@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChaosBalor.class, Forest.class, GrizzlyBears.class, ShivanHellkite.class})
 class ChaosBalorTest extends BaseCardTest {
@@ -72,6 +73,76 @@ class ChaosBalorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 
+    @Test
+    void twoModesCannotTargetTheSamePlayer() {
+        attackWithBalor();
+        chooseModes(DISCARD_MODE, DAMAGE_AND_TREASURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void deathTriggerResolvesDamageAndCreatureModesWithoutTheSourceOnBattlefield() {
+        Permanent creature = addCreatureReady(player2, new ShivanHellkite());
+        Permanent balor = addCreatureReady(player1, new ChaosBalor());
+        balor.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        chooseModes(DAMAGE_AND_TREASURE_MODE, CREATURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chaos Balor");
+        harness.assertNotOnBattlefield(player1, "Chaos Balor");
+        harness.assertLife(player1, 18);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+    }
+
+    @Test
+    void seekTakesOnlyAvailableNonlandsAndLeavesLandsInOrder() {
+        Card firstDiscarded = new Forest();
+        Card secondDiscarded = new Forest();
+        Card firstLand = new Forest();
+        Card secondLand = new Forest();
+        Card sought = new GrizzlyBears();
+        harness.setHand(player1, List.of(firstDiscarded, secondDiscarded));
+        harness.setLibrary(player1, List.of(firstLand, sought, secondLand));
+
+        attackWithBalor();
+        chooseModes(DISCARD_MODE, DAMAGE_AND_TREASURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sought);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscarded, secondDiscarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstLand, secondLand);
+    }
+
+    @Test
+    void lethallyDamagedCreatureKeepsPerpetualBoostInGraveyardAndWhenReturned() {
+        addCreatureReady(player2, new GrizzlyBears());
+
+        attackWithBalor();
+        chooseModes(DISCARD_MODE, CREATURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        Card deadCreature = gd.playerGraveyards.get(player2.getId()).stream()
+                .filter(card -> card.getName().equals("Grizzly Bears")).findFirst().orElseThrow();
+        gd.playerGraveyards.get(player2.getId()).remove(deadCreature);
+        Permanent returned = addCreatureReady(player2, deadCreature);
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+    }
     private void chooseModes(String first, String second) {
         harness.handleListChoice(player1, first);
         harness.handleListChoice(player1, second);

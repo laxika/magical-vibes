@@ -124,4 +124,37 @@ class CavesOfKoilosTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.assertLife(player1, 18);
     }
+
+    @Test
+    @DisplayName("The other player receives the mana and takes the damage from their land")
+    void otherControllerReceivesManaAndDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent caves = addReadyCaves(player2);
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(caves.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colored mana can be produced at one life because damage is not a cost")
+    void coloredManaCanBeProducedAtOneLife() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 20);
+        Permanent caves = addReadyCaves(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 20);
+        assertThat(caves.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

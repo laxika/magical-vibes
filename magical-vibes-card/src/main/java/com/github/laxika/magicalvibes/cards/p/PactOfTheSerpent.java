@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "LCC", collectorNumber = "206")
+@CardRegistration(set = "KHC", collectorNumber = "9")
 public class PactOfTheSerpent extends Card {
 
     public PactOfTheSerpent() {

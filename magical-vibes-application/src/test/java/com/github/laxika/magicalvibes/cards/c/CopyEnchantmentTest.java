@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.l.LightOfSanction;
+import com.github.laxika.magicalvibes.cards.f.FaithsFetters;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CopyEnchantment.class, LightOfSanction.class, CarvenCaryatid.class, Char.class})
+@CardUsed({CopyEnchantment.class, LightOfSanction.class, CarvenCaryatid.class, Char.class, FaithsFetters.class})
 class CopyEnchantmentTest extends BaseCardTest {
 
     @Test
@@ -58,6 +59,28 @@ class CopyEnchantmentTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findCopy(copy)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Copying an Aura chooses a new attachment and triggers its enters ability")
+    void copiesAuraWithNewAttachmentAndEntersTrigger() {
+        Permanent originalRecipient = harness.addToBattlefieldAndReturn(player2, new CarvenCaryatid());
+        Permanent newRecipient = harness.addToBattlefieldAndReturn(player1, new CarvenCaryatid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new FaithsFetters());
+        aura.setAttachedTo(originalRecipient.getId());
+        CopyEnchantment copy = new CopyEnchantment();
+
+        castCopyEnchantment(copy);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, aura.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, newRecipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(findCopy(copy).getAttachedTo()).isEqualTo(newRecipient.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(originalRecipient.getId());
+        harness.assertLife(player1, 24);
     }
 
     private void castCharAt(Permanent target) {

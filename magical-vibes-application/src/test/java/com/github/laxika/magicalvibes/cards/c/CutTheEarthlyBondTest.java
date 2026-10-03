@@ -45,6 +45,43 @@ class CutTheEarthlyBondTest extends BaseCardTest {
     }
 
     @Test
+    void cannotTargetAnAuraMerelyBecauseItEnchantsAnotherPermanent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FreedFromTheReal());
+        aura.setAttachedTo(creature.getId());
+
+        harness.setHand(player1, List.of(new CutTheEarthlyBond()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, aura.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an enchanted permanent");
+    }
+
+    @Test
+    void stillResolvesWhenOneOfTwoAurasLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArabaMothrider());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new FreedFromTheReal());
+        Permanent remainingAura = harness.addToBattlefieldAndReturn(player2, new FreedFromTheReal());
+        firstAura.setAttachedTo(target.getId());
+        remainingAura.setAttachedTo(target.getId());
+
+        harness.setHand(player1, List.of(new CutTheEarthlyBond()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+        gd.playerGraveyards.get(player1.getId()).add(firstAura.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Araba Mothrider");
+        harness.assertNotOnBattlefield(player1, "Araba Mothrider");
+        harness.assertInGraveyard(player2, "Freed from the Real");
+        harness.assertNotInHand(player2, "Freed from the Real");
+        harness.assertInGraveyard(player1, "Cut the Earthly Bond");
+    }
+
+    @Test
     void fizzlesIfTargetIsNoLongerEnchanted() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FreedFromTheReal());

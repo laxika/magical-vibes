@@ -82,4 +82,35 @@ class CobaltGolemTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, source, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, otherGolem, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent golem = addCreatureReady(player1, new CobaltGolem());
+        golem.setSummoningSick(true);
+        golem.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Blue mana can pay the generic cost and opposing Golems are unaffected")
+    void canPayWithTwoBlueMana() {
+        Permanent golem = addCreatureReady(player1, new CobaltGolem());
+        Permanent opposingGolem = addCreatureReady(player2, new CobaltGolem());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingGolem, Keyword.FLYING)).isFalse();
+    }
 }

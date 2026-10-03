@@ -49,6 +49,86 @@ class DeathRattleTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can pay the full mana cost without delving")
+    void castsWithoutDelving() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AugurOfSkulls());
+        Card graveyardCard = new HorizonCanopy();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setHand(player1, List.of(new DeathRattle()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Death Rattle");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can combine partial delve with mana and exile any card type")
+    void combinesPartialDelveWithMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AugurOfSkulls());
+        Card land = new HorizonCanopy();
+        Card creature = new Imperiosaur();
+        Card unselected = new AugurOfSkulls();
+        harness.setGraveyard(player1, List.of(land, creature, unselected));
+        harness.setHand(player1, List.of(new DeathRattle()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, target.getId(), List.of(0, 1));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(land, creature);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Death Rattle");
+    }
+
+    @Test
+    @DisplayName("Delve cannot pay the black mana requirement")
+    void delveCannotPayColoredMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AugurOfSkulls());
+        List<Card> graveyard = List.of(new Imperiosaur(), new Imperiosaur(), new Imperiosaur(),
+                new Imperiosaur(), new Imperiosaur());
+        harness.setGraveyard(player1, graveyard);
+        harness.setHand(player1, List.of(new DeathRattle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithMultipleGraveyardExile(
+                player1, 0, target.getId(), List.of(0, 1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Death Rattle");
+        harness.assertOnBattlefield(player2, "Augur of Skulls");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot delve more cards than the generic mana requirement")
+    void cannotDelveMoreThanGenericCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AugurOfSkulls());
+        List<Card> graveyard = List.of(new Imperiosaur(), new Imperiosaur(), new Imperiosaur(),
+                new Imperiosaur(), new Imperiosaur(), new Imperiosaur());
+        harness.setGraveyard(player1, graveyard);
+        harness.setHand(player1, List.of(new DeathRattle()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithMultipleGraveyardExile(
+                player1, 0, target.getId(), List.of(0, 1, 2, 3, 4, 5)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("generic cost");
+
+        harness.assertInHand(player1, "Death Rattle");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+    @Test
     @DisplayName("Cannot target a green creature")
     void cannotTargetGreenCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "100")
 @CardRegistration(set = "C19", collectorNumber = "121")
+@CardRegistration(set = "C16", collectorNumber = "113")
 public class InGarruksWake extends Card {
 
     public InGarruksWake() {

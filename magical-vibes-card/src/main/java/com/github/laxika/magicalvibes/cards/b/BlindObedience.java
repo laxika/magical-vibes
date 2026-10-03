@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "RVR", collectorNumber = "9")
 @CardRegistration(set = "RVR", collectorNumber = "303")
 @CardRegistration(set = "WOT", collectorNumber = "1")
+@CardRegistration(set = "C16", collectorNumber = "59")
 public class BlindObedience extends Card {
 
     public BlindObedience() {

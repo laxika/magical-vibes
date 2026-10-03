@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -59,7 +60,7 @@ class CrystalGolemTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
 
-        advanceTurn();
+        harness.passUntil(player1, TurnStep.UNTAP);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
         assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(golem);
@@ -72,12 +73,66 @@ class CrystalGolemTest extends BaseCardTest {
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 
-    private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+    @Test
+    @DisplayName("Phasing out waits for the end-step trigger to resolve")
+    void remainsOnBattlefieldUntilTriggerResolves() {
+        Permanent golem = addGolem();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("Crystal Golem entering after the end step begins waits until the next end step")
+    void enteringDuringEndStepDoesNotTriggerImmediately() {
+        advanceToEndStep(player1);
+        Permanent golem = harness.enterBattlefieldAndReturn(player1, new CrystalGolem());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("Crystal Golem stays phased out through the opponent's untap step")
+    void staysPhasedOutDuringOpponentUntap() {
+        Permanent golem = addGolem();
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(golem);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(golem);
+    }
+
+    @Test
+    @DisplayName("Crystal Golem keeps its counters and untaps after phasing in")
+    void retainsCountersAndUntapsWhenPhasingIn() {
+        Permanent golem = addGolem();
+        golem.setTapped(true);
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(golem);
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(golem.isTapped()).isFalse();
     }
 }

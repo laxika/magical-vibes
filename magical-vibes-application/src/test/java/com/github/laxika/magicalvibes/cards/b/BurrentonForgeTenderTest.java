@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.FireElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.p.Purelace;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BurrentonForgeTender.class, FireElemental.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({BurrentonForgeTender.class, FireElemental.class, GrizzlyBears.class, LightningBolt.class,
+        MoggFanatic.class, Purelace.class, RagingGoblin.class})
 class BurrentonForgeTenderTest extends BaseCardTest {
 
     @Test
@@ -46,7 +51,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, forgeTender.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forgeTender.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
 
@@ -179,6 +184,119 @@ class BurrentonForgeTenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Chosen source becoming white can deal damage again")
+    void chosenSourceMustStillBeRedWhenDealingDamage() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent attacker = addCreatureReady(player2, new FireElemental());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        harness.setHand(player1, List.of(new Purelace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("A sacrificed red source with a pending damage ability can be chosen")
+    void canChooseSacrificedSourceOfStackAbility() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent fanatic = addCreatureReady(player2, new MoggFanatic());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(fanatic.getId());
+        harness.handlePermanentChosen(player1, fanatic.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevention follows a chosen creature spell onto the battlefield")
+    void chosenCreatureSpellRemainsPreventedAfterResolving() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player2, new BurrentonForgeTender());
+        harness.setHand(player1, List.of(new RagingGoblin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        var spellId = gd.stack.getLast().getTargetableId();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, spellId);
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents red combat damage while blocking")
+    void protectionPreventsRedCombatDamage() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent attacker = addCreatureReady(player2, new FireElemental());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Burrenton Forge-Tender");
+        harness.assertLife(player1, 20);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Prevention protects creatures and leaves other red spells unaffected")
+    void preventsChosenSpellDamageToCreatureOnlyForThatSource() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new BurrentonForgeTender());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, bears.getId());
+        var spellId = gd.stack.getLast().getTargetableId();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spellId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("A red creature cannot block Forge-Tender")
+    void protectionDisallowsRedBlocker() {
+        addCreatureReady(player1, new BurrentonForgeTender());
+        addCreatureReady(player2, new FireElemental());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
 }

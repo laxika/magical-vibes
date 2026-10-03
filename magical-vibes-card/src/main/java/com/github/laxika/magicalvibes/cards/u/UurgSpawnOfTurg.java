@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "225")
+@CardRegistration(set = "EOC", collectorNumber = "127")
 public class UurgSpawnOfTurg extends Card {
 
     public UurgSpawnOfTurg() {

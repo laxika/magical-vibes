@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.e.Earthbrawn;
 import com.github.laxika.magicalvibes.cards.f.Forfend;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -130,9 +131,91 @@ class CreamOfTheCropTest extends BaseCardTest {
     @DisplayName("Does not trigger for an opponent's creature entering")
     void doesNotTriggerForOpponentCreature() {
         harness.addToBattlefield(player1, new CreamOfTheCrop());
-        harness.addToBattlefield(player2, new BallyrushBanneret());
+        harness.enterBattlefieldAndReturn(player2, new BallyrushBanneret());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Uses the creature's last known power after it leaves the battlefield")
+    void usesLastKnownPowerAfterCreatureLeaves() {
+        harness.addToBattlefield(player1, new CreamOfTheCrop());
+        harness.setLibrary(player1, List.of(
+                new CoordinatedBarrage(), new DailyRegimen(), new Disperse(),
+                new DistantMelody(), new Forfend()));
+        harness.castFromHand(player1, new BallyrushBanneret(), "{1}{W}");
+        harness.passBothPriorities();
+        var banneret = findPermanent(player1, "Ballyrush Banneret");
+
+        harness.setHand(player1, List.of(new Earthbrawn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, banneret.getId());
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, banneret.getId());
+        harness.assertNotOnBattlefield(player1, "Ballyrush Banneret");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Controller chooses the order of the cards put on the bottom")
+    void choosesBottomOrder() {
+        harness.addToBattlefield(player1, new CreamOfTheCrop());
+        Card barrage = new CoordinatedBarrage();
+        Card regimen = new DailyRegimen();
+        Card disperse = new Disperse();
+        Card melody = new DistantMelody();
+        harness.setLibrary(player1, List.of(barrage, regimen, disperse, melody));
+        harness.castFromHand(player1, new ChangelingSentinel(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.cards()).containsExactly(barrage, disperse);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(regimen, melody, disperse, barrage);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looks at all available cards when the library is smaller than the creature's power")
+    void looksAtAvailableCardsInShortLibrary() {
+        harness.addToBattlefield(player1, new CreamOfTheCrop());
+        Card barrage = new CoordinatedBarrage();
+        Card regimen = new DailyRegimen();
+        harness.setLibrary(player1, List.of(barrage, regimen));
+        harness.castFromHand(player1, new ChangelingSentinel(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(barrage, regimen);
+        harness.handleCardChosen(player1, 1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(regimen, barrage);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty library completes without a card choice")
+    void emptyLibraryCompletesWithoutChoice() {
+        harness.addToBattlefield(player1, new CreamOfTheCrop());
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new BallyrushBanneret(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

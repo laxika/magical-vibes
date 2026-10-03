@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 @CardRegistration(set = "MUL", collectorNumber = "46")
 @CardRegistration(set = "MUL", collectorNumber = "111")
 @CardRegistration(set = "MUL", collectorNumber = "176")
+@CardRegistration(set = "EOC", collectorNumber = "119")
 public class JuriMasterOfTheRevue extends Card {
 
     public JuriMasterOfTheRevue() {

@@ -55,14 +55,66 @@ class BatrocTheLeaperTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
     }
 
+    @Test
+    @DisplayName("A kicked Batroc can choose no targets and still enters with counters")
+    void kickedWithNoTargets() {
+        castBatroc(List.of("{2}"));
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Batroc the Leaper")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two kicks allow choosing only one target")
+    void fewerTargetsThanKicks() {
+        castBatroc(List.of("{2}", "{2}"));
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Batroc can deal damage to his own controller")
+    void canTargetController() {
+        castBatroc(List.of("{2}"));
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage uses Batroc's power when the triggered ability resolves")
+    void usesPowerAtResolution() {
+        castBatroc(List.of("{2}"));
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        Permanent batroc = findPermanent(player1, "Batroc the Leaper");
+        batroc.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+    }
+
     private void castBatroc(List<String> payments) {
         harness.setHand(player1, List.of(new BatrocTheLeaper()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1 + payments.size() * 2);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                payments, false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, payments);
         harness.passBothPriorities();
     }
 }

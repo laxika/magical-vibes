@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DissectionPractice.class, GrizzlyBears.class, FountainOfYouth.class})
 class DissectionPracticeTest extends BaseCardTest {
 
     @Test
@@ -62,8 +65,7 @@ class DissectionPracticeTest extends BaseCardTest {
         assertThat(creature.getPowerModifier()).isEqualTo(1);
         assertThat(creature.getToughnessModifier()).isEqualTo(1);
 
-        gd.expireEndOfTurnFloatingEffects();
-        creature.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
@@ -91,10 +93,42 @@ class DissectionPracticeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A missing boost target does not redirect the boost to the remaining creature")
+    void resolvesWithOneCreatureTargetGone() {
+        Permanent boosted = addCreature(player1);
+        Permanent weakened = addCreature(player2);
+        prepareCast();
+        harness.castInstant(player1, 0,
+                List.of(player2.getId(), boosted.getId(), weakened.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(boosted);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        assertThat(weakened.getPowerModifier()).isEqualTo(-1);
+        assertThat(weakened.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("The life effects resolve when both creature targets have left the battlefield")
+    void resolvesLifeEffectsWithBothCreatureTargetsGone() {
+        Permanent creature = addCreature(player2);
+        prepareCast();
+        harness.castInstant(player1, 0,
+                List.of(player2.getId(), creature.getId(), creature.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         prepareCast();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void prepareCast() {

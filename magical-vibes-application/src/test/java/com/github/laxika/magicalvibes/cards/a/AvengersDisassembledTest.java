@@ -3,14 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -30,8 +27,8 @@ class AvengersDisassembledTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -42,15 +39,14 @@ class AvengersDisassembledTest extends BaseCardTest {
         cast(new int[]{1}, List.of(targetId));
 
         harness.assertInGraveyard(player2, "Forest");
+        harness.handleMayAbilityChosen(player2, true);
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
-        assertThat(search.params().cards())
-                .allMatch(card -> card.hasType(CardType.LAND)
-                        && card.getSupertypes().contains(CardSupertype.BASIC));
+        assertThat(search.params().cards()).hasSize(1);
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Plains") && permanent.isTapped());
@@ -78,6 +74,49 @@ class AvengersDisassembledTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(
                 player1, 0, 1, 2, new int[]{1}, List.of(creatureId), null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void landControllerCanDeclineSearchingWithoutShuffling() {
+        harness.addToBattlefield(player2, new Forest());
+        UUID landId = harness.getPermanentId(player2, "Forest");
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(plains, forest));
+
+        cast(new int[]{1}, List.of(landId));
+
+        harness.assertInGraveyard(player2, "Forest");
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(plains, forest);
+        harness.assertNotOnBattlefield(player2, "Plains");
+        harness.assertNotOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void illegalLandTargetPreventsBothModesFromResolving() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID landId = harness.getPermanentId(player2, "Forest");
+        harness.setLibrary(player2, List.of(new Plains()));
+        harness.setHand(player1, List.of(new AvengersDisassembled()));
+        addMana();
+        harness.castModalSorceryWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(landId), null);
+
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(landId));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Plains");
+        harness.assertInGraveyard(player1, "Avengers Disassembled");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void cast(int[] modes, List<UUID> targetIds) {

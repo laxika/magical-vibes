@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,24 +12,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({AcademyDrake.class})
 class AcademyDrakeTest extends BaseCardTest {
 
-    // ===== Card setup =====
-
     @Test
-    @DisplayName("Has KickerEffect with cost {4}")
-    void hasKickerEffect() {
-        AcademyDrake card = new AcademyDrake();
+    @DisplayName("Entering without being cast does not grant kicker counters")
+    void entersWithoutCastingHasNoCounters() {
+        Permanent drake = harness.enterBattlefieldAndReturn(player1, new AcademyDrake());
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{4}"));
+        harness.assertOnBattlefield(player1, "Academy Drake");
+        assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
-
-    
-
-    // ===== Casting without kicker =====
 
     @Test
     @DisplayName("Cast without kicker — enters as 2/2 with no counters")
@@ -41,12 +36,10 @@ class AcademyDrakeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent drake = findDrake(player1);
-        assertThat(drake).isNotNull();
+        harness.assertOnBattlefield(player1, "Academy Drake");
+        Permanent drake = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
-
-    // ===== Casting with kicker =====
 
     @Test
     @DisplayName("Cast with kicker — enters as 4/4 with two +1/+1 counters")
@@ -58,9 +51,10 @@ class AcademyDrakeTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent drake = findDrake(player1);
-        assertThat(drake).isNotNull();
+        harness.assertOnBattlefield(player1, "Academy Drake");
+        Permanent drake = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -74,11 +68,18 @@ class AcademyDrakeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Having enough mana for kicker does not kick the spell automatically")
+    void castWithoutKickerWithEnoughManaForKicker() {
+        harness.setHand(player1, List.of(new AcademyDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 6);
 
-    private Permanent findDrake(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Academy Drake"))
-                .findFirst().orElse(null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Academy Drake");
+        Permanent drake = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

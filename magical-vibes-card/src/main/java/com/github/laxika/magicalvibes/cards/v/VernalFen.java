@@ -18,6 +18,8 @@ import java.util.List;
 @CardRegistration(set = "ECC", collectorNumber = "63")
 @CardRegistration(set = "TMC", collectorNumber = "81")
 @CardRegistration(set = "SOC", collectorNumber = "419")
+@CardRegistration(set = "EOC", collectorNumber = "24")
+@CardRegistration(set = "EOC", collectorNumber = "44")
 public class VernalFen extends Card {
 
     public VernalFen() {

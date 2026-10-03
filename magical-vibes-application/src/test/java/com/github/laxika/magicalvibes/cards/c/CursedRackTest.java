@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StealArtifact;
@@ -20,8 +21,47 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CursedRack.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class,
-        StealArtifact.class})
+        StealArtifact.class, LibraryOfLeng.class})
 class CursedRackTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Choosing the opponent happens during entry without a targeted triggered ability")
+    void opponentChosenAsRackEnters() {
+        harness.setHand(player1, List.of(new CursedRack()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cursed Rack");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("No maximum hand size overrides Cursed Rack even when Rack enters later")
+    void unlimitedHandSizeOverridesRack() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        harness.addToBattlefield(player1, new CursedRack());
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(8);
+    }
 
     @Test
     @DisplayName("Chosen opponent must discard down to four during cleanup")

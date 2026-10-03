@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.b.BellBorcaSpectralSergeant;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -11,23 +14,23 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DemonlordBelzenlok.class, Forest.class, GrizzlyBears.class, SerraAngel.class, SuntailHawk.class, Juggernaut.class, BellBorcaSpectralSergeant.class})
 class DemonlordBelzenlokTest extends BaseCardTest {
 
-    // ===== ETB trigger behavior =====
+
 
     @Test
     @DisplayName("Stops on first nonland card with mana value less than 4")
     void stopsOnLowMVNonland() {
         // Library: Forest, GrizzlyBears (MV 2)
         // Expected: Forest exiled, GrizzlyBears to hand, 1 damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -47,9 +50,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     void repeatsOnHighMVNonland() {
         // Library: SerraAngel (MV 5), GrizzlyBears (MV 2)
         // Expected: SerraAngel to hand (MV >= 4, repeat), GrizzlyBears to hand (MV < 4, stop), 2 damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new SerraAngel(), new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -71,9 +74,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         // Iteration 1: exile Forest (land), SerraAngel to hand (MV >= 4, repeat)
         // Iteration 2: exile Forest (land), exile Forest (land), SuntailHawk to hand (MV < 4, stop)
         // Expected: 3 Forests exiled, 2 cards to hand, 2 damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new SerraAngel(), new Forest(), new Forest(), new SuntailHawk()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -95,9 +98,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     void firstCardIsLowMVNonland() {
         // Library: GrizzlyBears (MV 2)
         // Expected: GrizzlyBears to hand, 1 damage, no lands exiled
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -116,9 +119,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     void allLandsInLibrary() {
         // Library: Forest, Forest, Forest
         // Expected: all 3 exiled, no cards to hand, no damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -135,7 +138,7 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     @Test
     @DisplayName("Empty library — no effect, no damage")
     void emptyLibrary() {
-        gd.playerDecks.put(player1.getId(), new ArrayList<>());
+        harness.setLibrary(player1, List.of());
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -153,9 +156,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     void libraryRunsOutDuringRepeat() {
         // Library: SerraAngel (MV 5)
         // Expected: SerraAngel to hand (MV >= 4, repeat), library empty, stop. 1 damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new SerraAngel()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -175,9 +178,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     void multipleHighMVCardsChain() {
         // Library: SerraAngel (MV 5), SerraAngel (MV 5), GrizzlyBears (MV 2)
         // Expected: 2 SerraAngels + 1 GrizzlyBears to hand = 3 cards, 3 damage
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new SerraAngel(), new SerraAngel(), new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -196,9 +199,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     @Test
     @DisplayName("Damage log mentions correct card count")
     void damageLogMentionsCardCount() {
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new SerraAngel(), new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -215,9 +218,9 @@ class DemonlordBelzenlokTest extends BaseCardTest {
     @DisplayName("Lands exiled before nonland remain in exile")
     void landsRemainInExile() {
         // Library: Forest, Forest, GrizzlyBears (MV 2)
-        gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new GrizzlyBears()
-        )));
+        ));
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new DemonlordBelzenlok()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -230,5 +233,45 @@ class DemonlordBelzenlokTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .allMatch(c -> c.getName().equals("Forest"));
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+    @Test
+    void repeatsAtExactlyFourAndLeavesRemainingLibraryUntouched() {
+        Juggernaut high = new Juggernaut();
+        GrizzlyBears low = new GrizzlyBears();
+        Forest remaining = new Forest();
+        harness.setLibrary(player1, List.of(high, low, remaining));
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DemonlordBelzenlok()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(high, low);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void nonlandCardsAreExiledBeforeBeingPutIntoHand() {
+        var bell = addCreatureReady(player1, new BellBorcaSpectralSergeant());
+        SerraAngel high = new SerraAngel();
+        GrizzlyBears low = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(high, low));
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DemonlordBelzenlok()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(high, low);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bell)).isEqualTo(5);
+        harness.assertLife(player1, 18);
     }
 }

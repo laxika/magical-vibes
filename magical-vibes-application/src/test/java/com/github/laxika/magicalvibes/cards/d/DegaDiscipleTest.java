@@ -93,6 +93,83 @@ class DegaDiscipleTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
+    @Test
+    void canTargetItself() {
+        Permanent disciple = addReadyDisciple(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, disciple.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, disciple)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, disciple)).isEqualTo(1);
+    }
+
+    @Test
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DegaDisciple());
+        disciple.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(disciple.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void tappedDiscipleCannotActivateEitherAbility() {
+        Permanent disciple = addReadyDisciple(player1);
+        disciple.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void redManaCannotPayForBlackAbility() {
+        Permanent disciple = addReadyDisciple(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(disciple.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent disciple = addReadyDisciple(player1);
+        Permanent target = addCreatureReady(player2, new DegaDisciple());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(disciple);
+        gd.playerGraveyards.get(player1.getId()).add(disciple.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyDisciple(Player player) {
         return addCreatureReady(player, new DegaDisciple());
     }

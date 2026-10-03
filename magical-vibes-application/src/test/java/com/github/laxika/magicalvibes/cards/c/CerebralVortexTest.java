@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,12 +29,70 @@ class CerebralVortexTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and ignores cards drawn by the opponent")
+    void canTargetControllerAndCountsOnlyTheirDraws() {
+        harness.setHand(player1, List.of(new CerebralVortex()));
+        harness.setLibrary(player1, List.of(new GhostWarden(), new GhostWarden(), new GhostWarden()));
+        harness.setLibrary(player2, List.of(new GhostWarden(), new GhostWarden()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Cerebral Vortex");
+    }
+
+    @Test
+    @DisplayName("A second Vortex counts cards drawn by the first Vortex this turn")
+    void repeatedCastsCountEarlierDraws() {
+        harness.setHand(player1, List.of(new CerebralVortex(), new CerebralVortex()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GhostWarden(), new GhostWarden(),
+                new GhostWarden(), new GhostWarden(), new GhostWarden()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An unsuccessful draw does not increase damage and the spell finishes before library loss")
+    void shortLibraryCountsOnlySuccessfulDraws() {
+        harness.setHand(player1, List.of(new CerebralVortex()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GhostWarden()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player2, 19);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Cerebral Vortex");
     }
 
     @Test

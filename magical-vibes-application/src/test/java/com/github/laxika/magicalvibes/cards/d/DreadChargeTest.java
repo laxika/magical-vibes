@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.e.EndlessCockroaches;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +22,7 @@ class DreadChargeTest extends BaseCardTest {
     @DisplayName("A black creature you control can't be blocked by a non-black creature")
     void blackCreatureCannotBeBlockedByNonBlack() {
         Permanent attacker = addCreatureReady(player1, new EndlessCockroaches());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         resolveDreadCharge();
 
         prepareDeclareBlockers(attacker);
@@ -83,6 +84,23 @@ class DreadChargeTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by black creatures");
+    }
+
+    @Test
+    @DisplayName("Dread Charge's blocking restriction expires at turn cleanup")
+    void restrictionExpiresAtCleanup() {
+        Permanent attacker = addCreatureReady(player1, new EndlessCockroaches());
+        addCreatureReady(player2, new GrizzlyBears());
+        resolveDreadCharge();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UNTAP);
+
+        prepareDeclareBlockers(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }
 
     private void resolveDreadCharge() {

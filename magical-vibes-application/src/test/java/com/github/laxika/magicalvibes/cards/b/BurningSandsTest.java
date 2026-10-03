@@ -63,4 +63,65 @@ class BurningSandsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Burning Sands' controller controls the trigger even when an opponent's creature dies")
+    void sourceControllerControlsTheTriggeredAbility() {
+        harness.addToBattlefield(player1, new BurningSands());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Burning Sands also triggers when its controller's creature dies")
+    void sourceControllersCreatureDeathAlsoRequiresLandSacrifice() {
+        harness.addToBattlefield(player2, new BurningSands());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Each Burning Sands triggers separately for the same creature death")
+    void multipleCopiesRequireSeparateLandSacrifices() {
+        harness.addToBattlefield(player1, new BurningSands());
+        harness.addToBattlefield(player1, new BurningSands());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new CruelEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(harness.getPermanentId(player2, "Mountain")));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

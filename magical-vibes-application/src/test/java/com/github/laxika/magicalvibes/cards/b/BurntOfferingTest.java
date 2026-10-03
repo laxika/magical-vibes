@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.i.Iceberg;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BurntOffering.class, BalduvianBears.class, KjeldoranWarrior.class, Ornithopter.class})
+@CardUsed({BurntOffering.class, BalduvianBears.class, KjeldoranWarrior.class, Ornithopter.class,
+        Counterspell.class, Iceberg.class})
 class BurntOfferingTest extends BaseCardTest {
 
     @Test
@@ -137,6 +140,44 @@ class BurntOfferingTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a noncreature permanent")
+    void cannotSacrificeNoncreature() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Iceberg());
+        harness.setHand(player1, List.of(new BurntOffering()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(
+                player1, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Iceberg");
+        harness.assertInHand(player1, "Burnt Offering");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Countering the spell adds no mana and does not undo the sacrifice")
+    void counteringDoesNotUndoSacrifice() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        BurntOffering offering = new BurntOffering();
+        harness.setHand(player1, List.of(offering));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstantWithSacrifice(player1, 0, null, sacrifice.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, offering.getId());
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Burnt Offering");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 }

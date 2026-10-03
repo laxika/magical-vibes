@@ -291,10 +291,15 @@ public class DestructionSupport {
         for (Permanent perm : dying) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
-            gameData.simultaneousDyingPermanents.put(perm.getId(), perm);
+            Permanent snapshot = new Permanent(perm);
+            snapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, perm));
+            snapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, perm));
+            snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, perm));
+            snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, perm));
+            gameData.simultaneousDyingPermanents.put(perm.getId(), snapshot);
             gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
             if (!gameQueryService.isCreature(gameData, perm)) continue;
-            gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
+            gameData.simultaneousDyingCreatures.put(perm.getId(), snapshot);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
             gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
             gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
@@ -614,6 +619,14 @@ public class DestructionSupport {
                                                   List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
                                                   com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices,
                                                   boolean recordSacrificedCount) {
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, simultaneousFlow,
+                afterSacrifices, recordSacrificedCount, false);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
+                                                  com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices,
+                                                  boolean recordSacrificedCount, boolean recordSacrificedPower) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -624,7 +637,7 @@ public class DestructionSupport {
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
                         List.copyOf(accumulatedSacrificeIds), simultaneousFlow, recordSacrificedCount,
-                        afterSacrifices),
+                        recordSacrificedPower, afterSacrifices),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
@@ -1002,6 +1015,11 @@ public class DestructionSupport {
                 gameData, controllerId, token);
         int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
                 gameData, controllerId, token);
+        int additionalThopterTokenCount = TokenCreationReplacementSupport.additionalThopterTokenCount(
+                gameData, controllerId, token, tokenCount);
+        CreateTokenEffect additionalThopterToken = additionalThopterTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalThopterToken(token)
+                : null;
         CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
                 ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
                         gameData, controllerId, token)
@@ -1033,6 +1051,9 @@ public class DestructionSupport {
         }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);
+        }
+        for (int i = 0; i < additionalThopterTokenCount; i++) {
+            tokenBlueprints.add(additionalThopterToken);
         }
         for (int i = 0; i < additionalFoodTokenCount; i++) {
             tokenBlueprints.add(additionalFoodToken);

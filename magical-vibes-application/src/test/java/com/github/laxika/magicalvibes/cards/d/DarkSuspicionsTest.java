@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DarkSuspicions.class)
+@CardUsed({DarkSuspicions.class, IvoryMask.class})
 class DarkSuspicionsTest extends BaseCardTest {
 
     private List<Card> cards(int count) {
@@ -87,5 +88,61 @@ class DarkSuspicionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Equal hand sizes cause no life loss")
+    void equalHandSizesCauseNoLifeLoss() {
+        harness.addToBattlefield(player1, new DarkSuspicions());
+        harness.setHand(player1, cards(3));
+        harness.setHand(player2, cards(3));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An empty controller hand makes the opponent lose their full hand size")
+    void emptyControllerHand() {
+        harness.addToBattlefield(player1, new DarkSuspicions());
+        harness.setHand(player1, cards(0));
+        harness.setHand(player2, cards(5));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Each copy causes its own life loss")
+    void multipleCopiesTriggerIndependently() {
+        harness.addToBattlefield(player1, new DarkSuspicions());
+        harness.addToBattlefield(player1, new DarkSuspicions());
+        harness.setHand(player1, cards(2));
+        harness.setHand(player2, cards(5));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent the non-targeting upkeep life loss")
+    void shroudDoesNotPreventLifeLoss() {
+        harness.addToBattlefield(player1, new DarkSuspicions());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player1, cards(2));
+        harness.setHand(player2, cards(5));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
     }
 }

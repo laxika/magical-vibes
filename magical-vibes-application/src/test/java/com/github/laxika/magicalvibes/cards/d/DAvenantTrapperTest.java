@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,14 +11,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DAvenantTrapper.class, AdelizTheCinderWind.class, GrizzlyBears.class,
+        Spellbook.class, HistoryOfBenalia.class})
 class DAvenantTrapperTest extends BaseCardTest {
 
     // ===== Artifact spell triggers target selection =====
@@ -41,19 +44,17 @@ class DAvenantTrapperTest extends BaseCardTest {
     @DisplayName("Choosing opponent's creature as target taps it when the triggered ability resolves")
     void tapOpponentCreature() {
         harness.addToBattlefield(player1, new DAvenantTrapper());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
 
         // Choose opponent's creature as target
-        harness.handlePermanentChosen(player1, bearsId);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
     }
 
@@ -148,5 +149,71 @@ class DAvenantTrapperTest extends BaseCardTest {
         // Trigger skipped — controller's creatures are not valid targets
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    @DisplayName("Casting a Saga taps the target before the Saga resolves")
+    void sagaSpellTriggers() {
+        harness.addToBattlefield(player1, new DAvenantTrapper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DAvenantTrapper());
+        harness.setHand(player1, List.of(new HistoryOfBenalia()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "History of Benalia");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void alreadyTappedCreatureIsLegalTarget() {
+        harness.addToBattlefield(player1, new DAvenantTrapper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DAvenantTrapper());
+        target.setTapped(true);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The triggered ability resolves after its source leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DAvenantTrapper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DAvenantTrapper());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that comes under your control is not tapped on resolution")
+    void targetMustStillBeControlledByOpponent() {
+        harness.addToBattlefield(player1, new DAvenantTrapper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DAvenantTrapper());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
     }
 }

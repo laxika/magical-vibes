@@ -23,8 +23,7 @@ class DespoticScepterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .doesNotContain(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -41,8 +40,7 @@ class DespoticScepterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, skeletons.getId());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .doesNotContain(skeletons);
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
     }
 
     @Test
@@ -69,5 +67,60 @@ class DespoticScepterTest extends BaseCardTest {
                 .hasMessageContaining("Permanent is already tapped");
 
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Can target and destroy itself")
+    void canDestroyItself() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new DespoticScepter());
+
+        harness.activateAbility(player1, 0, null, scepter.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Despotic Scepter");
+        harness.assertInGraveyard(player1, "Despotic Scepter");
+    }
+
+    @Test
+    @DisplayName("Destroys an owned permanent controlled by an opponent")
+    void destroysOwnedPermanentUnderOpponentControl() {
+        harness.addToBattlefield(player1, new DespoticScepter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        gd.stolenCreatures.put(forest.getId(), player1.getId());
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot target a controlled permanent owned by an opponent")
+    void cannotTargetBorrowedPermanent() {
+        harness.addToBattlefield(player1, new DespoticScepter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        gd.stolenCreatures.put(forest.getId(), player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a permanent you own");
+    }
+
+    @Test
+    @DisplayName("A change of target controller does not invalidate ownership targeting")
+    void targetRemainsLegalAfterControlChanges() {
+        harness.addToBattlefield(player1, new DespoticScepter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        gd.playerBattlefields.get(player2.getId()).add(forest);
+        gd.stolenCreatures.put(forest.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
     }
 }

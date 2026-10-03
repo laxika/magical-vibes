@@ -114,4 +114,44 @@ class DesertTwisterTest extends BaseCardTest {
 
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("Target can regenerate in response to Desert Twister")
+    void targetCanRegenerate() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player2, new HornedTroll());
+        harness.setHand(player1, List.of(new DesertTwister()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, troll.getId());
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Horned Troll");
+        harness.assertNotInGraveyard(player2, "Horned Troll");
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Desert Twister");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the target in response leaves other permanents untouched")
+    void targetCanBeSacrificedInResponse() {
+        Permanent horn = harness.addToBattlefieldAndReturn(player2, new HornOfRamos());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DesertTwister()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castSorcery(player1, 0, horn.getId());
+        harness.activateAbility(player2, 0, 1, null, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Horn of Ramos");
+        harness.assertInGraveyard(player2, "Horn of Ramos");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Desert Twister");
+        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

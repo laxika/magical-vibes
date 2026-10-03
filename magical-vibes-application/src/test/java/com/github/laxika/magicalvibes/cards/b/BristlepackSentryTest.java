@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DroverGrizzly;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BristlepackSentry.class, EnormousBaloth.class})
+@CardUsed({BristlepackSentry.class, EnormousBaloth.class, DroverGrizzly.class})
 class BristlepackSentryTest extends BaseCardTest {
 
     @Test
@@ -40,6 +42,52 @@ class BristlepackSentryTest extends BaseCardTest {
     void doesNotCountOpponentsLargeCreature() {
         addCreatureReady(player1, new BristlepackSentry());
         addCreatureReady(player2, new EnormousBaloth());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canAttackWithTappedCreatureAtExactlyFourPower() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BristlepackSentry());
+        Permanent grizzly = addCreatureReady(player1, new DroverGrizzly());
+        grizzly.setTapped(true);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void canQualifyItselfWithIncreasedPower() {
+        harness.setLife(player2, 20);
+        Permanent sentry = addCreatureReady(player1, new BristlepackSentry());
+        sentry.setPowerModifier(1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void cannotAttackWhenQualifyingCreaturesCurrentPowerFallsBelowFour() {
+        addCreatureReady(player1, new BristlepackSentry());
+        Permanent grizzly = addCreatureReady(player1, new DroverGrizzly());
+        grizzly.setPowerModifier(-1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void losesAttackPermissionWhenQualifyingCreatureLeaves() {
+        Permanent sentry = addCreatureReady(player1, new BristlepackSentry());
+        Permanent grizzly = addCreatureReady(player1, new DroverGrizzly());
+        assertThat(als.canAttack(gd, sentry, player1.getId())).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(grizzly);
+        gd.playerGraveyards.get(player1.getId()).add(grizzly.getCard());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

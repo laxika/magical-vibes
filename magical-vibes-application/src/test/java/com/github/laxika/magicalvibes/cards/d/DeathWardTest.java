@@ -29,8 +29,7 @@ class DeathWardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getRegenerationShield()).isEqualTo(1);
@@ -44,8 +43,7 @@ class DeathWardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         bear.setBlocking(true);
@@ -75,8 +73,7 @@ class DeathWardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
         assertThat(bear.getRegenerationShield()).isEqualTo(1);
@@ -106,13 +103,57 @@ class DeathWardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = findPermanent(player1, "Grizzly Bears");
         assertThat(bear.getRegenerationShield()).isEqualTo(1);
         bear.setToughnessModifier(-2);
 
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap, heal, or remove the creature from combat")
+    void resolvingDoesNotImmediatelyRegenerate() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setMarkedDamage(1);
+        bear.setAttacking(true);
+        harness.setHand(player1, List.of(new DeathWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+        assertThat(bear.isAttacking()).isTrue();
+        assertThat(bear.getTimesRegeneratedThisTurn()).isZero();
+        assertThat(bear.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Death Wards prevent two destructions, then the creature dies to a third")
+    void eachShieldReplacesOnlyOneDestruction() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new DeathWard(), new DeathWard()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        for (int shieldsRemaining = 1; shieldsRemaining >= 0; shieldsRemaining--) {
+            bear.setMarkedDamage(2);
+            harness.runStateBasedActions();
+
+            harness.assertOnBattlefield(player1, "Grizzly Bears");
+            assertThat(bear.isTapped()).isTrue();
+            assertThat(bear.getMarkedDamage()).isZero();
+            assertThat(bear.getRegenerationShield()).isEqualTo(shieldsRemaining);
+        }
+
+        bear.setMarkedDamage(2);
         harness.runStateBasedActions();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

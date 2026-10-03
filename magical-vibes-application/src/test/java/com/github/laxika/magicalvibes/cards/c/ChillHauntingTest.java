@@ -83,9 +83,7 @@ class ChillHauntingTest extends BaseCardTest {
         harness.castInstantWithMultipleGraveyardExile(player1, 0, target.getId(), List.of(0));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
@@ -152,5 +150,47 @@ class ChillHauntingTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unsorted creature selections exile only the selected cards and fix X at casting")
+    void mixedGraveyardSelectionsFixXAtCasting() {
+        TwistedAbomination first = new TwistedAbomination();
+        ClutchOfUndeath aura = new ClutchOfUndeath();
+        TwistedAbomination second = new TwistedAbomination();
+        harness.setGraveyard(player1, List.of(first, aura, second));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TwistedAbomination());
+        harness.setHand(player1, List.of(new ChillHaunting()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, target.getId(), List.of(2, 0));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(aura);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.setGraveyard(player1, List.of(new TwistedAbomination()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save a creature reduced to zero toughness")
+    void zeroToughnessIgnoresRegenerationShield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TwistedAbomination());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        harness.setGraveyard(player1, List.of(
+                new TwistedAbomination(), new TwistedAbomination(), new TwistedAbomination()));
+        harness.setHand(player1, List.of(new ChillHaunting()));
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, target.getId(), List.of(0, 1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Twisted Abomination");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Aeolipile.class, IcatianInfantry.class})
@@ -29,10 +30,9 @@ class AeolipileTest extends BaseCardTest {
     @Test
     void sacrificesItselfAndDealsTwoDamageToTargetCreature() {
         harness.addToBattlefield(player1, new Aeolipile());
-        harness.addToBattlefield(player2, new IcatianInfantry());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcatianInfantry());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent target = findPermanent(player2, "Icatian Infantry");
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
@@ -42,14 +42,71 @@ class AeolipileTest extends BaseCardTest {
 
     @Test
     void cannotActivateWhenAlreadyTapped() {
-        harness.addToBattlefield(player1, new Aeolipile());
+        Permanent aeolipile = harness.addToBattlefieldAndReturn(player1, new Aeolipile());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent aeolipile = findPermanent(player1, "Aeolipile");
         aeolipile.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void cannotActivateWithoutManaAndDoesNotPayOtherCosts() {
+        Permanent aeolipile = harness.addToBattlefieldAndReturn(player1, new Aeolipile());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(aeolipile.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Aeolipile");
+        harness.assertNotInGraveyard(player1, "Aeolipile");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetItsController() {
+        harness.addToBattlefield(player1, new Aeolipile());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Aeolipile");
+    }
+
+    @Test
+    void cannotTargetANoncreatureArtifact() {
+        harness.addToBattlefield(player1, new Aeolipile());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Aeolipile());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Aeolipile");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionDoesNotRefundSacrifice() {
+        harness.addToBattlefield(player1, new Aeolipile());
+        harness.addToBattlefield(player1, new Aeolipile());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Icatian Infantry");
+        harness.assertNotOnBattlefield(player1, "Aeolipile");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Aeolipile"))
+                .hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }

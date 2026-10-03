@@ -38,6 +38,8 @@ import java.util.List;
 @CardRegistration(set = "OTC", collectorNumber = "134")
 @CardRegistration(set = "LCC", collectorNumber = "198")
 @CardRegistration(set = "MIC", collectorNumber = "117")
+@CardRegistration(set = "VOC", collectorNumber = "129")
+@CardRegistration(set = "BRC", collectorNumber = "106")
 public class FeedTheSwarm extends Card {
 
     public FeedTheSwarm() {

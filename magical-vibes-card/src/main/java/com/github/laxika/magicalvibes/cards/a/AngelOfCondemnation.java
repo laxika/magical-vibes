@@ -31,11 +31,11 @@ public class AngelOfCondemnation extends Card {
         ));
 
         // {2}{W}, {T}, Exert this creature: Exile another target creature until this creature leaves
-        // the battlefield. Exert is modeled as an added SkipNextUntapEffect cost.
+        // the battlefield. The controller-step-only self restriction is paid as exert at activation.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
                         new ExileTargetPermanentUntilSourceLeavesEffect()
                 ),
                 "{2}{W}, {T}, Exert Angel of Condemnation: Exile another target creature until this creature leaves the battlefield.",

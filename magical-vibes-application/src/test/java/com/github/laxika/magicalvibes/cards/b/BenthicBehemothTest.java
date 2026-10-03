@@ -18,6 +18,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BenthicBehemothTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Benthic Behemoth cannot be blocked when the defending player's Island is tapped")
+    void cannotBeBlockedWhenDefendersIslandIsTapped() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.tap();
+        Permanent blocker = addCreatureReady(player2, new PhyrexianHulk());
+        Permanent attacker = addCreatureReady(player1, new BenthicBehemoth());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Benthic Behemoth cannot be blocked when defending player controls an Island")
     void cannotBeBlockedWhenDefenderControlsIsland() {
         harness.addToBattlefield(player2, new Island());

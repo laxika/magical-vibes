@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,15 +22,12 @@ class BetrayalAtTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("The chosen creature deals its power to both other target creatures")
     void dealsPowerDamageToBothTargets() {
-        harness.addToBattlefield(player1, new HillGiant());
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID sourceId = harness.addToBattlefieldAndReturn(player1, new HillGiant()).getId();
+        UUID ownTargetId = harness.addToBattlefieldAndReturn(player1, new LlanowarElves()).getId();
+        UUID opponentTargetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setHand(player1, List.of(new BetrayalAtTheVault()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID sourceId = harness.getPermanentId(player1, "Hill Giant");
-        UUID ownTargetId = harness.getPermanentId(player1, "Llanowar Elves");
-        UUID opponentTargetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, List.of(sourceId, ownTargetId, opponentTargetId));
         harness.passBothPriorities();
 
@@ -40,14 +39,12 @@ class BetrayalAtTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("The source creature cannot be chosen as a damage target")
     void cannotTargetSourceCreature() {
-        harness.addToBattlefield(player1, new HillGiant());
+        UUID sourceId = harness.addToBattlefieldAndReturn(player1, new HillGiant()).getId();
         harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setHand(player1, List.of(new BetrayalAtTheVault()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID sourceId = harness.getPermanentId(player1, "Hill Giant");
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(sourceId, sourceId, targetId)))
                 .isInstanceOf(IllegalStateException.class);
@@ -56,13 +53,11 @@ class BetrayalAtTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("The two damage targets must be different creatures")
     void cannotTargetSameCreatureTwice() {
-        harness.addToBattlefield(player1, new HillGiant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID sourceId = harness.addToBattlefieldAndReturn(player1, new HillGiant()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setHand(player1, List.of(new BetrayalAtTheVault()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID sourceId = harness.getPermanentId(player1, "Hill Giant");
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(sourceId, targetId, targetId)))
                 .isInstanceOf(IllegalStateException.class);
@@ -71,17 +66,64 @@ class BetrayalAtTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("No damage is dealt if the source creature leaves before resolution")
     void dealsNoDamageWhenSourceLeavesBeforeResolution() {
-        harness.addToBattlefield(player1, new HillGiant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        UUID sourceId = harness.addToBattlefieldAndReturn(player1, new HillGiant()).getId();
+        UUID firstTargetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID secondTargetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.setHand(player1, List.of(new BetrayalAtTheVault()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        UUID sourceId = harness.getPermanentId(player1, "Hill Giant");
-        UUID firstTargetId = harness.getPermanentId(player2, "Grizzly Bears");
-        UUID secondTargetId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.castInstant(player1, 0, List.of(sourceId, firstTargetId, secondTargetId));
         harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @DisplayName("The remaining damage target is damaged when the other target leaves")
+    void damagesRemainingTargetWhenOneTargetLeaves(boolean removeFirstTarget) {
+        UUID sourceId = harness.addToBattlefieldAndReturn(player1, new HillGiant()).getId();
+        UUID firstTargetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID secondTargetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
+        harness.setHand(player1, List.of(new BetrayalAtTheVault()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castInstant(player1, 0, List.of(sourceId, firstTargetId, secondTargetId));
+        UUID removedTargetId = removeFirstTarget ? firstTargetId : secondTargetId;
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(removedTargetId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, removeFirstTarget ? "Llanowar Elves" : "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("The damage source must be a creature you control")
+    void cannotChooseOpponentsCreatureAsSource() {
+        UUID sourceId = harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId();
+        UUID firstTargetId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        UUID secondTargetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
+        harness.setHand(player1, List.of(new BetrayalAtTheVault()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(sourceId, firstTargetId, secondTargetId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the source changes to the opponent's control")
+    void dealsNoDamageWhenSourceChangesController() {
+        var source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        UUID firstTargetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID secondTargetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
+        harness.setHand(player1, List.of(new BetrayalAtTheVault()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), firstTargetId, secondTargetId));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

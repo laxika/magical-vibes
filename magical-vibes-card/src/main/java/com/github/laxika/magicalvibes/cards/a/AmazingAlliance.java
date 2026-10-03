@@ -29,6 +29,6 @@ public class AmazingAlliance extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(
                         new HasAttacker(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
-                        new GainLifeEffect(new PermanentCount(attackingLegendary, CountScope.CONTROLLER))));
+                        new GainLifeEffect(new PermanentCount(attackingLegendary, CountScope.CONTROLLER, false, true))));
     }
 }

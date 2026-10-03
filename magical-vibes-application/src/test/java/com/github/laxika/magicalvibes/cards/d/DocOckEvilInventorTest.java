@@ -65,6 +65,62 @@ class DocOckEvilInventorTest extends BaseCardTest {
                 .doesNotContain(ownCreatureArtifact.getId(), ownCreature.getId(), opponentArtifact.getId());
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        addCreatureReady(player1, new DocOckEvilInventor());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, artifact)).isFalse();
+    }
+
+    @Test
+    void doesNotQueueAbilityWithoutLegalTargets() {
+        addCreatureReady(player1, new DocOckEvilInventor());
+        Permanent creatureArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+
+        advanceToCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creatureArtifact)).isZero();
+        assertThat(gqs.isCreature(gd, opponentArtifact)).isFalse();
+    }
+
+    @Test
+    void laterCombatAnimatesAnotherArtifactAndExcludesAlreadyAnimatedArtifact() {
+        addCreatureReady(player1, new DocOckEvilInventor());
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+
+        advanceToCombat();
+        harness.handlePermanentChosen(player1, firstArtifact.getId());
+        harness.passBothPriorities();
+
+        advanceToCombat();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(secondArtifact.getId())
+                .doesNotContain(firstArtifact.getId());
+        harness.handlePermanentChosen(player1, secondArtifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, firstArtifact)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, firstArtifact)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, secondArtifact)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, secondArtifact)).isEqualTo(8);
+        assertThat(gqs.hasEffectiveSubtype(gd, secondArtifact, CardSubtype.ROBOT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, secondArtifact, CardSubtype.VILLAIN)).isTrue();
+    }
+
     private void advanceToCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

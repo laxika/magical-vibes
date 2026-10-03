@@ -94,4 +94,62 @@ class DevouringStrossusTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(strossus);
         harness.assertInGraveyard(player1, "Devouring Strossus");
     }
+
+    @Test
+    @DisplayName("The upkeep sacrifice does not trigger during an opponent's upkeep")
+    void doesNotSacrificeDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new DevouringStrossus());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Devouring Strossus");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot prevent the upkeep sacrifice")
+    void regenerationCannotPreventUpkeepSacrifice() {
+        Permanent strossus = harness.addToBattlefieldAndReturn(player1, new DevouringStrossus());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new ArdentSoldier());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, soldier.getId());
+        harness.passBothPriorities();
+
+        assertThat(strossus.getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ardent Soldier");
+        harness.assertInGraveyard(player1, "Devouring Strossus");
+        harness.assertNotOnBattlefield(player1, "Devouring Strossus");
+    }
+
+    @Test
+    @DisplayName("The creature is sacrificed as a cost before regeneration resolves")
+    void sacrificeCostIsPaidBeforeAbilityResolves() {
+        Permanent strossus = harness.addToBattlefieldAndReturn(player1, new DevouringStrossus());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new ArdentSoldier());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ArdentSoldier());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(strossus.getId(), soldier.getId());
+        harness.handlePermanentChosen(player1, soldier.getId());
+
+        harness.assertInGraveyard(player1, "Ardent Soldier");
+        assertThat(strossus.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(strossus, swamp).doesNotContain(soldier);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+
+        harness.passBothPriorities();
+
+        assertThat(strossus.getRegenerationShield()).isEqualTo(1);
+        assertThat(strossus.isTapped()).isFalse();
+    }
 }

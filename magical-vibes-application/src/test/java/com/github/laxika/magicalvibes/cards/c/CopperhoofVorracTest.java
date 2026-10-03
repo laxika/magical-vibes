@@ -51,4 +51,41 @@ class CopperhoofVorracTest extends BaseCardTest {
         opponentPermanent.untap();
         assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Bonus updates when an opponent's permanent enters or leaves the battlefield")
+    void updatesWhenPermanentsEnterOrLeave() {
+        Permanent vorrac = addCreatureReady(player1, new CopperhoofVorrac());
+
+        assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vorrac)).isEqualTo(2);
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vorrac)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(mountain);
+        gd.playerGraveyards.get(player2.getId()).add(mountain.getCard());
+        assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vorrac)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Bonus uses Vorrac's current controller and remains active while Vorrac is tapped")
+    void updatesWhenVorracChangesController() {
+        Permanent vorrac = addCreatureReady(player1, new CopperhoofVorrac());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new YotianSoldier());
+        harness.addToBattlefield(player2, new Mountain());
+        vorrac.tap();
+
+        assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, vorrac)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(vorrac);
+        gd.playerBattlefields.get(player2.getId()).add(vorrac);
+
+        assertThat(gqs.getEffectivePower(gd, vorrac)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vorrac)).isEqualTo(3);
+    }
 }

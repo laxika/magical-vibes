@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DreamFighter.class, IronTuskElephant.class})
+@CardUsed({DreamFighter.class, IronTuskElephant.class, Incinerate.class})
 class DreamFighterTest extends BaseCardTest {
 
     @Test
@@ -111,4 +113,43 @@ class DreamFighterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(fighter);
     }
 
+    @Test
+    @DisplayName("The blocker still phases out if Dream Fighter dies before its trigger resolves")
+    void blockerPhasesOutAfterFighterDies() {
+        Permanent fighter = addCreatureReady(player1, new DreamFighter());
+        fighter.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new IronTuskElephant());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, fighter.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fighter.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Dream Fighter still phases out if the attacker dies before its block trigger resolves")
+    void fighterPhasesOutAfterAttackerDies() {
+        Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
+        attacker.setAttacking(true);
+        Permanent fighter = addCreatureReady(player2, new DreamFighter());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(fighter);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(fighter);
+    }
 }

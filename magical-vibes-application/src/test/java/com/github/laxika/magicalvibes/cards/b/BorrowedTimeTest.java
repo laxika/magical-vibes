@@ -37,8 +37,7 @@ class BorrowedTimeTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles target nonland permanent an opponent controls")
     void etbExilesOpponentPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         castAndResolve(bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -49,8 +48,7 @@ class BorrowedTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled card returns when Borrowed Time is destroyed")
     void exiledCardReturnsWhenSourceDestroyed() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         castAndResolve(bearsId);
 
         harness.forceActivePlayer(player1);
@@ -70,10 +68,45 @@ class BorrowedTimeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing Borrowed Time before its trigger resolves does not exile the target")
+    void sourceLeavesBeforeTriggerResolves() {
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        setUpCast();
+        harness.castEnchantment(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Borrowed Time");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, sourceId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Borrowed Time");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can exile an opposing enchantment rather than only a creature")
+    void exilesOpponentEnchantment() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BorrowedTime()).getId();
+        castAndResolve(targetId);
+
+        harness.assertOnBattlefield(player1, "Borrowed Time");
+        harness.assertNotOnBattlefield(player2, "Borrowed Time");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Borrowed Time"));
+    }
+
+    @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID forestId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
         setUpCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forestId))
@@ -83,8 +116,7 @@ class BorrowedTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent the caster controls")
     void cannotTargetOwnPermanent() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID ownBearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         setUpCast();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ownBearsId))

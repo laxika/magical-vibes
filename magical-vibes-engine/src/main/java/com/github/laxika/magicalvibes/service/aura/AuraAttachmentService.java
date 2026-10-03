@@ -275,6 +275,15 @@ public class AuraAttachmentService {
      * @param auraControllerId the controller of the Aura, for controller-relative enchant filters
      */
     public boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
+        Permanent sourceAura = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.getCard().getId().equals(auraCard.getId()))
+                .findFirst().orElse(null);
+        if (sourceAura != null && sourceAura.getChosenPermanentId() != null
+                && auraCard.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect.class::isInstance)
+                && !sourceAura.getChosenPermanentId().equals(host.getId())) {
+            return false;
+        }
         if (!auraCard.isAura()
                 || gameQueryService.hasProtectionFromSource(gameData, host, auraCard, auraControllerId)) {
             return false;
@@ -299,15 +308,13 @@ public class AuraAttachmentService {
             return false;
         }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();
-        if (filter == null) {
-            return true;
-        }
-        if (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
+        if (filter != null && (!(filter instanceof PlayerPredicateTargetFilter playerFilter)
                 || !targetLegalityService.matchesPlayerPredicate(
-                gameData, auraControllerId, playerId, playerFilter.predicate())) {
+                gameData, auraControllerId, playerId, playerFilter.predicate()))) {
             return false;
         }
         return !gameQueryService.playerHasProtectionFromEverything(gameData, playerId)
+                && !gameQueryService.playerHasProtectionFromOpponents(gameData, playerId, auraControllerId)
                 && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
                 .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
                 && !gameQueryService.playerHasProtectionFromChosenName(

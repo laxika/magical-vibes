@@ -61,4 +61,32 @@ class CatalogTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactlyInAnyOrder(catalog, firstDrawn);
     }
+
+    @Test
+    @DisplayName("Only the caster draws and discards when player two casts Catalog")
+    void playerTwoDrawsAndDiscardsWithoutAffectingOpponent() {
+        Catalog catalog = new Catalog();
+        Island firstDrawn = new Island();
+        Island secondDrawn = new Island();
+        GrizzlyBears opponentsCard = new GrizzlyBears();
+        Island opponentsLibraryCard = new Island();
+
+        harness.setHand(player1, List.of(opponentsCard));
+        harness.setLibrary(player1, List.of(opponentsLibraryCard));
+        harness.setLibrary(player2, List.of(firstDrawn, secondDrawn));
+        harness.castFromHand(player2, catalog, "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDrawn, secondDrawn);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDrawn);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(catalog, secondDrawn);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsLibraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 }

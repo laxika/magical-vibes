@@ -34,6 +34,16 @@ public class InteractionState {
                     reveal.amplifyEntry() == null ? null : reveal.amplifyEntry().deepCopy(),
                     reveal.duplicateManaValueRevealContext());
         }
+        if (activeInteraction instanceof PendingInteraction.ColorChoice choice
+                && choice.context() instanceof ChoiceContext.CardNameChoice nameChoice
+                && nameChoice.preparedPermanent() != null) {
+            ChoiceContext.CardNameChoice copiedNameChoice = new ChoiceContext.CardNameChoice(
+                    nameChoice.card(), nameChoice.controllerId(), nameChoice.excludedTypes(),
+                    nameChoice.nonbasicLandOnly(), nameChoice.attachedTo(), nameChoice.requiredType(),
+                    nameChoice.landPlayZone(), new Permanent(nameChoice.preparedPermanent()));
+            copy.activeInteraction = new PendingInteraction.ColorChoice(choice.playerId(), choice.permanentId(),
+                    choice.etbTargetId(), copiedNameChoice, choice.options(), choice.prompt(), choice.disabledOptions());
+        }
         copy.activeDecisionId = this.activeDecisionId;
         copy.permanentChoiceContext = this.permanentChoiceContext instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                 ? trigger.copyPlanarSnapshot() : this.permanentChoiceContext;

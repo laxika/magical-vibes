@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "40K", collectorNumber = "205")
 @CardRegistration(set = "NCC", collectorNumber = "266")
 @CardRegistration(set = "DSC", collectorNumber = "162")
+@CardRegistration(set = "EOC", collectorNumber = "49")
 @CardRegistration(set = "TDC", collectorNumber = "208")
 @CardRegistration(set = "MKC", collectorNumber = "149")
 @CardRegistration(set = "AFC", collectorNumber = "117")
@@ -41,7 +42,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "BLC", collectorNumber = "115")
 @CardRegistration(set = "C19", collectorNumber = "136")
 @CardRegistration(set = "NEC", collectorNumber = "104")
+@CardRegistration(set = "BRC", collectorNumber = "114")
 @CardRegistration(set = "C18", collectorNumber = "122")
+@CardRegistration(set = "C16", collectorNumber = "122")
+@CardRegistration(set = "DRC", collectorNumber = "48")
 public class ChaosWarp extends Card {
 
     public ChaosWarp() {

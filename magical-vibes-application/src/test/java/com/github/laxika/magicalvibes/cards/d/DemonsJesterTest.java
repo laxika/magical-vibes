@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HaazdaExonerator;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -58,5 +59,38 @@ class DemonsJesterTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, jester)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, jester)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Gains the bonus immediately when the last card is cast")
+    void gainsBonusWhenLastCardIsCast() {
+        harness.setHand(player1, List.of(new HaazdaExonerator()));
+        Permanent jester = harness.addToBattlefieldAndReturn(player1, new DemonsJester());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, jester)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, jester)).isEqualTo(2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, jester)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, jester)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Hellbent boosts only this creature")
+    void doesNotBoostOtherCreatures() {
+        harness.setHand(player1, List.of());
+        Permanent jester = harness.addToBattlefieldAndReturn(player1, new DemonsJester());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new HaazdaExonerator());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HaazdaExonerator());
+
+        assertThat(gqs.getEffectivePower(gd, jester)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, jester)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
     }
 }

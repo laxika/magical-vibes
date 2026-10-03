@@ -146,6 +146,30 @@ class DiseaseCarriersTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("A Disease Carriers killed by the debuff triggers for its own controller")
+    void deathTriggerCanCauseAnotherDiseaseCarriersToTrigger() {
+        harness.addToBattlefield(player1, new DiseaseCarriers());
+        Permanent secondCarriers = harness.addToBattlefieldAndReturn(player2, new DiseaseCarriers());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HulkingOgre());
+
+        destroyDiseaseCarriers();
+        harness.handlePermanentChosen(player1, secondCarriers.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Disease Carriers");
+        harness.assertInGraveyard(player2, "Disease Carriers");
+        harness.assertNotOnBattlefield(player2, "Disease Carriers");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        harness.assertOnBattlefield(player1, "Hulking Ogre");
+    }
+
     private void destroyDiseaseCarriers() {
         setupPlayer2Active();
         UUID diseaseCarriersId = harness.getPermanentId(player1, "Disease Carriers");
@@ -160,8 +184,7 @@ class DiseaseCarriersTest extends BaseCardTest {
         harness.setHand(player, List.of(spell, firstRevealedCard, secondRevealedCard, thirdRevealedCard));
         harness.addMana(player, ManaColor.RED, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player, 0, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player, 0, 0, targetId);
         harness.handleMultipleCardsChosen(player, List.of(firstRevealedCard.getId(), secondRevealedCard.getId(),
                 thirdRevealedCard.getId()));
     }

@@ -36,6 +36,52 @@ class CollectorsCaseTest extends BaseCardTest {
     }
 
     @Test
+    void alreadyTappedCreatureStillGetsTwoStunCounters() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+
+        cast(List.of(creature.getId()));
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    void canTargetControllersOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(List.of(creature.getId()));
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    void stunCountersReplaceTheNextTwoUntaps() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(List.of(creature.getId()));
+
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isZero();
+
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void mayEnterWhenThereAreNoCreatures() {
+        cast(List.of());
+
+        harness.assertOnBattlefield(player1, "Collector's Case");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void activatedAbilityTapsTargetCreature() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new CollectorsCase());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -59,13 +105,37 @@ class CollectorsCaseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void tappedSourceCannotActivateAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CollectorsCase());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        source.tap();
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void activatedAbilityRequiresFullManaCost() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CollectorsCase());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new CollectorsCase()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castArtifact(player1, 0, targetIds.isEmpty() ? null : targetIds.getFirst());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addAbilityMana() {

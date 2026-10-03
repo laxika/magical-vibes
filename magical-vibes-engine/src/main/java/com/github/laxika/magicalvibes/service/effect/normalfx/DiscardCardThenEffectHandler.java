@@ -90,7 +90,8 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                         e.condition(), e.useEntryTarget() ? preservedTargetId : null,
                         e.alternateCardType(), e.alternateThenEffect())
                 .withSourceContext(entry.getSourcePermanentId(),
-                        sourceSnapshot, entry.getEventValue());
+                        sourceSnapshot, entry.getEventValue())
+                .withSameResolutionContinuation(e.resolveThenDuringSameResolution());
         playerInputService.beginDiscardChoice(gameData, discardPlayerId, validIndices,
                 entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
                 1, followUp);

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BroodBirthing.class, SkitteringInvasion.class})
 class BroodBirthingTest extends BaseCardTest {
 
     @Test
@@ -34,10 +36,9 @@ class BroodBirthingTest extends BaseCardTest {
     @Test
     @DisplayName("With an Eldrazi Spawn, Brood Birthing creates three Eldrazi Spawn")
     void createsThreeSpawnsWithExistingSpawn() {
-        harness.setHand(player1, List.of(new SkitteringInvasion()));
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SkitteringInvasion(), "{7}");
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new BroodBirthing()));
@@ -60,12 +61,51 @@ class BroodBirthingTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
     }
 
-    private void castBroodBirthing() {
-        harness.setHand(player1, List.of(new BroodBirthing()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
+    @Test
+    @DisplayName("An opponent's Eldrazi Spawn does not increase the number created")
+    void opponentsSpawnDoesNotSatisfyCondition() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new BroodBirthing(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
 
-        harness.castSorcery(player1, 0, 0);
+        castBroodBirthing();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(1);
+        assertThat(findPermanents(player2, "Eldrazi Spawn")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the last Spawn in response selects the one-token branch")
+    void checksSpawnConditionAtResolution() {
+        castBroodBirthing();
+        harness.castFromHand(player1, new BroodBirthing(), "{1}{R}");
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("One existing Spawn is sufficient and all three new tokens can produce mana")
+    void oneExistingSpawnCreatesThreeWithManaAbilities() {
+        castBroodBirthing();
+        castBroodBirthing();
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+        }
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
+
+    private void castBroodBirthing() {
+        harness.castFromHand(player1, new BroodBirthing(), "{1}{R}");
+
         harness.passBothPriorities();
     }
 }

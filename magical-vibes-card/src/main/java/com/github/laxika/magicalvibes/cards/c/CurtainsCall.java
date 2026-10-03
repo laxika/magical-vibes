@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "CMM", collectorNumber = "146")
 @CardRegistration(set = "CMM", collectorNumber = "506")
 @CardRegistration(set = "OTC", collectorNumber = "130")
+@CardRegistration(set = "C16", collectorNumber = "13")
 public class CurtainsCall extends Card {
 
     public CurtainsCall() {

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DevourIntellect.class, DeadlyDispute.class, LlanowarElves.class, GrizzlyBears.class, Forest.class})
 class DevourIntellectTest extends BaseCardTest {
@@ -26,8 +27,7 @@ class DevourIntellectTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevourIntellect()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -53,8 +53,7 @@ class DevourIntellectTest extends BaseCardTest {
 
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest())));
         harness.setHand(player1, List.of(new DevourIntellect()));
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.RevealedHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
@@ -67,5 +66,87 @@ class DevourIntellectTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(card -> card.getName())
                 .containsExactly("Forest");
+    }
+
+    @Test
+    void cannotTargetYourself() {
+        harness.setHand(player1, List.of(new DevourIntellect()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    void ordinaryDiscardCanDiscardALand() {
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new DevourIntellect()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ordinaryDiscardResolvesAgainstAnEmptyHand() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new DevourIntellect()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Devour Intellect");
+    }
+
+    @Test
+    void treasureManaDoesNotDiscardFromALandOnlyHand() {
+        addBlackManaFromTreasure();
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new DevourIntellect()));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Forest", "Forest");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Devour Intellect");
+    }
+
+    @Test
+    void treasureManaResolvesAgainstAnEmptyHand() {
+        addBlackManaFromTreasure();
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new DevourIntellect()));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Devour Intellect");
+    }
+
+    private void addBlackManaFromTreasure() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new DeadlyDispute()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstantWithSacrifice(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent treasure = findPermanent(player1, "Treasure");
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
+        harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, "BLACK");
     }
 }

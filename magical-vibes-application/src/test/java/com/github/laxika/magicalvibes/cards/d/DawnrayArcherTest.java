@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DawnrayArcher.class, GrizzlyBears.class, FugitiveWizard.class})
 class DawnrayArcherTest extends BaseCardTest {
-
-    // ===== Exalted =====
 
     @Test
     @DisplayName("Exalted — another creature attacking alone gets +1/+1")
@@ -74,13 +73,12 @@ class DawnrayArcherTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== {W}, {T}: deal 1 damage to attacking or blocking creature =====
-
     @Test
     @DisplayName("Ability deals 1 damage to an attacking creature, killing a 1/1")
     void abilityDestroysAttackingOneToughness() {
         Permanent archer = addCreatureReady(player1, new DawnrayArcher());
-        Permanent target = addAttackingCreature(player2, new FugitiveWizard());
+        Permanent target = addCreatureReady(player2, new FugitiveWizard());
+        target.setAttacking(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
@@ -98,11 +96,8 @@ class DawnrayArcherTest extends BaseCardTest {
     @DisplayName("Ability can target a blocking creature")
     void abilityTargetsBlockingCreature() {
         addCreatureReady(player1, new DawnrayArcher());
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent blocker = new Permanent(bear);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
@@ -125,11 +120,119 @@ class DawnrayArcherTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking");
     }
 
-    private Permanent addAttackingCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void multipleExaltedAbilitiesEachBoostTheLoneAttacker() {
+        addCreatureReady(player1, new DawnrayArcher());
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(2));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    void exaltedDoesNotBoostAnOpponentsLoneAttacker() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void exaltedStillResolvesAfterItsSourceLeaves() {
+        Permanent archer = addCreatureReady(player1, new DawnrayArcher());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
+        gd.playerBattlefields.get(player1.getId()).remove(archer);
+        gd.playerGraveyards.get(player1.getId()).add(archer.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    void exaltedStillResolvesAfterAttackerIsRemovedFromCombat() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
+        attacker.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    void abilityDealsOneDamageToABlockingCreature() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, 0, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void abilityDoesNotDamageTargetThatLeavesCombatBeforeResolution() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityCanDamageAnAttackingCreatureYouControl() {
+        addCreatureReady(player1, new DawnrayArcher());
+        Permanent target = addCreatureReady(player1, new FugitiveWizard());
+        target.setAttacking(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+    }
+
+    @Test
+    void summoningSickArcherCannotPayTheTapCost() {
+        Permanent archer = addCreatureReady(player1, new DawnrayArcher());
+        archer.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(archer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Tidings;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DocentOfPerfection.class, FugitiveWizard.class, GrizzlyBears.class, Shock.class, Tidings.class})
 class DocentOfPerfectionTest extends BaseCardTest {
 
     @Test
@@ -119,10 +122,9 @@ class DocentOfPerfectionTest extends BaseCardTest {
     @DisplayName("Final Iteration gives Wizards you control +2/+1 and flying")
     void finalIterationBoostsWizards() {
         DocentOfPerfection card = new DocentOfPerfection();
-        Permanent finalIteration = new Permanent(card);
+        Permanent finalIteration = harness.addToBattlefieldAndReturn(player1, card);
         finalIteration.setCard(card.getBackFaceCard());
         finalIteration.setTransformed(true);
-        gd.playerBattlefields.get(player1.getId()).add(finalIteration);
 
         Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -145,10 +147,9 @@ class DocentOfPerfectionTest extends BaseCardTest {
     @DisplayName("Final Iteration creates a Wizard token when you cast an instant")
     void finalIterationCreatesTokenOnCast() {
         DocentOfPerfection card = new DocentOfPerfection();
-        Permanent finalIteration = new Permanent(card);
+        Permanent finalIteration = harness.addToBattlefieldAndReturn(player1, card);
         finalIteration.setCard(card.getBackFaceCard());
         finalIteration.setTransformed(true);
-        gd.playerBattlefields.get(player1.getId()).add(finalIteration);
 
         castShockAndResolveTrigger();
 
@@ -163,12 +164,135 @@ class DocentOfPerfectionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(2);
     }
 
-    private void castShockAndResolveTrigger() {
+    @Test
+    @DisplayName("Casting a sorcery creates a Wizard before the spell resolves")
+    void castingSorceryCreatesWizardBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new DocentOfPerfection());
+        castTidingsAndResolveTrigger();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).count()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Tidings.class);
+    }
+
+    @Test
+    @DisplayName("Final Iteration creates a flying boosted Wizard for a sorcery")
+    void finalIterationCreatesTokenForSorcery() {
+        DocentOfPerfection card = new DocentOfPerfection();
+        Permanent finalIteration = harness.addToBattlefieldAndReturn(player1, card);
+        finalIteration.setCard(card.getBackFaceCard());
+        finalIteration.setTransformed(true);
+
+        castTidingsAndResolveTrigger();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, tokens.getFirst(), Keyword.FLYING)).isTrue();
+        assertThat(finalIteration.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Wizards do not count toward transforming")
+    void opponentWizardsDoNotCountTowardTransforming() {
+        Permanent docent = harness.addToBattlefieldAndReturn(player1, new DocentOfPerfection());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+
+        castShockAndResolveTrigger();
+
+        assertThat(docent.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not trigger either face")
+    void opponentInstantDoesNotTriggerEitherFace() {
+        harness.addToBattlefield(player1, new DocentOfPerfection());
+        DocentOfPerfection card = new DocentOfPerfection();
+        Permanent finalIteration = harness.addToBattlefieldAndReturn(player1, card);
+        finalIteration.setCard(card.getBackFaceCard());
+        finalIteration.setTransformed(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Shock()));
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An older pending trigger creates its token without transforming Final Iteration back")
+    void olderPendingTriggerDoesNotTransformBack() {
+        Permanent docent = harness.addToBattlefieldAndReturn(player1, new DocentOfPerfection());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(docent.isTransformed()).isTrue();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).count()).isEqualTo(2);
+        assertThat(docent.isTransformed()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()))
+                .allSatisfy(token -> {
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("The Wizard threshold is checked after responses and token creation")
+    void wizardRemovedInResponsePreventsTransforming() {
+        Permanent docent = harness.addToBattlefieldAndReturn(player1, new DocentOfPerfection());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Shock()));
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve cast trigger
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Shock()));
+
+        harness.castAndResolveInstant(player2, 0, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wizard);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).count()).isEqualTo(1);
+        assertThat(docent.isTransformed()).isFalse();
+    }
+
+    private void castTidingsAndResolveTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.setHand(player1, List.of(new Tidings()));
+        harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    private void castShockAndResolveTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.cards.s.SnowHound;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -165,5 +166,41 @@ class ArcticFoxesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A blocker raised to power 2 by a counter cannot block with a snow land")
+    void restrictionUsesCurrentPowerIncludingCounters() {
+        snowLandOnDefender();
+        Permanent blocker = addCreatureReady(player2, new SnowHound());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent fox = foxAttacking();
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(fox);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Losing the last snow land before blockers removes the restriction")
+    void losingLastSnowLandBeforeBlockingRemovesRestriction() {
+        Permanent snowLand = snowLandOnDefender();
+        Permanent blocker = addCreatureReady(player2, new BalduvianBarbarians());
+        Permanent fox = foxAttacking();
+        gd.playerBattlefields.get(player2.getId()).remove(snowLand);
+        gd.playerGraveyards.get(player2.getId()).add(snowLand.getCard());
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(fox);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

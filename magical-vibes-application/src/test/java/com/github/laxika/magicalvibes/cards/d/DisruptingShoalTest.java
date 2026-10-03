@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AkkiRaider;
+import com.github.laxika.magicalvibes.cards.h.HangarbackWalker;
 import com.github.laxika.magicalvibes.cards.m.MendingHands;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DisruptingShoal.class, AkkiRaider.class, MendingHands.class})
+@CardUsed({DisruptingShoal.class, AkkiRaider.class, MendingHands.class, HangarbackWalker.class})
 class DisruptingShoalTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,67 @@ class DisruptingShoalTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Disrupting Shoal");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({DisruptingShoal.class, HangarbackWalker.class})
+    @DisplayName("Counts both X symbols in the target spell's mana value")
+    void countersDoubleXSpellAtItsFullManaValue() {
+        HangarbackWalker walker = new HangarbackWalker();
+        harness.setHand(player1, List.of(walker));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new DisruptingShoal()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castArtifact(player1, 0, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 4, walker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hangarback Walker");
+        harness.assertNotOnBattlefield(player1, "Hangarback Walker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({DisruptingShoal.class, HangarbackWalker.class})
+    @DisplayName("Does not counter a double-X spell when only one X matches")
+    void doesNotCounterDoubleXSpellAtHalfItsManaValue() {
+        HangarbackWalker walker = new HangarbackWalker();
+        harness.setHand(player1, List.of(walker));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player2, List.of(new DisruptingShoal()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castArtifact(player1, 0, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 2, walker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hangarback Walker");
+        harness.assertNotInGraveyard(player1, "Hangarback Walker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell being cast cannot itself pay the exile cost")
+    void alternativeCostCannotExileTheSpellBeingCast() {
+        AkkiRaider raider = new AkkiRaider();
+        harness.setHand(player1, List.of(raider));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player2, List.of(new DisruptingShoal()));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.castInstantWithAlternateExileFromHand(player2, 0, 2, raider.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInHand(player2, "Disrupting Shoal");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     @Test

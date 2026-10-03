@@ -13,9 +13,50 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArabaMothrider.class, OboroEnvoy.class})
+@CardUsed({ArabaMothrider.class, OboroEnvoy.class, HighGround.class, AkkiDrillmaster.class})
 class ArabaMothriderTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({ArabaMothrider.class, AkkiDrillmaster.class})
+    @DisplayName("Flying prevents a creature without flying or reach from blocking Araba Mothrider")
+    void cannotBeBlockedByGroundCreature() {
+        Permanent mothrider = addCreatureReady(player1, new ArabaMothrider());
+        mothrider.setAttacking(true);
+        addCreatureReady(player2, new AkkiDrillmaster());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mothrider.getPowerModifier()).isZero();
+        assertThat(mothrider.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bushido uses the stack and does not boost Araba Mothrider before resolution")
+    void bushidoBonusWaitsForTriggerResolution() {
+        Permanent mothrider = addCreatureReady(player1, new ArabaMothrider());
+        mothrider.setAttacking(true);
+        addCreatureReady(player2, new OboroEnvoy());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gqs.getEffectivePower(gd, mothrider)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, mothrider)).isEqualTo(1);
+
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, mothrider)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mothrider)).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("When Araba Mothrider becomes blocked, it gets +1/+1 until end of turn")

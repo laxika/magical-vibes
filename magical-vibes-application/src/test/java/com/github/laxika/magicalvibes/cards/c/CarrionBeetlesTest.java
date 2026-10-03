@@ -146,6 +146,73 @@ class CarrionBeetlesTest extends BaseCardTest {
         assertThat(response.maxTargets()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Still exiles remaining legal targets when one target leaves the graveyard")
+    void resolvesWithSomeTargetsMissing() {
+        Permanent beetles = addReadyBeetles();
+        Card removed = new Forest();
+        Card remaining = new Forest();
+        harness.setGraveyard(player2, List.of(removed, remaining));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, index(beetles), 0,
+                List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setExile(player2, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(removed, remaining);
+    }
+
+    @Test
+    @DisplayName("Does not substitute another card when all targets leave the graveyard")
+    void doesNotRetargetWhenAllTargetsAreMissing() {
+        Permanent beetles = addReadyBeetles();
+        Card removed = new Forest();
+        Card untouched = new Forest();
+        harness.setGraveyard(player2, List.of(removed, untouched));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, index(beetles), 0, List.of(removed.getId()));
+        harness.setGraveyard(player2, List.of(untouched));
+        harness.setExile(player2, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(removed);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost without black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent beetles = addReadyBeetles();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, index(beetles), 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(beetles.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost even with zero targets")
+    void cannotActivateWhileSummoningSick() {
+        Permanent beetles = addReadyBeetles();
+        beetles.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, index(beetles), 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(beetles.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBeetles() {
         return addCreatureReady(player1, new CarrionBeetles());
     }

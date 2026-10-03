@@ -12,9 +12,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "8ED", collectorNumber = "20")
 @CardRegistration(set = "USG", collectorNumber = "15")
 @CardRegistration(set = "M21", collectorNumber = "21")
+@CardRegistration(set = "M21", collectorNumber = "341")
 public class GloriousAnthem extends Card {
 
     public GloriousAnthem() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
     }
 }

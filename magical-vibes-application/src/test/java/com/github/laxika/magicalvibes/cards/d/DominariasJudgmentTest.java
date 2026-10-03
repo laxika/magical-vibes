@@ -121,4 +121,47 @@ class DominariasJudgmentTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.WHITE)).isTrue();
     }
+
+    @Test
+    @DisplayName("A matching land entering before resolution enables protection")
+    void landEnteringBeforeResolutionEnablesProtection() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new DominariasJudgment(), "{2}{W}");
+
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A matching land leaving before resolution does not enable protection")
+    void landLeavingBeforeResolutionDoesNotEnableProtection() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.castFromHand(player1, new DominariasJudgment(), "{2}{W}");
+
+        gd.playerBattlefields.get(player1.getId()).remove(plains);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only creatures present at resolution receive protection")
+    void protectionDoesNotExtendToCreaturesEnteringAfterResolution() {
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.castFromHand(player1, new DominariasJudgment(), "{2}{W}");
+        Permanent creatureEnteringBeforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        Permanent creatureEnteringAfterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasProtectionFrom(gd, existingCreature, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, creatureEnteringBeforeResolution, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, creatureEnteringAfterResolution, CardColor.WHITE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, plains, CardColor.WHITE)).isFalse();
+    }
 }

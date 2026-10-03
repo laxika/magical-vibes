@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AlchemistsApprentice;
 import com.github.laxika.magicalvibes.cards.i.ImplementsOfSacrifice;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,8 +20,110 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DargoTheShipwrecker.class, GrizzlyBears.class, ImplementsOfSacrifice.class,
-        AlchemistsApprentice.class, ZuranOrb.class, Forest.class})
+        AlchemistsApprentice.class, ZuranOrb.class, Forest.class, MishrasFactory.class})
 class DargoTheShipwreckerTest extends BaseCardTest {
+
+    @Test
+    void canCastWithoutSacrificingAnything() {
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dargo, the Shipwrecker");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void earlierCreatureSacrificeReducesCostWithoutAdditionalSacrifices() {
+        harness.addToBattlefield(player1, new AlchemistsApprentice());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dargo, the Shipwrecker");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void sacrificesCannotReplaceRequiredRedMana() {
+        List<Permanent> sacrifices = List.of(
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreatureWithSacrificeForReduction(player1, 0, null,
+                sacrifices.stream().map(Permanent::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void combinesEarlierSacrificesWithAdditionalCostSacrifices() {
+        harness.addToBattlefield(player1, new AlchemistsApprentice());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ImplementsOfSacrifice());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreatureWithSacrificeForReduction(player1, 0, null, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dargo, the Shipwrecker");
+        harness.assertInGraveyard(player1, "Alchemist's Apprentice");
+        harness.assertInGraveyard(player1, "Implements of Sacrifice");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void maySacrificeMorePermanentsThanNeededToRemoveGenericCost() {
+        List<Permanent> sacrifices = List.of(
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()),
+                harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithSacrificeForReduction(player1, 0, null,
+                sacrifices.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dargo, the Shipwrecker");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void countsEarlierSacrificedAnimatedLandOnceAsArtifactOrCreature() {
+        harness.addToBattlefield(player1, new MishrasFactory());
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Mishra's Factory");
+        harness.setHand(player1, List.of(new DargoTheShipwrecker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dargo, the Shipwrecker");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Sacrificing artifacts and creatures reduces the cost by 2 each")

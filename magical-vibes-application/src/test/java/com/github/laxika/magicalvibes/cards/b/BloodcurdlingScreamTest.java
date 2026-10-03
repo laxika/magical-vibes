@@ -18,6 +18,39 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BloodcurdlingScreamTest extends BaseCardTest {
 
     @Test
+    @DisplayName("X can be zero with only the black mana cost paid")
+    void resolvesWithZeroX() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        harness.setHand(player1, List.of(new BloodcurdlingScream()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Bloodcurdling Scream");
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature receives the boost")
+    void leavesUntargetedCreaturesUnchanged() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new BearCub());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        harness.setHand(player1, List.of(new BloodcurdlingScream()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 4, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(ally.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Resolving gives target creature +X/+0")
     void resolvesAndBoostsPowerOnly() {
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new BearCub());

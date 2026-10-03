@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -53,8 +55,7 @@ class DragonlordOjutaiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, ojutai.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ojutai.getId());
 
         assertThat(ojutai.getMarkedDamage()).isEqualTo(2);
     }
@@ -91,6 +92,146 @@ class DragonlordOjutaiTest extends BaseCardTest {
                         reorder.cards().indexOf(first), reorder.cards().indexOf(third))));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void controllerCanTargetUntappedOjutai() {
+        Permanent ojutai = addOjutai(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, ojutai.getId());
+
+        assertThat(ojutai.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void regainingHexproofMakesOpponentsSpellTargetIllegal() {
+        Permanent ojutai = addOjutai(player2);
+        ojutai.tap();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, ojutai.getId());
+
+        ojutai.untap();
+        harness.passBothPriorities();
+
+        assertThat(ojutai.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void combatDamageWithEmptyLibraryDoesNotDrawOrRequestChoice() {
+        addOjutai(player1).setAttacking(true);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void combatDamageWithOneCardPutsItIntoHand() {
+        addOjutai(player1).setAttacking(true);
+        Card only = new DragonlordOjutai();
+        harness.setLibrary(player1, List.of(only));
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(only);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void combatDamageWithTwoCardsRequiresOneAndBottomsTheOther() {
+        addOjutai(player1).setAttacking(true);
+        Card first = new DragonlordOjutai();
+        Card second = new DragonlordOjutai();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void remainingCardsGoBelowUnseenCardsInChosenOrder() {
+        addOjutai(player1).setAttacking(true);
+        Card first = new DragonlordOjutai();
+        Card second = new DragonlordOjutai();
+        Card third = new DragonlordOjutai();
+        Card unseen = new DragonlordOjutai();
+        harness.setLibrary(player1, List.of(first, second, third, unseen));
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(
+                        reorder.cards().indexOf(third), reorder.cards().indexOf(first))));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unseen, third, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void combatDamageUsesTheSourceControllersLibrary() {
+        addOjutai(player2).setAttacking(true);
+        Card controllersCard = new DragonlordOjutai();
+        Card opponentsCard = new DragonlordOjutai();
+        harness.setLibrary(player2, List.of(controllersCard));
+        harness.setLibrary(player1, List.of(opponentsCard));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of());
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(controllersCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void combatDamageToCreatureDoesNotTriggerLibrarySelection() {
+        addOjutai(player1);
+        addOjutai(player2);
+        Card libraryCard = new DragonlordOjutai();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

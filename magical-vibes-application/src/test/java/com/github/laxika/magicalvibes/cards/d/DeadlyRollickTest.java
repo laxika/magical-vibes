@@ -29,8 +29,7 @@ class DeadlyRollickTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DeadlyRollick()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
@@ -53,10 +52,12 @@ class DeadlyRollickTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot use the free alternate cost without controlling a commander")
     void freeCastRequiresCommander() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeadlyRollick()));
 
-        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
     }
 
     @Test
@@ -83,8 +84,7 @@ class DeadlyRollickTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
@@ -108,11 +108,15 @@ class DeadlyRollickTest extends BaseCardTest {
 
     @Test
     void cannotUseFreeCastWithoutControllingRegisteredCommander() {
-        addToCommandZone(player1, new EdgarMarkov());
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        addToCommandZone(player1, commander);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DeadlyRollick()));
 
-        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -130,6 +134,65 @@ class DeadlyRollickTest extends BaseCardTest {
 
     private void addToCommandZone(Player player, Card card) {
         gd.playerCommandZones.get(player.getId()).add(card);
+    }
+
+    @Test
+    void canCastForFreeWhileControllingOpponentsCommander() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player2.getId(), commander);
+        commander.setOwnerId(player2.getId());
+        Permanent commanderPermanent = harness.addToBattlefieldAndReturn(player1, commander);
+        commanderPermanent.setCommander(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyRollick()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void legendaryCreatureThatIsNotACommanderDoesNotEnableFreeCast() {
+        harness.addToBattlefield(player1, new EdgarMarkov());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyRollick()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void canExileOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyRollick()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void losingCommanderAfterFreeCastDoesNotPreventResolution() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        Permanent commanderPermanent = harness.addToBattlefieldAndReturn(player1, commander);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyRollick()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of());
+        gd.playerBattlefields.get(player1.getId()).remove(commanderPermanent);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
 }

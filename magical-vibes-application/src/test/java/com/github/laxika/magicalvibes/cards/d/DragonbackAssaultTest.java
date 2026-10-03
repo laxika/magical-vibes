@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -32,8 +34,8 @@ class DragonbackAssaultTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -66,6 +68,66 @@ class DragonbackAssaultTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Dragon")))
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering damage kills creatures and planeswalkers on both sides")
+    void etbDamagesBothControllersPermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ownPlaneswalker = harness.addToBattlefieldAndReturn(player1, new GarrukWildspeaker());
+        Permanent opposingPlaneswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+        ownPlaneswalker.setCounterCount(CounterType.LOYALTY, 3);
+        opposingPlaneswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        castDragonbackAssault();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
+        harness.assertInGraveyard(player2, "Garruk Wildspeaker");
+        harness.assertOnBattlefield(player1, "Dragonback Assault");
+    }
+
+    @Test
+    @DisplayName("A Dragon created by landfall survives another Assault's entering damage")
+    void dragonSurvivesThreeDamage() {
+        harness.addToBattlefield(player1, new DragonbackAssault());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        castDragonbackAssault();
+
+        List<Permanent> dragons = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Dragon"))
+                .toList();
+        assertThat(dragons).hasSize(1);
+        assertThat(dragons.getFirst().getCard().getColor()).isEqualTo(CardColor.RED);
+        assertThat(dragons.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.DRAGON);
+        assertThat(dragons.getFirst().getEffectivePower()).isEqualTo(4);
+        assertThat(dragons.getFirst().getEffectiveToughness()).isEqualTo(4);
+        assertThat(dragons.getFirst().getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Each Assault triggers independently for the same land")
+    void twoAssaultsCreateTwoDragons() {
+        harness.addToBattlefield(player1, new DragonbackAssault());
+        harness.addToBattlefield(player1, new DragonbackAssault());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Dragon")))
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().isToken()))
                 .isEmpty();
     }
 

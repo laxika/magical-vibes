@@ -48,10 +48,7 @@ class DesolationGiantTest extends BaseCardTest {
     void withoutKickerLeavesNoncreaturePermanentsAlone() {
         harness.addToBattlefield(player1, new BattlefieldForge());
         harness.addToBattlefield(player2, new BattlefieldForge());
-        harness.setHand(player1, List.of(new DesolationGiant()));
-        addBaseMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DesolationGiant(), "{2}{R}{R}");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Battlefield Forge");
@@ -72,6 +69,47 @@ class DesolationGiantTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Battlefield Forge");
         harness.assertOnBattlefield(player2, "Battlefield Forge");
+    }
+
+    @Test
+    @DisplayName("Without kicker, destroys another Desolation Giant but not itself")
+    void withoutKickerDestroysAnotherGiant() {
+        harness.addToBattlefield(player1, new DesolationGiant());
+        harness.castFromHand(player1, new DesolationGiant(), "{2}{R}{R}");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Desolation Giant");
+        harness.assertOnBattlefield(player1, "Desolation Giant");
+    }
+
+    @Test
+    @DisplayName("When kicked, destroys another Desolation Giant but not itself")
+    void whenKickedDestroysAnotherGiant() {
+        harness.addToBattlefield(player2, new DesolationGiant());
+        harness.setHand(player1, List.of(new DesolationGiant()));
+        addBaseMana();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castKickedCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Desolation Giant");
+        harness.assertNotOnBattlefield(player2, "Desolation Giant");
+        harness.assertOnBattlefield(player1, "Desolation Giant");
+    }
+
+    @Test
+    @DisplayName("Destroys creatures present when the enter trigger resolves")
+    void destroysCreatureAddedAfterTriggerWasQueued() {
+        harness.castFromHand(player1, new DesolationGiant(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new GaeasSkyfolk());
+        harness.addToBattlefield(player2, new GaeasSkyfolk());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Gaea's Skyfolk");
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+        harness.assertOnBattlefield(player2, "Gaea's Skyfolk");
+        harness.assertOnBattlefield(player1, "Desolation Giant");
     }
 
     private void addBaseMana() {

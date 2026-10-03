@@ -138,4 +138,47 @@ class ChromiumTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Chromium");
     }
+
+    @Test
+    @DisplayName("Chromium does not demand payment during an opponent's upkeep")
+    void opponentUpkeepDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new Chromium());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Chromium");
+    }
+
+    @Test
+    @DisplayName("Chromium may be sacrificed even when its upkeep payment is available")
+    void canDeclineWithEnoughMana() {
+        harness.addToBattlefield(player1, new Chromium());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Chromium");
+        harness.assertInGraveyard(player1, "Chromium");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Three mana of the wrong colors cannot pay Chromium's upkeep")
+    void wrongColorsCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new Chromium());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Chromium");
+        harness.assertInGraveyard(player1, "Chromium");
+    }
 }

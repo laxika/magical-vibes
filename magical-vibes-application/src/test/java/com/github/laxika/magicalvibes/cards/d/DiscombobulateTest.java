@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,8 +22,70 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Discombobulate.class, GrizzlyBears.class})
+@CardUsed({Discombobulate.class, GrizzlyBears.class, GaeasHerald.class})
 class DiscombobulateTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An uncounterable spell survives while the caster still reorders their library")
+    void uncounterableSpellStillAllowsLibraryReorder() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Discombobulate()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(first, second));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == bears);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second);
+        harness.getGameService().handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, first);
+        harness.assertInGraveyard(player2, "Discombobulate");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can counter your own spell and reorder only the top four cards")
+    void countersOwnSpellAndPreservesRestOfLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new Discombobulate()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        GameData gd = harness.getGameData();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(first, second, third, fourth);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(2, 0, 3, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(third, first, fourth, second, fifth, sixth);
+        harness.assertInGraveyard(player1, "Discombobulate");
+        assertThat(gd.stack).isEmpty();
+    }
 
     // ===== Casting =====
 

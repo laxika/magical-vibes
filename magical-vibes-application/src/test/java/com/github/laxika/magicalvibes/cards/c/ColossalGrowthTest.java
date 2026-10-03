@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AutomaticLibrarian;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ColossalGrowth.class, GrizzlyBears.class, Forest.class})
+@CardUsed({ColossalGrowth.class, AutomaticLibrarian.class, Forest.class})
 class ColossalGrowthTest extends BaseCardTest {
 
     @Test
@@ -59,7 +58,6 @@ class ColossalGrowthTest extends BaseCardTest {
         harness.castKickedInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isZero();
@@ -70,7 +68,7 @@ class ColossalGrowthTest extends BaseCardTest {
 
     @Test
     void cannotTargetANoncreaturePermanent() {
-        Permanent target = addToBattlefield(player2, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new ColossalGrowth()));
         addBaseMana();
 
@@ -79,12 +77,50 @@ class ColossalGrowthTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private Permanent addCreature(Player player) {
-        return addToBattlefield(player, new GrizzlyBears());
+    @Test
+    void unkickedBoostExpiresAtEndOfTurn() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new ColossalGrowth()));
+        addBaseMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
     }
 
-    private Permanent addToBattlefield(Player player, Card card) {
-        return harness.addToBattlefieldAndReturn(player, card);
+    @Test
+    void kickedAndUnkickedSpellsOnTheStackKeepTheirOwnKickerStatus() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new ColossalGrowth(), new ColossalGrowth()));
+        addKickedMana();
+        addBaseMana();
+
+        harness.castKickedInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(7);
+        assertThat(target.getToughnessModifier()).isEqualTo(7);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    private Permanent addCreature(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new AutomaticLibrarian());
     }
 
     private void addBaseMana() {

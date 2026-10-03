@@ -24,6 +24,7 @@ import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "83")
 @CardRegistration(set = "NCC", collectorNumber = "183")
+@CardRegistration(set = "EOC", collectorNumber = "55")
 public class GavelOfTheRighteous extends Card {
 
     public GavelOfTheRighteous() {

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DarksteelIngot.class, Oxidize.class})
 class DarksteelIngotTest extends BaseCardTest {
@@ -40,6 +41,35 @@ class DarksteelIngotTest extends BaseCardTest {
             assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
             ingot.untap();
         }
+    }
+
+    @Test
+    @DisplayName("A newly cast Darksteel Ingot can immediately produce mana")
+    void newlyCastIngotCanProduceMana() {
+        harness.castFromHand(player1, new DarksteelIngot(), "{3}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Darksteel Ingot cannot produce mana again")
+    void tappedIngotCannotProduceManaAgain() {
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(ingot.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -105,6 +105,60 @@ class CongregationAtDawnTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
     }
 
+    @Test
+    @DisplayName("Allows choosing two creatures and ordering them above the shuffled remainder")
+    void allowsChoosingTwoCards() {
+        Card creatureA = new BorosRecruit();
+        Card creatureB = new BorosRecruit();
+        Card creatureC = new BorosRecruit();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(creatureA, forest, creatureB, creatureC));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(creatureA.getId(), creatureB.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2))
+                .containsExactly(creatureB, creatureA);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(creatureC, forest);
+        assertThat(gameLogContains("reveals")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Rejects noncreature and duplicate selections without losing the valid choice")
+    void rejectsInvalidSelections() {
+        Card creature = new BorosRecruit();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(creature, forest));
+
+        cast();
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, forest);
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library without prompting for cards")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof CongregationAtDawn);
+    }
     private void cast() {
         harness.castFromHand(player1, new CongregationAtDawn(), "{G}{G}{W}");
         harness.passBothPriorities();

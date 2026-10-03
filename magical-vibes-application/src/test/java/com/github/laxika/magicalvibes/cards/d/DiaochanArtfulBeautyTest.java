@@ -132,6 +132,88 @@ class DiaochanArtfulBeautyTest extends BaseCardTest {
                 .hasMessageContaining("during your turn");
     }
 
+    @Test
+    @DisplayName("Can activate in the beginning of the first combat phase")
+    void canActivateAtBeginningOfFirstCombat() {
+        Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 1;
+        Permanent target = addCreatureReady(player2, new ForestBear());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest Bear");
+        harness.assertOnBattlefield(player1, "Diaochan, Artful Beauty");
+        assertThat(diaochan.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying Diaochan first does not stop destruction of the second target")
+    void destroysSecondTargetAfterDestroyingDiaochan() {
+        Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent secondTarget = addCreatureReady(player2, new ForestBear());
+
+        harness.activateAbility(player1, 0, null, diaochan.getId());
+        harness.handlePermanentChosen(player2, secondTarget.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Diaochan, Artful Beauty");
+        harness.assertInGraveyard(player2, "Forest Bear");
+        harness.assertNotOnBattlefield(player1, "Diaochan, Artful Beauty");
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+    }
+
+    @Test
+    @DisplayName("Diaochan can be both targets when she is the only creature")
+    void canChooseDiaochanForBothTargetsWhenOnlyCreature() {
+        Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, diaochan.getId());
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(diaochan.getId());
+        harness.handlePermanentChosen(player2, diaochan.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Diaochan, Artful Beauty");
+        harness.assertNotOnBattlefield(player1, "Diaochan, Artful Beauty");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        diaochan.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new ForestBear());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(diaochan.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Forest Bear");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost when already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent diaochan = setupDiaochanOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        diaochan.setTapped(true);
+        Permanent target = addCreatureReady(player2, new ForestBear());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Forest Bear");
+    }
+
     private Permanent setupDiaochanOnMyTurn(TurnStep step) {
         Permanent diaochan = addCreatureReady(player1, new DiaochanArtfulBeauty());
         harness.forceActivePlayer(player1);

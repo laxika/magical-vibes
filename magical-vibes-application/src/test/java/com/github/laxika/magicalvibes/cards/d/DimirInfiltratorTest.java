@@ -97,4 +97,68 @@ class DimirInfiltratorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(infiltrator);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
+
+    @Test
+    void transmutePaysManaAndDiscardsBeforeResolving() {
+        DimirInfiltrator infiltrator = new DimirInfiltrator();
+        DimirSignet matchingCard = new DimirSignet();
+        harness.setHand(player1, List.of(infiltrator));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Dimir Infiltrator");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void transmuteCannotBeActivatedDuringOpponentsMainPhase() {
+        DimirInfiltrator infiltrator = new DimirInfiltrator();
+        harness.setHand(player1, List.of(infiltrator));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(infiltrator);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.assertNotInGraveyard(player1, "Dimir Infiltrator");
+    }
+
+    @Test
+    void transmuteCannotBeActivatedWithASpellOnTheStack() {
+        harness.castFromHand(player1, new DimirSignet(), "{2}");
+        DimirInfiltrator infiltrator = new DimirInfiltrator();
+        harness.setHand(player1, List.of(infiltrator));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(infiltrator);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.assertNotInGraveyard(player1, "Dimir Infiltrator");
+    }
 }

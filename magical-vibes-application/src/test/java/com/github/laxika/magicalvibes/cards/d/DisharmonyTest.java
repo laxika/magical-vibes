@@ -25,8 +25,8 @@ class DisharmonyTest extends BaseCardTest {
         Permanent attacker = addAttacker(player2);
         attacker.tap();
 
-        castDisharmony(attacker.getId());
-        harness.passBothPriorities();
+        setUpSpell();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(attacker.isAttacking()).isFalse();
@@ -42,8 +42,8 @@ class DisharmonyTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         Permanent attacker = addAttacker(player2);
 
-        castDisharmony(attacker.getId());
-        harness.passBothPriorities();
+        setUpSpell();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -80,6 +80,57 @@ class DisharmonyTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Can untap and remove your own attacking creature from combat")
+    void canTargetOwnAttacker() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        Permanent attacker = addAttacker(player1);
+        attacker.tap();
+
+        setUpSpell();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getAttackTarget()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Does nothing if the target stops attacking before resolution")
+    void fizzlesWhenTargetStopsAttacking() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        Permanent attacker = addAttacker(player2);
+        attacker.tap();
+
+        castDisharmony(attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.isStolenUntilEndOfTurn(attacker.getId())).isFalse();
+        harness.assertInGraveyard(player1, "Disharmony");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast outside combat")
+    void cannotCastOutsideCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent attacker = addAttacker(player2);
+        setUpSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
     private void castDisharmony(java.util.UUID targetId) {
         setUpSpell();
         harness.castInstant(player1, 0, targetId);
@@ -92,11 +143,10 @@ class DisharmonyTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
-        Permanent attacker = new Permanent(new KoboldsOfKherKeep());
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, new KoboldsOfKherKeep());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(owner.getId().equals(player1.getId()) ? player2.getId() : player1.getId());
-        gd.playerBattlefields.get(owner.getId()).add(attacker);
         return attacker;
     }
 }

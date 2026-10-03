@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CMD", collectorNumber = "240")
+@CardRegistration(set = "C16", collectorNumber = "231")
 public class ZedruuTheGreathearted extends Card {
 
     public ZedruuTheGreathearted() {

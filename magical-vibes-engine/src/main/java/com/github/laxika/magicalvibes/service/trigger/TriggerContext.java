@@ -69,6 +69,14 @@ public sealed interface TriggerContext {
 
     record Foretell(UUID foretellingPlayerId, Card foretoldCard) implements TriggerContext {}
 
+    /** Context for one or more cards exiled from a player's hand. */
+    record ControllerCardsExiledFromHand(UUID handOwnerId, int count) implements TriggerContext {}
+
+    /** Context for a controller's spell or ability exiling a permanent from the battlefield. */
+    record ControllerSpellOrAbilityExilesPermanent(Permanent exiledPermanent,
+                                                    UUID exiledPermanentControllerId,
+                                                    UUID exilingControllerId) implements TriggerContext {}
+
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
 
@@ -165,6 +173,8 @@ public sealed interface TriggerContext {
         }
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
+    /** Context for a creature being exerted by its controller. */
+    record Exert(UUID exertingPlayerId, UUID exertedCreatureId) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
     /** Context for triggers watching a creature crew a Vehicle. */
     record CreatureCrewsVehicle(Permanent crewingCreature, Permanent vehicle) implements TriggerContext {}
@@ -744,7 +754,16 @@ public sealed interface TriggerContext {
     }
 
     /** Context for a controller's commander entering the command zone. */
-    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) implements TriggerContext {}
+    record CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId,
+                                       Map<CounterType, Integer> commanderCounters) implements TriggerContext {
+        public CommanderPutIntoCommandZone(Card commander, UUID commanderOwnerId) {
+            this(commander, commanderOwnerId, Map.of());
+        }
+
+        public CommanderPutIntoCommandZone {
+            commanderCounters = commanderCounters == null ? Map.of() : Map.copyOf(commanderCounters);
+        }
+    }
 
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}

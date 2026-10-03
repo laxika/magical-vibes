@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 
 
 
-@CardUsed({ArchmagesCharm.class, GrizzlyBears.class, HillGiant.class, Island.class, LlanowarElves.class})
+@CardUsed({ArchmagesCharm.class, ArcumsAstrolabe.class, GrizzlyBears.class, HillGiant.class, Island.class, LlanowarElves.class, Shock.class})
 class ArchmagesCharmTest extends BaseCardTest {
 
     @Test
@@ -86,6 +86,70 @@ class ArchmagesCharmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawModeCanTargetItsController() {
+        Island first = new Island();
+        Island second = new Island();
+        harness.setHand(player1, List.of(new ArchmagesCharm()));
+        harness.setLibrary(player1, List.of(first, second));
+        addBlueMana(player1);
+
+        harness.castInstant(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertInGraveyard(player1, "Archmage's Charm");
+    }
+
+    @Test
+    void controlModeCanTargetOwnPermanentWithoutUntappingIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        target.tap();
+        harness.setHand(player1, List.of(new ArchmagesCharm()));
+        addBlueMana(player1);
+
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentController(gd, target.getId())).isEqualTo(player1.getId());
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void controlModeCanGainControlOfNoncreatureArtifactWithoutTriggeringEntryAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArcumsAstrolabe());
+        target.tap();
+        harness.setHand(player1, List.of(new ArchmagesCharm()));
+        harness.setLibrary(player1, List.of(new Island()));
+        addBlueMana(player1);
+
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentController(gd, target.getId())).isEqualTo(player1.getId());
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void controlModeDoesNothingWhenTargetDiesInResponse() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new ArchmagesCharm()));
+        harness.setHand(player2, List.of(new Shock()));
+        addBlueMana(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Archmage's Charm");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addBlueMana(com.github.laxika.magicalvibes.model.Player player) {

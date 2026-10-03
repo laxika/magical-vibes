@@ -70,6 +70,42 @@ class DriftingDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two colorless mana cannot pay the upkeep's blue requirement")
+    void colorlessManaCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new DriftingDjinn());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Drifting Djinn");
+        harness.assertInGraveyard(player1, "Drifting Djinn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cycling discards and pays immediately but draws only on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        harness.setHand(player1, List.of(new DriftingDjinn()));
+        harness.setLibrary(player1, List.of(new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Drifting Djinn");
+        harness.assertInGraveyard(player1, "Drifting Djinn");
+        harness.assertNotInHand(player1, "Coral Merfolk");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Coral Merfolk");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Cycling discards Drifting Djinn and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new DriftingDjinn()));

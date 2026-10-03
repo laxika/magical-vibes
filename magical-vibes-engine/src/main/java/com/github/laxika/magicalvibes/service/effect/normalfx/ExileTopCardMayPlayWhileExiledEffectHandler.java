@@ -50,6 +50,9 @@ public class ExileTopCardMayPlayWhileExiledEffectHandler implements NormalEffect
             exileService.exileCard(gameData, controllerId, topCard);
         }
         exileSupport.grantPlayWhileExiled(gameData, topCard.getId(), controllerId);
+        if (exileEffect.permissionCondition() != null) {
+            gameData.exilePlayPermissionConditions.put(topCard.getId(), exileEffect.permissionCondition());
+        }
         if (exileEffect.anyManaType()) {
             gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
         }

@@ -54,6 +54,130 @@ class CyclopeanTombTest extends BaseCardTest {
     }
 
     @Test
+    void cannotActivateOutsideControllersUpkeep() {
+        harness.addToBattlefield(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+
+        advanceToUpkeep(player2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+    }
+
+    @Test
+    void expiredSwampEffectDoesNotRestartWhenAnotherMireCounterAppears() {
+        harness.addToBattlefield(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        forest.setCounterCount(CounterType.MIRE, 0);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+        harness.passBothPriorities();
+
+        forest.setCounterCount(CounterType.MIRE, 1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    void cleanupIncludesLandAffectedByActivationResolvingAfterTombDies() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, tomb.getId());
+        resolveAllTriggers();
+
+        assertThat(forest.getCounterCount(CounterType.MIRE)).isEqualTo(1);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(forest.getCounterCount(CounterType.MIRE)).isZero();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    void choosingLandWithoutCountersDoesNotPreventLaterCleanup() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        forest.setCounterCount(CounterType.MIRE, 0);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, tomb.getId());
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        forest.setCounterCount(CounterType.MIRE, 2);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(forest.getCounterCount(CounterType.MIRE)).isZero();
+    }
+
+    @Test
+    void cleanupChoosesOneLandPerUpkeepAndRemovesAllItsCounters() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+        first.setCounterCount(CounterType.MIRE, 3);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, tomb.getId());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(first.getCounterCount(CounterType.MIRE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.MIRE)).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, first.getId());
+        resolveAllTriggers();
+        assertThat(first.getCounterCount(CounterType.MIRE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MIRE)).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(second.getCounterCount(CounterType.MIRE)).isZero();
+    }
+
+    @Test
     @DisplayName("After leaving the battlefield, removes mire counters from a remembered land at upkeep")
     void removesRememberedMireCountersAfterLeavingBattlefield() {
         Permanent tomb = harness.addToBattlefieldAndReturn(player1, new CyclopeanTomb());

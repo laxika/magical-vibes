@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AncientSpider;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
+import com.github.laxika.magicalvibes.cards.s.SerraAvatar;
 import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,9 +14,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeathBomb.class, AncientSpider.class, VolcanoImp.class, ForsakenCity.class})
+@CardUsed({DeathBomb.class, AncientSpider.class, VolcanoImp.class, ForsakenCity.class,
+        SerraAvatar.class, DeathsPresence.class})
 class DeathBombTest extends BaseCardTest {
 
     private void giveMana() {
@@ -82,5 +86,84 @@ class DeathBombTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, land.getId(), sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new VolcanoImp());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        harness.setHand(player1, List.of(new DeathBomb()));
+        giveMana();
+
+        harness.castInstantWithSacrifice(player1, 0, victim.getId(), sacrifice.getId());
+
+        harness.assertInGraveyard(player1, "Volcano Imp");
+        harness.assertNotOnBattlefield(player1, "Volcano Imp");
+        harness.assertOnBattlefield(player2, "Ancient Spider");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotCastWithoutCreatureToSacrifice() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        harness.setHand(player1, List.of(new DeathBomb()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, victim.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Death Bomb");
+        harness.assertOnBattlefield(player2, "Ancient Spider");
+    }
+
+    @Test
+    void sacrificingTheTargetMakesTheSpellHaveNoLegalTarget() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DeathBomb()));
+        giveMana();
+
+        harness.castInstantWithSacrifice(player1, 0, victim.getId(), victim.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ancient Spider");
+        harness.assertInGraveyard(player1, "Death Bomb");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void destroyingYourOwnCreatureMakesYouLoseLife() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new VolcanoImp());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new AncientSpider());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DeathBomb()));
+        giveMana();
+
+        harness.castInstantWithSacrifice(player1, 0, victim.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ancient Spider");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({SerraAvatar.class, DeathsPresence.class})
+    void destroysBeforeLifeLossForLastKnownPower() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new VolcanoImp());
+        harness.addToBattlefield(player2, new DeathsPresence());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new SerraAvatar());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new DeathBomb()));
+        giveMana();
+
+        harness.castInstantWithSacrifice(player1, 0, victim.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, survivor.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
     }
 }

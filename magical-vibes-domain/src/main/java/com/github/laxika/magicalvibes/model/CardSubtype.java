@@ -179,6 +179,7 @@ public enum CardSubtype {
     PHYREXIAN("Phyrexian"),
     KITHKIN("Kithkin"),
     AJANI("Ajani"),
+    BASRI("Basri"),
     GARRUK("Garruk"),
     KOTH("Koth"),
     WRAITH("Wraith"),
@@ -356,7 +357,7 @@ SYNTH("Synth"),
             URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
-            AJANI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
+            AJANI, BASRI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
             SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANGGU, YANLING, WRENN);
 
     public static List<CardSubtype> basicLandTypes() {

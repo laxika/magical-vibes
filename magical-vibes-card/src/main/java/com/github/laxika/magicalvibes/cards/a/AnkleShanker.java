@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "164")
+@CardRegistration(set = "C16", collectorNumber = "178")
 public class AnkleShanker extends Card {
 
     public AnkleShanker() {

@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -93,6 +96,183 @@ class DoomsTimePlatformTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Several attackers produce only one exile trigger")
+    void severalAttackersExileOnlyOneCard() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        addAttackTriggerSourceAndAttacker();
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(first.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(second.getId());
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard is not eligible")
+    void opponentGraveyardCannotBeTargeted() {
+        GrizzlyBears own = new GrizzlyBears();
+        GrizzlyBears opposing = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(opposing));
+        addAttackTriggerSourceAndAttacker();
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(own.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opposing.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(own.getId()));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent upkeep does not count down your suspended card")
+    void onlyOwnerUpkeepRemovesTimeCounter() {
+        GrizzlyBears card = new GrizzlyBears();
+        suspendFromGraveyard(card);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+    }
+
+    @Test
+    @DisplayName("Declining suspend leaves the card exiled without another offer")
+    void decliningCastLeavesCardExiled() {
+        GrizzlyBears card = new GrizzlyBears();
+        suspendFromGraveyard(card);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(card.getId());
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter creates a separate respondable trigger")
+    void lastCounterCastAbilityUsesStack() {
+        GrizzlyBears card = new GrizzlyBears();
+        suspendFromGraveyard(card);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(card.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("A creature cast through suspend retains haste after cleanup")
+    void suspendHasteSurvivesCleanup() {
+        GrizzlyBears card = new GrizzlyBears();
+        suspendFromGraveyard(card);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Suspend can cast a noncreature artifact as well")
+    void suspendedArtifactCanBeCast() {
+        DoomsTimePlatform card = new DoomsTimePlatform();
+        suspendFromGraveyard(card);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Doom's Time Platform")).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    private void suspendFromGraveyard(Card card) {
+        harness.setGraveyard(player1, List.of(card));
+        addAttackTriggerSourceAndAttacker();
+        declareAttackers(List.of(1));
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The Platform does not trigger when an opponent attacks")
+    void opponentAttackDoesNotTrigger() {
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addToBattlefield(player1, new DoomsTimePlatform());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard before resolution is not suspended")
+    void departedTargetIsNotSuspended() {
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(card));
+        addAttackTriggerSourceAndAttacker();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+            harness.setGraveyard(player1, List.of());
+            harness.setHand(player1, List.of(card));
+            harness.passBothPriorities();
+        });
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
     }
 
     private void addAttackTriggerSourceAndAttacker() {

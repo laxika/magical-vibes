@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AlBhedSalvagers.class, GrizzlyBears.class, LightningBolt.class, MindStone.class,
-        Naturalize.class, Ornithopter.class, Shock.class})
+        Naturalize.class, Ornithopter.class, Shock.class, WrathOfGod.class})
 class AlBhedSalvagersTest extends BaseCardTest {
 
     @Test
@@ -77,14 +78,91 @@ class AlBhedSalvagersTest extends BaseCardTest {
         harness.assertLife(player1, 21);
     }
 
+    @Test
+    @DisplayName("An opponent's creature dying does not trigger Al Bhed Salvagers")
+    void opponentCreatureDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AlBhedSalvagers());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyWithShock(player2, "Grizzly Bears");
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact dying does not trigger Al Bhed Salvagers")
+    void opponentArtifactDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AlBhedSalvagers());
+        harness.addToBattlefield(player2, new MindStone());
+
+        destroyArtifact(player2, "Mind Stone");
+
+        harness.assertInGraveyard(player2, "Mind Stone");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Salvagers sees a non-artifact creature dying simultaneously with itself")
+    void simultaneousNonArtifactCreatureDeathDrainsTwice() {
+        harness.addToBattlefield(player1, new AlBhedSalvagers());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyAllCreatures();
+        resolveSimultaneousDrains();
+
+        harness.assertInGraveyard(player1, "Al Bhed Salvagers");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Salvagers sees an artifact creature dying simultaneously with itself")
+    void simultaneousArtifactCreatureDeathDrainsTwice() {
+        harness.addToBattlefield(player1, new AlBhedSalvagers());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        destroyAllCreatures();
+        resolveSimultaneousDrains();
+
+        harness.assertInGraveyard(player1, "Al Bhed Salvagers");
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    private void destroyAllCreatures() {
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        setupPlayer2Active();
+        harness.castAndResolveSorcery(player2, 0, 0);
+    }
+
+    private void resolveSimultaneousDrains() {
+        for (int i = 0; i < 2; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void destroyWithShock(com.github.laxika.magicalvibes.model.Player controller, String permanentName) {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         setupPlayer2Active();
 
         UUID permanentId = harness.getPermanentId(controller, permanentName);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 
     private void destroyWithLightningBolt(com.github.laxika.magicalvibes.model.Player controller,
@@ -94,8 +172,7 @@ class AlBhedSalvagersTest extends BaseCardTest {
         setupPlayer2Active();
 
         UUID permanentId = harness.getPermanentId(controller, permanentName);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 
     private void destroyArtifact(com.github.laxika.magicalvibes.model.Player controller, String permanentName) {
@@ -104,8 +181,7 @@ class AlBhedSalvagersTest extends BaseCardTest {
         setupPlayer2Active();
 
         UUID permanentId = harness.getPermanentId(controller, permanentName);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 
     private void resolveDrain(UUID targetId) {

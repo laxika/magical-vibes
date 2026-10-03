@@ -27,7 +27,7 @@ public class ArcadeCabinet extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "Sacrifice a token"),
+                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "Sacrifice a token", false),
                         new DoubleCountersOnTargetPermanentEffect()
                 ),
                 "{2}, {T}, Sacrifice a token: Double the number of each kind of counter on target creature.",

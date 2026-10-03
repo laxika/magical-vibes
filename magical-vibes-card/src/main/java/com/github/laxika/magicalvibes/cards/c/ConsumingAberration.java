@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "152")
+@CardRegistration(set = "C16", collectorNumber = "189")
 @CardRegistration(set = "FDN", collectorNumber = "238")
 @CardRegistration(set = "GK1", collectorNumber = "10")
 @CardRegistration(set = "TSR", collectorNumber = "374")

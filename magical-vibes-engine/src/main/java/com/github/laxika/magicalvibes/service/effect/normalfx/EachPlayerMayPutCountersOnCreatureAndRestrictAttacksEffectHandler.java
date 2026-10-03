@@ -45,7 +45,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
                 ? apnapPlayers(gameData)
                 : counterEffect.remainingPlayerIds();
         promptNext(gameData, entry.getCard(), new EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(
-                counterEffect.counterType(), counterEffect.count(), players, entry.getControllerId()),
+                counterEffect.counterType(), counterEffect.count(), players, entry.getControllerId(), counterEffect.acceptedFollowUp()),
                 entry.getSourcePermanentId());
     }
 
@@ -73,7 +73,12 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
         placementEntry.setControllerId(ability.controllerId());
         int placed = permanentCounterSupport.placeCounterOnPermanent(
                 gameData, placementEntry, target, effect.counterType(), effect.count());
-        if (placed > 0) {
+        if (placed > 0 && effect.acceptedFollowUp() instanceof com.github.laxika.magicalvibes.model.effect.GoadTriggeringCreatureUntilNextTurnEffect) {
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), ability.sourceCard().getName(), ability.sourcePermanentId(),
+                    effect.sourceControllerId(), effect.acceptedFollowUp(), target.getId(), null, null,
+                    EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
+        } else if (placed > 0) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ability.sourceCard().getName(), ability.sourcePermanentId(),
                     effect.sourceControllerId(),
@@ -94,7 +99,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
                 : effect.remainingPlayerIds().subList(1, effect.remainingPlayerIds().size());
         promptNext(gameData, sourceCard,
                 new EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(
-                        effect.counterType(), effect.count(), remaining, effect.sourceControllerId()),
+                        effect.counterType(), effect.count(), remaining, effect.sourceControllerId(), effect.acceptedFollowUp()),
                 sourcePermanentId);
     }
 
@@ -126,7 +131,7 @@ public class EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler
 
             EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect current =
                     new EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect(
-                            effect.counterType(), effect.count(), remaining, effect.sourceControllerId());
+                            effect.counterType(), effect.count(), remaining, effect.sourceControllerId(), effect.acceptedFollowUp());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     sourceCard, playerId, List.of(current),
                     sourceCard.getName() + " - You may put " + effect.count() + " "

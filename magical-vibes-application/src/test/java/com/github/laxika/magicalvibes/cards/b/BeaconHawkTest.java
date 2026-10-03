@@ -86,6 +86,53 @@ class BeaconHawkTest extends BaseCardTest {
         assertThat(hawk.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Beacon Hawk can untap itself after dealing combat damage")
+    void canUntapItself() {
+        Permanent hawk = attackWithBeaconHawk(player1);
+        hawk.tap();
+
+        resolveCombatAndTrigger();
+        harness.handlePermanentChosen(player1, hawk.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(hawk.isTapped()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Repeated activations each add toughness only to their source")
+    void repeatedActivationsStackOnSourceOnly() {
+        Permanent hawk = addCreatureReady(player1, new BeaconHawk());
+        Permanent other = addCreatureReady(player1, new BeaconHawk());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(hawk.getPowerModifier()).isZero();
+        assertThat(hawk.getToughnessModifier()).isEqualTo(2);
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Beacon Hawk can activate its toughness ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new BeaconHawk());
+        hawk.setSummoningSick(true);
+        hawk.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hawk.getPowerModifier()).isZero();
+        assertThat(hawk.getToughnessModifier()).isEqualTo(1);
+        assertThat(hawk.isTapped()).isTrue();
+    }
+
     private Permanent attackWithBeaconHawk(Player player) {
         Permanent hawk = addCreatureReady(player, new BeaconHawk());
         hawk.setAttacking(true);

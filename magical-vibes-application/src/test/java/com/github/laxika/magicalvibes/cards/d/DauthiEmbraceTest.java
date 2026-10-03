@@ -125,6 +125,60 @@ class DauthiEmbraceTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Granted shadow prevents blocking a creature without shadow")
+    void grantedShadowPreventsBlockingNonShadowAttacker() {
+        harness.addToBattlefield(player2, new DauthiEmbrace());
+        Permanent attacker = addCreatureReady(player1, new CanopySpider());
+        Permanent blocker = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player2, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Ability can be activated repeatedly without tapping its source")
+    void canActivateRepeatedly() {
+        Permanent embrace = harness.addToBattlefieldAndReturn(player1, new DauthiEmbrace());
+        Permanent first = addCreatureReady(player1, new CanopySpider());
+        Permanent second = addCreatureReady(player2, new CanopySpider());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.SHADOW)).isTrue();
+        assertThat(embrace.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Expiration of granted shadow preserves a creature's inherent shadow")
+    void expirationPreservesInherentShadow() {
+        harness.addToBattlefield(player1, new DauthiEmbrace());
+        Permanent creature = addCreatureReady(player1, new DauthiMarauder());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHADOW)).isTrue();
+    }
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);
     }

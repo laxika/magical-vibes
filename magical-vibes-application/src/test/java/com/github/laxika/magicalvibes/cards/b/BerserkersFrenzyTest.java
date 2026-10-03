@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.p.PaleBears;
+import com.github.laxika.magicalvibes.cards.e.EtaliPrimalStorm;
+import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BerserkersFrenzy.class, PaleBears.class})
+@CardUsed({BerserkersFrenzy.class, BurnishedHart.class, EtaliPrimalStorm.class, Hipparion.class})
 class BerserkersFrenzyTest extends BaseCardTest {
 
     private RollTwoD20IgnoreLowerEffectHandler rollHandler;
@@ -42,7 +43,7 @@ class BerserkersFrenzyTest extends BaseCardTest {
     void lowerResultLetsControllerChooseCreaturesThatMustBlock() {
         ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(4, 14));
         Permanent attacker = addAttacker();
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new BurnishedHart());
         castDuringDeclareAttackers();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -67,7 +68,7 @@ class BerserkersFrenzyTest extends BaseCardTest {
     void higherResultLetsControllerChooseTheBlockAssignments() {
         ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(14, 15));
         Permanent attacker = addAttacker();
-        Permanent blocker = addCreatureReady(player2, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new BurnishedHart());
         castDuringDeclareAttackers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
@@ -93,10 +94,8 @@ class BerserkersFrenzyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new BerserkersFrenzy()));
         addMana();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Berserker's Frenzy"));
+        harness.castAndResolveInstant(player1, 0);
+        harness.assertInGraveyard(player1, "Berserker's Frenzy");
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -106,8 +105,99 @@ class BerserkersFrenzyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void lowResultAllowsChoosingNoCreatures() {
+        ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(14, 1));
+        addAttacker();
+        Permanent blocker = addCreatureReady(player2, new BurnishedHart());
+        castDuringDeclareAttackers();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+        harness.assertInGraveyard(player1, "Berserker's Frenzy");
+    }
+
+    @Test
+    void selectedTappedCreatureIsNotRequiredToBlock() {
+        ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(1, 1));
+        addAttacker();
+        Permanent blocker = addCreatureReady(player2, new BurnishedHart());
+        blocker.tap();
+        castDuringDeclareAttackers();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(blocker.getId()));
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void highResultAllowsChoosingNoBlockersEvenWhenCreaturesCanBlock() {
+        ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(20, 20));
+        addAttacker();
+        Permanent blocker = addCreatureReady(player2, new BurnishedHart());
+        castDuringDeclareAttackers();
+        advanceToBlockerDeclaration();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        gs.declareBlockers(gd, player1, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @CardUsed({BerserkersFrenzy.class, BurnishedHart.class, EtaliPrimalStorm.class, Hipparion.class})
+    void choosingOpponentBlockersDoesNotAuthorizePayingTheirBlockCosts() {
+        ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(20, 1));
+        Permanent attacker = addCreatureReady(player1, new EtaliPrimalStorm());
+        attacker.setAttacking(true);
+        attacker.tap();
+        Permanent blocker = addCreatureReady(player2, new Hipparion());
+        castDuringDeclareAttackers();
+        advanceToBlockerDeclaration();
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void highResultKeepsControlOfBlockingInAnAdditionalCombat() {
+        ReflectionTestUtils.setField(rollHandler, "d20RollService", new FixedD20RollService(20, 1));
+        addAttacker();
+        Permanent secondAttacker = addCreatureReady(player1, new BurnishedHart());
+        addCreatureReady(player2, new BurnishedHart());
+        castDuringDeclareAttackers();
+        advanceToBlockerDeclaration();
+        gs.declareBlockers(gd, player1, List.of());
+
+        gd.additionalCombatPhasesOnly = 1;
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        gs.advanceStep(gd);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker);
+        gs.declareAttackers(gd, player1, List.of(attackerIndex));
+
+        PendingInteraction.BlockerDeclaration pending =
+                gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class);
+        assertThat(pending).isNotNull();
+        assertThat(pending.decidingPlayerId()).isEqualTo(player1.getId());
+        gs.declareBlockers(gd, player1, List.of());
+    }
+
     private Permanent addAttacker() {
-        Permanent attacker = addCreatureReady(player1, new PaleBears());
+        Permanent attacker = addCreatureReady(player1, new BurnishedHart());
         attacker.setAttacking(true);
         attacker.tap();
         return attacker;
@@ -119,8 +209,7 @@ class BerserkersFrenzyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new BerserkersFrenzy()));
         addMana();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void addMana() {

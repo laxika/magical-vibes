@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
+import com.github.laxika.magicalvibes.cards.s.Standardize;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DerangedHermit.class, GiantCockroach.class})
+@CardUsed({DerangedHermit.class, GiantCockroach.class, Standardize.class, Stifle.class})
 class DerangedHermitTest extends BaseCardTest {
 
     @Test
@@ -99,10 +101,98 @@ class DerangedHermitTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Deranged Hermit");
     }
 
-    private void castAndResolveHermit() {
+    @Test
+    @DisplayName("Deranged Hermit receives its own bonus when it becomes a Squirrel")
+    void hermitBecomingASquirrelReceivesItsOwnBonus() {
+        castAndResolveHermit();
+        Permanent hermit = findPermanent(player1, "Deranged Hermit");
+
+        harness.castFromHand(player1, new Standardize(), "{U}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.SQUIRREL.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hermit)).containsExactly(CardSubtype.SQUIRREL);
+        assertThat(gqs.getEffectivePower(gd, hermit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hermit)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Countering the Squirrel trigger does not prevent echo")
+    void counteringEnterTriggerDoesNotPreventEcho() {
         harness.castFromHand(player1, new DerangedHermit(), "{3}{G}{G}");
         harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Deranged Hermit");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Stifle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getCard().getId());
+        assertThat(squirrelTokens(player1)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Deranged Hermit");
+        harness.assertInGraveyard(player1, "Deranged Hermit");
+    }
+
+    @Test
+    @DisplayName("The Squirrel trigger still creates tokens after Deranged Hermit leaves")
+    void enterTriggerCreatesTokensAfterHermitLeaves() {
+        harness.castFromHand(player1, new DerangedHermit(), "{3}{G}{G}");
+        harness.passBothPriorities();
+        Permanent hermit = findPermanent(player1, "Deranged Hermit");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hermit));
+        resolveAllTriggers();
+
+        List<Permanent> squirrels = squirrelTokens(player1);
+        assertThat(squirrels).hasSize(4);
+        for (Permanent squirrel : squirrels) {
+            assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(1);
+        }
+    }
+
+    @Test
+    @DisplayName("Multiple Deranged Hermits give cumulative bonuses")
+    void multipleHermitsGiveCumulativeBonuses() {
+        castAndResolveHermit();
+        castAndResolveHermit();
+
+        List<Permanent> squirrels = squirrelTokens(player1);
+        assertThat(squirrels).hasSize(8);
+        for (Permanent squirrel : squirrels) {
+            assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(3);
+        }
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not consume the pending echo obligation")
+    void echoWaitsForControllersUpkeep() {
+        castAndResolveHermit();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Deranged Hermit");
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Deranged Hermit");
+    }
+
+    private void castAndResolveHermit() {
+        harness.castFromHand(player1, new DerangedHermit(), "{3}{G}{G}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Deranged Hermit");
     }
 

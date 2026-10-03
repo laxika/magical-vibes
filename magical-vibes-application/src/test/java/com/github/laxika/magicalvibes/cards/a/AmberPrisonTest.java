@@ -100,6 +100,42 @@ class AmberPrisonTest extends BaseCardTest {
         assertThat(amberPrison.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Choosing to untap cannot override Amber Prison's self-targeted lock")
+    void optionalUntapCannotOverrideSelfLock() {
+        Permanent amberPrison = addReadyAmberPrison(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, amberPrison.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player2);
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(amberPrison.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Amber Prison locked by another cannot choose to untap")
+    void optionalUntapCannotOverrideAnotherPrisonsLock() {
+        Permanent source = addReadyAmberPrison(player1);
+        Permanent target = addReadyAmberPrison(player2);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player1);
+        if (!gd.pendingMayAbilities.isEmpty()) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
     // ===== Prevent untap while source tapped =====
 
     @Test
@@ -124,7 +160,7 @@ class AmberPrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Already-tapped target remains locked while Amber Prison is tapped")
     void alreadyTappedTargetIsLocked() {
-        Permanent amberPrison = addReadyAmberPrison(player1);
+        addReadyAmberPrison(player1);
         Permanent target = addReadyCreature(player2);
         target.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -305,9 +341,11 @@ class AmberPrisonTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.performUntapStep(newActivePlayer);
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -315,9 +353,11 @@ class AmberPrisonTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.performUntapStep(newActivePlayer);
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

@@ -74,4 +74,44 @@ class DragonspeakerShamanTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
     }
+
+    @Test
+    @DisplayName("A single Shaman does not reduce a Dragon spell by more than two mana")
+    void insufficientGenericManaStillPreventsCasting() {
+        harness.addToBattlefield(player1, new DragonspeakerShaman());
+        harness.setHand(player1, List.of(new DragonMage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Excess cost reduction removes all generic mana but still requires colored mana")
+    void excessReductionAllowsCastingForOnlyColoredMana() {
+        harness.addToBattlefield(player1, new DragonspeakerShaman());
+        harness.addToBattlefield(player1, new DragonspeakerShaman());
+        harness.addToBattlefield(player1, new DragonspeakerShaman());
+        harness.setHand(player1, List.of(new DragonMage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Shaman in the graveyard does not reduce Dragon spell costs")
+    void shamanInGraveyardDoesNotReduceCosts() {
+        harness.setGraveyard(player1, List.of(new DragonspeakerShaman()));
+        harness.setHand(player1, List.of(new DragonMage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }

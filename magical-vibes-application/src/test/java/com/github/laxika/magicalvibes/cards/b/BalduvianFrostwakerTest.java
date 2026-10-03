@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ class BalduvianFrostwakerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, snowLand.getId());
         harness.passBothPriorities();
-        snowLand.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, snowLand)).isTrue();
         assertThat(gqs.getEffectivePower(gd, snowLand)).isEqualTo(2);
@@ -84,6 +85,60 @@ class BalduvianFrostwakerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, plains.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activation taps Frostwaker and cannot be repeated while tapped")
+    void activationRequiresUntappedSource() {
+        Permanent frostwaker = addReadyFrostwaker(player1);
+        Permanent snowLand = addSnowLand(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, snowLand.getId());
+        assertThat(frostwaker.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Frostwaker cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new BalduvianFrostwaker());
+        Permanent snowLand = addSnowLand(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, snowLand)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activation requires blue mana")
+    void cannotActivateWithoutBlueMana() {
+        addReadyFrostwaker(player1);
+        Permanent snowLand = addSnowLand(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, snowLand)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped snow land remains tapped when animated")
+    void animationDoesNotUntapTarget() {
+        addReadyFrostwaker(player1);
+        Permanent snowLand = addSnowLand(player1);
+        snowLand.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, snowLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, snowLand)).isTrue();
+        assertThat(snowLand.isTapped()).isTrue();
     }
 
     private Permanent addReadyFrostwaker(Player player) {

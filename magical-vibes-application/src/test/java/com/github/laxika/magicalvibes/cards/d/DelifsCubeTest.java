@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.cards.q.QuestingBeast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DelifsCube.class, IcatianPhalanx.class})
+@CardUsed({DelifsCube.class, IcatianPhalanx.class, QuestingBeast.class})
 class DelifsCubeTest extends BaseCardTest {
 
     @Test
@@ -94,8 +95,7 @@ class DelifsCubeTest extends BaseCardTest {
         Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
         Permanent attacker = addCreatureReady(player1, new IcatianPhalanx());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -117,14 +117,109 @@ class DelifsCubeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker)).isTrue();
         harness.passBothPriorities();
 
         assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration requires a cube counter as an activation cost")
+    void regenerationCannotBeActivatedWithoutCubeCounter() {
+        harness.addToBattlefield(player1, new DelifsCube());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Cube can regenerate and pays its counter before resolution")
+    void tappedCubePaysRegenerationCounterImmediately() {
+        Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
+        cube.setTapped(true);
+        cube.setCounterCount(CounterType.CUBE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(cube.getCounterCount(CounterType.CUBE)).isZero();
+        assertThat(target.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(cube.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A returned Cube is not the source of the old delayed trigger")
+    void returnedCubeDoesNotReceiveOldTriggerCounter() {
+        Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
+        Permanent attacker = addCreatureReady(player1, new IcatianPhalanx());
+        addCreatureReady(player2, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cube)).isTrue();
+        gd.playerGraveyards.get(player1.getId()).remove(cube.getCard());
+        Permanent returnedCube = harness.addToBattlefieldAndReturn(player1, cube.getCard());
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(returnedCube.getCounterCount(CounterType.CUBE)).isZero();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The delayed trigger follows the creature after a control change")
+    void delayedTriggerFollowsCreatureControlledByOpponent() {
+        harness.forceActivePlayer(player2);
+        Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
+        Permanent attacker = addCreatureReady(player1, new IcatianPhalanx());
+        addCreatureReady(player1, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        attacker.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
+        resolveCombat(player2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Assigning no combat damage still applies when damage cannot be prevented")
+    void assignsNoCombatDamageEvenWhenDamageCannotBePrevented() {
+        Permanent cube = harness.addToBattlefieldAndReturn(player1, new DelifsCube());
+        Permanent attacker = addCreatureReady(player1, new IcatianPhalanx());
+        harness.addToBattlefield(player1, new QuestingBeast());
+        addCreatureReady(player2, new IcatianPhalanx());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+        assertThat(cube.getCounterCount(CounterType.CUBE)).isEqualTo(1);
+        resolveCombat();
+        harness.assertLife(player2, 20);
     }
 
     private void declareBlockers(List<BlockerAssignment> assignments) {

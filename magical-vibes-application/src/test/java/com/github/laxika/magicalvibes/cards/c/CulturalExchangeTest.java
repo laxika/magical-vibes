@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.a.AvenSmokeweaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantBeControlledByOtherPlayersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -103,5 +107,67 @@ class CulturalExchangeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(player1.getId(), player1.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The second selection must contain exactly as many creatures as the first")
+    void secondSelectionMustHaveTheSameSize() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        Permanent opponentFirst = harness.addToBattlefieldAndReturn(player2, new AvenFisher());
+        Permanent opponentSecond = harness.addToBattlefieldAndReturn(player2, new AvenSmokeweaver());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(own.getId()));
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(opponentFirst.getId(), opponentSecond.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(opponentFirst.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(opponentFirst);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactlyInAnyOrder(own, opponentSecond);
+    }
+
+    @Test
+    @DisplayName("Exchanged creatures remain under their new controllers after the turn ends")
+    void exchangeLastsIndefinitely() {
+        prepare();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new AvenSmokeweaver());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), player1.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(own.getId()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(opponent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(own);
+    }
+
+    @Test
+    @DisplayName("No creatures change control if any chosen creature cannot change control")
+    void impossibleExchangeDoesNotTransferAnyCreatures() {
+        prepare();
+        // No implemented creature has this restriction; use a runtime copy to exercise the engine's control prohibition.
+        Card restrictedCard = new AvenFisher().createRuntimeCopy();
+        restrictedCard.addEffect(EffectSlot.STATIC, new CantBeControlledByOtherPlayersEffect());
+        Permanent restricted = harness.addToBattlefieldAndReturn(player1, restrictedCard);
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AvenSmokeweaver());
+        Permanent opponentFirst = harness.addToBattlefieldAndReturn(player2, new AvenFisher());
+        Permanent opponentSecond = harness.addToBattlefieldAndReturn(player2, new AvenSmokeweaver());
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(restricted.getId(), own.getId()));
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(opponentFirst.getId(), opponentSecond.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(restricted, own);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactlyInAnyOrder(opponentFirst, opponentSecond);
     }
 }

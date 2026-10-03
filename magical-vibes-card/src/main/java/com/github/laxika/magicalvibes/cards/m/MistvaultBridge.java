@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "14")
 @CardRegistration(set = "MH2", collectorNumber = "249")
+@CardRegistration(set = "BRC", collectorNumber = "189")
 public class MistvaultBridge extends Card {
 
     public MistvaultBridge() {

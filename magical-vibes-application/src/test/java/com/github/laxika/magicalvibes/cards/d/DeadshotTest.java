@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -135,5 +137,71 @@ class DeadshotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Mogg Fanatic");
+    }
+
+    @Test
+    @DisplayName("The first target may be an opposing creature and only it is tapped")
+    void mayUseOpposingCreatureAsDamageSource() {
+        Permanent conscripts = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
+        Permanent turtle = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        harness.setHand(player1, List.of(new Deadshot()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(conscripts.getId(), turtle.getId()));
+
+        assertThat(conscripts.isTapped()).isTrue();
+        assertThat(conscripts.getMarkedDamage()).isZero();
+        assertThat(turtle.isTapped()).isFalse();
+        assertThat(turtle.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {-2, -3})
+    @DisplayName("A creature with zero or negative power is tapped but deals no damage")
+    void nonpositivePowerDealsNoDamage(int powerModifier) {
+        Permanent conscripts = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
+        conscripts.setPowerModifier(powerModifier);
+        Permanent turtle = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
+        harness.setHand(player1, List.of(new Deadshot()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(conscripts.getId(), turtle.getId()));
+
+        assertThat(conscripts.isTapped()).isTrue();
+        assertThat(turtle.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Horned Turtle");
+    }
+
+    @Test
+    @DisplayName("The first target cannot be a noncreature permanent")
+    void cannotUseNonCreatureAsDamageSource() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent turtle = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
+        harness.setHand(player1, List.of(new Deadshot()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(forest.getId(), turtle.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The first target is still tapped when the second target leaves before resolution")
+    void stillTapsShooterWhenVictimLeaves() {
+        Permanent conscripts = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
+        harness.setHand(player1, List.of(new Deadshot()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(conscripts.getId(), fanatic.getId()));
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(conscripts.isTapped()).isTrue();
+        assertThat(conscripts.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Mogg Fanatic");
+        harness.assertInGraveyard(player1, "Deadshot");
+        assertThat(gd.stack).isEmpty();
     }
 }

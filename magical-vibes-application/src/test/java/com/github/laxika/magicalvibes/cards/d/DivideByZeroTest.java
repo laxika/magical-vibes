@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DivideByZero.class, EnvironmentalSciences.class, Forest.class, GiantGrowth.class,
+        GrizzlyBears.class, LetterOfAcceptance.class})
 class DivideByZeroTest extends BaseCardTest {
 
     @Test
@@ -43,8 +46,7 @@ class DivideByZeroTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DivideByZero()));
         addMana();
-        harness.castInstant(player1, 0, growth.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, growth.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).contains(growth);
     }
@@ -92,14 +94,89 @@ class DivideByZeroTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
 
+    @Test
+    @DisplayName("Learn may take a Lesson when the hand is empty")
+    void learnsWithEmptyHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LetterOfAcceptance());
+        Card lesson = new EnvironmentalSciences();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+
+        castDivideByZero(target.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lesson);
+        assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Learn may decline both discarding and taking a Lesson")
+    void mayDeclineLearning() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LetterOfAcceptance());
+        Card lesson = new EnvironmentalSciences();
+        Card retained = new Forest();
+        Card topCard = new Forest();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+        harness.setLibrary(player1, List.of(topCard));
+
+        castDivideByZero(target.getId(), retained);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not learn when its only target leaves before resolution")
+    void doesNotLearnWithIllegalTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LetterOfAcceptance());
+        Card lesson = new EnvironmentalSciences();
+        Card retained = new Forest();
+        DivideByZero spell = new DivideByZero();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+        harness.setHand(player1, List.of(spell, retained));
+        addMana();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(target.getCard());
+    }
+
+    @Test
+    @DisplayName("Can return its controller's own permanent and discard it to learn")
+    void canReturnOwnPermanentAndDiscardIt() {
+        Card returned = new LetterOfAcceptance();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, returned);
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+
+        castDivideByZero(target.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(returned);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
     private void castDivideByZero(java.util.UUID target, Card... additionalHandCards) {
         List<Card> hand = new ArrayList<>();
         hand.add(new DivideByZero());
         hand.addAll(List.of(additionalHandCards));
         harness.setHand(player1, hand);
         addMana();
-        harness.castInstant(player1, 0, target);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target);
     }
 
     private void addMana() {

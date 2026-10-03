@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({DegaSanctuary.class, BloodfireDwarf.class, Cromat.class, MournfulZombie.class})
 class DegaSanctuaryTest extends BaseCardTest {
 
@@ -98,6 +100,51 @@ class DegaSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BloodfireDwarf());
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Gains 4 life if the second qualifying color appears before resolution")
+    void gainsFourLifeWhenSecondColorAppearsBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new DegaSanctuary());
+        harness.addToBattlefield(player1, new MournfulZombie());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player1, new BloodfireDwarf());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Gains 2 life if one qualifying color leaves before resolution")
+    void gainsTwoLifeWhenOneColorLeavesBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new DegaSanctuary());
+        harness.addToBattlefield(player1, new MournfulZombie());
+        Permanent redPermanent = harness.addToBattlefieldAndReturn(player1, new BloodfireDwarf());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(redPermanent);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Does not trigger if a qualifying color appears only after upkeep begins")
+    void doesNotTriggerWhenQualifyingColorAppearsAfterUpkeepBegins() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new DegaSanctuary());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new BloodfireDwarf());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

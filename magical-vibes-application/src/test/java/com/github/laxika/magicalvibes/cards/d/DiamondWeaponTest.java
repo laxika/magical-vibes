@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DiamondWeapon.class, AirElemental.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DiamondWeapon.class, AirElemental.class, Forest.class, GrizzlyBears.class, Shock.class})
 class DiamondWeaponTest extends BaseCardTest {
 
     @Test
@@ -54,10 +55,8 @@ class DiamondWeaponTest extends BaseCardTest {
         diamondWeapon.setBlocking(true);
         diamondWeapon.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AirElemental());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -66,6 +65,75 @@ class DiamondWeaponTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(diamondWeapon);
         assertThat(diamondWeapon.getMarkedDamage()).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card instanceof AirElemental);
+    }
+
+    @Test
+    @DisplayName("Opponent's graveyard does not reduce the cost")
+    void costReductionIgnoresOpponentsGraveyard() {
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DiamondWeapon()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Land cards also reduce the casting cost")
+    void landCardsReduceCastingCost() {
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new DiamondWeapon()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess reduction still requires both green mana")
+    void excessReductionDoesNotReduceColoredMana() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DiamondWeapon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof DiamondWeapon);
+    }
+
+    @Test
+    @DisplayName("Combat damage from blockers is prevented while Diamond Weapon deals damage")
+    void attackingDiamondWeaponPreventsOnlyIncomingDamage() {
+        Permanent diamondWeapon = addCreatureReady(player1, new DiamondWeapon());
+        diamondWeapon.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(diamondWeapon);
+        assertThat(diamondWeapon.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test

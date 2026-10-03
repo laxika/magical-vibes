@@ -58,4 +58,56 @@ class DirectorNickFuryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3).doesNotContain(hero);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    void otherCreaturesAttackingTriggerOnlyOnceAndMayDeclineHero() {
+        harness.addToBattlefield(player1, new DirectorNickFury());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Card hero = new DirectorNickFury();
+        List<Card> topFour = List.of(hero, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        Card fifth = new MindStone();
+        harness.setLibrary(player1, List.of(topFour.get(0), topFour.get(1), topFour.get(2), topFour.get(3), fifth));
+
+        declareAttackers(List.of(1, 2));
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(hero.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(hero);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5).containsExactlyInAnyOrderElementsOf(
+                List.of(topFour.get(0), topFour.get(1), topFour.get(2), topFour.get(3), fifth));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(fifth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void shortLibraryWithNoHeroIsReturnedWithoutAChoice() {
+        addCreatureReady(player1, new DirectorNickFury());
+        List<Card> cards = List.of(new GrizzlyBears(), new MindStone());
+        harness.setLibrary(player1, cards);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContainAnyElementsOf(cards);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsHeroSpellsAreNotReduced() {
+        harness.addToBattlefield(player1, new DirectorNickFury());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DaredevilManWithoutFear()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

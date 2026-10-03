@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -22,6 +24,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
 
 /**
  * Resolves the destroy-plus-value family via {@link DestroyTargetPermanentThenEffect}: destroy the
@@ -45,6 +48,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameOutcomeService gameOutcomeService;
+    private final ObjectProvider<EffectResolutionService> effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -132,11 +136,15 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             thenEffect = conditional.wrapped();
         }
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
-        if (handler != null) {
-            handler.resolve(gameData, thenEntry, thenEffect);
+        if (thenEffect instanceof SequenceEffect) {
+            effectResolutionService.getObject().resolveEffects(gameData, thenEntry);
         } else {
-            log.warn("Game {} - No handler for then-effect: {}", gameData.id, thenEffect.getClass().getSimpleName());
+            EffectHandler handler = effectHandlerRegistry.getHandler(thenEffect);
+            if (handler != null) {
+                handler.resolve(gameData, thenEntry, thenEffect);
+            } else {
+                log.warn("Game {} - No handler for then-effect: {}", gameData.id, thenEffect.getClass().getSimpleName());
+            }
         }
 
         gameOutcomeService.checkWinCondition(gameData);

@@ -24,7 +24,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathPitsOfRath.class, GrizzlyBears.class, HillGiant.class, Pyrotechnics.class, Shock.class})
+@CardUsed({DeathPitsOfRath.class, GrizzlyBears.class, HillGiant.class, Pyrotechnics.class,
+        Shock.class, ArcTrail.class, LilianaVess.class, InvasionOfInnistrad.class,
+        Humility.class, Opalescence.class})
 class DeathPitsOfRathTest extends BaseCardTest {
 
     @Test
@@ -36,8 +38,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castInstant(player1, 0, giantId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage to the 3/3
+        harness.castAndResolveInstant(player1, 0, giantId);
 
         // Death Pits trigger should now be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -108,8 +109,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID giantId = harness.getPermanentId(player1, "Hill Giant");
-        harness.castInstant(player1, 0, giantId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, giantId);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -161,6 +161,8 @@ class DeathPitsOfRathTest extends BaseCardTest {
      * a creature (CR 603.2), so damaging a planeswalker or a battle must not queue the destroy.
      */
     @Nested
+    @CardUsed({DeathPitsOfRath.class, HillGiant.class, ArcTrail.class, LilianaVess.class,
+            Shock.class, InvasionOfInnistrad.class})
     @DisplayName("Non-creature any-target permanents")
     class NonCreatureAnyTargets {
 
@@ -190,7 +192,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
         }
 
         @Test
-        @CardUsed({DeathPitsOfRath.class, HillGiant.class, Shock.class, InvasionOfInnistrad.class})
+        @CardUsed({DeathPitsOfRath.class, Shock.class, InvasionOfInnistrad.class})
         @DisplayName("Damaging a battle does not trigger Death Pits")
         void battleDealtDamageDoesNotTrigger() {
             harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -208,7 +210,7 @@ class DeathPitsOfRathTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({Humility.class, Opalescence.class})
+    @CardUsed({DeathPitsOfRath.class, Humility.class, Opalescence.class, HillGiant.class, Shock.class})
     @DisplayName("Death Pits stops triggering after it loses all abilities")
     void losingAllAbilitiesStopsDeathPitsTriggers() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());
@@ -224,5 +226,56 @@ class DeathPitsOfRathTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(giant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({DeathPitsOfRath.class, Opalescence.class, HillGiant.class})
+    @DisplayName("Animated Death Pits still triggers for combat damage when it dies simultaneously")
+    void dyingAnimatedDeathPitsStillDestroysSurvivingCombatOpponent() {
+        harness.addToBattlefield(player2, new Opalescence());
+        Permanent pits = addCreatureReady(player2, new DeathPitsOfRath());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        giant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        giant.setAttacking(true);
+        pits.setBlocking(true);
+        pits.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Death Pits of Rath");
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Damage to a player does not trigger Death Pits")
+    void playerDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Each Death Pits triggers independently for the same damaged creature")
+    void multipleDeathPitsTriggerIndependently() {
+        harness.addToBattlefield(player1, new DeathPitsOfRath());
+        harness.addToBattlefield(player2, new DeathPitsOfRath());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 }

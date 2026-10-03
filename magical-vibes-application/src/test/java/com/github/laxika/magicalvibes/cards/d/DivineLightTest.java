@@ -79,6 +79,34 @@ class DivineLightTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Goblin Legionnaire");
     }
 
+    @Test
+    @DisplayName("Prevention applies to multiple creatures and repeated damage events")
+    void preventsRepeatedDamageToMultipleCreatures() {
+        Permanent first = addCreatureReady(player1, new GoblinLegionnaire());
+        Permanent second = addCreatureReady(player1, new GoblinLegionnaire());
+        castDivineLight();
+
+        dealDamage(player2, first.getId());
+        dealDamage(player2, second.getId());
+        dealDamage(player2, first.getId());
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("Also prevents damage from sources you control")
+    void preventsDamageFromControlledSources() {
+        Permanent creature = addCreatureReady(player1, new GoblinLegionnaire());
+        castDivineLight();
+
+        dealDamage(player1, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Goblin Legionnaire");
+    }
+
     private void castDivineLight() {
         harness.castFromHand(player1, new DivineLight(), "{W}");
         harness.passBothPriorities();

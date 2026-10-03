@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -486,7 +487,9 @@ public class GameService {
             }
             hand.remove(cardIndex);
             gameData.addForetoldCardToExile(player.getId(), card, foretellCost);
+            gameData.playersWhoForetoldThisTurn.add(player.getId());
             triggerCollectionService.checkControllerForetellTriggers(gameData, player.getId(), card);
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
             gameData.priorityPassedBy.clear();
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " foretells ", card, "."));
@@ -1422,6 +1425,30 @@ public class GameService {
                                      Integer revealedHandCardIndex, List<UUID> morphAdditionalCostPermanentIds,
                                      Integer xValue,
                                      boolean completingXChoice) {
+        turnFaceUpInternal(gameData, player, permanentIndex, revealedHandCardIndex,
+                morphAdditionalCostPermanentIds, xValue, completingXChoice, null);
+    }
+
+    /** Completes the choice of a manifested or cloaked creature's face-up payment method. */
+    public void completeTurnFaceUpCostChoice(GameData gameData, Player player, UUID permanentId,
+                                             boolean payMorphCost) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> completeTurnFaceUpCostChoice(gameData, actionPlayer, permanentId, payMorphCost))) return;
+        synchronized (gameData) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(player.getId());
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (battlefield == null || permanent == null || !battlefield.contains(permanent)) {
+                throw new IllegalStateException("Permanent is no longer controlled by the player");
+            }
+            turnFaceUpInternal(gameData, player, battlefield.indexOf(permanent), null,
+                    List.of(), null, true, payMorphCost);
+        }
+    }
+
+    private void turnFaceUpInternal(GameData gameData, Player player, int permanentIndex,
+                                     Integer revealedHandCardIndex, List<UUID> morphAdditionalCostPermanentIds,
+                                     Integer xValue, boolean completingXChoice, Boolean payMorphCost) {
         synchronized (gameData) {
             if (!completingXChoice) {
                 player = resolveActingPlayer(gameData, player);
@@ -1441,6 +1468,21 @@ public class GameService {
             boolean cloaked = permanent.isCloaked();
             boolean manifestedOrCloaked = permanent.isManifested() || cloaked;
             String morphCost = permanent.getCard().getMorphCost();
+            if (manifestedOrCloaked && morphCost != null) {
+                boolean normalPayable = permanent.getCard().hasType(CardType.CREATURE)
+                        && canPayTurnFaceUpManaCost(gameData, player.getId(), permanent, false);
+                boolean morphPayable = canPayTurnFaceUpManaCost(gameData, player.getId(), permanent, true);
+                if (payMorphCost == null && normalPayable && morphPayable) {
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            player.getId(), permanent.getId(), null,
+                            new ChoiceContext.TurnFaceUpCostChoice(permanent.getId()),
+                            List.of("Mana cost", "Morph cost"), "Choose how to turn the creature face up."));
+                    return;
+                }
+                if (Boolean.TRUE.equals(payMorphCost) || (payMorphCost == null && !normalPayable && morphPayable)) {
+                    manifestedOrCloaked = false;
+                }
+            }
             String faceUpCost = manifestedOrCloaked ? permanent.getCard().getManaCost() : morphCost;
             if (manifestedOrCloaked && !permanent.getCard().hasType(CardType.CREATURE)) {
                 throw new IllegalStateException("Face-down permanent is not a creature card");
@@ -1456,7 +1498,7 @@ public class GameService {
             List<UUID> additionalCostPermanentIds = morphAdditionalCostPermanentIds != null
                     ? morphAdditionalCostPermanentIds : List.of();
             ReturnPermanentsCost morphAdditionalCost = permanent.getCard().getMorphAdditionalCost();
-            if (morphAdditionalCost != null) {
+            if (!manifestedOrCloaked && morphAdditionalCost != null) {
                 spellCastingService.validateMorphAdditionalCost(
                         gameData, player, morphAdditionalCost, additionalCostPermanentIds);
             }
@@ -1466,7 +1508,7 @@ public class GameService {
                         gameData, player, permanent.getId(), morphSacrificeCost, additionalCostPermanentIds);
             }
             DiscardCardTypeCost morphDiscardCost = permanent.getCard().getMorphDiscardCost();
-            if (morphDiscardCost != null) {
+            if (!manifestedOrCloaked && morphDiscardCost != null) {
                 spellCastingService.validateMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
             }
@@ -1492,7 +1534,7 @@ public class GameService {
                         GameEventFact.RevealZone.HAND, List.of(toReveal));
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else if (morphDiscardCost == null) {
+            } else if (manifestedOrCloaked || morphDiscardCost == null) {
                 ManaCost cost = new ManaCost(faceUpCost);
                 int morphCostModifier = 0;
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
@@ -1559,7 +1601,7 @@ public class GameService {
                     pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
                 }
             }
-            if (morphAdditionalCost != null) {
+            if (!manifestedOrCloaked && morphAdditionalCost != null) {
                 spellCastingService.payMorphAdditionalCost(
                         gameData, player, permanent.getCard(), morphAdditionalCost, additionalCostPermanentIds);
             }
@@ -1568,15 +1610,45 @@ public class GameService {
                         gameData, player, permanent.getId(), permanent.getCard(), morphSacrificeCost,
                         additionalCostPermanentIds);
             }
-            if (morphDiscardCost != null) {
+            if (!manifestedOrCloaked && morphDiscardCost != null) {
                 spellCastingService.payMorphDiscardCost(
                         gameData, player, permanent.getCard(), morphDiscardCost, revealedHandCardIndex);
             }
             if (!manifestedOrCloaked && morphLifeCost != null) {
                 spellCastingService.payMorphLifeCost(gameData, player, permanent.getCard(), morphLifeCost);
             }
-            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, true, true);
+            finishTurningFaceUp(gameData, permanent, player.getId(), xValue, !manifestedOrCloaked, !manifestedOrCloaked);
         }
+    }
+
+    private boolean canPayTurnFaceUpManaCost(GameData gameData, UUID playerId, Permanent permanent,
+                                             boolean morphPayment) {
+        String manaCost = morphPayment ? permanent.getCard().getMorphCost() : permanent.getCard().getManaCost();
+        if (manaCost == null) return false;
+        ManaCost cost = new ManaCost(manaCost);
+        int modifier = 0;
+        if (morphPayment && permanent.getCard().getMorphCostReduction() != null && amountEvaluationService != null) {
+            modifier -= amountEvaluationService.evaluate(gameData, permanent.getCard().getMorphCostReduction(),
+                    AmountContext.forCasting(playerId));
+        }
+        if (castingCostService != null) {
+            modifier += castingCostService.getTurnFaceUpCostModifier(
+                    gameData, playerId, permanent.getCard(), permanent.getId());
+            if (morphPayment) {
+                modifier += castingCostService.getMorphCostModifier(gameData, playerId, permanent.getCard());
+            }
+        }
+        if (modifier > 0) cost = cost.increasedBy(new ManaCost("{" + modifier + "}"));
+        if (modifier < 0) cost = cost.reducedBy(new ManaCost("{" + -modifier + "}"));
+        if (castingCostService != null) {
+            cost = castingCostService.applyManaCostPaymentAlternatives(gameData, playerId, cost);
+        }
+        ManaPool actualPool = gameData.playerManaPools.get(playerId);
+        ManaPool pool = actualPool == null ? new ManaPool() : new ManaPool(actualPool);
+        pool.promoteFaceDownSpellsOrTurnFaceUpMana();
+        pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
+        pool.promoteTurnPermanentsFaceUpMana();
+        return cost.canPay(pool, 0);
     }
 
     /** Turns a targeted face-down creature face up without using its morph or disguise action. */

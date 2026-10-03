@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,19 +12,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DauntlessUnity.class, GrizzlyBears.class})
+@CardUsed({DauntlessUnity.class, ExpeditionHealer.class})
 class DauntlessUnityTest extends BaseCardTest {
 
     @Test
     void withoutKickerBoostsCreaturesYouControlByOneOne() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ExpeditionHealer());
 
         harness.setHand(player1, List.of(new DauntlessUnity()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
@@ -34,8 +33,8 @@ class DauntlessUnityTest extends BaseCardTest {
 
     @Test
     void kickedSpellBoostsCreaturesYouControlByTwoOne() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ExpeditionHealer());
 
         harness.setHand(player1, List.of(new DauntlessUnity()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -51,13 +50,12 @@ class DauntlessUnityTest extends BaseCardTest {
 
     @Test
     void boostExpiresAtEndOfTurn() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
 
         harness.setHand(player1, List.of(new DauntlessUnity()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -65,5 +63,47 @@ class DauntlessUnityTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void kickedBoostAppliesToAllCreaturesPresentAtResolutionButNotLaterArrivals() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        harness.setHand(player1, List.of(new DauntlessUnity()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castKickedInstant(player1, 0);
+
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void canResolveWithoutCreaturesAndDoesNotBoostLaterArrivals() {
+        harness.setHand(player1, List.of(new DauntlessUnity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertInGraveyard(player1, "Dauntless Unity");
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new ExpeditionHealer());
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
     }
 }

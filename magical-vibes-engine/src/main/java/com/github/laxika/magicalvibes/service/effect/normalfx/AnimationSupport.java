@@ -232,9 +232,9 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            if (effect.dynamicPowerToughness()) {
+            if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
                 addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
-            } else {
+            } else if (effect.power() != null || effect.toughness() != null) {
                 addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
                         EffectDuration.UNTIL_END_OF_TURN);
             }
@@ -793,6 +793,19 @@ public class AnimationSupport {
 
     public boolean transformToBackFaceForDayNight(GameData gameData, Permanent self) {
         return transformToBackFace(gameData, self, true);
+    }
+
+    /** Turns a flip card to its alternative characteristics without a transformation event. */
+    public boolean flipToBackFace(GameData gameData, Permanent self) {
+        Card backFace = self.getOriginalCard().getBackFaceCard();
+        if (backFace == null || self.isTransformed()) {
+            return false;
+        }
+        Card front = self.getCard();
+        self.setCard(backFace);
+        self.setTransformed(true);
+        gameLogService.append(gameData, GameLog.cardTextCard(front, " flips to ", backFace, "."));
+        return true;
     }
 
     private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +17,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CurseOfEchoes.class, CounselOfTheSoratami.class, GrizzlyBears.class, LightningBolt.class})
 class CurseOfEchoesTest extends BaseCardTest {
 
     private Permanent attachCurseToPlayer2() {
-        Permanent auraPerm = new Permanent(new CurseOfEchoes());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfEchoes());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
         return auraPerm;
     }
 
-    // ===== Trigger fires only for the enchanted player =====
 
     @Test
     @DisplayName("Enchanted player casting a sorcery puts the curse trigger on the stack")
@@ -78,7 +78,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
     }
 
-    // ===== "may copy" choice =====
 
     @Test
     @DisplayName("Resolving the trigger offers the other player an optional copy choice")
@@ -111,7 +110,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();          // resolve trigger -> may copy
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();          // resolve the copy-creation ability
 
         StackEntry copyEntry = gd.stack.stream()
                 .filter(se -> se.getDescription().equals("Copy of Counsel of the Soratami"))
@@ -155,14 +153,12 @@ class CurseOfEchoesTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();          // resolve trigger -> may copy
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();          // resolve copy-creation ability
         harness.passBothPriorities();          // resolve the copy -> player1 draws 2
 
         int p1HandAfter = gd.playerHands.get(player1.getId()).size();
         assertThat(p1HandAfter - p1HandBefore).isEqualTo(2);
     }
 
-    // ===== Targeted spell — retarget option =====
 
     @Test
     @DisplayName("Accepting the copy of a targeted spell offers a retarget choice")
@@ -170,8 +166,7 @@ class CurseOfEchoesTest extends BaseCardTest {
         attachCurseToPlayer2();
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player2, bears);
-        UUID bearsPermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player2, bears).getId();
 
         LightningBolt bolt = new LightningBolt();
         harness.setHand(player2, List.of(bolt));
@@ -181,7 +176,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsPermId);
         harness.passBothPriorities();          // resolve trigger -> may copy
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();          // resolve copy-creation ability -> may retarget
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -193,8 +187,7 @@ class CurseOfEchoesTest extends BaseCardTest {
         attachCurseToPlayer2();
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player2, bears);
-        UUID bearsPermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player2, bears).getId();
 
         LightningBolt bolt = new LightningBolt();
         harness.setHand(player2, List.of(bolt));
@@ -204,7 +197,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsPermId);
         harness.passBothPriorities();          // resolve trigger -> may copy
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();          // resolve copy-creation ability -> may retarget
         harness.handleMayAbilityChosen(player1, false);
 
         StackEntry copyEntry = gd.stack.stream()
@@ -212,5 +204,54 @@ class CurseOfEchoesTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(copyEntry.getControllerId()).isEqualTo(player1.getId());
         assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
+    }
+
+    @Test
+    @DisplayName("The aura can enchant its controller and copies are offered to the opponent")
+    void canEnchantItsController() {
+        harness.setHand(player1, List.of(new CurseOfEchoes(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        Permanent curse = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof CurseOfEchoes)
+                .findFirst().orElseThrow();
+        assertThat(curse.getAttachedTo()).isEqualTo(player1.getId());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("The copy can choose a new target and resolves before the original spell")
+    void retargetedCopyResolvesBeforeOriginal() {
+        attachCurseToPlayer2();
+        UUID originalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID newTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, originalTarget);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().isCopy()).isTrue();
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(newTarget);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(newTarget));
+        assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(originalTarget));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(originalTarget));
     }
 }

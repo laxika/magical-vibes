@@ -74,6 +74,47 @@ class CorruptCourtOfficialTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Target opponent chooses exactly one card from a larger hand")
+    void opponentChoosesOneCardFromLargerHand() {
+        CorruptCourtOfficial retained = new CorruptCourtOfficial();
+        CorruptCourtOfficial discarded = new CorruptCourtOfficial();
+        harness.setHand(player2, List.of(retained, discarded));
+        castCorruptCourtOfficial(player2.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent is determined relative to the creature's controller")
+    void otherControllerMakesPlayerOneDiscard() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new CorruptCourtOfficial()));
+        harness.setHand(player2, List.of(new CorruptCourtOfficial()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+        harness.castCreature(player2, 0, player1.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Corrupt Court Official");
+        harness.assertInGraveyard(player1, "Corrupt Court Official");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private void castCorruptCourtOfficial(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new CorruptCourtOfficial()));
         harness.addMana(player1, ManaColor.BLACK, 2);

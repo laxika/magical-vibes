@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.t.TyphoidRats;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CurseOfDeathsHold.class, WalkingCorpse.class, TyphoidRats.class})
 class CurseOfDeathsHoldTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -28,7 +29,7 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Curse of Death's Hold");
+        assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -45,21 +46,14 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
     }
 
-    // ===== Static effect: debuffs enchanted player's creatures =====
-
     @Test
     @DisplayName("Enchanted player's creatures get -1/-1")
     void debuffsEnchantedPlayerCreatures() {
         CurseOfDeathsHold curse = new CurseOfDeathsHold();
-        harness.addToBattlefield(player1, curse);
-        Permanent cursePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == curse)
-                .findFirst().orElseThrow();
+        Permanent cursePerm = harness.addToBattlefieldAndReturn(player1, curse);
         cursePerm.setAttachedTo(player2.getId());
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
 
         // 2/2 base - 1/1 from curse = 1/1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
@@ -70,31 +64,24 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
     @DisplayName("Curse controller's own creatures are NOT affected")
     void doesNotDebuffControllerCreatures() {
         CurseOfDeathsHold curse = new CurseOfDeathsHold();
-        harness.addToBattlefield(player1, curse);
-        Permanent cursePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == curse)
-                .findFirst().orElseThrow();
+        Permanent cursePerm = harness.addToBattlefieldAndReturn(player1, curse);
         cursePerm.setAttachedTo(player2.getId());
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
 
         // Controller's creature is unaffected: 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Effect applies when cast and resolved =====
-
     @Test
     @DisplayName("Debuff applies when curse resolves onto battlefield")
     void debuffAppliesOnResolve() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WalkingCorpse());
         harness.setHand(player1, List.of(new CurseOfDeathsHold()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Walking Corpse");
 
         // Before casting, no debuff
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -108,21 +95,14 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
-    // ===== Debuff removed when curse leaves =====
-
     @Test
     @DisplayName("Debuff is removed when curse leaves the battlefield")
     void debuffRemovedWhenCurseLeaves() {
         CurseOfDeathsHold curse = new CurseOfDeathsHold();
-        harness.addToBattlefield(player1, curse);
-        Permanent cursePerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() == curse)
-                .findFirst().orElseThrow();
+        Permanent cursePerm = harness.addToBattlefieldAndReturn(player1, curse);
         cursePerm.setAttachedTo(player2.getId());
 
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
 
@@ -133,26 +113,66 @@ class CurseOfDeathsHoldTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Multiple curses stack =====
-
     @Test
     @DisplayName("Two curses give -2/-2 to enchanted player's creatures")
     void twoCursesStack() {
         CurseOfDeathsHold curse1 = new CurseOfDeathsHold();
         CurseOfDeathsHold curse2 = new CurseOfDeathsHold();
-        harness.addToBattlefield(player1, curse1);
-        harness.addToBattlefield(player1, curse2);
+        harness.addToBattlefieldAndReturn(player1, curse1).setAttachedTo(player2.getId());
+        harness.addToBattlefieldAndReturn(player1, curse2).setAttachedTo(player2.getId());
 
-        gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof CurseOfDeathsHold)
-                .forEach(p -> p.setAttachedTo(player2.getId()));
-
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
 
         // 2/2 base - 2/2 from two curses = 0/0
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A curse can enchant its controller and debuff that player's creatures")
+    void canEnchantItsController() {
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        Permanent opponentCorpse = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.setHand(player1, List.of(new CurseOfDeathsHold()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castEnchantment(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Curse of Death's Hold").getAttachedTo()).isEqualTo(player1.getId());
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentCorpse)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCorpse)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature with one toughness dies when the curse resolves")
+    void oneToughnessCreatureDiesOnResolution() {
+        harness.addToBattlefield(player2, new TyphoidRats());
+        harness.setHand(player1, List.of(new CurseOfDeathsHold()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Typhoid Rats");
+        harness.assertInGraveyard(player2, "Typhoid Rats");
+        harness.assertOnBattlefield(player1, "Curse of Death's Hold");
+    }
+
+    @Test
+    @DisplayName("Creatures entering later are also affected")
+    void creatureEnteringLaterIsDebuffed() {
+        harness.setHand(player1, List.of(new CurseOfDeathsHold()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        Permanent corpse = harness.enterBattlefieldAndReturn(player2, new WalkingCorpse());
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(1);
+        harness.enterBattlefieldAndReturn(player2, new TyphoidRats());
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Typhoid Rats");
+        harness.assertInGraveyard(player2, "Typhoid Rats");
     }
 }

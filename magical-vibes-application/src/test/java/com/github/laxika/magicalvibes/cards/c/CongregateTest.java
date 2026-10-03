@@ -85,4 +85,36 @@ class CongregateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Counts creatures that enter after casting but before resolution")
+    void countsCreaturesAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Congregate()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.addToBattlefield(player2, new ElvishLyrist());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Creature cards in hands and graveyards do not contribute life")
+    void excludesCreatureCardsOutsideBattlefield() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new ElvishLyrist());
+        harness.setHand(player1, List.of(new Congregate(), new ElvishLyrist()));
+        harness.setHand(player2, List.of(new ElvishLyrist()));
+        harness.setGraveyard(player1, List.of(new ElvishLyrist()));
+        harness.setGraveyard(player2, List.of(new ElvishLyrist()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
 }

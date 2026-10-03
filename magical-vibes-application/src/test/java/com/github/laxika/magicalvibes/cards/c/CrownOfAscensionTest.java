@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.s.Smother;
 import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrownOfAscension.class, ElvishWarrior.class, GlorySeeker.class, WirewoodElf.class, WirewoodLodge.class})
+@CardUsed({CrownOfAscension.class, ElvishWarrior.class, GlorySeeker.class, Smother.class, WirewoodElf.class, WirewoodLodge.class})
 class CrownOfAscensionTest extends BaseCardTest {
 
     @Test
@@ -112,6 +113,43 @@ class CrownOfAscensionTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherElf, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sharing creatures entering before resolution gain flying")
+    void sacrificeAbilityIncludesCreaturesEnteringBeforeResolution() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent crown = attachCrown(warrior);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(crown);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isFalse();
+        Permanent newElf = addCreatureReady(player2, new WirewoodElf());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newElf, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sharing creatures gain flying even if the enchanted creature dies in response")
+    void sacrificeAbilityUsesLastKnownCreatureTypes() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent otherElf = addCreatureReady(player2, new WirewoodElf());
+        Permanent human = addCreatureReady(player2, new GlorySeeker());
+        Permanent crown = attachCrown(warrior);
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warrior);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, otherElf, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FLYING)).isFalse();
     }
 
     private Permanent attachCrown(Permanent host) {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "1093")
 @CardRegistration(set = "SLD", collectorNumber = "2362")
 @CardRegistration(set = "2XM", collectorNumber = "48")
+@CardRegistration(set = "EOC", collectorNumber = "70")
+@CardRegistration(set = "C16", collectorNumber = "7")
 public class DeepglowSkate extends Card {
 
     public DeepglowSkate() {

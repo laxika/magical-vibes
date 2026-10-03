@@ -33,9 +33,7 @@ class DainIronfootTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        Permanent dain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof DainIronfoot)
-                .findFirst().orElseThrow();
+        Permanent dain = findPermanent(player1, "Dáin Ironfoot");
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
                 bears.getId(), dain.getId());
 
@@ -61,9 +59,7 @@ class DainIronfootTest extends BaseCardTest {
 
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        Permanent dain = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard() instanceof DainIronfoot)
-                .findFirst().orElseThrow();
+        Permanent dain = findPermanent(player1, "Dáin Ironfoot");
         assertThat(choice.validIds())
                 .containsExactly(dain.getId())
                 .doesNotContain(harness.getPermanentId(player2, "Grizzly Bears"));
@@ -93,4 +89,63 @@ class DainIronfootTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Unequipped attackers and equipped nonattackers do not gain double strike")
+    void onlyEquippedAttackersGainDoubleStrike() {
+        Permanent dain = addCreatureReady(player1, new DainIronfoot());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(nonattacker.getId());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, dain, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equipment is checked at resolution and removing it afterward does not remove double strike")
+    void equipmentIsCheckedAtResolution() {
+        Permanent dain = addCreatureReady(player1, new DainIronfoot());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(dain.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1)));
+        equipment.setAttachedTo(bears.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.hasKeyword(gd, dain, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        equipment.setAttachedTo(null);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The created Axe can be reequipped for two mana and grants only one power")
+    void createdAxeCanBeReequipped() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dain = harness.enterBattlefieldAndReturn(player1, new DainIronfoot());
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, dain.getId());
+        resolveAllTriggers();
+
+        Permanent axe = findPermanent(player1, "Axe");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int axeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(axe);
+        harness.activateAbility(player1, axeIndex, null, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(axe.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dain)).isEqualTo(1);
+    }
 }

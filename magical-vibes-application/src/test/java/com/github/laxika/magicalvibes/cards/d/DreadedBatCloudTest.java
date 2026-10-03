@@ -52,11 +52,97 @@ class DreadedBatCloudTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         java.util.UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dreaded Bat-Cloud");
+    }
+
+    @Test
+    @DisplayName("Can pay the full cost when no creature died")
+    void castsForFullCostWithoutMorbid() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DreadedBatCloud()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dreaded Bat-Cloud");
+    }
+
+    @Test
+    @DisplayName("Four mana is insufficient without a creature death")
+    void fourManaDoesNotPayFullCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DreadedBatCloud()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The reduction does not remove the black mana requirement")
+    void reducedCostStillRequiresBlackMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DreadedBatCloud()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Multiple creature deaths do not multiply the reduction")
+    void multipleDeathsStillRequireTwoMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DreadedBatCloud()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 2, Integer::sum);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A creature in the graveyard without a death this turn does not reduce the cost")
+    void graveyardCreatureDoesNotEnableMorbid() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DreadedBatCloud()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The caster's own creature dying also enables the reduction")
+    void ownCreatureDeathEnablesReduction() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock(), new DreadedBatCloud()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 

@@ -15,8 +15,9 @@ class DemonOfWailingAgoniesTest extends BaseCardTest {
 
     @Test
     void lieutenantBoostsDemon() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
-        addCreatureReady(player1, new EdgarMarkov());
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        addCreatureReady(player1, commander);
         Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
 
         assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(6);
@@ -41,8 +42,9 @@ class DemonOfWailingAgoniesTest extends BaseCardTest {
 
     @Test
     void lieutenantMakesDamagedPlayerSacrificeCreature() {
-        gd.playerCommandZones.get(player1.getId()).add(new EdgarMarkov());
-        addCreatureReady(player1, new EdgarMarkov());
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        addCreatureReady(player1, commander);
         Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
         demon.setAttacking(true);
         Permanent firstEnemyCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -64,5 +66,75 @@ class DemonOfWailingAgoniesTest extends BaseCardTest {
                 .contains(secondEnemyCreature)
                 .doesNotContain(firstEnemyCreature);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void commanderInCommandZoneDoesNotEnableLieutenant() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    void nonCommanderWithCommandersNameDoesNotEnableLieutenant() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        EdgarMarkov otherCommander = new EdgarMarkov();
+        gd.playerCommanders.get(player2.getId()).add(otherCommander);
+        addCreatureReady(player1, otherCommander);
+        Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    void controllingOpponentsCommanderDoesNotEnableLieutenant() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player2.getId()).add(commander);
+        addCreatureReady(player1, commander);
+        Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    void losingControlOfCommanderImmediatelyRemovesBonus() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        Permanent commanderPermanent = addCreatureReady(player1, commander);
+        Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player1.getId()).remove(commanderPermanent);
+        gd.playerBattlefields.get(player2.getId()).add(commanderPermanent);
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    void damagedPlayerWithNoCreaturesHasNothingToSacrifice() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.playerCommanders.get(player1.getId()).add(commander);
+        Permanent commanderPermanent = addCreatureReady(player1, commander);
+        Permanent demon = addCreatureReady(player1, new DemonOfWailingAgonies());
+        demon.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(commanderPermanent, demon);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

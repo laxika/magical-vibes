@@ -72,15 +72,72 @@ class CrystallineSliverTest extends BaseCardTest {
     @Test
     @DisplayName("Shroud does not prevent spells from targeting non-Sliver creatures")
     void nonSliversRemainTargetable() {
+        addCreatureReady(player1, new CrystallineSliver());
         Permanent nonSliver = addCreatureReady(player2, new YouthfulKnight());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, nonSliver.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, nonSliver.getId());
 
         harness.assertNotOnBattlefield(player2, "Youthful Knight");
         harness.assertInGraveyard(player2, "Youthful Knight");
+    }
+
+    @Test
+    @DisplayName("Slivers entering after Crystalline Sliver also gain shroud")
+    void newlyEnteringSliversGainShroud() {
+        addCreatureReady(player1, new CrystallineSliver());
+
+        Permanent sliver = harness.enterBattlefieldAndReturn(player2, new SpinedSliver());
+
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.SHROUD)).isTrue();
+        assertThatShockCannotTarget(sliver);
+    }
+
+    @Test
+    @DisplayName("A spell's target becomes illegal if Crystalline Sliver enters before resolution")
+    void gainingShroudBeforeResolutionStopsTargetedSpell() {
+        Permanent sliver = addCreatureReady(player2, new SpinedSliver());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, sliver.getId());
+
+        harness.enterBattlefieldAndReturn(player2, new CrystallineSliver());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spined Sliver");
+        assertThat(sliver.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud remains while another Crystalline Sliver is on the battlefield")
+    void multipleSourcesKeepGrantingShroud() {
+        Permanent firstSource = addCreatureReady(player1, new CrystallineSliver());
+        addCreatureReady(player2, new CrystallineSliver());
+        Permanent sliver = addCreatureReady(player1, new SpinedSliver());
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstSource);
+
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.SHROUD)).isTrue();
+        assertThatShockCannotTarget(sliver);
+    }
+
+    @Test
+    @DisplayName("Shroud allows sacrificing Crystalline Sliver to its granted ability")
+    void shroudDoesNotPreventSacrificingSource() {
+        addCreatureReady(player1, new CrystallineSliver());
+        Permanent sliver = addCreatureReady(player1, new AcidicSliver());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Crystalline Sliver");
+        harness.assertInGraveyard(player1, "Crystalline Sliver");
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.SHROUD)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     private void assertThatShockCannotTarget(Permanent target) {

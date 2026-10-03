@@ -101,7 +101,6 @@ class DawnCharmTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 1 cannot target a noncreature permanent")
     void regenerateModeRejectsNoncreaturePermanent() {
-        addCreatureReady(player1, new GrizzlyBears());
         Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         harness.setHand(player1, List.of(new DawnCharm()));
@@ -164,6 +163,65 @@ class DawnCharmTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstant(player2, 0, 2, List.of(shock.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("targets you");
+    }
+
+    @Test
+    @DisplayName("Mode 0 prevents damage from an unblocked attacker")
+    void preventsCombatDamageToPlayer() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        harness.setHand(player1, List.of(new DawnCharm()));
+        addWhiteMana();
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Mode 1 leaves a healthy creature untapped until destruction and protects only once")
+    void regenerationShieldWaitsForDestructionAndIsConsumed() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DawnCharm()));
+        addWhiteMana();
+        harness.castModalInstant(player1, 0, 1, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        assertThat(bear.isTapped()).isFalse();
+
+        for (int i = 0; i < 2; i++) {
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+            harness.castInstant(player2, 0, bear.getId());
+            harness.passBothPriorities();
+            if (i == 0) {
+                harness.assertOnBattlefield(player1, "Grizzly Bears");
+                assertThat(bear.isTapped()).isTrue();
+                assertThat(bear.getMarkedDamage()).isZero();
+            }
+        }
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Mode 2 can counter your own spell when it targets you")
+    void countersOwnSpellTargetingController() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new DawnCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        addWhiteMana();
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.castModalInstant(player1, 0, 2, List.of(shock.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertLife(player1, 20);
     }
 
     private void addWhiteMana() {

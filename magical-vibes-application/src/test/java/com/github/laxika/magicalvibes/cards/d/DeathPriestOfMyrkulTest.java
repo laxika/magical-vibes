@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
 import com.github.laxika.magicalvibes.cards.s.SkeletonArcher;
 import com.github.laxika.magicalvibes.cards.v.VampireNoble;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DeathPriestOfMyrkul.class, SkeletonArcher.class, VampireNoble.class, Gravecrawler.class,
-        WalkingCorpse.class, GrizzlyBears.class})
+        WalkingCorpse.class, GrizzlyBears.class, MaskwoodNexus.class})
 class DeathPriestOfMyrkulTest extends BaseCardTest {
 
     @Test
@@ -110,10 +111,114 @@ class DeathPriestOfMyrkulTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Skeleton")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Boosts itself when it gains a listed creature type")
+    void boostsItselfWithMaskwoodNexus() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new DeathPriestOfMyrkul());
+        int power = gqs.getEffectivePower(gd, priest);
+        int toughness = gqs.getEffectiveToughness(gd, priest);
+
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(toughness + 1);
+    }
+
+    @Test
+    @DisplayName("A creature with all three listed types receives only one boost")
+    void multipleMatchingTypesGiveOnlyOneBoost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DeathPriestOfMyrkul());
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        int power = gqs.getEffectivePower(gd, creature);
+        int toughness = gqs.getEffectiveToughness(gd, creature);
+
+        harness.addToBattlefield(player1, new DeathPriestOfMyrkul());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(toughness + 1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step even after a death")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new DeathPriestOfMyrkul());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
+        victim.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Skeleton")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Deaths before the Priest enters produce one trigger and one boosted token")
+    void earlierMultipleDeathsProduceOnlyOneToken() {
+        Permanent firstVictim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
+        Permanent secondVictim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
+        firstVictim.setMarkedDamage(2);
+        secondVictim.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.addToBattlefield(player1, new DeathPriestOfMyrkul());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Skeleton")).hasSize(1);
+        Permanent token = findPermanent(player1, "Skeleton");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The triggered ability still creates its token after the Priest dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new DeathPriestOfMyrkul());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
+        victim.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        priest.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Skeleton")).hasSize(1);
+        Permanent token = findPermanent(player1, "Skeleton");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature dying after the end step begins cannot trigger the ability")
+    void deathDuringEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DeathPriestOfMyrkul());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        victim.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Skeleton")).isEmpty();
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

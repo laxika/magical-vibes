@@ -83,6 +83,60 @@ class DauthiMercenaryTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability can be activated while tapped")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent mercenary = addCreatureReady(player1, new DauthiMercenary());
+        mercenary.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(3);
+        assertThat(mercenary.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability requires black mana")
+    void abilityRequiresBlackMana() {
+        Permanent mercenary = addCreatureReady(player1, new DauthiMercenary());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Shadow prevents blocking a creature without shadow")
+    void shadowPreventsBlockingNonShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new MoggFanatic());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new DauthiMercenary());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Dauthi Mercenary can block another shadow creature")
+    void canBlockShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new SoltariFootSoldier());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DauthiMercenary());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Shadow prevents a non-shadow creature from blocking")
     void shadowPreventsNonShadowBlocker() {
         Permanent attacker = addCreatureReady(player1, new DauthiMercenary());

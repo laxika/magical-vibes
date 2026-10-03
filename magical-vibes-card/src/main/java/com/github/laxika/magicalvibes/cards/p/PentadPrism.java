@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "5DN", collectorNumber = "143")
 @CardRegistration(set = "HOP", collectorNumber = "122")
 @CardRegistration(set = "2XM", collectorNumber = "281")
+@CardRegistration(set = "EOC", collectorNumber = "56")
 public class PentadPrism extends Card {
 
     public PentadPrism() {

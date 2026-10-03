@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "GK2", collectorNumber = "118")
 @CardRegistration(set = "FIC", collectorNumber = "325")
 @CardRegistration(set = "NCC", collectorNumber = "339")
+@CardRegistration(set = "C16", collectorNumber = "198")
 public class FathomMage extends Card {
 
     public FathomMage() {

@@ -64,7 +64,6 @@ class CruelTutorTest extends BaseCardTest {
         cast();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -93,6 +92,28 @@ class CruelTutorTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Searching a single-card library preserves the card and only the caster loses life")
+    void singleCardLibraryPreservesCardAndOnlyCasterLosesLife() {
+        Card card = new Island();
+        harness.setLibrary(player1, List.of(card));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        cast();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertNotInHand(player1, card.getName());
+        harness.assertNotInGraveyard(player1, card.getName());
+        harness.assertInGraveyard(player1, "Cruel Tutor");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
     private void cast() {

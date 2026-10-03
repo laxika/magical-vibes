@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.t.TelJiladOutrider;
+import com.github.laxika.magicalvibes.cards.o.OxiddaGolem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DeathMaskDuplicant.class, DarksteelGargoyle.class, DarksteelIngot.class,
-        TelJiladOutrider.class})
+        TelJiladOutrider.class, DrossGolem.class, OxiddaGolem.class})
 class DeathMaskDuplicantTest extends BaseCardTest {
 
     @Test
@@ -80,6 +81,82 @@ class DeathMaskDuplicantTest extends BaseCardTest {
                 .contains(Keyword.FLYING)
                 .doesNotContain(Keyword.INDESTRUCTIBLE, Keyword.REACH);
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, duplicant, nonCreatureArtifact)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain abilities from earlier imprints")
+    void repeatedActivationsRetainEarlierAbilities() {
+        Permanent duplicant = addDuplicantReady(player1);
+        Card flyingCreature = new DarksteelGargoyle();
+        Card protectionCreature = new TelJiladOutrider();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(flyingCreature, protectionCreature)));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, flyingCreature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, protectionCreature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(duplicant.getId()))
+                .containsExactlyInAnyOrder(flyingCreature, protectionCreature);
+        assertThat(gqs.computeStaticBonus(gd, duplicant).keywords()).contains(Keyword.FLYING);
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, duplicant, new DarksteelIngot())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Loses only the abilities supplied by a card that leaves exile")
+    void losesAbilitiesWhenImprintedCardLeavesExile() {
+        Permanent duplicant = addDuplicantReady(player1);
+        Card flyingCreature = new DarksteelGargoyle();
+        Card protectionCreature = new TelJiladOutrider();
+        gd.addToExile(player1.getId(), flyingCreature, duplicant.getId());
+        gd.addToExile(player1.getId(), protectionCreature, duplicant.getId());
+        assertThat(gqs.computeStaticBonus(gd, duplicant).keywords()).contains(Keyword.FLYING);
+
+        gd.removeFromExile(flyingCreature.getId());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(flyingCreature)));
+
+        assertThat(gqs.computeStaticBonus(gd, duplicant).keywords()).doesNotContain(Keyword.FLYING);
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, duplicant, new DarksteelIngot())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard before resolution is not imprinted")
+    void targetLeavingGraveyardIsNotImprinted() {
+        Permanent duplicant = addDuplicantReady(player1);
+        Card flyingCreature = new DarksteelGargoyle();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(flyingCreature)));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, flyingCreature.getId(), Zone.GRAVEYARD);
+
+        harness.setGraveyard(player1, new ArrayList<>());
+        harness.setHand(player1, List.of(flyingCreature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Darksteel Gargoyle");
+        assertThat(gd.getCardsExiledByPermanent(duplicant.getId())).isEmpty();
+        assertThat(gqs.computeStaticBonus(gd, duplicant).keywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Can imprint while tapped and summoning sick, gaining fear and haste")
+    void imprintsWhileTappedAndSummoningSick() {
+        Permanent duplicant = addDuplicantReady(player1);
+        duplicant.setSummoningSick(true);
+        duplicant.setTapped(true);
+        Card fearCreature = new DrossGolem();
+        Card hasteCreature = new OxiddaGolem();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(fearCreature, hasteCreature)));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, fearCreature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, hasteCreature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gqs.computeStaticBonus(gd, duplicant).keywords()).contains(Keyword.FEAR, Keyword.HASTE);
+        assertThat(gd.getCardsExiledByPermanent(duplicant.getId()))
+                .containsExactlyInAnyOrder(fearCreature, hasteCreature);
     }
 
     private Permanent addDuplicantReady(Player player) {

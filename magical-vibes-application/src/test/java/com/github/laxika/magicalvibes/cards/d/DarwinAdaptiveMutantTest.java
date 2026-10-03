@@ -60,6 +60,56 @@ class DarwinAdaptiveMutantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Evolve does not trigger when neither entering stat is greater")
+    void doesNotEvolveWhenNeitherStatIsGreater() {
+        Permanent darwin = harness.addToBattlefieldAndReturn(player1, new DarwinAdaptiveMutant());
+        darwin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(darwin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Evolve rechecks the comparison when its trigger resolves")
+    void rechecksStatsWhenEvolveResolves() {
+        Permanent darwin = harness.addToBattlefieldAndReturn(player1, new DarwinAdaptiveMutant());
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        darwin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        resolveAllTriggers();
+
+        assertThat(darwin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick Darwin pays counters immediately and gains indestructible on resolution")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent darwin = harness.addToBattlefieldAndReturn(player1, new DarwinAdaptiveMutant());
+        darwin.setTapped(true);
+        darwin.setSummoningSick(true);
+        darwin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(darwin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, darwin, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, darwin, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(darwin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private Permanent addDarwinReady() {
         return addCreatureReady(player1, new DarwinAdaptiveMutant());
     }

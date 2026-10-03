@@ -65,7 +65,44 @@ class BlitzballShotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
+        harness.castAndResolveInstant(player1, 0, bearsId);
+    }
+
+    @Test
+    @DisplayName("Blitzball Shot can boost an opponent's creature")
+    void canTargetOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BlitzballShot()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.getEffectivePower()).isEqualTo(5);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(5);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        harness.assertInGraveyard(player1, "Blitzball Shot");
+    }
+
+    @Test
+    @DisplayName("Multiple Blitzball Shots stack their boosts and expire together")
+    void multipleBoostsStackAndExpire() {
+        castBlitzballShotOnBears();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new BlitzballShot()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.getEffectivePower()).isEqualTo(8);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(8);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }

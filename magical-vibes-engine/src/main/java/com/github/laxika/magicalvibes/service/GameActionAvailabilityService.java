@@ -1445,7 +1445,7 @@ public class GameActionAvailabilityService {
                         .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                         .orElse(false));
         boolean hasStaticGraveyardLandPermission = graveyard.stream()
-                .filter(card -> card.hasType(CardType.LAND))
+                .flatMap(card -> graveyardLandFaces(card).stream())
                 .anyMatch(card -> castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card));
         if (!hasStaticGraveyardLandPermission && !hasAnyGraveyardLandPermission && !hasMayhemLandPermission) {
             return playable;
@@ -1470,18 +1470,28 @@ public class GameActionAvailabilityService {
                     && card.getCastingOption(GraveyardCast.class)
                     .map(option -> castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, option))
                     .orElse(false);
-            boolean canPlayThisLandFromGraveyard = castingPermissionService
-                    .canPlayLandsFromGraveyard(gameData, playerId, card);
-            if (card.hasType(CardType.LAND)
-                    && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
-                    && (castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, card)
-                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId)
-                    || hasMayhemPermission)) {
+            if (graveyardLandFaces(card).stream().anyMatch(face ->
+                    !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, face)
+                    && (castingPermissionService.canPlayLandFromGraveyard(gameData, playerId, face)
+                    || castingPermissionService.hasGraveyardPlayPermission(gameData, face, playerId)
+                    || hasMayhemPermission))) {
                 playable.add(i);
             }
         }
 
         return playable;
+    }
+
+    private List<Card> graveyardLandFaces(Card card) {
+        List<Card> faces = new ArrayList<>();
+        if (card.hasType(CardType.LAND)) faces.add(card);
+        if (card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                && card.getBackFaceCard().hasType(CardType.LAND)) {
+            Card backFace = card.createRuntimeCopyWithFace(card.getBackFaceCard());
+            backFace.setOwnerId(card.getOwnerId());
+            faces.add(backFace);
+        }
+        return faces;
     }
 
     public boolean canPlayGraveyardLand(GameData gameData, UUID playerId, Card card, UUID graveyardOwnerId) {

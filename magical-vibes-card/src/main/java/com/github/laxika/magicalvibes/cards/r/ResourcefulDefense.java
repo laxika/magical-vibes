@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "251")
 @CardRegistration(set = "NCC", collectorNumber = "19")
 @CardRegistration(set = "NCC", collectorNumber = "120")
+@CardRegistration(set = "EOC", collectorNumber = "67")
 public class ResourcefulDefense extends Card {
 
     public ResourcefulDefense() {

@@ -35,9 +35,14 @@ class AuroraShifterTest extends BaseCardTest {
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, elemental.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gqs.hasKeyword(gd, aurora, Keyword.FLYING)).isFalse();
+        harness.handlePermanentChosen(player1, elemental.getId());
+        assertThat(gqs.hasKeyword(gd, aurora, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
@@ -53,12 +58,13 @@ class AuroraShifterTest extends BaseCardTest {
     @Test
     void cannotCopyWithoutEnoughEnergy() {
         Permanent aurora = addCreatureReady(player1, new AuroraShifter());
-        Permanent elemental = addCreatureReady(player1, new AirElemental());
+        addCreatureReady(player1, new AirElemental());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, elemental.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
         resolveAllTriggers();
 
         assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
@@ -70,8 +76,12 @@ class AuroraShifterTest extends BaseCardTest {
         Permanent aurora = addCreatureReady(player1, new AuroraShifter());
         Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
         Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
 
         advanceToBeginningOfCombat(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -80,9 +90,52 @@ class AuroraShifterTest extends BaseCardTest {
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void canPayEnergyEvenWhenThereIsNoOtherCreatureToCopy() {
+        addCreatureReady(player1, new AuroraShifter());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void decliningPaymentDoesNotChooseATargetOrSpendEnergy() {
+        Permanent aurora = addCreatureReady(player1, new AuroraShifter());
+        addCreatureReady(player1, new AirElemental());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        advanceToBeginningOfCombat(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, aurora, Keyword.FLYING)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerAtBeginningOfOpponentsCombat() {
+        addCreatureReady(player1, new AuroraShifter());
+        addCreatureReady(player1, new AirElemental());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "2X2", collectorNumber = "144")
 @CardRegistration(set = "M3C", collectorNumber = "226")
 @CardRegistration(set = "OTC", collectorNumber = "191")
+@CardRegistration(set = "KHC", collectorNumber = "60")
 public class ElvishRejuvenator extends Card {
 
     public ElvishRejuvenator() {

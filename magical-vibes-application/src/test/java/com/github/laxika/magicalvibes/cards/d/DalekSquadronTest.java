@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DalekSquadron.class)
+@CardUsed({DalekSquadron.class, JaceBeleren.class})
 class DalekSquadronTest extends BaseCardTest {
 
     @Test
@@ -63,21 +64,68 @@ class DalekSquadronTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
-    private Permanent addCreatureReady(Player player, DalekSquadron card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Myriad creates no copies in a two-player game")
+    void myriadCreatesNoCopiesWithOnlyOneOpponent() {
+        Permanent squadron = addCreatureReady(player1, new DalekSquadron());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackersAt(player2, squadron);
+            resolveAllTriggers();
+        });
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(squadron);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Myriad allows a separate decision for each other opponent")
+    void myriadCanBeAcceptedForOneOpponentAndDeclinedForAnother() {
+        Player player3 = addOpponent("Charlie");
+        addOpponent("Dana");
+        Permanent squadron = addCreatureReady(player1, new DalekSquadron());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackersAt(player2, squadron);
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMayAbilityChosen(player1, false);
+        });
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getAttackTarget()).isEqualTo(player3.getId());
+        assertThat(tokens.getFirst().isTapped()).isTrue();
+        assertThat(tokens.getFirst().isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Myriad still creates copies when the original attacks a planeswalker")
+    void myriadTriggersWhenAttackingPlaneswalker() {
+        Player player3 = addOpponent("Charlie");
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
+        Permanent squadron = addCreatureReady(player1, new DalekSquadron());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackersAt(planeswalker.getId(), squadron);
+            resolveAllTriggers();
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getAttackTarget()).isEqualTo(player3.getId());
     }
 
     private void declareAttackersAt(Player target, Permanent attacker) {
+        declareAttackersAt(target.getId(), attacker);
+    }
+
+    private void declareAttackersAt(UUID targetId, Permanent attacker) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareAttackers(gd, player1, List.of(attackerIndex),
-                java.util.Map.of(attackerIndex, target.getId()));
+                java.util.Map.of(attackerIndex, targetId));
     }
 
     private Player addOpponent(String name) {

@@ -6,12 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,10 +57,93 @@ class CrustaceanCommandoTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Created Mutagen has the predefined token's artifact subtype")
+    void createdTokenHasMutagenSubtype() {
+        castCrustaceanCommando();
+
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+        assertThat(findPermanent(player1, "Mutagen").getCard().getSubtypes())
+                .extracting(subtype -> subtype.name()).contains("MUTAGEN");
+    }
+
+    @Test
+    @DisplayName("Mutagen can target an opponent's creature and is sacrificed as a cost")
+    void mutagenCanCounterOpponentsCreature() {
+        castCrustaceanCommando();
+        Permanent mutagen = findPermanent(player1, "Mutagen");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrustaceanCommando());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(mutagen), 0, null, creature.getId());
+
+        assertThat(findPermanents(player1, "Mutagen")).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Mutagen cannot pay the tap cost")
+    void tappedMutagenCannotActivate() {
+        castCrustaceanCommando();
+        Permanent mutagen = findPermanent(player1, "Mutagen");
+        Permanent creature = findPermanent(player1, "Crustacean Commando");
+        mutagen.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mutagen), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mutagen requires one mana to activate")
+    void mutagenCannotActivateWithoutMana() {
+        castCrustaceanCommando();
+        Permanent mutagen = findPermanent(player1, "Mutagen");
+        Permanent creature = findPermanent(player1, "Crustacean Commando");
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mutagen), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Mutagen cannot activate outside a main phase")
+    void mutagenCannotActivateDuringCombat() {
+        castCrustaceanCommando();
+        Permanent mutagen = findPermanent(player1, "Mutagen");
+        Permanent creature = findPermanent(player1, "Crustacean Commando");
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mutagen), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Mutagen cannot activate while a spell is on the stack")
+    void mutagenCannotActivateWithNonemptyStack() {
+        castCrustaceanCommando();
+        Permanent mutagen = findPermanent(player1, "Mutagen");
+        Permanent creature = findPermanent(player1, "Crustacean Commando");
+        harness.castFromHand(player1, new CrustaceanCommando(), "{1}{U}");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(mutagen), 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+    }
+
     private void castCrustaceanCommando() {
-        harness.setHand(player1, List.of(new CrustaceanCommando()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CrustaceanCommando(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEf
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddThopterTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSquirrelTokenToTokenCreationEffect;
@@ -95,6 +96,24 @@ public final class TokenCreationReplacementSupport {
             return 0;
         }
         return additionalMapTokenCount(gameData, controllerId);
+    }
+
+    static int additionalThopterTokenCount(GameData gameData, UUID controllerId,
+                                           CreateTokenEffect token, int amount) {
+        if (amount <= 0 || !isArtifactToken(token)) {
+            return 0;
+        }
+        return countActiveStaticEffects(gameData, controllerId,
+                AddThopterTokenToArtifactTokenCreationEffect.class);
+    }
+
+    static CreateTokenEffect additionalThopterToken(CreateTokenEffect original) {
+        return withEventModifiers(thopterToken(), original);
+    }
+
+    private static CreateTokenEffect thopterToken() {
+        return new CreateTokenEffect("Thopter", 1, 1, null,
+                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));
     }
 
     static int additionalMapTokenCount(GameData gameData, UUID controllerId,
@@ -339,6 +358,21 @@ public final class TokenCreationReplacementSupport {
             blueprints.add(clue);
             blueprints.add(food);
             blueprints.add(treasure);
+        }
+        if (!original.subtypes().contains(CardSubtype.TREASURE)) {
+            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect add
+                            && add.affectedSubtype() == CardSubtype.TREASURE
+                            && !permanent.isStaticEffectSuppressed(add.getClass())) {
+                        for (int i = 0; i < add.additionalTokens(); i++) {
+                            blueprints.add(treasure);
+                        }
+                    }
+                }
+            }
         }
         return blueprints;
     }

@@ -23,7 +23,7 @@ class DrippingDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage destroys the damaged creature and prevents regeneration")
     void combatDamageDestroysDamagedCreatureWithoutRegeneration() {
-        Permanent drippingDead = addCreatureReady(player1, new DrippingDead());
+        addCreatureReady(player1, new DrippingDead());
         Permanent wall = addCreatureReady(player2, new WallOfDeceit());
         wall.setRegenerationShield(1);
 
@@ -84,6 +84,24 @@ class DrippingDeadTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Enormous Baloth");
         harness.assertInGraveyard(player2, "Enormous Baloth");
         assertThat(blocker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a player does not destroy unrelated creatures")
+    void combatDamageToPlayerDoesNotDestroyCreatures() {
+        addCreatureReady(player1, new DrippingDead());
+        addCreatureReady(player2, new WallOfDeceit());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player1, "Dripping Dead");
+        harness.assertOnBattlefield(player2, "Wall of Deceit");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

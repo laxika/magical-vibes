@@ -87,6 +87,9 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
 
         if (deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + " explores)."));
+            putExploreCounter(gameData, entry, exploringPermanent, controllerId);
+            gameData.playersWhoControlledPermanentThatExploredThisTurn.add(controllerId);
+            triggerCollectionService.checkExploreTriggers(gameData, controllerId, null);
             return;
         }
 
@@ -111,23 +114,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
             triggerCollectionService.checkExploreTriggers(gameData, controllerId, topCard);
         } else {
             // Not a land — put a +1/+1 counter on the exploring creature
-            Permanent source = exploringPermanent;
-            if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
-                int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
-                if (placed > 0) {
-                    source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                    permanentCounterSupport.notifyCountersPlaced(
-                            gameData, entry, source, placed, CounterType.PLUS_ONE_PLUS_ONE);
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                            gameData, source, controllerId);
-                    permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                            gameData, source, placed);
-                    permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
-                            gameData, source, placed, controllerId);
-                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
-                            placed == 1 ? " gets a +1/+1 counter." : " gets " + placed + " +1/+1 counters."));
-                }
-            }
+            putExploreCounter(gameData, entry, exploringPermanent, controllerId);
 
             // Ask: put the revealed card into your graveyard?
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
@@ -140,6 +127,26 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                     gameData.id, sourceName, topCard.getName());
         }
     
+    }
+
+    private void putExploreCounter(GameData gameData, StackEntry entry, Permanent source, UUID controllerId) {
+        if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
+            int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, 1);
+            if (placed > 0) {
+                source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                permanentCounterSupport.notifyCountersPlaced(
+                        gameData, entry, source, placed, CounterType.PLUS_ONE_PLUS_ONE);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
+                        gameData, source, controllerId);
+                permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
+                        gameData, source, placed);
+                permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
+                        gameData, source, placed, controllerId);
+                gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                        placed == 1 ? " gets a +1/+1 counter." : " gets " + placed + " +1/+1 counters."));
+            }
+        }
+
     }
 
     private ExploreReplacementCounts countExploreReplacements(GameData gameData, Permanent exploringPermanent) {

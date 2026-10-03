@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CalixGuidedByFate.class, GloriousAnthem.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({CalixGuidedByFate.class, GloriousAnthem.class, GrizzlyBears.class, HolyStrength.class, Pacifism.class})
 class CalixGuidedByFateTest extends BaseCardTest {
 
     @Test
@@ -62,8 +63,8 @@ class CalixGuidedByFateTest extends BaseCardTest {
     void combatDamageOffersFilteredCopyChoice() {
         Permanent calix = addReadyCalix();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent anthem = addPermanent(player1, new GloriousAnthem());
-        Permanent pacifism = addPermanent(player1, new Pacifism());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent pacifism = harness.addToBattlefieldAndReturn(player1, new Pacifism());
         pacifism.setAttachedTo(bears.getId());
         calix.setAttacking(true);
 
@@ -85,9 +86,9 @@ class CalixGuidedByFateTest extends BaseCardTest {
     void acceptingCopyConsumesAbilityForTurn() {
         Permanent calix = addReadyCalix();
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
-        Permanent pacifism = addPermanent(player1, new Pacifism());
-        pacifism.setAttachedTo(enchanted.getId());
-        Permanent anthem = addPermanent(player1, new GloriousAnthem());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
         calix.setAttacking(true);
         enchanted.setAttacking(true);
 
@@ -114,8 +115,8 @@ class CalixGuidedByFateTest extends BaseCardTest {
     void decliningCopyDoesNotConsumeAbility() {
         Permanent calix = addReadyCalix();
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
-        Permanent pacifism = addPermanent(player1, new Pacifism());
-        pacifism.setAttachedTo(enchanted.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(enchanted.getId());
         calix.setAttacking(true);
         enchanted.setAttacking(true);
 
@@ -129,15 +130,54 @@ class CalixGuidedByFateTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
     }
 
-    private Permanent addReadyCalix() {
-        return addCreatureReady(player1, new CalixGuidedByFate());
+    @Test
+    @DisplayName("Copying an Aura lets its controller choose a creature for the copy to enchant")
+    void auraCopyChoosesWhatToEnchant() {
+        Permanent calix = addReadyCalix();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(calix.getId());
+        calix.setAttacking(true);
+
+        declareAndResolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(calix.getId(), bears.getId());
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isNotInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(findPermanents(player1, "Holy Strength"))
+                .anySatisfy(copy -> {
+                    assertThat(copy.getId()).isNotEqualTo(aura.getId());
+                    assertThat(copy.getAttachedTo()).isEqualTo(bears.getId());
+                });
+        harness.handlePermanentChosen(player1, calix.getId());
+        resolveAllTriggers();
+        assertThat(calix.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    private Permanent addPermanent(com.github.laxika.magicalvibes.model.Player player,
-                                   com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("An unenchanted ally dealing combat damage does not trigger copying")
+    void unenchantedAllyDoesNotTriggerCopy() {
+        addReadyCalix();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        bears.setAttacking(true);
+
+        declareAndResolveCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanents(player1, "Glorious Anthem")).hasSize(1);
+    }
+
+    private Permanent addReadyCalix() {
+        return addCreatureReady(player1, new CalixGuidedByFate());
     }
 
     private void declareAndResolveCombat() {

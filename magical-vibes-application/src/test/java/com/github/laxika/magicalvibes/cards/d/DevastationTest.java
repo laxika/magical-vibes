@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Devastation.class, Forest.class, GolemsHeart.class, GrizzlyBears.class, Island.class, Mountain.class})
+@CardUsed({Devastation.class, DarksteelMyr.class, Forest.class, GolemsHeart.class, GrizzlyBears.class, Island.class, Memnite.class, Mountain.class})
 class DevastationTest extends BaseCardTest {
 
     @Test
@@ -48,5 +49,40 @@ class DevastationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .singleElement()
                 .matches(p -> p.getCard().getName().equals("Golem's Heart"));
+    }
+
+    @Test
+    @DisplayName("Indestructible artifact creatures survive while other creatures and lands are destroyed")
+    void indestructibleCreatureSurvives() {
+        harness.addToBattlefield(player1, new DarksteelMyr());
+        harness.addToBattlefield(player1, new Memnite());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.castFromHand(player1, new Devastation(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Darksteel Myr");
+        harness.assertNotInGraveyard(player1, "Darksteel Myr");
+        harness.assertInGraveyard(player1, "Memnite");
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures or lands on the battlefield")
+    void resolvesOnEmptyBattlefield() {
+        harness.castFromHand(player1, new Devastation(), "{5}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Devastation");
     }
 }

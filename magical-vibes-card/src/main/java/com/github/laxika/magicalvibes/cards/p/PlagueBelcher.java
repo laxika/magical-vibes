@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AKH", collectorNumber = "104")
+@CardRegistration(set = "DRC", collectorNumber = "97")
 public class PlagueBelcher extends Card {
 
     public PlagueBelcher() {

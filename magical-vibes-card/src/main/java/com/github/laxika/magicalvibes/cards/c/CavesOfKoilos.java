@@ -25,6 +25,8 @@ import java.util.List;
 @CardRegistration(set = "M3C", collectorNumber = "328")
 @CardRegistration(set = "OTC", collectorNumber = "277")
 @CardRegistration(set = "C20", collectorNumber = "262")
+@CardRegistration(set = "C16", collectorNumber = "285")
+@CardRegistration(set = "DRC", collectorNumber = "148")
 public class CavesOfKoilos extends Card {
 
     public CavesOfKoilos() {

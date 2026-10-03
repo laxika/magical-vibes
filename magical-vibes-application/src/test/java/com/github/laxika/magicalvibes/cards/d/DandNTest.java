@@ -21,10 +21,7 @@ class DandNTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificed when controller controls no Islands")
     void sacrificedWhenControllingNoIslands() {
-        harness.setHand(player1, List.of(new DandN()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
         harness.passBothPriorities(); // resolve creature spell → state trigger fires
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -38,15 +35,13 @@ class DandNTest extends BaseCardTest {
     @DisplayName("Survives while controller controls an Island")
     void survivesWhileControllingIsland() {
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new DandN()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Dandân");
     }
+
     @Test
     @DisplayName("Can attack when defending player controls an Island")
     void canAttackWhenDefenderControlsIsland() {
@@ -84,9 +79,7 @@ class DandNTest extends BaseCardTest {
         harness.handleListChoice(player1, "ISLAND");
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
-        harness.setHand(player1, List.of(new DandN()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -116,10 +109,7 @@ class DandNTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice trigger does not recheck Islands when it resolves")
     void sacrificeTriggerDoesNotRecheckConditionOnResolution() {
-        harness.setHand(player1, List.of(new DandN()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new Island());
         harness.passBothPriorities();
@@ -132,13 +122,40 @@ class DandNTest extends BaseCardTest {
     @DisplayName("An Island controlled by the opponent does not prevent the sacrifice")
     void opponentsIslandDoesNotPreventSacrifice() {
         harness.addToBattlefield(player2, new Island());
-        harness.setHand(player1, List.of(new DandN()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Dandân");
         harness.assertInGraveyard(player1, "Dandân");
+    }
+
+    @Test
+    @DisplayName("Can attack a defender whose Forest has become an Island")
+    void canAttackWhenDefendingLandBecomesIsland() {
+        harness.addToBattlefield(player1, new Island());
+        var forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+
+        var dandan = addCreatureReady(player1, new DandN());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(dandan)));
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Each Dandân has its own sacrifice trigger when no Islands are controlled")
+    void eachCreatureSacrificesIndependently() {
+        harness.addToBattlefield(player1, new DandN());
+        harness.castFromHand(player1, new DandN(), "{U}{U}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Dandân");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof DandN)
+                .hasSize(2);
     }
 }

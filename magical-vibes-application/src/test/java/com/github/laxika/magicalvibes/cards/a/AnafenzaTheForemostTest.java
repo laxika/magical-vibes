@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -13,7 +15,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,16 +27,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AnafenzaTheForemost.class, GrizzlyBears.class, MindRot.class, Peek.class,
+        Shock.class, WrathOfGod.class, Humble.class})
 class AnafenzaTheForemostTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacks and targets another tapped creature you control for a counter")
     void attacksAndCountersAnotherTappedCreatureYouControl() {
-        Permanent anafenza = addReadyCreature(player1, new AnafenzaTheForemost());
-        Permanent tappedCreature = addReadyCreature(player1, new GrizzlyBears());
+        Permanent anafenza = addCreatureReady(player1, new AnafenzaTheForemost());
+        Permanent tappedCreature = addCreatureReady(player1, new GrizzlyBears());
         tappedCreature.tap();
-        Permanent untappedCreature = addReadyCreature(player1, new GrizzlyBears());
-        Permanent opponentCreature = addReadyCreature(player2, new GrizzlyBears());
+        Permanent untappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
 
@@ -56,8 +62,7 @@ class AnafenzaTheForemostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(isExiled("Grizzly Bears")).isTrue();
@@ -72,8 +77,7 @@ class AnafenzaTheForemostTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(isExiled("Grizzly Bears")).isFalse();
@@ -87,8 +91,7 @@ class AnafenzaTheForemostTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, token.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, token.getId());
 
         assertThat(isExiled("Bear Token")).isFalse();
     }
@@ -101,8 +104,7 @@ class AnafenzaTheForemostTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -110,6 +112,152 @@ class AnafenzaTheForemostTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Peek");
         assertThat(isExiled("Grizzly Bears")).isTrue();
         assertThat(isExiled("Peek")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can put the attack counter on another creature attacking alongside Anafenza")
+    void countersAnotherAttackingCreature() {
+        addCreatureReady(player1, new AnafenzaTheForemost());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not put a counter on a target that becomes untapped before resolution")
+    void untappedTargetIsIllegalOnResolution() {
+        addCreatureReady(player1, new AnafenzaTheForemost());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        bears.untap();
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Exiles an opponent-owned creature even when Anafenza's controller controls it")
+    void replacementUsesOwnershipRatherThanControl() {
+        harness.addToBattlefield(player1, new AnafenzaTheForemost());
+        GrizzlyBears card = new GrizzlyBears();
+        card.setOwnerId(player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exiles opposing creatures when Anafenza is destroyed simultaneously with them")
+    void replacementAppliesDuringSimultaneousDestruction() {
+        harness.addToBattlefield(player1, new AnafenzaTheForemost());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exiles opposing creatures when Anafenza dies to lethal damage simultaneously")
+    void replacementAppliesDuringSimultaneousStateBasedDeaths() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        anafenza.setMarkedDamage(4);
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stops replacing creature deaths while Anafenza has lost all abilities")
+    void noDeathReplacementAfterLosingAbilities() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, anafenza.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    void simultaneousDestructionDoesNotRestoreSuppressedReplacement() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble(), new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player1, 0, anafenza.getId()));
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    void simultaneousLethalDamageDoesNotRestoreSuppressedReplacement() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player1, 0, anafenza.getId()));
+        anafenza.setMarkedDamage(1);
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Stops replacing discarded creature cards while Anafenza has lost all abilities")
+    void noDiscardReplacementAfterLosingAbilities() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        harness.setHand(player1, List.of(new Humble(), new MindRot()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, anafenza.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Peek");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
     }
 
     private Permanent addTokenCreature(Player player) {
@@ -122,19 +270,11 @@ class AnafenzaTheForemostTest extends BaseCardTest {
         tokenCard.setPower(2);
         tokenCard.setToughness(2);
         tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player.getId()).add(token);
-        return token;
+        return harness.addToBattlefieldAndReturn(player, tokenCard);
     }
 
     private boolean isExiled(String cardName) {
         return gd.exiledCards.stream().anyMatch(exiled -> exiled.card().getName().equals(cardName));
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }

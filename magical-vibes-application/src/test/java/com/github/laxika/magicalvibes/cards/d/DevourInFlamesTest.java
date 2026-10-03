@@ -78,6 +78,118 @@ class DevourInFlamesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped land is returned during casting, before damage resolves")
+    void returnsTappedLandBeforeResolution() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        land.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId());
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertNotInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without returning a land")
+    void cannotCastWithoutReturningLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Devour in Flames");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot return an opponent's land as the additional cost")
+    void cannotReturnOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, target.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertInHand(player1, "Devour in Flames");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A controlled land owned by another player returns to its owner's hand")
+    void returnsLandToOwner() {
+        Mountain borrowedLand = new Mountain();
+        borrowedLand.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedLand);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId());
+
+        harness.assertInHand(player2, "Mountain");
+        harness.assertNotInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, player2.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertInHand(player1, "Devour in Flames");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The land remains returned when the target leaves before resolution")
+    void additionalCostIsNotRefundedWhenTargetLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevourInFlames()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Devour in Flames");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

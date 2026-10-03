@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "106")
+@CardRegistration(set = "M21", collectorNumber = "358")
 public class KaervekTheSpiteful extends Card {
 
     public KaervekTheSpiteful() {

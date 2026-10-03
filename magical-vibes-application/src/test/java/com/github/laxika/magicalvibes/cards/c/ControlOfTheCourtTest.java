@@ -55,9 +55,7 @@ class ControlOfTheCourtTest extends BaseCardTest {
     @Test
     @DisplayName("Finishes discarding before losing for drawing from an empty library")
     void finishesResolvingBeforeEmptyLibraryLoss() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new ShuGeneral());
-        gd.playerDecks.get(player1.getId()).add(new ShuGeneral());
+        harness.setLibrary(player1, List.of(new ShuGeneral(), new ShuGeneral()));
 
         harness.setHand(player1, List.of(new ControlOfTheCourt()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -70,5 +68,28 @@ class ControlOfTheCourtTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .filteredOn(log -> log.contains("discards") && log.contains("at random"))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Discards exactly three from the controller's hand and leaves the opponent unchanged")
+    void discardsThreeWithCardsAlreadyInHand() {
+        harness.setHand(player1, List.of(new ControlOfTheCourt(), new ShuGeneral(), new ShuGeneral()));
+        harness.setLibrary(player1, List.of(new ShuGeneral(), new ShuGeneral(),
+                new ShuGeneral(), new ShuGeneral()));
+        ShuGeneral opponentCard = new ShuGeneral();
+        harness.setHand(player2, List.of(opponentCard));
+        int opponentLibrarySize = gd.playerDecks.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

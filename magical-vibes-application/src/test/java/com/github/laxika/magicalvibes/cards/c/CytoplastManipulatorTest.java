@@ -139,6 +139,72 @@ class CytoplastManipulatorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Control does not begin if the source leaves before the ability resolves")
+    void sourceLeavesBeforeControlAbilityResolves() {
+        Permanent charger = addCreatureReady(player2, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent manipulator = castManipulator();
+        manipulator.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null,
+                charger.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, manipulator));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(charger);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(charger);
+    }
+
+    @Test
+    @DisplayName("Removing the stolen creature's counter and untapping the source do not end control")
+    void controlPersistsAfterCounterRemovalAndSourceUntap() {
+        Permanent charger = addCreatureReady(player2, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent manipulator = castManipulator();
+        manipulator.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null,
+                charger.getId());
+        harness.passBothPriorities();
+
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.performUntapStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(charger);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(charger);
+    }
+
+    @Test
+    @DisplayName("Moving the final graft counter kills the source and returns a stolen creature")
+    void finalGraftCounterEndsControlWhenSourceDies() {
+        Permanent stolen = addCreatureReady(player2, new MistralCharger());
+        stolen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent manipulator = castManipulator();
+        manipulator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        manipulator.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null,
+                stolen.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
+        harness.passBothPriorities();
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof MistralCharger && p != stolen)
+                .findFirst().orElseThrow();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(manipulator, stolen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(stolen);
+        harness.assertInGraveyard(player1, "Cytoplast Manipulator");
+    }
+
     private Permanent castManipulator() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

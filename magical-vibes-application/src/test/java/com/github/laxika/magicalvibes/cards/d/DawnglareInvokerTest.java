@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DawnglareInvoker.class, GrizzlyBears.class, HillGiant.class, JayemdaeTome.class})
 class DawnglareInvokerTest extends BaseCardTest {
 
     @Test
@@ -56,5 +58,61 @@ class DawnglareInvokerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new DawnglareInvoker());
+        invoker.setTapped(true);
+        invoker.setSummoningSick(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DawnglareInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(invoker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Taps creatures that entered after activation")
+    void tapsCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new DawnglareInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DawnglareInvoker());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only seven mana")
+    void requiresEightMana() {
+        harness.addToBattlefield(player1, new DawnglareInvoker());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DawnglareInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target a player with no creatures")
+    void canTargetPlayerWithNoCreatures() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new DawnglareInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(invoker.isTapped()).isFalse();
     }
 }

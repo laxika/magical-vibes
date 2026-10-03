@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CuriousPair.class, TreatsToShare.class})
 class CuriousPairTest extends BaseCardTest {
@@ -60,5 +61,59 @@ class CuriousPairTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         harness.assertNotOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    void castingCreatureDirectlyDoesNotCreateFood() {
+        CuriousPair card = new CuriousPair();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Curious Pair");
+        harness.assertNotOnBattlefield(player1, "Food");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void foodIsSacrificedAsACostBeforeLifeGainResolves() {
+        harness.setHand(player1, List.of(new CuriousPair()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Food");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void tappedFoodCannotBeActivated() {
+        harness.setHand(player1, List.of(new CuriousPair()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        findPermanent(player1, "Food").setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

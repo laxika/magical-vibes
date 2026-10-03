@@ -23,4 +23,9 @@ public record GrantMiracleReducedByManaCostEffect(CardPredicate filter, int gene
                 .reducedBy(new ManaCost("{" + genericReduction + "}"))
                 .toManaCostString();
     }
+    @Override
+    public int miracleXReductionFor(Card card) {
+        return card == null || card.getParsedManaCost() == null ? 0
+                : Math.max(0, genericReduction - card.getParsedManaCost().getGenericCost());
+    }
 }

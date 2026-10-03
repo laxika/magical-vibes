@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
+import com.github.laxika.magicalvibes.cards.t.TauntingElf;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianWarlord.class, KjeldoranOutrider.class})
+@CardUsed({BalduvianWarlord.class, KjeldoranOutrider.class, TauntingElf.class})
 class BalduvianWarlordTest extends BaseCardTest {
 
     @Test
@@ -125,6 +126,24 @@ class BalduvianWarlordTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("must reassign a blocker to an attacker that requires it to block")
+    void respectsMandatoryBlockingRequirement() {
+        Permanent warlord = addCreatureReady(player1, new BalduvianWarlord());
+        Permanent elf = addCreatureReady(player1, new TauntingElf());
+        Permanent otherAttacker = addCreatureReady(player1, new KjeldoranOutrider());
+        Permanent blocker = addCreatureReady(player2, new KjeldoranOutrider());
+
+        setUpCombat(elf, otherAttacker, blocker);
+
+        harness.activateAbility(player1, indexOf(player1, warlord), null, blocker.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(elf.getId());
+        assertThat(elf.isBlockedWithoutBlockers()).isFalse();
+    }
+
+    @Test
     @DisplayName("rejects a target that is not a blocking creature")
     void rejectsNonblockingTarget() {
         Permanent warlord = addCreatureReady(player2, new BalduvianWarlord());
@@ -179,10 +198,7 @@ class BalduvianWarlordTest extends BaseCardTest {
     }
 
     private void setUpCombat(Permanent formerAttacker, Permanent blocker) {
-        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, formerAttacker)));
-        gs.declareBlockers(gd, player2, List.of(
-                new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, formerAttacker))));
-        harness.clearPriorityPassed();
+        setUpCombat(formerAttacker, List.of(blocker));
     }
 
     private int indexOf(Player player, Permanent permanent) {

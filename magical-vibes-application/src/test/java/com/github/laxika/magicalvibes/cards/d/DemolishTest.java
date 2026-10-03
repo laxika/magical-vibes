@@ -8,8 +8,7 @@ import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,10 +20,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Demolish.class, BottleGnomes.class, GrizzlyBears.class, Mountain.class, Millstone.class, PhyrexianHulk.class})
+@CardUsed({Demolish.class, BottleGnomes.class, GrizzlyBears.class, Mountain.class, Millstone.class, Ornithopter.class})
 class DemolishTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Demolish puts it on the stack with target")
@@ -42,8 +39,6 @@ class DemolishTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving destroys target land")
     void resolvingDestroysTargetLand() {
@@ -60,11 +55,10 @@ class DemolishTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvingDestroysTargetArtifact() {
-        harness.addToBattlefield(player2, new BottleGnomes());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BottleGnomes()).getId();
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Bottle Gnomes");
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Bottle Gnomes");
@@ -74,11 +68,10 @@ class DemolishTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy own artifact")
     void canDestroyOwnArtifact() {
-        harness.addToBattlefield(player1, new BottleGnomes());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new BottleGnomes()).getId();
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player1, "Bottle Gnomes");
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Bottle Gnomes");
@@ -134,14 +127,14 @@ class DemolishTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy an artifact creature")
     void canDestroyArtifactCreature() {
-        UUID targetId = harness.addToBattlefieldAndReturn(player2, new PhyrexianHulk()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Ornithopter()).getId();
         harness.setHand(player1, List.of(new Demolish()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castAndResolveSorcery(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Phyrexian Hulk");
-        harness.assertInGraveyard(player2, "Phyrexian Hulk");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 
     @Test
@@ -169,5 +162,38 @@ class DemolishTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys a noncreature artifact")
+    void destroysNoncreatureArtifact() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Millstone()).getId();
+        harness.setHand(player1, List.of(new Demolish()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        harness.assertInGraveyard(player2, "Millstone");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the target in response makes Demolish fizzle")
+    void fizzlesWhenTargetSacrificedInResponse() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BottleGnomes()).getId();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Demolish()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, targetId);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 23);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player2, "Bottle Gnomes");
+        harness.assertInGraveyard(player1, "Demolish");
     }
 }

@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeepForestHermit.class, GiantCockroach.class})
+@CardUsed({DeepForestHermit.class, VampireHexmage.class})
 class DeepForestHermitTest extends BaseCardTest {
 
     @Test
@@ -25,7 +21,7 @@ class DeepForestHermitTest extends BaseCardTest {
     void enteringCreatesFourBuffedSquirrels() {
         castAndResolveHermit();
 
-        List<Permanent> squirrels = squirrelTokens(player1);
+        List<Permanent> squirrels = findPermanents(player1, "Squirrel");
         assertThat(squirrels).hasSize(4);
         for (Permanent squirrel : squirrels) {
             assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(2);
@@ -34,19 +30,22 @@ class DeepForestHermitTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The static ability buffs Squirrels controlled by any player")
-    void buffsSquirrelsControlledByAnyPlayer() {
-        harness.addToBattlefield(player1, new DeepForestHermit());
-        Permanent ownSquirrel = harness.addToBattlefieldAndReturn(player1, squirrelToken());
-        Permanent opponentSquirrel = harness.addToBattlefieldAndReturn(player2, squirrelToken());
-        Permanent nonSquirrel = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+    @DisplayName("The static ability buffs only Squirrels you control")
+    void buffsOnlyControlledSquirrels() {
+        castAndResolveHermit();
+        List<Permanent> squirrels = findPermanents(player1, "Squirrel");
+        Permanent ownSquirrel = squirrels.get(0);
+        Permanent opponentSquirrel = squirrels.get(1);
+        gd.playerBattlefields.get(player1.getId()).remove(opponentSquirrel);
+        gd.playerBattlefields.get(player2.getId()).add(opponentSquirrel);
+        Permanent nonSquirrel = findPermanent(player1, "Deep Forest Hermit");
 
         assertThat(gqs.getEffectivePower(gd, ownSquirrel)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownSquirrel)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, opponentSquirrel)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentSquirrel)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, nonSquirrel)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, nonSquirrel)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentSquirrel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentSquirrel)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, nonSquirrel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonSquirrel)).isEqualTo(1);
     }
 
     @Test
@@ -73,28 +72,76 @@ class DeepForestHermitTest extends BaseCardTest {
 
     private void castAndResolveHermit() {
         harness.castFromHand(player1, new DeepForestHermit(), "{3}{G}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Deep Forest Hermit");
     }
 
-    private List<Permanent> squirrelTokens(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SQUIRREL))
-                .toList();
+    @Test
+    void entersWithThreeTimeCountersBeforeTokenTriggerResolves() {
+        harness.castFromHand(player1, new DeepForestHermit(), "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Deep Forest Hermit").getCounterCount(CounterType.TIME))
+                .isEqualTo(3);
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(4);
     }
 
-    private Card squirrelToken() {
-        Card card = new Card();
-        card.setName("Squirrel");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("");
-        card.setColor(CardColor.GREEN);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.SQUIRREL));
-        card.setToken(true);
-        return card;
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        castAndResolveHermit();
+        Permanent hermit = findPermanent(player1, "Deep Forest Hermit");
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(hermit.getCounterCount(CounterType.TIME)).isEqualTo(3);
+    }
+
+    @Test
+    void lastCounterCreatesSeparateSacrificeTriggerAndBonusEndsOnSacrifice() {
+        castAndResolveHermit();
+        Permanent hermit = findPermanent(player1, "Deep Forest Hermit");
+        hermit.setCounterCount(CounterType.TIME, 1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(hermit.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hermit);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Deep Forest Hermit");
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(4).allSatisfy(squirrel -> {
+            assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void removingLastTimeCounterWithAnotherAbilityTriggersSacrifice() {
+        castAndResolveHermit();
+        Permanent hermit = findPermanent(player1, "Deep Forest Hermit");
+        Permanent hexmage = harness.addToBattlefieldAndReturn(player1, new VampireHexmage());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(hexmage), null, hermit.getId());
+        harness.passBothPriorities();
+
+        assertThat(hermit.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hermit);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Deep Forest Hermit");
+        harness.assertInGraveyard(player1, "Deep Forest Hermit");
+    }
+
+    @Test
+    void vanishingDoesNotTriggerWithoutTimeCounters() {
+        Permanent hermit = addCreatureReady(player1, new DeepForestHermit());
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hermit);
     }
 }

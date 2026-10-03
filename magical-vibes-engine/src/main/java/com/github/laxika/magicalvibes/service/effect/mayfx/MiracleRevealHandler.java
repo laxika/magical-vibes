@@ -54,18 +54,16 @@ public class MiracleRevealHandler implements MayEffectHandlerBean {
                 .build());
         log.info("Game {} - {} reveals {} for miracle", gameData.id, playerName, card.getName());
 
+        MiracleRevealEffect reveal = ability.effects().stream()
+                .filter(MiracleRevealEffect.class::isInstance)
+                .map(MiracleRevealEffect.class::cast)
+                .findFirst().orElse(new MiracleRevealEffect());
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 player.getId(),
                 card.getName() + "'s miracle",
-                new ArrayList<>(List.of(new MiracleMayCastEffect(
-                        ability.effects().stream()
-                                .filter(MiracleRevealEffect.class::isInstance)
-                                .map(MiracleRevealEffect.class::cast)
-                                .map(MiracleRevealEffect::miracleCost)
-                                .findFirst()
-                                .orElse(null))))
+                new ArrayList<>(List.of(new MiracleMayCastEffect(reveal.miracleCost(), reveal.xReduction())))
         ));
         gameData.priorityPassedBy.clear();
 

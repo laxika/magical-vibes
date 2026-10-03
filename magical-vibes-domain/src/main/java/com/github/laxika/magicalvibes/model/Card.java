@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -976,6 +977,7 @@ public class Card {
             // filter (e.g. opponent-only) is lost after unwrapping.
             case TriggeringCardConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case ConditionalTriggeringPermanentEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringArtifactControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringRoomDoorConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
@@ -1133,13 +1135,26 @@ public class Card {
 
     /** Returns per-position target filters for the selected kicker branch. */
     public List<TargetFilter> getMultiTargetFilters(boolean kicked) {
-        List<TargetFilter> expanded = new ArrayList<>();
-        for (SpellTarget st : spellTargets) {
-            for (int i = 0; i < Math.max(st.getMaxTargets(), st.getKickedMaxTargets()); i++) {
-                expanded.add(st.getFilter(kicked));
+        int positionCount = (int) Math.min(Integer.MAX_VALUE, spellTargets.stream()
+                .mapToLong(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets())).sum());
+        return new java.util.AbstractList<>() {
+            @Override
+            public TargetFilter get(int index) {
+                java.util.Objects.checkIndex(index, positionCount);
+                int remaining = index;
+                for (SpellTarget st : spellTargets) {
+                    int count = Math.max(st.getMaxTargets(), st.getKickedMaxTargets());
+                    if (remaining < count) return st.getFilter(kicked);
+                    remaining -= count;
+                }
+                throw new IndexOutOfBoundsException(index);
             }
-        }
-        return expanded;
+
+            @Override
+            public int size() {
+                return positionCount;
+            }
+        };
     }
 
     /**

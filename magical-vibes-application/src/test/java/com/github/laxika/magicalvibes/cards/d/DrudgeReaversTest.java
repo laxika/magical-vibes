@@ -54,20 +54,55 @@ class DrudgeReaversTest extends BaseCardTest {
         reavers.setBlocking(true);
         reavers.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AshcoatBear());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Drudge Reavers");
         assertThat(reavers.isTapped()).isTrue();
         assertThat(reavers.getRegenerationShield()).isZero();
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent reavers = harness.addToBattlefieldAndReturn(player1, new DrudgeReavers());
+        reavers.setSummoningSick(true);
+        reavers.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(reavers.getRegenerationShield()).isEqualTo(2);
+        assertThat(reavers.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolving regeneration does not tap the creature until lethal damage")
+    void resolvedRegenerationProtectsFromLethalCombatDamage() {
+        Permanent reavers = addCreatureReady(player1, new DrudgeReavers());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(reavers.isTapped()).isFalse();
+        reavers.setBlocking(true);
+        reavers.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new AshcoatBear());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Drudge Reavers");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+        assertThat(reavers.isTapped()).isTrue();
+        assertThat(reavers.getMarkedDamage()).isZero();
+        assertThat(reavers.isBlocking()).isFalse();
+        assertThat(reavers.getBlockingTargets()).isEmpty();
+        assertThat(reavers.getRegenerationShield()).isZero();
+    }
 }

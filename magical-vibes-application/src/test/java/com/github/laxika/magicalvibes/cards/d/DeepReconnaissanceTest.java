@@ -61,8 +61,7 @@ class DeepReconnaissanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
         setupLibrary();
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
@@ -88,6 +87,39 @@ class DeepReconnaissanceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().equals(nonBasicCard));
         harness.assertInGraveyard(player1, "Deep Reconnaissance");
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find even when basic lands are available")
+    void mayFailToFindAvailableBasicLand() {
+        Forest forest = new Forest();
+        Werebear werebear = new Werebear();
+        harness.castFromHand(player1, new DeepReconnaissance(), "{2}{G}");
+        harness.setLibrary(player1, List.of(forest, werebear));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, werebear);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Deep Reconnaissance");
+    }
+
+    @Test
+    @DisplayName("Flashback still exiles the spell when its controller has an empty library")
+    void flashbackWithEmptyLibraryStillExiles() {
+        harness.setGraveyard(player1, List.of(new DeepReconnaissance()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Deep Reconnaissance");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Deep Reconnaissance"));
     }
 
     private void setupLibrary() {

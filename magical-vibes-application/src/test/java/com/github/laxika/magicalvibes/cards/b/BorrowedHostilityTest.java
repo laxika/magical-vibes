@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BorrowedHostility.class, GrizzlyBears.class})
 class BorrowedHostilityTest extends BaseCardTest {
 
     // Modes: 0 = +3/+0, 1 = first strike
@@ -59,6 +62,61 @@ class BorrowedHostilityTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void bothModesApplyOnlyToTheirRespectiveTargets() {
+        Permanent boosted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstStriker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BorrowedHostility()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(boosted.getId(), firstStriker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(boosted.getPowerModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, boosted, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(firstStriker.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, firstStriker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void bothEffectsExpireAtEndOfTurn() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BorrowedHostility()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(bears.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
+        harness.passUntil(TurnStep.UNTAP);
+
+        assertThat(bears.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void remainingModeResolvesWhenOtherTargetLeavesBattlefield() {
+        Permanent boosted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstStriker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BorrowedHostility()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(boosted.getId(), firstStriker.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(boosted);
+        harness.passBothPriorities();
+
+        assertThat(firstStriker.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, firstStriker, Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertInGraveyard(player1, "Borrowed Hostility");
     }
 
     @Test

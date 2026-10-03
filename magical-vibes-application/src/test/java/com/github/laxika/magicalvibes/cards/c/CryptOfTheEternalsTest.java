@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CryptOfTheEternals.class})
 class CryptOfTheEternalsTest extends BaseCardTest {
 
     @Test
@@ -20,7 +22,7 @@ class CryptOfTheEternalsTest extends BaseCardTest {
     void etbGainsOneLife() {
         harness.setHand(player1, List.of(new CryptOfTheEternals()));
 
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.playLand(player1, 0);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 21);
@@ -82,5 +84,44 @@ class CryptOfTheEternalsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mana can be produced immediately while the life-gain trigger is pending")
+    void tapWhileEntryTriggerIsPending() {
+        harness.setHand(player1, List.of(new CryptOfTheEternals()));
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Colored mana pays the generic filter cost and the land cannot be reused while tapped")
+    void filterAcceptsColoredManaAndRequiresUntappedLand() {
+        harness.addToBattlefield(player1, new CryptOfTheEternals());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.GREEN)).isZero();
+        assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

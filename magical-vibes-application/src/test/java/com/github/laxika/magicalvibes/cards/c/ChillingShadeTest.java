@@ -72,4 +72,34 @@ class ChillingShadeTest extends BaseCardTest {
         assertThat(shade.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Colored snow mana can pay the snow activation cost")
+    void coloredSnowManaPaysForBoost() {
+        Permanent shade = addCreatureReady(player1, new ChillingShade());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Shade with summoning sickness can activate its boost")
+    void tappedSummoningSickShadeCanBoost() {
+        Permanent shade = addCreatureReady(player1, new ChillingShade());
+        shade.setSummoningSick(true);
+        shade.setTapped(true);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
 }

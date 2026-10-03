@@ -59,6 +59,38 @@ class BullElephantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent's Forests cannot pay the return cost")
+    void opponentsForestsDoNotCount() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        castBullElephant();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Bull Elephant");
+        harness.assertNotOnBattlefield(player1, "Bull Elephant");
+        assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(forestsControlledBy(player2.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Tapped Forests can pay the return cost")
+    void tappedForestsCanBeReturned() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> permanent.setTapped(true));
+        castBullElephant();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(forestsControlledBy(player1.getId())).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Bull Elephant");
+    }
+
+    @Test
     @DisplayName("Prompts a may ability when controller has two or more Forests")
     void promptsMayAbilityWithTwoForests() {
         harness.addToBattlefield(player1, new Forest());

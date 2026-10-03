@@ -156,8 +156,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, spirit.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
         harness.assertNotInGraveyard(player1, "Blinking Spirit");
@@ -177,5 +176,59 @@ class DreamsOfTheDeadTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Blinking Spirit");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Blinking Spirit"));
+    }
+
+    @Test
+    @DisplayName("Granted cumulative upkeep costs four mana on the second upkeep")
+    void secondUpkeepCostsFourMana() {
+        Permanent spirit = reanimate(new BlinkingSpirit());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(spirit.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spirit);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Granted cumulative upkeep does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent spirit = reanimate(new BlinkingSpirit());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spirit);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("A target removed from the graveyard before resolution is not returned")
+    void targetMustRemainInGraveyard() {
+        Card spirit = new BlinkingSpirit();
+        Permanent dreams = harness.addToBattlefieldAndReturn(player1, new DreamsOfTheDead());
+        harness.setGraveyard(player1, List.of(spirit));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(dreams), 0, List.of(spirit.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blinking Spirit");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spirit);
+        assertThat(gd.stack).isEmpty();
     }
 }

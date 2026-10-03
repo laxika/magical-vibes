@@ -52,10 +52,8 @@ class BendOrBreakTest extends BaseCardTest {
         assertThat(player2Tapped.isTapped()).isTrue();
         assertThat(player1TokenLand.isTapped()).isFalse();
         assertThat(player1Creature.isTapped()).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
-                .contains("Forest");
-        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(card -> card.getName())
-                .contains("Mountain");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 
     @Test
@@ -78,8 +76,7 @@ class BendOrBreakTest extends BaseCardTest {
                 .contains(creature.getId())
                 .doesNotContain(forest.getId());
         assertThat(creature.isTapped()).isFalse();
-        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
-                .contains("Forest");
+        harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
@@ -91,5 +88,75 @@ class BendOrBreakTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing an empty pile preserves and taps all lands in the other pile")
+    void choosingEmptyPilePreservesAndTapsLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        harness.castFromHand(player1, new BendOrBreak(), "{3}{R}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .containsExactlyInAnyOrder(forest.getId(), mountain.getId());
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(mountain.isTapped()).isTrue();
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("All pile choices finish before any lands are destroyed or tapped")
+    void waitsForEveryPileChoiceBeforeChangingLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.castFromHand(player1, new BendOrBreak(), "{3}{R}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(mountain.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(mountain.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player2, "Mountain");
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(mountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent lands are separated even when the caster controls only token lands")
+    void separatesOpponentLandsAndExcludesCasterTokenLands() {
+        Forest tokenForest = new Forest();
+        tokenForest.setToken(true);
+        Permanent tokenLand = harness.addToBattlefieldAndReturn(player1, tokenForest);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        harness.castFromHand(player1, new BendOrBreak(), "{3}{R}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(mountain.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .containsExactly(tokenLand.getId());
+        assertThat(tokenLand.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 }

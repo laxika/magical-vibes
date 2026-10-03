@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.Colossapede;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AvenWindGuide.class, Colossapede.class})
 class AvenWindGuideTest extends BaseCardTest {
 
     private static Card createCreature(String name, CardColor color) {
@@ -35,8 +38,6 @@ class AvenWindGuideTest extends BaseCardTest {
         card.setToken(true);
         return card;
     }
-
-    // ===== Static: creature tokens you control have flying and vigilance =====
 
     @Test
     @DisplayName("Own creature token gains flying and vigilance")
@@ -87,8 +88,6 @@ class AvenWindGuideTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isFalse();
     }
 
-    // ===== Embalm =====
-
     private void setUpEmbalm() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -118,10 +117,9 @@ class AvenWindGuideTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities(); // resolve the Embalm ability
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Aven Wind Guide") && p.getCard().isToken())
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Aven Wind Guide");
 
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.BIRD, CardSubtype.WARRIOR);
         assertThat(token.getCard().getManaCost()).isEmpty();
@@ -143,5 +141,87 @@ class AvenWindGuideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Aven Wind Guide");
+    }
+
+    @Test
+    @DisplayName("Embalmed Wind Guide grants flying and vigilance to other creature tokens")
+    void embalmedGuideRetainsTokenGrant() {
+        setUpEmbalm();
+        Card insectToken = new Colossapede();
+        insectToken.setToken(true);
+        harness.addToBattlefield(player1, insectToken);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent insect = findPermanent(player1, "Colossapede");
+        Permanent guide = findPermanent(player1, "Aven Wind Guide");
+        assertThat(gqs.hasKeyword(gd, insect, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, insect, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, guide, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, guide, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noncreature tokens do not gain flying or vigilance")
+    void noncreatureTokenDoesNotGainKeywords() {
+        harness.addToBattlefield(player1, new AvenWindGuide());
+        Card token = new Card();
+        token.setName("Treasure");
+        token.setType(CardType.ARTIFACT);
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+
+        Permanent treasure = findPermanent(player1, "Treasure");
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, treasure, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated during combat on its controller's turn")
+    void embalmCannotBeActivatedDuringCombat() {
+        setUpEmbalm();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Aven Wind Guide");
+        harness.assertNotOnBattlefield(player1, "Aven Wind Guide");
+    }
+
+    @Test
+    @DisplayName("Embalm cannot be activated in response to another embalm ability")
+    void embalmRequiresEmptyStack() {
+        setUpEmbalm();
+        harness.setGraveyard(player1, List.of(new AvenWindGuide(), new AvenWindGuide()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateGraveyardAbility(player1, 0);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Aven Wind Guide");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Aven Wind Guide")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Embalm requires both white and blue mana")
+    void embalmCannotUseOnlyWhiteAndColorlessMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new AvenWindGuide()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        Assertions.assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Aven Wind Guide");
+        harness.assertNotOnBattlefield(player1, "Aven Wind Guide");
     }
 }

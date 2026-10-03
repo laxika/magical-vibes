@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.v.VoiceOfDuty;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DaughterOfAutumn.class, ProdigalPyromancer.class, SerraAngel.class, GrizzlyBears.class})
+@CardUsed({DaughterOfAutumn.class, ProdigalPyromancer.class, SerraAngel.class, GrizzlyBears.class, VoiceOfDuty.class})
 class DaughterOfAutumnTest extends BaseCardTest {
 
     private void addDaughter() {
@@ -29,24 +31,24 @@ class DaughterOfAutumnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activating registers a 1-damage, any-source redirect shield pointing at Daughter of Autumn")
-    void activationCreatesShield() {
+    @DisplayName("Daughter can redirect damage while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
         addDaughter();
         harness.addToBattlefield(player1, new SerraAngel());
+        addPyromancerReady();
 
-        UUID daughterId = harness.getPermanentId(player1, "Daughter of Autumn");
+        findPermanent(player1, "Daughter of Autumn").setTapped(true);
         UUID angelId = harness.getPermanentId(player1, "Serra Angel");
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, angelId);
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        var shield = gd.creatureDamageRedirectShields.getFirst();
-        assertThat(shield.protectedPermanentId()).isEqualTo(angelId);
-        assertThat(shield.damageSourceId()).isNull();
-        assertThat(shield.remainingAmount()).isEqualTo(1);
-        assertThat(shield.redirectTargetId()).isEqualTo(daughterId);
+        harness.activateAbility(player1, 2, null, angelId);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Serra Angel").getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -88,8 +90,7 @@ class DaughterOfAutumnTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         resolveCombat(player2);
 
@@ -124,17 +125,73 @@ class DaughterOfAutumnTest extends BaseCardTest {
     void canTargetOpponentsWhiteCreature() {
         addDaughter();
         harness.addToBattlefield(player2, new SerraAngel());
+        addPyromancerReady();
 
-        UUID daughterId = harness.getPermanentId(player1, "Daughter of Autumn");
         UUID angelId = harness.getPermanentId(player2, "Serra Angel");
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateAbility(player1, 0, null, angelId);
         harness.passBothPriorities();
 
-        assertThat(gd.creatureDamageRedirectShields).hasSize(1);
-        assertThat(gd.creatureDamageRedirectShields.getFirst().protectedPermanentId()).isEqualTo(angelId);
-        assertThat(gd.creatureDamageRedirectShields.getFirst().redirectTargetId()).isEqualTo(daughterId);
+        harness.activateAbility(player1, 1, null, angelId);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Serra Angel").getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two activations redirect two damage from the same combat event")
+    void multipleActivationsRedirectTwoDamage() {
+        addDaughter();
+        Permanent target = addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat(player2);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Unused redirection expires at the end of the turn")
+    void redirectionExpiresAtEndOfTurn() {
+        addDaughter();
+        harness.addToBattlefield(player1, new SerraAngel());
+        addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        UUID angelId = harness.getPermanentId(player1, "Serra Angel");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, angelId);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, angelId);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Serra Angel").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Daughter of Autumn").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A white creature with protection from green cannot be targeted")
+    void cannotTargetCreatureWithProtectionFromGreen() {
+        addDaughter();
+        harness.addToBattlefield(player1, new VoiceOfDuty());
+        UUID targetId = harness.getPermanentId(player1, "Voice of Duty");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Distress.class, GrizzlyBears.class, Peek.class, Forest.class})
 class DistressTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack targeting a player")
@@ -38,7 +35,6 @@ class DistressTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Distress");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -53,14 +49,12 @@ class DistressTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolving — choosing a nonland card from opponent's hand =====
-
     @Test
     @DisplayName("Resolving reveals hand and prompts caster for card choice")
     void promptsForCardChoice() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -78,7 +72,7 @@ class DistressTest extends BaseCardTest {
     void choosingNonlandCardDiscardsIt() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -97,7 +91,7 @@ class DistressTest extends BaseCardTest {
 
         // Peek should remain in player2's hand
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player2.getId()).get(0).getName()).isEqualTo("Peek");
+        harness.assertInHand(player2, "Peek");
     }
 
     @Test
@@ -105,7 +99,7 @@ class DistressTest extends BaseCardTest {
     void landCardsExcludedFromChoices() {
         Card creature = new GrizzlyBears();
         Card land = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(creature, land)));
+        harness.setHand(player2, List.of(creature, land));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -123,7 +117,7 @@ class DistressTest extends BaseCardTest {
     void selectingLandIndexIsRejected() {
         Card creature = new GrizzlyBears();
         Card land = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(creature, land)));
+        harness.setHand(player2, List.of(creature, land));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -141,7 +135,7 @@ class DistressTest extends BaseCardTest {
     void handWithOnlyLandsNoValidChoices() {
         Card land1 = new Forest();
         Card land2 = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(land1, land2)));
+        harness.setHand(player2, List.of(land1, land2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -177,7 +171,7 @@ class DistressTest extends BaseCardTest {
         Card land1 = new Forest();
         Card creature = new GrizzlyBears();
         Card land2 = new Forest();
-        harness.setHand(player2, new ArrayList<>(List.of(land1, creature, land2)));
+        harness.setHand(player2, List.of(land1, creature, land2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -200,14 +194,12 @@ class DistressTest extends BaseCardTest {
                 .allMatch(c -> c.getName().equals("Forest"));
     }
 
-    // ===== Validation =====
-
     @Test
     @DisplayName("Invalid card index is rejected")
     void invalidCardIndexRejected() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -224,7 +216,7 @@ class DistressTest extends BaseCardTest {
     void wrongPlayerCannotChoose() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -236,14 +228,12 @@ class DistressTest extends BaseCardTest {
                 .hasMessageContaining("Not your turn to choose");
     }
 
-    // ===== Targeting =====
-
     @Test
     @DisplayName("Can target self")
     void canTargetSelf() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player1, new ArrayList<>(List.of(new Distress(), card1, card2)));
+        harness.setHand(player1, List.of(new Distress(), card1, card2));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
@@ -258,16 +248,14 @@ class DistressTest extends BaseCardTest {
 
         // Peek should remain in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).get(0).getName()).isEqualTo("Peek");
+        harness.assertInHand(player1, "Peek");
     }
-
-    // ===== After resolution =====
 
     @Test
     @DisplayName("Distress goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         Card card1 = new GrizzlyBears();
-        harness.setHand(player2, new ArrayList<>(List.of(card1)));
+        harness.setHand(player2, List.of(card1));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -280,14 +268,12 @@ class DistressTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Distress");
     }
 
-    // ===== Logging =====
-
     @Test
     @DisplayName("Hand reveal is logged")
     void handRevealIsLogged() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -302,7 +288,7 @@ class DistressTest extends BaseCardTest {
     void cardChoiceIsLogged() {
         Card card1 = new GrizzlyBears();
         Card card2 = new Peek();
-        harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setHand(player2, List.of(card1, card2));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -318,7 +304,7 @@ class DistressTest extends BaseCardTest {
     @DisplayName("Discard is logged")
     void discardIsLogged() {
         Card card1 = new GrizzlyBears();
-        harness.setHand(player2, new ArrayList<>(List.of(card1)));
+        harness.setHand(player2, List.of(card1));
 
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -329,5 +315,64 @@ class DistressTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
-}
 
+    @Test
+    @DisplayName("Caster can choose the instant instead of the creature")
+    void canChooseAnyNonlandCard() {
+        Card creature = new GrizzlyBears();
+        Card instant = new Peek();
+        harness.setHand(player2, List.of(creature, instant));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(instant);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The choice uses the target's hand at resolution")
+    void usesHandAtResolution() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        Card land = new Forest();
+        Card instant = new Peek();
+        harness.setHand(player2, List.of(land, instant));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)
+                .validIndices()).containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(instant);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Caster cannot decline the mandatory nonland choice")
+    void cannotDeclineChoice() {
+        Card creature = new GrizzlyBears();
+        harness.setHand(player2, List.of(creature));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+}

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GavonyTownship;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SisterhoodOfKarn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DannyPink.class, Forest.class, GavonyTownship.class, GrizzlyBears.class})
+@CardUsed({DannyPink.class, Forest.class, GavonyTownship.class, GrizzlyBears.class, SisterhoodOfKarn.class})
 class DannyPinkTest extends BaseCardTest {
 
     @BeforeEach
@@ -79,12 +80,59 @@ class DannyPinkTest extends BaseCardTest {
     }
 
     private void declareAttackers(Permanent first, Permanent second) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(
+        declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(first),
                 gd.playerBattlefields.get(player1.getId()).indexOf(second)));
+    }
+
+    @Test
+    @DisplayName("Counters placed before Danny enters still count as the first placement that turn")
+    void earlierCounterPlacementPreventsDrawAfterDannyEnters() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent township = harness.addToBattlefieldAndReturn(player1, new GavonyTownship());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        activateTownship(township);
+        resolveAllTriggers();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.castFromHand(player1, new DannyPink(), "{3}{U}");
+        resolveAllTriggers();
+        township.untap();
+        activateTownship(township);
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering with counters draws a card from Danny's granted ability")
+    void enteringWithCountersDrawsCard() {
+        harness.addToBattlefield(player1, new DannyPink());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.castFromHand(player1, new SisterhoodOfKarn(), "{1}{G}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Sisterhood of Karn")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Mentor cannot put a counter on an equal-power attacking creature")
+    void mentorDoesNotCounterEqualPowerAttacker() {
+        Permanent danny = addCreatureReady(player1, new DannyPink());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(danny, attacker);
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

@@ -27,7 +27,7 @@ public class AgathasChampion extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        targetWhenKicked(TargetFilters.creatureAnOpponentControls(), 0, 0, 1, 1)
+        targetWhenKicked(TargetFilters.creatureAnOpponentControls(), 0, 0, 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                         new EnteringCreatureFightsTargetCreatureEffect()));
     }

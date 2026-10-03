@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({DireFleetInterloper.class, Forest.class})
 class DireFleetInterloperTest extends BaseCardTest {
 
-    // ===== Explore reveals a land — put into hand =====
 
     @Test
     @DisplayName("Explore with land on top puts land into hand")
@@ -55,12 +55,11 @@ class DireFleetInterloperTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Explore reveals a non-land — +1/+1 counter and may graveyard =====
 
     @Test
     @DisplayName("Explore with non-land on top puts +1/+1 counter on creature")
     void exploreNonLandAddsCounter() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new DireFleetInterloper());
 
         castInterloper();
 
@@ -72,7 +71,7 @@ class DireFleetInterloperTest extends BaseCardTest {
     @Test
     @DisplayName("Explore with non-land on top prompts may ability")
     void exploreNonLandPromptsMayAbility() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new DireFleetInterloper());
 
         castInterloper();
 
@@ -83,7 +82,7 @@ class DireFleetInterloperTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — accept puts card into graveyard")
     void exploreNonLandAcceptPutsInGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new DireFleetInterloper();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castInterloper();
@@ -98,7 +97,7 @@ class DireFleetInterloperTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — decline leaves card on top of library")
     void exploreNonLandDeclineLeavesOnTop() {
-        Card creature = new GrizzlyBears();
+        Card creature = new DireFleetInterloper();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castInterloper();
@@ -110,22 +109,35 @@ class DireFleetInterloperTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creature.getId()));
     }
 
-    // ===== Explore with empty library =====
 
     @Test
-    @DisplayName("Explore with empty library does nothing")
+    @DisplayName("Explore with empty library still adds a +1/+1 counter")
     void exploreEmptyLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         castInterloper();
 
         Permanent interloper = findInterloper();
         assertThat(interloper).isNotNull();
-        assertThat(interloper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(interloper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Entering explores exactly once and leaves the next card untouched")
+    void exploresOnlyOneCard() {
+        Card land = new Forest();
+        Card nextCard = new DireFleetInterloper();
+        harness.setLibrary(player1, List.of(land, nextCard));
+
+        castInterloper();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(findInterloper().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void castInterloper() {
         harness.setHand(player1, List.of(new DireFleetInterloper()));

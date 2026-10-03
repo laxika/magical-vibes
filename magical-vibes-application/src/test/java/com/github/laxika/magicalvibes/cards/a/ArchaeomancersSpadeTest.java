@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchaeomancersSpade.class, FlaringPain.class, ThinkTwice.class, Shock.class})
+@CardUsed({ArchaeomancersSpade.class, FlaringPain.class, ThinkTwice.class, Shock.class,
+        CosisTrickster.class, ShivanDragon.class})
 class ArchaeomancersSpadeTest extends BaseCardTest {
 
     @Test
@@ -59,11 +62,78 @@ class ArchaeomancersSpadeTest extends BaseCardTest {
         FlaringPain flaringPain = new FlaringPain();
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(flaringPain));
-        harness.castFromGraveyard(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.RED))
                 .isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.WHITE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void seeksTheOnlyFlashbackCardWhenFewerThanTwoAreAvailable() {
+        FlaringPain flaringPain = new FlaringPain();
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(shock, flaringPain));
+
+        harness.enterBattlefieldAndReturn(player1, new ArchaeomancersSpade());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(flaringPain);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+    }
+
+    @Test
+    void doesNotPutNonFlashbackCardsIntoTheGraveyard() {
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+
+        harness.enterBattlefieldAndReturn(player1, new ArchaeomancersSpade());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+    }
+
+    @Test
+    void seekingDoesNotTriggerOpponentShuffleAbilities() {
+        harness.addToBattlefield(player2, new CosisTrickster());
+        harness.setLibrary(player1, List.of(new FlaringPain(), new ThinkTwice(), new Shock()));
+
+        harness.enterBattlefieldAndReturn(player1, new ArchaeomancersSpade());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void manaCanPayForActivatedAbilities() {
+        harness.addToBattlefield(player1, new ArchaeomancersSpade());
+        var dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.RED))
+                .isZero();
+    }
+
+    @Test
+    void manaAbilityTapsTheArtifactAndDoesNotUseTheStack() {
+        var spade = harness.addToBattlefieldAndReturn(player1, new ArchaeomancersSpade());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(spade.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.RED))
+                .isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getNonHandSpellOnlyMana(ManaColor.WHITE))
                 .isEqualTo(1);
     }

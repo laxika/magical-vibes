@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HitchclawRecluse;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.n.NullhideFerox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,16 +18,17 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DreamEater.class, HitchclawRecluse.class, Island.class, NullhideFerox.class})
 class DreamEaterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Surveils fewer than four cards, then may return an opposing nonland permanent")
     void surveilsAndReturnsOpponentPermanent() {
-        Card topCard = new GrizzlyBears();
-        Card secondCard = new GrizzlyBears();
+        Card topCard = new HitchclawRecluse();
+        Card secondCard = new HitchclawRecluse();
         harness.setLibrary(player1, List.of(topCard, secondCard));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new HitchclawRecluse());
+        UUID targetId = harness.getPermanentId(player2, "Hitchclaw Recluse");
         castDreamEater();
 
         harness.passBothPriorities();
@@ -41,17 +44,17 @@ class DreamEaterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Hitchclaw Recluse");
+        harness.assertInHand(player2, "Hitchclaw Recluse");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(secondCard);
     }
 
     @Test
     @DisplayName("May decline leaves the opposing permanent on the battlefield")
     void decliningBounceLeavesPermanent() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setLibrary(player1, List.of(new HitchclawRecluse(), new HitchclawRecluse(), new HitchclawRecluse(), new HitchclawRecluse()));
+        harness.addToBattlefield(player2, new HitchclawRecluse());
+        UUID targetId = harness.getPermanentId(player2, "Hitchclaw Recluse");
         castDreamEater();
 
         harness.passBothPriorities();
@@ -62,18 +65,18 @@ class DreamEaterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hitchclaw Recluse");
     }
 
     @Test
     @DisplayName("The reflexive target excludes lands and permanents controlled by the caster")
     void reflexiveTargetIsOpponentNonlandPermanent() {
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new HitchclawRecluse(), new HitchclawRecluse(), new HitchclawRecluse(), new HitchclawRecluse()));
+        harness.addToBattlefield(player1, new HitchclawRecluse());
+        harness.addToBattlefield(player2, new HitchclawRecluse());
         harness.addToBattlefield(player2, new Island());
-        UUID ownCreatureId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID opposingCreatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID ownCreatureId = harness.getPermanentId(player1, "Hitchclaw Recluse");
+        UUID opposingCreatureId = harness.getPermanentId(player2, "Hitchclaw Recluse");
         UUID opposingLandId = harness.getPermanentId(player2, "Island");
         castDreamEater();
 
@@ -88,6 +91,68 @@ class DreamEaterTest extends BaseCardTest {
         assertThat(targetChoice.validIds())
                 .contains(opposingCreatureId)
                 .doesNotContain(ownCreatureId, opposingLandId);
+    }
+
+    @Test
+    void emptyLibraryStillAllowsBounce() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new HitchclawRecluse());
+        UUID targetId = harness.getPermanentId(player2, "Hitchclaw Recluse");
+        castDreamEater();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, targetId);
+        harness.assertOnBattlefield(player2, "Hitchclaw Recluse");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Hitchclaw Recluse");
+        harness.assertInHand(player2, "Hitchclaw Recluse");
+    }
+
+    @Test
+    void surveilReordersFourCardsAndLeavesFifthUntouchedWithoutBounceTarget() {
+        Card first = new HitchclawRecluse();
+        Card second = new Island();
+        Card third = new HitchclawRecluse();
+        Card fourth = new Island();
+        Card fifth = new HitchclawRecluse();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+        harness.addToBattlefield(player2, new Island());
+        castDreamEater();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil.cards()).containsExactly(first, second, third, fourth);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(3, 1), List.of(0, 2)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, second, fifth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, third);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    void reflexiveTargetExcludesOpponentHexproofPermanent() {
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addToBattlefield(player2, new NullhideFerox());
+        harness.addToBattlefield(player2, new HitchclawRecluse());
+        UUID hexproofId = harness.getPermanentId(player2, "Nullhide Ferox");
+        UUID legalId = harness.getPermanentId(player2, "Hitchclaw Recluse");
+        castDreamEater();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(legalId).doesNotContain(hexproofId);
     }
 
     private void castDreamEater() {

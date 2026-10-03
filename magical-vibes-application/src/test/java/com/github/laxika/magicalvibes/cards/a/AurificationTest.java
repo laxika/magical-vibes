@@ -90,12 +90,71 @@ class AurificationTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castInstant(player2, 0, aurification.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aurification.getId());
+        resolveAllTriggers();
 
         assertThat(ownCreature.getCounterCount(CounterType.GOLD)).isZero();
         assertThat(opposingCreature.getCounterCount(CounterType.GOLD)).isZero();
         assertThat(land.getCounterCount(CounterType.GOLD)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Damage from your own creature also gives it a gold counter")
+    void marksOwnCreatureThatDealsDamageToYou() {
+        Permanent shooter = addCreatureReady(player1, new GoblinSharpshooter());
+        harness.addToBattlefield(player1, new Aurification());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(shooter.getCounterCount(CounterType.GOLD)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, shooter)).contains(CardSubtype.GOBLIN, CardSubtype.WALL);
+        assertThat(gqs.hasKeyword(gd, shooter, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not trigger Aurification")
+    void doesNotMarkCreatureThatDamagesAnotherPlayer() {
+        Permanent shooter = addCreatureReady(player1, new GoblinSharpshooter());
+        harness.addToBattlefield(player1, new Aurification());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(shooter.getCounterCount(CounterType.GOLD)).isZero();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, shooter)).doesNotContain(CardSubtype.WALL);
+        assertThat(gqs.hasKeyword(gd, shooter, Keyword.DEFENDER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Aurification triggers, but either one leaving removes all gold counters")
+    void leavingOneCopyRemovesCountersWhileAnotherRemains() {
+        Permanent shooter = addCreatureReady(player1, new GoblinSharpshooter());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Aurification());
+        harness.addToBattlefield(player2, new Aurification());
+        shooter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(shooter.getCounterCount(CounterType.GOLD)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, shooter, Keyword.DEFENDER)).isTrue();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Aurification")).isEqualTo(1);
+        assertThat(shooter.getCounterCount(CounterType.GOLD)).isZero();
+        assertThat(shooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, shooter)).contains(CardSubtype.GOBLIN)
+                .doesNotContain(CardSubtype.WALL);
+        assertThat(gqs.hasKeyword(gd, shooter, Keyword.DEFENDER)).isFalse();
     }
 }

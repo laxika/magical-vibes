@@ -23,8 +23,7 @@ class DeepwoodWolverineTest extends BaseCardTest {
         Permanent wolverine = addCreatureReady(player1, new DeepwoodWolverine());
         Permanent blocker = addCreatureReady(player2, new CrenellatedWall());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -39,8 +38,7 @@ class DeepwoodWolverineTest extends BaseCardTest {
     void unblockedGetsNoBoost() {
         Permanent wolverine = addCreatureReady(player1, new DeepwoodWolverine());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(wolverine.getPowerModifier()).isZero();
@@ -53,8 +51,7 @@ class DeepwoodWolverineTest extends BaseCardTest {
         addCreatureReady(player1, new HuntedWumpus());
         Permanent wolverine = addCreatureReady(player2, new DeepwoodWolverine());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wolverine.getPowerModifier()).isZero();
@@ -68,8 +65,7 @@ class DeepwoodWolverineTest extends BaseCardTest {
         addCreatureReady(player2, new CrenellatedWall());
         addCreatureReady(player2, new CrenellatedWall());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -86,8 +82,7 @@ class DeepwoodWolverineTest extends BaseCardTest {
         Permanent wolverine = addCreatureReady(player1, new DeepwoodWolverine());
         addCreatureReady(player2, new CrenellatedWall());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -97,5 +92,26 @@ class DeepwoodWolverineTest extends BaseCardTest {
 
         assertThat(wolverine.getPowerModifier()).isZero();
         assertThat(wolverine.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only the Wolverine that became blocked")
+    void boostResolvesOnlyForBlockedWolverine() {
+        Permanent blocked = addCreatureReady(player1, new DeepwoodWolverine());
+        Permanent unblocked = addCreatureReady(player1, new DeepwoodWolverine());
+        addCreatureReady(player2, new CrenellatedWall());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocked.getPowerModifier()).isZero();
+        assertThat(unblocked.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(blocked.getPowerModifier()).isEqualTo(2);
+        assertThat(blocked.getToughnessModifier()).isZero();
+        assertThat(unblocked.getPowerModifier()).isZero();
+        assertThat(unblocked.getToughnessModifier()).isZero();
     }
 }

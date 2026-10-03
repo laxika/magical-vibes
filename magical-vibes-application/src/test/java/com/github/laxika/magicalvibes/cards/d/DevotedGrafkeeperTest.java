@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StormriderSpirit;
+import com.github.laxika.magicalvibes.cards.t.TimberlandGuide;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,8 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DevotedGrafkeeper.class, DepartedSoulkeeper.class, AirElemental.class, AncientGrudge.class,
-        Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({DevotedGrafkeeper.class, DepartedSoulkeeper.class, Forest.class,
+        StormriderSpirit.class, TimberlandGuide.class})
 class DevotedGrafkeeperTest extends BaseCardTest {
 
     @Test
@@ -44,19 +42,21 @@ class DevotedGrafkeeperTest extends BaseCardTest {
     @DisplayName("Casting a spell from the graveyard taps an opposing creature")
     void graveyardSpellCastTapsOpposingCreature() {
         harness.addToBattlefield(player1, new DevotedGrafkeeper());
-        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new AncientGrudge()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TimberlandGuide());
+        harness.setGraveyard(player1, List.of(new DevotedGrafkeeper()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0, fountain.getId());
+        harness.castFlashback(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(opponentCreature.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
     }
 
     @Test
@@ -64,6 +64,7 @@ class DevotedGrafkeeperTest extends BaseCardTest {
     void disturbEntersTransformed() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setGraveyard(player1, List.of(new DevotedGrafkeeper()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -75,21 +76,20 @@ class DevotedGrafkeeperTest extends BaseCardTest {
 
         Permanent soulkeeper = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(soulkeeper.isTransformed()).isTrue();
-        assertThat(soulkeeper.getCard().getName()).isEqualTo("Departed Soulkeeper");
+        assertThat(soulkeeper.getCard()).isInstanceOf(DepartedSoulkeeper.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
     @Test
     @DisplayName("Departed Soulkeeper can block flying but not nonflying creatures")
     void backFaceBlocksOnlyFlyingCreatures() {
-        Permanent soulkeeper = new Permanent(new DepartedSoulkeeper());
+        Permanent soulkeeper = harness.addToBattlefieldAndReturn(player2, new DepartedSoulkeeper());
         soulkeeper.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(soulkeeper);
 
-        Permanent flyingAttacker = new Permanent(new AirElemental());
+        Permanent flyingAttacker = harness.addToBattlefieldAndReturn(player1, new StormriderSpirit());
         flyingAttacker.setSummoningSick(false);
         flyingAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(flyingAttacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -99,11 +99,10 @@ class DevotedGrafkeeperTest extends BaseCardTest {
 
         assertThat(soulkeeper.isBlocking()).isTrue();
 
-        Permanent groundAttacker = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent groundAttacker = harness.addToBattlefieldAndReturn(player1, new TimberlandGuide());
         groundAttacker.setSummoningSick(false);
         groundAttacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).clear();
-        gd.playerBattlefields.get(player1.getId()).add(groundAttacker);
         soulkeeper.setBlocking(false);
 
         harness.clearPriorityPassed();
@@ -116,10 +115,14 @@ class DevotedGrafkeeperTest extends BaseCardTest {
     @Test
     @DisplayName("Departed Soulkeeper is exiled instead of going to the graveyard")
     void backFaceIsExiledInsteadOfGraveyard() {
-        Permanent soulkeeper = new Permanent(new DepartedSoulkeeper());
-        soulkeeper.setTransformed(true);
-        soulkeeper.setCard(new DepartedSoulkeeper());
-        gd.playerBattlefields.get(player1.getId()).add(soulkeeper);
+        DevotedGrafkeeper card = new DevotedGrafkeeper();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        Permanent soulkeeper = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, soulkeeper));
@@ -127,6 +130,97 @@ class DevotedGrafkeeperTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
-                .contains(soulkeeper.getOriginalCard().getId());
+                .containsExactly(card.getId());
     }
+
+    @Test
+    @DisplayName("Milling a one-card library mills only that card")
+    void millsRemainingCardOfShortLibrary() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setHand(player1, List.of(new DevotedGrafkeeper()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not trigger the tap ability")
+    void handSpellDoesNotTapOpposingCreature() {
+        harness.addToBattlefield(player1, new DevotedGrafkeeper());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TimberlandGuide());
+        harness.setHand(player1, List.of(new DevotedGrafkeeper()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard spell does not trigger the tap ability")
+    void opponentGraveyardSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DevotedGrafkeeper());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TimberlandGuide());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player2, List.of(new DevotedGrafkeeper()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The front face goes to the graveyard normally")
+    void frontFaceIsNotExiledWhenItDies() {
+        DevotedGrafkeeper card = new DevotedGrafkeeper();
+        Permanent grafkeeper = harness.addToBattlefieldAndReturn(player1, card);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, grafkeeper));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The tap trigger cannot target a creature you control")
+    void tapTriggerRejectsOwnCreature() {
+        Permanent grafkeeper = harness.addToBattlefieldAndReturn(player1, new DevotedGrafkeeper());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TimberlandGuide());
+        harness.setGraveyard(player1, List.of(new DevotedGrafkeeper()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, grafkeeper.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(grafkeeper.isTapped()).isFalse();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+        assertThat(opponentCreature.isTapped()).isTrue();
+        harness.passBothPriorities();
+    }
+
 }

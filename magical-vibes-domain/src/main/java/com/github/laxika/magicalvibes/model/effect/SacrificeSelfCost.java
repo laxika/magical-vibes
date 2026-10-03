@@ -30,4 +30,9 @@ public record SacrificeSelfCost(boolean trackPower, boolean recordSacrificedPerm
     public boolean consumesSourcePermanent() {
         return true;
     }
+
+    @Override
+    public boolean sacrificesSourcePermanent() {
+        return true;
+    }
 }

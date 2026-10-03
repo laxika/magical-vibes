@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.m.ManaLeak;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChangeOfHeart.class, HonorGuard.class, ManaLeak.class})
+@CardUsed({ChangeOfHeart.class, HonorGuard.class, ManaLeak.class, Shock.class})
 class ChangeOfHeartTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class ChangeOfHeartTest extends BaseCardTest {
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, guard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, guard.getId());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -45,8 +45,7 @@ class ChangeOfHeartTest extends BaseCardTest {
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, guard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, guard.getId());
         advanceTurn();
         advanceTurn();
 
@@ -78,8 +77,7 @@ class ChangeOfHeartTest extends BaseCardTest {
         harness.setHand(player1, List.of(changeOfHeart));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThatCode(() -> declareAttackers(List.of(1))).doesNotThrowAnyException();
     }
@@ -116,6 +114,56 @@ class ChangeOfHeartTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Buyback does not return the spell when its target leaves before resolution")
+    void illegalTargetPreventsBuybackReturn() {
+        Permanent target = addCreatureReady(player2, new HonorGuard());
+        Card changeOfHeart = new ChangeOfHeart();
+        harness.setHand(player1, List.of(changeOfHeart));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Honor Guard");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(changeOfHeart);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature is also prevented from attacking this turn")
+    void opponentsCreatureCannotAttack() {
+        Permanent target = addCreatureReady(player2, new HonorGuard());
+        harness.setHand(player1, List.of(new ChangeOfHeart()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Buyback requires the additional three mana")
+    void cannotPayBuybackWithOnlySpellMana() {
+        Permanent target = addCreatureReady(player1, new HonorGuard());
+        Card changeOfHeart = new ChangeOfHeart();
+        harness.setHand(player1, List.of(changeOfHeart));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(changeOfHeart);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceTurn() {

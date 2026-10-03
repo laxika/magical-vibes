@@ -20,11 +20,7 @@ class CrushOfWurmsTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Crush of Wurms creates three 6/6 green Wurm tokens")
     void createsWurmTokens() {
-        harness.setHand(player1, List.of(new CrushOfWurms()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new CrushOfWurms(), "{6}{G}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Wurm")).hasSize(3);
@@ -80,5 +76,40 @@ class CrushOfWurmsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(crushOfWurms);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same card can create six Wurms by being cast normally and then flashed back")
+    void normalCastThenFlashbackCreatesSixWurms() {
+        CrushOfWurms card = new CrushOfWurms();
+        harness.castFromHand(player1, card, "{6}{G}{G}{G}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Crush of Wurms");
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wurm")).hasSize(6);
+        assertThat(findPermanents(player2, "Wurm")).isEmpty();
+        harness.assertNotInGraveyard(player1, "Crush of Wurms");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot replace a required green mana with colorless mana")
+    void flashbackRequiresThreeGreenMana() {
+        CrushOfWurms card = new CrushOfWurms();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Wurm")).isEmpty();
     }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Chatterstorm.class, GrizzlyBears.class})
+@CardUsed({Chatterstorm.class, GrizzlyBears.class, Counterspell.class})
 class ChatterstormTest extends BaseCardTest {
 
     @Test
@@ -22,8 +22,7 @@ class ChatterstormTest extends BaseCardTest {
     void createsSquirrelToken() {
         castChatterstorm();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> squirrels = findPermanents(player1, "Squirrel");
         assertThat(squirrels).hasSize(1);
@@ -44,17 +43,53 @@ class ChatterstormTest extends BaseCardTest {
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Squirrel")).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Storm copies are not casts and do not increase later storm counts")
+    void copiesDoNotIncreaseLaterStormCounts() {
+        castChatterstorm();
+        resolveAllTriggers();
+        castChatterstorm();
+        resolveAllTriggers();
+        castChatterstorm();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(6);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Chatterstorm).hasSize(3);
+        assertThat(findPermanents(player2, "Squirrel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm survives countering the original and excludes spells cast afterward")
+    void stormSurvivesCounteringOriginal() {
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+
+        Chatterstorm chatterstorm = new Chatterstorm();
+        harness.castFromHand(player1, chatterstorm, "{1}{G}");
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, chatterstorm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(chatterstorm);
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(1);
+        assertThat(findPermanents(player2, "Squirrel")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castChatterstorm() {
-        harness.setHand(player1, List.of(new Chatterstorm()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Chatterstorm(), "{1}{G}");
     }
 }

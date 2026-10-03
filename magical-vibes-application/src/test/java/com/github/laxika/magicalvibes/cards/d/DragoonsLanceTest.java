@@ -43,7 +43,7 @@ class DragoonsLanceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Flying applies only during the equipped creature controller's turn")
+    @DisplayName("Flying applies only during the Equipment controller's turn")
     void flyingAppliesOnlyDuringControllerTurn() {
         Permanent lance = addLanceReady(player1);
         Permanent hero = addCreatureReady(player1, new GrizzlyBears());
@@ -78,17 +78,51 @@ class DragoonsLanceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 
-    private Permanent addLanceReady(Player player) {
-        Permanent permanent = new Permanent(new DragoonsLance());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Flying follows the Lance controller when the equipped creature has a different controller")
+    void flyingFollowsEquipmentController() {
+        Permanent lance = addLanceReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        lance.setAttachedTo(creature.getId());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR, CardSubtype.KNIGHT);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.BEAR, CardSubtype.KNIGHT);
     }
 
-    private Permanent addCreatureReady(Player player, GrizzlyBears bears) {
-        Permanent permanent = new Permanent(bears);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Job select still creates a Hero when the Lance leaves before the trigger resolves")
+    void jobSelectCreatesHeroWithoutEquipment() {
+        harness.setHand(player1, List.of(new DragoonsLance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent lance = findPermanent(player1, "Dragoon's Lance");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lance));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(1);
+        Permanent hero = findPermanent(player1, "Hero");
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hero))
+                .contains(CardSubtype.HERO).doesNotContain(CardSubtype.KNIGHT);
+        assertThat(gqs.hasKeyword(gd, hero, Keyword.FLYING)).isFalse();
+        harness.assertInGraveyard(player1, "Dragoon's Lance");
+    }
+
+    private Permanent addLanceReady(Player player) {
+        return addCreatureReady(player, new DragoonsLance());
     }
 }

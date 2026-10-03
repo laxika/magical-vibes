@@ -43,9 +43,7 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         // A null amount is the ordinary single event. The dynamic form is used when a preceding
         // resolution step records a variable number of proliferates on the stack entry.
         int totalProliferates = typedEffect.amount() == null
-                ? Math.max(1, (int) entry.getEffectsToResolve().stream()
-                        .filter(e -> e instanceof ProliferateEffect)
-                        .count())
+                ? 1
                 : Math.max(0, amountEvaluationService.evaluate(gameData, typedEffect.amount(),
                         AmountContext.forStackEntry(entry, null)));
         totalProliferates = gameQueryService.replaceProliferateCount(
@@ -66,7 +64,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         List<UUID> eligiblePlayerIds = new ArrayList<>();
         for (UUID playerId : gameData.playerIds) {
             if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerRadCounters.getOrDefault(playerId, 0) > 0) {
+                    || gameData.playerRadCounters.getOrDefault(playerId, 0) > 0
+                    || gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0) {
                 eligiblePlayerIds.add(playerId);
             }
         }

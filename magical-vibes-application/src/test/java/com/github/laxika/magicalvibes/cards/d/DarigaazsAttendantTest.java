@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DarigaazsAttendant.class)
+@CardUsed({DarigaazsAttendant.class})
 class DarigaazsAttendantTest extends BaseCardTest {
 
     @Test
@@ -51,5 +51,39 @@ class DarigaazsAttendantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Darigaaz's Attendant");
         harness.assertNotInGraveyard(player1, "Darigaaz's Attendant");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Darigaaz's Attendant can activate while tapped")
+    void canActivateWhileTapped() {
+        harness.addToBattlefieldAndReturn(player1, new DarigaazsAttendant()).tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Darigaaz's Attendant");
+        harness.assertInGraveyard(player1, "Darigaaz's Attendant");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic activation cost")
+    void canPayGenericCostWithColoredMana() {
+        harness.addToBattlefield(player1, new DarigaazsAttendant());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Darigaaz's Attendant");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }

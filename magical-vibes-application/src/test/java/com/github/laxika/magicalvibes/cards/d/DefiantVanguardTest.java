@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +47,51 @@ class DefiantVanguardTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Defiant Vanguard");
         harness.assertNotOnBattlefield(player1, "Chieftain en-Dal");
         harness.assertNotOnBattlefield(player2, "Defiant Vanguard");
+    }
+
+    @Test
+    @DisplayName("Both creatures remain until the end-of-combat delayed ability resolves")
+    void destructionWaitsForDelayedAbilityResolution() {
+        Permanent vanguard = addCreatureReady(player2, new DefiantVanguard());
+        ChieftainEnDal attackerCard = new ChieftainEnDal();
+        attackerCard.setPower(0);
+        attackerCard.setToughness(10);
+        Permanent attacker = addCreatureReady(player1, attackerCard);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(vanguard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Defiant Vanguard");
+        harness.assertInGraveyard(player1, "Chieftain en-Dal");
+    }
+
+    @Test
+    @DisplayName("The blocked creature is destroyed even if Vanguard dies in combat")
+    void delayedDestructionSurvivesVanguardsCombatDeath() {
+        addCreatureReady(player2, new DefiantVanguard());
+        ChieftainEnDal attackerCard = new ChieftainEnDal();
+        attackerCard.setToughness(10);
+        Permanent attacker = addCreatureReady(player1, attackerCard);
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player2, "Defiant Vanguard");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chieftain en-Dal");
     }
 
     @Test
@@ -95,7 +140,7 @@ class DefiantVanguardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new DefiantFalcon()));
 
         activateVanguard();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
@@ -111,7 +156,7 @@ class DefiantVanguardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(falcon));
 
         activateVanguard();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).contains(falcon);

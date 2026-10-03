@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GoblinDynamo;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -66,8 +67,7 @@ class DeftbladeEliteTest extends BaseCardTest {
         addCreatureReady(player1, new DeftbladeElite());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent defendingCreature = addCreatureReady(player2, new GrizzlyBears());
-        Permanent noncreature = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(noncreature);
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         declareAttackers(List.of(0));
 
@@ -123,5 +123,50 @@ class DeftbladeEliteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Deftblade Elite");
+    }
+
+    @Test
+    @DisplayName("A provoked creature tapped before blockers are declared is not forced to block")
+    void provokedCreatureCanTapBeforeBlocking() {
+        addCreatureReady(player1, new DeftbladeElite());
+        Permanent dynamo = addCreatureReady(player2, new GoblinDynamo());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, dynamo.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        assertThat(dynamo.isTapped()).isTrue();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(dynamo.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Provoke's blocking requirement expires when combat ends")
+    void provokeRequirementExpiresAfterCombat() {
+        Permanent elite = addCreatureReady(player1, new DeftbladeElite());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(blocker.getMustBlockIds()).contains(elite.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Deftblade Elite");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(blocker.getMustBlockIds()).doesNotContain(elite.getId());
     }
 }

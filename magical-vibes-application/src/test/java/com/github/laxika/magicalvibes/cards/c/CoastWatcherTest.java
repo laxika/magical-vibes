@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AcceleratedMutation;
 import com.github.laxika.magicalvibes.cards.d.DragonFangs;
 import com.github.laxika.magicalvibes.cards.t.TreetopScout;
+import com.github.laxika.magicalvibes.cards.x.XantidSwarm;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CoastWatcher.class, AcceleratedMutation.class, DragonFangs.class,
-        ClawsOfWirewood.class, TreetopScout.class})
+        ClawsOfWirewood.class, TreetopScout.class, XantidSwarm.class})
 class CoastWatcherTest extends BaseCardTest {
 
     @Test
@@ -63,7 +65,60 @@ class CoastWatcherTest extends BaseCardTest {
 
         assertThat(coastWatcher.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Coast Watcher");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void cannotBeBlockedByGreenFlyer() {
+        addCreatureReady(player1, new CoastWatcher());
+        addCreatureReady(player2, new XantidSwarm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    void flyingPreventsNonFlyingCreatureFromBlocking() {
+        addCreatureReady(player1, new CoastWatcher());
+        addCreatureReady(player2, new TreetopScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("(flying)");
+    }
+
+    @Test
+    void canBeBlockedAndDamagedByBlueFlyer() {
+        addCreatureReady(player1, new CoastWatcher());
+        addCreatureReady(player2, new CoastWatcher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Coast Watcher");
+        harness.assertInGraveyard(player2, "Coast Watcher");
+    }
+
+    @Test
+    void canBlockGreenCreatureAndPreventItsCombatDamage() {
+        addCreatureReady(player1, new TreetopScout());
+        Permanent coastWatcher = addCreatureReady(player2, new CoastWatcher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Treetop Scout");
+        harness.assertOnBattlefield(player2, "Coast Watcher");
+        assertThat(coastWatcher.getMarkedDamage()).isZero();
     }
 }

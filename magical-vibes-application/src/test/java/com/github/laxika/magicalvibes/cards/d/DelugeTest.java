@@ -100,5 +100,31 @@ class DelugeTest extends BaseCardTest {
         assertThat(airElemental.isTapped()).isFalse();
         assertThat(grizzlyBears.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Taps a nonflying creature that enters after Deluge is cast")
+    void includesCreaturesPresentAtResolution() {
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaves already tapped creatures tapped and taps remaining nonfliers")
+    void handlesAlreadyTappedCreatures() {
+        Permanent tappedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        tappedCreature.tap();
+        Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Deluge(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(tappedCreature.isTapped()).isTrue();
+        assertThat(untappedCreature.isTapped()).isTrue();
+    }
 }
 

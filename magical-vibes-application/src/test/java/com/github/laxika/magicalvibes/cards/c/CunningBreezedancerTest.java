@@ -19,11 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CunningBreezedancerTest extends BaseCardTest {
 
     private Permanent addBreezedancer() {
-        harness.addToBattlefield(player1, new CunningBreezedancer());
+        Permanent breezedancer = harness.addToBattlefieldAndReturn(player1, new CunningBreezedancer());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return breezedancer;
     }
 
     private void endTurn() {
@@ -46,8 +46,17 @@ class CunningBreezedancerTest extends BaseCardTest {
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isEqualTo(1);
 
+        assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(4);
+
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
+        assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(6);
+
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(6);
@@ -98,8 +107,7 @@ class CunningBreezedancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(6);
 
@@ -107,5 +115,46 @@ class CunningBreezedancerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell creates a separate cumulative boost")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent breezedancer = addBreezedancer();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack.stream()
+                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .count()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(8);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The controller's noncreature spell triggers during an opponent's turn")
+    void controllerSpellOnOpponentsTurnPumps() {
+        Permanent breezedancer = addBreezedancer();
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, breezedancer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, breezedancer)).isEqualTo(6);
     }
 }

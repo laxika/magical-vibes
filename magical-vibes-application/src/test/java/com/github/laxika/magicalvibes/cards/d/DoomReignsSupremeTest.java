@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BaronHelmutZemo;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoomReignsSupreme.class, BaronHelmutZemo.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DoomReignsSupreme.class, BaronHelmutZemo.class, Forest.class, GrizzlyBears.class, Shock.class, VampireHexmage.class})
 class DoomReignsSupremeTest extends BaseCardTest {
 
     @Test
@@ -69,6 +70,7 @@ class DoomReignsSupremeTest extends BaseCardTest {
         assertThat(castChoice.maxCount()).isEqualTo(2);
 
         harness.handleMultipleCardsChosen(player1, List.of(firstSpell.getId(), secondSpell.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -92,6 +94,61 @@ class DoomReignsSupremeTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("An opponent's Villain does not advance the plan")
+    void opposingVillainDoesNotAdvancePlan() {
+        Permanent doom = addDoom();
+        harness.enterBattlefieldAndReturn(player2, new BaronHelmutZemo());
+        harness.passBothPriorities();
+        assertThat(doom.getCounterCount(CounterType.PLAN)).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing counters after the fifth-counter trigger does not prevent sacrifice")
+    void removingCountersInResponseDoesNotPreventSacrifice() {
+        Permanent doom = addDoom();
+        doom.setCounterCount(CounterType.PLAN, 4);
+        harness.addToBattlefield(player2, new VampireHexmage());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.enterBattlefieldAndReturn(player1, new BaronHelmutZemo());
+        harness.passBothPriorities();
+        assertThat(doom.getCounterCount(CounterType.PLAN)).isEqualTo(5);
+
+        harness.activateAbility(player2, 0, null, doom.getId());
+        harness.passBothPriorities();
+        assertThat(doom.getCounterCount(CounterType.PLAN)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(doom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(doom.getCard());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline all spells from a short opposing library")
+    void mayDeclineAllExiledSpells() {
+        Permanent doom = addDoom();
+        doom.setCounterCount(CounterType.PLAN, 4);
+        Card spell = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setLibrary(player2, List.of(spell, land));
+        harness.enterBattlefieldAndReturn(player1, new BaronHelmutZemo());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+        assertThat(gd.findExiledCard(land.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(spell.getId()));
+    }
     private Permanent addDoom() {
         return harness.addToBattlefieldAndReturn(player1, new DoomReignsSupreme());
     }

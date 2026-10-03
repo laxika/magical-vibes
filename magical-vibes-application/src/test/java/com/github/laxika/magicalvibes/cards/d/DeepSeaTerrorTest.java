@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FieryImpulse;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeepSeaTerror.class, FieryImpulse.class})
 class DeepSeaTerrorTest extends BaseCardTest {
 
     @Test
@@ -23,9 +24,9 @@ class DeepSeaTerrorTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setGraveyard(player1, graveyardCards(7));
 
-        Permanent terror = readyTerror();
+        Permanent terror = addCreatureReady(player1, new DeepSeaTerror());
 
-        declareAttack(terror);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(terror)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -36,9 +37,9 @@ class DeepSeaTerrorTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setGraveyard(player1, graveyardCards(9));
 
-        Permanent terror = readyTerror();
+        Permanent terror = addCreatureReady(player1, new DeepSeaTerror());
 
-        declareAttack(terror);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(terror)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
@@ -48,22 +49,20 @@ class DeepSeaTerrorTest extends BaseCardTest {
     void cannotAttackWithSixCards() {
         harness.setGraveyard(player1, graveyardCards(6));
 
-        Permanent terror = readyTerror();
-        prepareCombat();
+        Permanent terror = addCreatureReady(player1, new DeepSeaTerror());
 
-        int index = findIndex(terror);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(terror);
+        assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Cannot attack with an empty graveyard")
     void cannotAttackWithEmptyGraveyard() {
-        Permanent terror = readyTerror();
-        prepareCombat();
+        Permanent terror = addCreatureReady(player1, new DeepSeaTerror());
 
-        int index = findIndex(terror);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(terror);
+        assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -72,47 +71,46 @@ class DeepSeaTerrorTest extends BaseCardTest {
     void opponentGraveyardDoesNotCount() {
         harness.setGraveyard(player2, graveyardCards(10));
 
-        Permanent terror = readyTerror();
-        prepareCombat();
+        Permanent terror = addCreatureReady(player1, new DeepSeaTerror());
 
-        int index = findIndex(terror);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(index)))
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(terror);
+        assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private List<Card> graveyardCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new Shock());
+            cards.add(new FieryImpulse());
         }
         return cards;
     }
 
-    private Permanent readyTerror() {
-        Permanent terror = new Permanent(new DeepSeaTerror());
-        terror.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(terror);
-        return terror;
+    @Test
+    @DisplayName("Creature and noncreature cards both count toward the threshold")
+    void allCardTypesCount() {
+        List<Card> cards = graveyardCards(6);
+        cards.add(new DeepSeaTerror());
+        harness.setGraveyard(player1, cards);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new DeepSeaTerror());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 
-    private void prepareCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
+    @Test
+    @DisplayName("Can block with an empty graveyard")
+    void canBlockWithEmptyGraveyard() {
+        harness.setGraveyard(player1, graveyardCards(7));
+        addCreatureReady(player1, new DeepSeaTerror());
+        Permanent blocker = addCreatureReady(player2, new DeepSeaTerror());
 
-    private void declareAttack(Permanent terror) {
-        prepareCombat();
-        gs.declareAttackers(gd, player1, List.of(findIndex(terror)));
-    }
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-    private int findIndex(Permanent target) {
-        Player player = player1;
-        List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i) == target) return i;
-        }
-        throw new IllegalStateException("Permanent not found on battlefield");
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(0);
     }
 }

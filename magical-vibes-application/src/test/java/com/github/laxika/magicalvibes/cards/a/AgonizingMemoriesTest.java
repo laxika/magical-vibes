@@ -308,8 +308,8 @@ class AgonizingMemoriesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Card choice is logged")
-    void cardChoiceIsLogged() {
+    @DisplayName("Chosen cards and their library order are not revealed in the public log")
+    void chosenCardsRemainPrivateInPublicLog() {
         Card card1 = new Abeyance();
         Card card2 = new AlabasterDragon();
         harness.setHand(player2, new ArrayList<>(List.of(card1, card2)));
@@ -320,12 +320,14 @@ class AgonizingMemoriesTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog).anySatisfy(log -> {
-            assertThat(log.plainText()).contains("chooses");
-            assertThat(log.segments()).anyMatch(segment -> segment instanceof GameLogSegment.CardSegment cardSegment
-                    && cardSegment.card().getId().equals(card1.getId()));
-        });
+        assertThat(gd.gameLog.stream().flatMap(log -> log.segments().stream()))
+                .noneMatch(segment -> segment instanceof GameLogSegment.CardSegment cardSegment
+                        && (cardSegment.card().getId().equals(card1.getId())
+                        || cardSegment.card().getId().equals(card2.getId())));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(text -> text.contains(card1.getName()) || text.contains(card2.getName()));
     }
 
     @Test
@@ -340,8 +342,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AgonizingMemories()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player1, 0);

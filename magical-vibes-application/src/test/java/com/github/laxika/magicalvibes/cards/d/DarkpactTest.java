@@ -21,8 +21,7 @@ class DarkpactTest extends BaseCardTest {
     void exchangesAnteCardWithLibraryTop() {
         Card antedCard = new GrizzlyBears();
         Card libraryTop = new HillGiant();
-        harness.setExile(player1, List.of(antedCard));
-        gd.markCardAsAnted(antedCard);
+        gd.addToAnte(player1.getId(), antedCard);
         harness.setLibrary(player1, List.of(libraryTop));
         Card spell = new Darkpact();
         harness.setHand(player1, List.of(spell));
@@ -39,11 +38,10 @@ class DarkpactTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Exchanges the ante card into the library when the library is empty")
-    void exchangesAnteCardWithEmptyLibrary() {
+    @DisplayName("Leaves the ante card in the ante when there is no library card to exchange")
+    void cannotExchangeAnteCardWithEmptyLibrary() {
         Card antedCard = new GrizzlyBears();
-        harness.setExile(player1, List.of(antedCard));
-        gd.markCardAsAnted(antedCard);
+        gd.addToAnte(player1.getId(), antedCard);
         harness.setLibrary(player1, List.of());
         Card spell = new Darkpact();
         harness.setHand(player1, List.of(spell));
@@ -51,10 +49,10 @@ class DarkpactTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, antedCard.getId());
 
-        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.antedCardIds).isEmpty();
+        assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
 
@@ -73,17 +71,86 @@ class DarkpactTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target an opponent's ante card")
-    void cannotTargetOpponentsAnteCard() {
+    @DisplayName("Takes ownership of an opponent's ante card and exchanges it")
+    void exchangesOpponentsAnteCard() {
         Card antedCard = new GrizzlyBears();
-        harness.setExile(player2, List.of(antedCard));
-        gd.markCardAsAnted(antedCard);
-        harness.setLibrary(player1, List.of(new HillGiant()));
+        Card libraryTop = new HillGiant();
+        gd.addToAnte(player2.getId(), antedCard);
+        harness.setLibrary(player1, List.of(libraryTop));
         harness.setHand(player1, List.of(new Darkpact()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, antedCard.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("own");
+        harness.castAndResolveSorcery(player1, 0, antedCard.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(antedCard.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(libraryTop.getId());
+        assertThat(gd.antedCardIds).containsExactly(libraryTop.getId());
+    }
+
+    @Test
+    @DisplayName("Takes ownership even when an empty library prevents the exchange")
+    void takesOwnershipWithoutExchangeWhenLibraryIsEmpty() {
+        Card antedCard = new GrizzlyBears();
+        gd.addToAnte(player2.getId(), antedCard);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Darkpact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, antedCard.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactly(antedCard.getId());
+        assertThat(gd.findExiledCard(antedCard.getId()).ownerId()).isEqualTo(player1.getId());
+        assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
+    }
+
+    @Test
+    @DisplayName("Exchanges only the chosen ante card and preserves the rest of the library")
+    void preservesOtherAnteCardsAndLibraryOrder() {
+        Card antedCard = new GrizzlyBears();
+        Card otherAnteCard = new HillGiant();
+        Card libraryTop = new HillGiant();
+        Card libraryBottom = new GrizzlyBears();
+        gd.addToAnte(player1.getId(), antedCard);
+        gd.addToAnte(player1.getId(), otherAnteCard);
+        harness.setLibrary(player1, List.of(libraryTop, libraryBottom));
+        harness.setHand(player1, List.of(new Darkpact()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, antedCard.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(antedCard.getId(), libraryBottom.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(otherAnteCard.getId(), libraryTop.getId());
+        assertThat(gd.antedCardIds).containsExactlyInAnyOrder(otherAnteCard.getId(), libraryTop.getId());
+    }
+
+    @Test
+    @DisplayName("Does not exchange when the target leaves the ante before resolution")
+    void targetLeavesAnteBeforeResolution() {
+        Card antedCard = new GrizzlyBears();
+        Card libraryTop = new HillGiant();
+        gd.addToAnte(player1.getId(), antedCard);
+        harness.setLibrary(player1, List.of(libraryTop));
+        Card spell = new Darkpact();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, antedCard.getId());
+
+        gd.removeFromExile(antedCard.getId());
+        harness.setGraveyard(player1, List.of(antedCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(libraryTop.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.antedCardIds).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(antedCard, spell);
     }
 }

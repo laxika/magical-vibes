@@ -1,32 +1,40 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DecimatorWeb.class})
 class DecimatorWebTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
     @Test
-    @DisplayName("Has activated ability with tap, {4} mana, three effects, and opponent-only target filter")
-    void hasActivatedAbility() {
-        DecimatorWeb card = new DecimatorWeb();
+    @DisplayName("Activation pays four mana and taps the source before effects resolve")
+    void activationPaysCostsBeforeResolution() {
+        var web = harness.addToBattlefieldAndReturn(player1, new DecimatorWeb());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player2, 20);
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(ability.getEffects()).hasSize(3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(web.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 6);
     }
-
-    // ===== Activation: all three effects resolve =====
 
     @Test
     @DisplayName("Activating ability causes opponent to lose 2 life, get a poison counter, and mill 6 cards")
@@ -49,8 +57,6 @@ class DecimatorWebTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 6);
     }
 
-    // ===== Targeting restriction: opponents only =====
-
     @Test
     @DisplayName("Cannot target yourself with the ability")
     void cannotTargetSelf() {
@@ -60,8 +66,6 @@ class DecimatorWebTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Costs: tap and mana =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
@@ -88,8 +92,6 @@ class DecimatorWebTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Multiple activations across turns =====
-
     @Test
     @DisplayName("Activating multiple times accumulates all effects")
     void multipleActivationsAccumulate() {
@@ -111,5 +113,61 @@ class DecimatorWebTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A short library mills all remaining cards while life loss and poison still apply")
+    void millsShortLibrary() {
+        harness.addToBattlefield(player1, new DecimatorWeb());
+        var cards = List.of(new DecimatorWeb(), new DecimatorWeb(), new DecimatorWeb());
+        harness.setLibrary(player2, cards);
+        harness.setGraveyard(player2, List.of());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(cards);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent life loss or poison")
+    void resolvesWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new DecimatorWeb());
+        harness.setLibrary(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new DecimatorWeb());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 6);
     }
 }

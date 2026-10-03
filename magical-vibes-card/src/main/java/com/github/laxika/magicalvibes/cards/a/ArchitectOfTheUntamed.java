@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "143")
+@CardRegistration(set = "DRC", collectorNumber = "108")
 public class ArchitectOfTheUntamed extends Card {
 
     public ArchitectOfTheUntamed() {

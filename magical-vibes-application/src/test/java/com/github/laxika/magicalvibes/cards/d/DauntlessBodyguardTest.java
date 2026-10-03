@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SylvanAwakening;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,14 +17,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DauntlessBodyguard.class, BalothGorger.class, Plains.class, SylvanAwakening.class})
 class DauntlessBodyguardTest extends BaseCardTest {
-
-    // ===== ETB: choose another creature =====
 
     @Test
     @DisplayName("Casting with another creature prompts for creature choice")
     void castingWithOtherCreaturePromptsChoice() {
-        Permanent bears = addReadyCreature(player1);
+        addCreatureReady(player1, new BalothGorger());
         harness.setHand(player1, List.of(new DauntlessBodyguard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -33,7 +36,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a creature stores chosenPermanentId on the bodyguard")
     void choosingCreatureStoresId() {
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new BalothGorger());
         harness.setHand(player1, List.of(new DauntlessBodyguard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -61,13 +64,11 @@ class DauntlessBodyguardTest extends BaseCardTest {
         assertThat(bodyguard.getChosenPermanentId()).isNull();
     }
 
-    // ===== Sacrifice ability: grant indestructible =====
-
     @Test
     @DisplayName("Sacrificing bodyguard grants indestructible to chosen creature")
     void sacrificeGrantsIndestructibleToChosenCreature() {
-        Permanent bears = addReadyCreature(player1);
-        Permanent bodyguard = addReadyBodyguard(player1);
+        Permanent bears = addCreatureReady(player1, new BalothGorger());
+        Permanent bodyguard = addCreatureReady(player1, new DauntlessBodyguard());
         bodyguard.setChosenPermanentId(bears.getId());
 
         harness.activateAbility(player1, 1, null, null);
@@ -81,8 +82,8 @@ class DauntlessBodyguardTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifice does nothing if no creature was chosen")
     void sacrificeDoesNothingWhenNoCreatureChosen() {
-        Permanent bears = addReadyCreature(player1);
-        Permanent bodyguard = addReadyBodyguard(player1);
+        Permanent bears = addCreatureReady(player1, new BalothGorger());
+        addCreatureReady(player1, new DauntlessBodyguard());
         // chosenPermanentId is null (no creature chosen)
 
         harness.activateAbility(player1, 1, null, null);
@@ -95,8 +96,8 @@ class DauntlessBodyguardTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifice does nothing if chosen creature left the battlefield")
     void sacrificeDoesNothingWhenChosenCreatureGone() {
-        Permanent bears = addReadyCreature(player1);
-        Permanent bodyguard = addReadyBodyguard(player1);
+        Permanent bears = addCreatureReady(player1, new BalothGorger());
+        Permanent bodyguard = addCreatureReady(player1, new DauntlessBodyguard());
         bodyguard.setChosenPermanentId(bears.getId());
 
         // Remove the chosen creature before activating
@@ -109,12 +110,10 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
-    // ===== Full flow: cast + choose + sacrifice =====
-
     @Test
     @DisplayName("Full flow: cast bodyguard, choose creature, sacrifice for indestructible")
     void fullFlowCastChooseSacrifice() {
-        Permanent bears = addReadyCreature(player1);
+        Permanent bears = addCreatureReady(player1, new BalothGorger());
         harness.setHand(player1, List.of(new DauntlessBodyguard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -138,20 +137,64 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Dauntless Bodyguard");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The chosen permanent can be protected after it stops being a creature")
+    void protectsChosenLandAfterAnimationExpires() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new SylvanAwakening(), new DauntlessBodyguard()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gqs.isCreature(gd, plains)).isTrue();
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, plains.getId());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.isCreature(gd, plains)).isFalse();
+        assertThat(gqs.hasKeyword(gd, plains, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.assertInGraveyard(player1, "Dauntless Bodyguard");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, plains, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    private Permanent addReadyBodyguard(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new DauntlessBodyguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("The entry choice excludes itself and opposing creatures")
+    void entryChoiceIncludesOnlyOtherOwnCreatures() {
+        Permanent ownCreature = addCreatureReady(player1, new BalothGorger());
+        addCreatureReady(player2, new BalothGorger());
+        harness.setHand(player1, List.of(new DauntlessBodyguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).containsExactly(ownCreature.getId());
+        harness.handlePermanentChosen(player1, ownCreature.getId());
     }
 
+    @Test
+    @DisplayName("Indestructible expires at the end of the turn")
+    void protectionExpiresAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player1, new BalothGorger());
+        harness.setHand(player1, List.of(new DauntlessBodyguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.assertInGraveyard(player1, "Dauntless Bodyguard");
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
 }

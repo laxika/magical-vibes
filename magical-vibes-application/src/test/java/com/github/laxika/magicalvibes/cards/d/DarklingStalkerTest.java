@@ -9,8 +9,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DarklingStalker.class)
+@CardUsed({DarklingStalker.class})
 class DarklingStalkerTest extends BaseCardTest {
 
     @Test
@@ -81,5 +82,62 @@ class DarklingStalkerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Both abilities work while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent stalker = harness.addToBattlefieldAndReturn(player1, new DarklingStalker());
+        stalker.setSummoningSick(true);
+        stalker.tap();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(stalker.getRegenerationShield()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, stalker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, stalker)).isEqualTo(2);
+        assertThat(stalker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Neither ability can use colorless mana to pay its black cost")
+    void abilitiesRequireBlackMana() {
+        addCreatureReady(player1, new DarklingStalker());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unused regeneration shields expire at end of turn")
+    void unusedRegenerationShieldsExpire() {
+        Permanent stalker = addCreatureReady(player1, new DarklingStalker());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(stalker.getRegenerationShield()).isEqualTo(2);
+        assertThat(stalker.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(stalker.getRegenerationShield()).isZero();
+        harness.assertOnBattlefield(player1, "Darkling Stalker");
     }
 }

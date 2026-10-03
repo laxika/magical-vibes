@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CyclicalEvolution.class, CoalitionRelic.class, NessianCourser.class})
+@CardUsed({CyclicalEvolution.class, CoalitionRelic.class, NessianCourser.class, Clockspinning.class})
 class CyclicalEvolutionTest extends BaseCardTest {
 
     @Test
@@ -28,8 +28,7 @@ class CyclicalEvolutionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(bears.getToughnessModifier()).isEqualTo(3);
@@ -125,12 +124,53 @@ class CyclicalEvolutionTest extends BaseCardTest {
         assertThat(gd.suspendedSpellExiles).isEmpty();
     }
 
+    @Test
+    @DisplayName("Removing the last time counter creates a separate trigger before the cast choice")
+    void lastTimeCounterCreatesSeparateCastTrigger() {
+        harness.addToBattlefield(player1, new NessianCourser());
+        suspendCard();
+
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Clockspinning can adjust time counters after Cyclical Evolution exiles itself")
+    void selfExiledCardCanBeTargetedByClockspinning() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
+        CyclicalEvolution card = new CyclicalEvolution();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.setHand(player1, List.of(new Clockspinning()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, card.getId());
+        harness.handleListChoice(player1, "time counters");
+        harness.handleListChoice(player1, "ADD");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.suspendedSpellExiles)
+                .containsExactly(new GameData.SuspendedSpellExile(card.getId(), player1.getId(), 3));
+    }
+
     private void castNormallyOn(Permanent target) {
         harness.setHand(player1, List.of(new CyclicalEvolution()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private CyclicalEvolution suspendCard() {

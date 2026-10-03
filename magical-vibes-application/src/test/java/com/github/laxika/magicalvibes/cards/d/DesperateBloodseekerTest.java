@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,9 +45,71 @@ class DesperateBloodseekerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
+    @Test
+    void millsOnlyTheTopTwoCardsOfTheTargetLibrary() {
+        DesperateBloodseeker first = new DesperateBloodseeker();
+        DesperateBloodseeker second = new DesperateBloodseeker();
+        DesperateBloodseeker third = new DesperateBloodseeker();
+        harness.setLibrary(player2, List.of(first, second, third));
+        castDesperateBloodseeker();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void millsTheRemainingCardWhenLibraryHasFewerThanTwoCards() {
+        DesperateBloodseeker remaining = new DesperateBloodseeker();
+        harness.setLibrary(player2, List.of(remaining));
+        castDesperateBloodseeker();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    void canTargetAPlayerWithAnEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+        castDesperateBloodseeker();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lifelinkGainsLifeWhenDealingCombatDamage() {
+        Permanent bloodseeker = harness.addToBattlefieldAndReturn(player1, new DesperateBloodseeker());
+        bloodseeker.setSummoningSick(false);
+        bloodseeker.setAttacking(true);
+        bloodseeker.setAttackTarget(player2.getId());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
+
     private void castDesperateBloodseeker() {
-        harness.setHand(player1, List.of(new DesperateBloodseeker()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DesperateBloodseeker(), "{1}{B}");
     }
 }

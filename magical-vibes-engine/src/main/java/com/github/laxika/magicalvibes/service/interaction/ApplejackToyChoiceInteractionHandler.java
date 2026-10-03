@@ -62,6 +62,7 @@ public class ApplejackToyChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
+        gameData.playerSideboards.get(interaction.playerId()).remove(chosenToy);
         effectHandler.completeChoice(gameData, chosenToy);
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

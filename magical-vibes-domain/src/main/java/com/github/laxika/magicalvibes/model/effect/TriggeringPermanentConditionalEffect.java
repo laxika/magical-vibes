@@ -46,4 +46,9 @@ public record TriggeringPermanentConditionalEffect(
     public TargetSpec targetSpec() {
         return wrapped.targetSpec();
     }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return wrapped.hasOptionalTarget();
+    }
 }

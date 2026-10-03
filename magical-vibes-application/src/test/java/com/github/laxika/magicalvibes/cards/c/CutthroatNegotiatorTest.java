@@ -56,6 +56,48 @@ class CutthroatNegotiatorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).contains(player2Top);
     }
 
+    @Test
+    @DisplayName("A mixed reveal rewards only the attacking Negotiator's controller")
+    void mixedRevealRewardsOpponentController() {
+        Card player1Top = new GrizzlyBears();
+        Card player2Top = new Forest();
+        harness.setLibrary(player1, List.of(player1Top));
+        harness.setLibrary(player2, List.of(player2Top));
+        addCreatureReady(player2, new CutthroatNegotiator());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1)
+                .allSatisfy(treasure -> assertThat(treasure.isTapped()).isTrue());
+        assertThat(gd.playerHands.get(player1.getId())).contains(player1Top);
+        assertThat(gd.playerHands.get(player2.getId())).contains(player2Top);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another creature attacking does not trigger a nonattacking Negotiator")
+    void anotherCreatureAttackingDoesNotTriggerParley() {
+        Card player1Top = new GrizzlyBears();
+        Card player2Top = new Forest();
+        harness.setLibrary(player1, List.of(player1Top));
+        harness.setLibrary(player2, List.of(player2Top));
+        addReadyNegotiator();
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(player1Top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(player2Top);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(player1Top);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(player2Top);
+    }
+
     private Permanent addReadyNegotiator() {
         return addCreatureReady(player1, new CutthroatNegotiator());
     }

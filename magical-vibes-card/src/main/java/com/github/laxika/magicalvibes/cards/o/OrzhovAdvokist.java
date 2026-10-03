@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCountersOnCre
 @CardRegistration(set = "NCC", collectorNumber = "207")
 @CardRegistration(set = "MKC", collectorNumber = "77")
 @CardRegistration(set = "MIC", collectorNumber = "91")
+@CardRegistration(set = "C16", collectorNumber = "3")
 public class OrzhovAdvokist extends Card {
 
     public OrzhovAdvokist() {

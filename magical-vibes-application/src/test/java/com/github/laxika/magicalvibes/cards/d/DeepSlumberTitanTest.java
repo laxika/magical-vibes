@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,9 +43,7 @@ class DeepSlumberTitanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlameJavelin()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID titanId = titan.getId();
-        harness.castInstant(player1, 0, titanId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, titan.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(titan.isTapped()).isTrue();
@@ -55,5 +52,56 @@ class DeepSlumberTitanTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Deep-Slumber Titan");
         assertThat(titan.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Damage untaps only the Titan that was dealt damage")
+    void damageUntapsOnlyDamagedTitan() {
+        Permanent damaged = harness.enterBattlefieldAndReturn(player2, new DeepSlumberTitan());
+        Permanent other = harness.enterBattlefieldAndReturn(player2, new DeepSlumberTitan());
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, damaged.getId());
+        harness.passBothPriorities();
+
+        assertThat(damaged.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Damage still triggers when the Titan is already untapped")
+    void damageTriggersWhileUntapped() {
+        Permanent titan = addCreatureReady(player2, new DeepSlumberTitan());
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, titan.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(titan.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(titan.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lethal damage kills the Titan before its untap trigger resolves")
+    void lethalDamageDoesNotSaveTitan() {
+        Permanent titan = harness.enterBattlefieldAndReturn(player2, new DeepSlumberTitan());
+        harness.setHand(player1, List.of(new FlameJavelin(), new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveInstant(player1, 0, titan.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, titan.getId());
+
+        harness.assertInGraveyard(player2, "Deep-Slumber Titan");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(titan);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Deep-Slumber Titan");
+        assertThat(gd.stack).isEmpty();
     }
 }

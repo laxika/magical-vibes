@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -64,6 +65,66 @@ class AtomicMicrosizerTest extends BaseCardTest {
         declareEndStep();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equip attaches to a controlled creature for two mana")
+    void equipAttachesAndBoostsCreature() {
+        Permanent microsizer = addMicrosizerReady();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(microsizer.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The equipped attacker can target itself and keeps its equipment bonus")
+    void equippedAttackerCanTargetItself() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent microsizer = addMicrosizerReady();
+        microsizer.setAttachedTo(attacker.getId());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Both resolved effects last through the end step and expire in cleanup")
+    void resolvedEffectsExpireInCleanup() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent microsizer = addMicrosizerReady();
+        microsizer.setAttachedTo(attacker.getId());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasCantBeBlocked(gd, target)).isFalse();
     }
 
     private Permanent addMicrosizerReady() {

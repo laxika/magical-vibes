@@ -28,7 +28,7 @@ class BarrageTyrantTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Bronze Sable");
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -59,5 +59,73 @@ class BarrageTyrantTest extends BaseCardTest {
     private void addManaForAbility() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
+    }
+
+    @Test
+    @DisplayName("Chosen sacrifice power is retained even when the source is sacrificed in response")
+    void retainsChosenPowerAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new BarrageTyrant());
+        Permanent sacrifice = addCreatureReady(player1, new BarrageTyrant());
+        addCreatureReady(player1, new BarrageTyrant());
+        sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player2, 20);
+        addManaForAbility();
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.activateAbility(player1, 1, null, player2.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source, sacrifice);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 15);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Tyrant can activate and target its controller")
+    void activatesWithoutTappingOrHasteAndCanTargetController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new BarrageTyrant());
+        source.setSummoningSick(true);
+        source.tap();
+        addCreatureReady(player1, new BarrageTyrant());
+        harness.setLife(player1, 20);
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("An opponent's colorless creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addCreatureReady(player1, new BarrageTyrant());
+        addCreatureReady(player2, new BarrageTyrant());
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Barrage Tyrant");
+        harness.assertOnBattlefield(player2, "Barrage Tyrant");
+    }
+
+    @Test
+    @DisplayName("The creature chosen as the target can also pay the sacrifice cost")
+    void sacrificedTargetMakesAbilityFailToResolve() {
+        Permanent source = addCreatureReady(player1, new BarrageTyrant());
+        Permanent target = addCreatureReady(player1, new BarrageTyrant());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Barrage Tyrant");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

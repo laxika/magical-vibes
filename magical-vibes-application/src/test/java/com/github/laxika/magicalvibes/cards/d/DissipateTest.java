@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Dissipate.class, GrizzlyBears.class, MightOfOaks.class})
+@CardUsed({Dissipate.class, GrizzlyBears.class, MightOfOaks.class, GaeasHerald.class})
 class DissipateTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -57,8 +58,7 @@ class DissipateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         // Countered creature is exiled, not in graveyard
@@ -83,8 +83,7 @@ class DissipateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         GameData gd = harness.getGameData();
         // Countered spell is exiled, not in graveyard
@@ -107,8 +106,7 @@ class DissipateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         // Dissipate itself goes to its caster's graveyard (not exiled)
@@ -136,8 +134,7 @@ class DissipateTest extends BaseCardTest {
                 .forEach(se -> se.setCopy(true));
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -191,12 +188,56 @@ class DissipateTest extends BaseCardTest {
                 .setOwnerIdOverride(player2.getId());
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(bears.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getId().equals(bears.getId()));
+    }
+
+    @Test
+    @DisplayName("An uncounterable spell is a legal target but is not exiled")
+    void doesNotExileUncounterableSpell() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Dissipate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(bears.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Dissipate");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can counter and exile a spell controlled by its own caster")
+    void countersOwnSpell() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new Dissipate()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(bears.getId()));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dissipate");
     }
 }

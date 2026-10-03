@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.c.CoralEel;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlindingLight.class, ArmoredPegasus.class, CoralEel.class, Plains.class})
+@CardUsed({BlindingLight.class, ArmoredPegasus.class, CoralEel.class, Plains.class, Ornithopter.class})
 class BlindingLightTest extends BaseCardTest {
 
     private BlindingLight castBlindingLight() {
@@ -54,6 +55,30 @@ class BlindingLightTest extends BaseCardTest {
         castBlindingLight();
 
         assertThat(plains.isTapped()).isFalse();
+        assertThat(nonwhiteCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Taps colorless artifact creatures")
+    void tapsColorlessCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        castBlindingLight();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Leaves already tapped creatures tapped")
+    void leavesAlreadyTappedCreaturesTapped() {
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player1, new ArmoredPegasus());
+        Permanent nonwhiteCreature = harness.addToBattlefieldAndReturn(player2, new CoralEel());
+        whiteCreature.tap();
+        nonwhiteCreature.tap();
+
+        castBlindingLight();
+
+        assertThat(whiteCreature.isTapped()).isTrue();
         assertThat(nonwhiteCreature.isTapped()).isTrue();
     }
 

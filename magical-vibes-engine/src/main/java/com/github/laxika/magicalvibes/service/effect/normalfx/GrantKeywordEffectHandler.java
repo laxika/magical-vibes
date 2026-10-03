@@ -21,7 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +43,13 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        GrantKeywordEffect linkedGrant = (GrantKeywordEffect) effect;
+        if (linkedGrant.duration() == GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                && (entry.getSourcePermanentId() == null
+                || !entry.getControllerId().equals(gameQueryService.findPermanentController(
+                        gameData, entry.getSourcePermanentId())))) {
+            return;
+        }
         var grant = (GrantKeywordEffect) effect;
         if (grant.scope() == GrantScope.OWN_CREATURES
                 || grant.scope() == GrantScope.ALL_OWN_CREATURES) {
@@ -72,7 +81,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 addLegacyBucket(permanent, grant.duration(), grantableKeywords);
                 gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
-                        new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition()),
+                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(), grant.duration(), grant.grantCondition()),
                         permanent.getId(), null, null, floatingDurationFor(grant.duration()), 0));
                 count++;
             }
@@ -315,6 +324,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        Map<Permanent, Set<Keyword>> grants = new LinkedHashMap<>();
         for (UUID id : ids) {
             if (sourceLinked(grant.duration())
                     && (entry.getSourcePermanentId() == null
@@ -345,6 +355,11 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (grantableKeywords.isEmpty()) {
                 continue;
             }
+            grants.put(target, grantableKeywords);
+        }
+        for (Map.Entry<Permanent, Set<Keyword>> resolved : grants.entrySet()) {
+            Permanent target = resolved.getKey();
+            Set<Keyword> grantableKeywords = resolved.getValue();
             addLegacyBucket(target, grant.duration(), grantableKeywords);
             GrantKeywordEffect resolvedGrant = new GrantKeywordEffect(grantableKeywords, grant.scope(), grant.filter(), grant.duration(), grant.grantCondition());
             UUID floatingSourceId = sourceLinked(grant.duration())

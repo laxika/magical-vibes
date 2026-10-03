@@ -125,4 +125,51 @@ class DarigaazsCalderaTest extends BaseCardTest {
         harness.passBothPriorities();
         return caldera;
     }
+
+    @Test
+    @DisplayName("Caldera is sacrificed when there is no other land")
+    void sacrificesWithNoOtherLand() {
+        DarigaazsCaldera caldera = playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(caldera);
+    }
+
+    @Test
+    @DisplayName("Caldera can produce mana before its enter trigger sacrifices it")
+    void producesManaBeforeEnterTriggerResolves() {
+        DarigaazsCaldera caldera = new DarigaazsCaldera();
+        harness.setHand(player1, List.of(caldera));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(caldera);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returning a tapped non-Lair land leaves both Lairs on the battlefield")
+    void returnsTappedNonLairLandAmongLairs() {
+        Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new DarigaazsCaldera());
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        moraine.setTapped(true);
+        DarigaazsCaldera caldera = playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(existingLair)
+                .noneMatch(permanent -> permanent == moraine)
+                .anyMatch(permanent -> permanent.getCard() == caldera);
+        assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
+    }
 }

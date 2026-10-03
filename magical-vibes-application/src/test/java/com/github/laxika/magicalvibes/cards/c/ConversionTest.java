@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Plateau;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,10 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Conversion.class, Mountain.class, Plains.class, Plateau.class})
+@CardUsed({Conversion.class, Mountain.class, Plains.class})
 class ConversionTest extends BaseCardTest {
-
-    // ===== Static: All Mountains are Plains =====
 
     @Test
     @DisplayName("A Mountain taps for white instead of red")
@@ -53,6 +52,7 @@ class ConversionTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(Plateau.class)
     @DisplayName("A Mountain Plains dual land becomes a Plains")
     void convertsMountainPlainsDualLand() {
         harness.addToBattlefield(player1, new Plateau());
@@ -77,8 +77,6 @@ class ConversionTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
     }
-
-    // ===== Upkeep sacrifice-unless-pay {W}{W} =====
 
     @Test
     @DisplayName("Declining to pay {W}{W} sacrifices Conversion")
@@ -120,5 +118,71 @@ class ConversionTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Conversion");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Conversion does not trigger during the opponent's upkeep")
+    void noPaymentDuringOpponentUpkeep() {
+        harness.addToBattlefield(player1, new Conversion());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Conversion");
+    }
+
+    @Test
+    @DisplayName("The second player pays during their own upkeep")
+    void secondPlayerPaysDuringOwnUpkeep() {
+        harness.addToBattlefield(player2, new Conversion());
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Conversion");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("One white mana and one red cannot pay the upkeep and are not spent")
+    void insufficientWhiteManaIsNotSpent() {
+        harness.addToBattlefield(player1, new Conversion());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Conversion");
+        harness.assertInGraveyard(player1, "Conversion");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Mountain entering after Conversion also produces white mana")
+    void convertsNewMountain() {
+        harness.addToBattlefield(player1, new Conversion());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @CardUsed(Plateau.class)
+    @DisplayName("Conversion replaces a dual land's Mountain type with Plains")
+    void replacesDualLandTypes() {
+        harness.addToBattlefield(player1, new Plateau());
+        harness.addToBattlefield(player1, new Conversion());
+
+        assertThat(gqs.effectiveLandTypes(gd, findPermanent(player1, "Plateau")))
+                .containsExactly(CardSubtype.PLAINS);
     }
 }

@@ -32,6 +32,12 @@ public class DiscardOwnHandThenDrawAndThenEffectHandler implements NormalEffectH
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
+            CardEffect followUp = discardEffect.reflexiveFollowUp()
+                    ? new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(discardEffect.thenEffect())
+                    : discardEffect.thenEffect();
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(discardEffect.drawCount()),
+                            followUp));
             return;
         }
 
@@ -41,6 +47,7 @@ public class DiscardOwnHandThenDrawAndThenEffectHandler implements NormalEffectH
                 ? entry.getSourcePermanentSnapshot() : new Permanent(currentSource);
         DiscardFollowUp followUp = DiscardFollowUp.thenEffect(entry.getCard(), discardEffect.thenEffect())
                 .withRummageDrawCount(discardEffect.drawCount())
+                .withSameResolutionContinuation(!discardEffect.reflexiveFollowUp())
                 .withSourceContext(entry.getSourcePermanentId(), sourceSnapshot, hand.size());
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveDiscardCards(gameData, controllerId, hand.size(), followUp);

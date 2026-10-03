@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.d.DromarsAttendant;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ClayStatue;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+
+import java.util.List;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,8 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArtifactPossession.class, AetherSpellbomb.class, DromarsAttendant.class, GrizzlyBears.class,
-        IcyManipulator.class, IronMyr.class, Ornithopter.class})
+@CardUsed({ArtifactPossession.class, AetherSpellbomb.class, DromarsAttendant.class, ClayStatue.class,
+        IcyManipulator.class, IronMyr.class, Ornithopter.class, RayOfCommand.class})
 class ArtifactPossessionTest extends BaseCardTest {
 
     @Test
@@ -29,7 +33,7 @@ class ArtifactPossessionTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.tapPermanent(player2, 0);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -39,12 +43,12 @@ class ArtifactPossessionTest extends BaseCardTest {
     @DisplayName("Activating a non-tap ability of the enchanted artifact deals damage to its controller")
     void controllerActivatingNonTapAbilityDealsDamage() {
         attachAuraTo(player1, player1, new AetherSpellbomb());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).add(new Ornithopter());
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -57,7 +61,7 @@ class ArtifactPossessionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, null, null);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -66,13 +70,13 @@ class ArtifactPossessionTest extends BaseCardTest {
     @DisplayName("An opponent activating a non-tap ability deals damage to the enchanted artifact's controller")
     void opponentActivatingNonTapAbilityDealsDamageToArtifactController() {
         attachAuraTo(player1, player2, new AetherSpellbomb());
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player2.getId()).add(new Ornithopter());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, 1, null, null);
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -87,7 +91,7 @@ class ArtifactPossessionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.activateAbility(player2, 0, null, target.getId());
-        resolveStackFully();
+        resolveAllTriggers();
 
         assertThat(artifact.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -100,9 +104,56 @@ class ArtifactPossessionTest extends BaseCardTest {
         return artifact;
     }
 
-    private void resolveStackFully() {
-        for (int i = 0; i < 8 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty()); i++) {
+    @Test
+    @DisplayName("Non-tap activation damage follows a control change before resolution")
+    void activationDamageUsesControllerAtResolution() {
+        Permanent artifact = attachAuraTo(player1, player2, new ClayStatue());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player2, 0, null, null);
+            harness.castInstant(player1, 0, artifact.getId());
             harness.passBothPriorities();
-        }
+            resolveAllTriggers();
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        });
+    }
+
+    @Test
+    @DisplayName("An unrelated artifact's activation does not trigger Artifact Possession")
+    void unrelatedActivationDoesNotDealDamage() {
+        attachAuraTo(player1, player2, new Ornithopter());
+        harness.addToBattlefield(player2, new ClayStatue());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Tapping the enchanted artifact with another artifact's ability deals damage")
+    void tappingByAnEffectDealsDamage() {
+        Permanent artifact = attachAuraTo(player1, player2, new Ornithopter());
+        harness.addToBattlefield(player2, new IcyManipulator());
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 1, null, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }

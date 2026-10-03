@@ -181,6 +181,8 @@ import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithCreaturePowerAtLeast;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.amount.OpponentsControllingReturnedPermanents;
+import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
@@ -480,6 +482,8 @@ public class AmountEvaluationService {
                     countCardsDrawnThisTurn(gameData, c, ctx);
             case OpponentsWithAtLeastCardsDrawnThisTurn c ->
                     opponentsWithAtLeastCardsDrawnThisTurn(gameData, c, ctx);
+            case OpponentsControllingReturnedPermanents ignored ->
+                    opponentsControllingReturnedPermanents(gameData, ctx);
             case DistinctManaCostsAmongCardsInGraveyard c ->
                     countDistinctManaCostsAmongCardsInGraveyard(gameData, c, ctx);
             case DistinctPermanentNamesAmongControlled c ->
@@ -711,6 +715,8 @@ public class AmountEvaluationService {
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
+            case OpponentsWithAtLeastPoisonCounters c ->
+                    opponentsWithAtLeastPoisonCounters(gameData, c, ctx);
             case DefendingPlayerPoisonCounters ignored ->
                     countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
@@ -888,10 +894,16 @@ public class AmountEvaluationService {
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
             case SourcePower ignored ->
                     ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
+                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
+                            && ctx.sourcePermanent().getLastKnownPower() != null
+                            ? ctx.sourcePermanent().getLastKnownPower()
+                            : gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
             case SourceToughness ignored ->
                     ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
+                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
+                            && ctx.sourcePermanent().getLastKnownToughness() != null
+                            ? ctx.sourcePermanent().getLastKnownToughness()
+                            : gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
             case TargetToughness ignored ->
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
@@ -1263,6 +1275,12 @@ public class AmountEvaluationService {
     }
 
     private int countPermanents(GameData gameData, PermanentCount count, AmountContext ctx) {
+        if (count.declaredAttackersOnly()) {
+            return ctx.stackEntry() == null ? 0 : (int) ctx.stackEntry().getAttackingPermanentSnapshots().stream()
+                    .filter(attacker -> count.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, count.filter(), FilterContext.empty().withSourceControllerId(ctx.controllerId())))
+                    .count();
+        }
         return countPermanents(gameData, count, ctx, false);
     }
 
@@ -1898,12 +1916,13 @@ public class AmountEvaluationService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 if (card.isToken()
-                        || !predicateEvaluationService.matchesCardPredicate(card, amount.filter(), null)
-                        || card.getPower() == null) {
+                        || !predicateEvaluationService.matchesCardPredicate(card, amount.filter(), null, gameData, playerId)
+                        || power == null) {
                     continue;
                 }
-                greatestPower = Math.max(greatestPower, card.getPower());
+                greatestPower = Math.max(greatestPower, power);
             }
         }
         return greatestPower;
@@ -2331,6 +2350,18 @@ public class AmountEvaluationService {
 
     private int greatestPowerAmongControlled(
             GameData gameData, GreatestPowerAmongControlled amount, AmountContext ctx) {
+        if (amount.declaredAttackersOnly()) {
+            if (ctx.stackEntry() == null) return 0;
+            java.util.OptionalInt greatest = ctx.stackEntry().getAttackingPermanentSnapshots().stream()
+                    .filter(attacker -> amount.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, amount.filter(), FilterContext.empty().withSourceControllerId(ctx.controllerId())))
+                    .mapToInt(attacker -> {
+                        Permanent current = gameQueryService.findPermanentById(gameData, attacker.getId());
+                        return current == null ? attacker.getLastKnownPower()
+                                : gameQueryService.getEffectivePower(gameData, current);
+                    }).max();
+            return greatest.isEmpty() ? 0 : amount.floorAtZero() ? Math.max(0, greatest.getAsInt()) : greatest.getAsInt();
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         FilterContext filterContext = null;
         if (amount.filter() != null) {
@@ -2890,6 +2921,21 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int opponentsControllingReturnedPermanents(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null || ctx.stackEntry() == null) return 0;
+        Set<UUID> returnedPermanentIds = ctx.stackEntry().getReturnedPermanentIds();
+        if (returnedPermanentIds.isEmpty()) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
+    }
+
     private int opponentsWithAtLeastCardsDrawnThisTurn(
             GameData gameData, OpponentsWithAtLeastCardsDrawnThisTurn count, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
@@ -3173,6 +3219,19 @@ public class AmountEvaluationService {
         return total;
     }
 
+    private int opponentsWithAtLeastPoisonCounters(
+            GameData gameData, OpponentsWithAtLeastPoisonCounters count, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(ctx.controllerId())
+                    && gameData.playerPoisonCounters.getOrDefault(playerId, 0) >= count.minimum()) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
+    }
+
     private int countDefendingPlayerPoisonCounters(GameData gameData, AmountContext ctx) {
         UUID defendingPlayerId = defendingPlayerId(gameData, ctx);
         return defendingPlayerId == null
@@ -3212,7 +3271,8 @@ public class AmountEvaluationService {
         if (ctx.sourcePermanent() == null) return 0;
         int total = 0;
         for (Card exiled : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId())) {
-            Integer value = power ? exiled.getPower() : exiled.getToughness();
+            Integer value = power ? gameQueryService.getEffectiveCardPower(gameData, exiled)
+                    : gameQueryService.getEffectiveCardToughness(gameData, exiled);
             if (value != null) {
                 total += value;
             }

@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.Wastes;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DimensionalInfiltrator.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DimensionalInfiltrator.class, Forest.class, GrizzlyBears.class, Wastes.class})
 class DimensionalInfiltratorTest extends BaseCardTest {
 
     @Test
@@ -82,6 +85,69 @@ class DimensionalInfiltratorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("An empty library offers no return and does not cause a loss")
+    void emptyLibraryDoesNotOfferReturn() {
+        addInfiltrator();
+        harness.setLibrary(player2, List.of());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Dimensional Infiltrator");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Exiles only the top card, leaving the land below it in the library")
+    void exilesOnlyTopCard() {
+        addInfiltrator();
+        Card topCard = new DimensionalInfiltrator();
+        Card nextCard = new Wastes();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Dimensional Infiltrator");
+    }
+
+    @Test
+    @DisplayName("Colored mana cannot pay the colorless part of the activation cost")
+    void activationRequiresColorlessMana() {
+        addInfiltrator();
+        Card topCard = new Wastes();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting on the opponent's turn")
+    void canCastOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new DimensionalInfiltrator(), "{1}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dimensional Infiltrator");
+        harness.assertNotInHand(player1, "Dimensional Infiltrator");
     }
 
     private Permanent addInfiltrator() {

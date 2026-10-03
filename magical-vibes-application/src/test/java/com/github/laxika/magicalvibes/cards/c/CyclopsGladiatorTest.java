@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CyclopsGladiator.class, RuneclawBear.class})
 class CyclopsGladiatorTest extends BaseCardTest {
-
-    // ===== Attack trigger: target selection =====
 
     @Test
     @DisplayName("Attacking queues attack trigger for target selection")
     void attackTriggersTargetSelection() {
-        addReadyCyclops(player1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CyclopsGladiator());
+        addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
 
@@ -34,8 +33,8 @@ class CyclopsGladiatorTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing target puts MayEffect trigger on the stack")
     void choosingTargetPutsTriggerOnStack() {
-        Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -47,15 +46,13 @@ class CyclopsGladiatorTest extends BaseCardTest {
                         && se.getSourcePermanentId().equals(cyclops.getId()));
     }
 
-    // ===== May choice =====
-
     @Test
     @DisplayName("Resolving trigger presents may ability choice")
     void resolvingTriggerPresentsMayChoice() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        addReadyCyclops(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new CyclopsGladiator());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -69,8 +66,8 @@ class CyclopsGladiatorTest extends BaseCardTest {
     void decliningMayDealsNoDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -84,26 +81,26 @@ class CyclopsGladiatorTest extends BaseCardTest {
         assertThat(cyclops.getMarkedDamage()).isZero();
     }
 
-    // ===== Fight resolution =====
-
     @Test
     @DisplayName("Accepting may ability deals mutual damage — Cyclops 4/4 vs 2/2")
     void acceptingDealsMutualDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
-        // Accept the may ability — CR 603.5: fight resolves inline during resolution
+        // Accepting the choice resolves the damage immediately.
         harness.handleMayAbilityChosen(player1, true);
 
         // Opponent's 2/2 takes 4 damage from Cyclops (lethal) — should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(opponentCreature.getId()));
+
+        assertThat(cyclops.getMarkedDamage()).isEqualTo(2);
 
         // Cyclops 4/4 takes 2 damage from the 2/2 — should survive
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -115,9 +112,9 @@ class CyclopsGladiatorTest extends BaseCardTest {
     void bothCreaturesDieWhenMutualLethal() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent cyclops = addReadyCyclops(player1);
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
         // Put a 4/4 on opponent's side
-        Permanent opponentCyclops = addReadyCyclops(player2);
+        Permanent opponentCyclops = addCreatureReady(player2, new CyclopsGladiator());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCyclops.getId());
@@ -133,29 +130,23 @@ class CyclopsGladiatorTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(opponentCyclops.getId()));
     }
 
-    // ===== Ruling 3: source leaves battlefield before resolution =====
-
     @Test
-    @DisplayName("If Cyclops Gladiator leaves battlefield before resolution, still deals damage to target using base power")
+    @DisplayName("If Cyclops Gladiator leaves battlefield before resolution, still deals damage to target using last known power")
     void sourceLeavesBattlefieldStillDealsDamageToTarget() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent cyclops = addReadyCyclops(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
-        harness.passBothPriorities();
-
-        // Accept the may ability
-        harness.handleMayAbilityChosen(player1, true);
-
-        // Remove Cyclops Gladiator before the fight effect resolves (simulating opponent's removal spell)
+        // Remove Cyclops Gladiator before the triggered ability resolves (simulating opponent's removal spell)
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(cyclops.getId()));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Target should still take damage equal to Cyclops Gladiator's base power (4)
+        // Target should still take damage equal to Cyclops Gladiator's last known power (4)
         // Opponent's 2/2 creature takes 4 damage — lethal, should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(opponentCreature.getId()));
@@ -166,53 +157,45 @@ class CyclopsGladiatorTest extends BaseCardTest {
     void sourceLeavesBattlefieldNoReciprocalDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent cyclops = addReadyCyclops(player1);
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
         // Use a large creature so we can verify no damage is dealt to player
-        Permanent opponentCyclops = addReadyCyclops(player2);
+        Permanent opponentCyclops = addCreatureReady(player2, new CyclopsGladiator());
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, opponentCyclops.getId());
-        harness.passBothPriorities();
-
-        harness.handleMayAbilityChosen(player1, true);
-
         // Remove source before resolution
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(cyclops.getId()));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        // Target takes 4 damage (from base power) but survives (4/4 with 4 damage = lethal, destroyed)
+        // The target takes lethal damage from the departed source.
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(opponentCyclops.getId()));
         // Player 1 life should be unchanged — no reciprocal damage redirected to player
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Target restriction =====
-
     @Test
     @DisplayName("Cannot target own creatures — only opponent's creatures are valid targets")
     void cannotTargetOwnCreatures() {
-        Permanent cyclops = addReadyCyclops(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent ownCreature = addCreatureReady(player1, new RuneclawBear());
+        Permanent opponentCreature = addCreatureReady(player2, new RuneclawBear());
 
         declareAttackers(player1, List.of(0));
 
-        // The valid targets should not include the controller's own creature
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        // Selecting own creature should fail — only opponent creatures are valid
-        // The interaction context should only allow opponent's creatures
-        PermanentChoiceContext.AttackTriggerTarget att =
-                (PermanentChoiceContext.AttackTriggerTarget) gd.interaction.permanentChoiceContext();
-        assertThat(att).isNotNull();
-        assertThat(att.sourceCard().getName()).isEqualTo("Cyclops Gladiator");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(opponentCreature.getId())
+                .doesNotContain(cyclops.getId(), ownCreature.getId());
     }
 
     @Test
     @DisplayName("Trigger skipped when opponent has no creatures")
     void triggerSkippedWhenNoValidTargets() {
-        addReadyCyclops(player1);
+        addCreatureReady(player1, new CyclopsGladiator());
         // No creatures on opponent's battlefield
 
         declareAttackers(player1, List.of(0));
@@ -221,12 +204,18 @@ class CyclopsGladiatorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A departed target causes the attack ability to do nothing")
+    void departedTargetMakesAbilityDoNothing() {
+        Permanent cyclops = addCreatureReady(player1, new CyclopsGladiator());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
 
-    private Permanent addReadyCyclops(Player player) {
-        Permanent perm = new Permanent(new CyclopsGladiator());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(cyclops.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }

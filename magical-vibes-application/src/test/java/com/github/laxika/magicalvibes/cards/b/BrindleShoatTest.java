@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,11 +23,8 @@ class BrindleShoatTest extends BaseCardTest {
     void deathTriggerCreatesBoarToken() {
         harness.addToBattlefield(player1, new BrindleShoat());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -60,5 +56,30 @@ class BrindleShoatTest extends BaseCardTest {
         assertThat(boar.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(boar.getCard().getSubtypes()).contains(CardSubtype.BOAR);
         assertThat(boar.getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths create one Boar for each Shoat's controller")
+    void simultaneousDeathsCreateTokensForBothControllers() {
+        harness.addToBattlefield(player1, new BrindleShoat());
+        harness.addToBattlefield(player1, new BrindleShoat());
+        harness.addToBattlefield(player2, new BrindleShoat());
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(countPermanents(player1, "Boar")).isZero();
+        assertThat(countPermanents(player2, "Boar")).isZero();
+        harness.assertNotOnBattlefield(player1, "Brindle Shoat");
+        harness.assertNotOnBattlefield(player2, "Brindle Shoat");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Boar")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Boar")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

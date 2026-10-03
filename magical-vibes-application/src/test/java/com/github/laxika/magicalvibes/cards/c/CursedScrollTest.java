@@ -138,8 +138,86 @@ class CursedScrollTest extends BaseCardTest {
     }
 
     private Permanent addReadyScroll(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new CursedScroll());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new CursedScroll());
+    }
+
+    @Test
+    @DisplayName("A matching reveal still deals damage after Cursed Scroll leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        harness.setLife(player2, 20);
+        Permanent scroll = addReadyScroll(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new Counterspell()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(scroll);
+        gd.playerGraveyards.get(player1.getId()).add(scroll.getCard());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Counterspell");
+
+        harness.assertLife(player2, 18);
+        harness.assertInHand(player1, "Counterspell");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple cards with the chosen name guarantee damage without discarding them")
+    void duplicateNamesGuaranteeDamage() {
+        harness.setLife(player2, 20);
+        addReadyScroll(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new Counterspell(), new Counterspell()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Counterspell");
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The name prompt allows valid card names absent from the game")
+    void namePromptIncludesCardsOutsideGame() {
+        addReadyScroll(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(interaction.options()).contains("Fighting Drake");
+        harness.handleListChoice(player1, "Fighting Drake");
+    }
+
+    @Test
+    @DisplayName("The name prompt does not disclose changes to an opponent's hidden hand")
+    void namePromptDoesNotLeakOpponentHand() {
+        Permanent scroll = addReadyScroll(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        List<String> firstOptions = List.copyOf(
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options());
+        harness.handleListChoice(player1, "Cursed Scroll");
+
+        scroll.setTapped(false);
+        harness.setHand(player2, List.of(new FightingDrake()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyElementsOf(firstOptions);
+        harness.handleListChoice(player1, "Cursed Scroll");
     }
 }

@@ -83,6 +83,59 @@ class ComponentPouchTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void naturalTwentyAddsTwoCountersToExistingCounters() {
+        Permanent pouch = harness.addToBattlefieldAndReturn(player1, new ComponentPouch());
+        pouch.setCounterCount(CounterType.COMPONENT, 3);
+        setRoll(20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pouch.getCounterCount(CounterType.COMPONENT)).isEqualTo(5);
+    }
+
+    @Test
+    void rollingTapsThePouchAsAnActivationCost() {
+        Permanent pouch = harness.addToBattlefieldAndReturn(player1, new ComponentPouch());
+        setRoll(1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(pouch.isTapped()).isTrue();
+        assertThat(pouch.getCounterCount(CounterType.COMPONENT)).isZero();
+        harness.passBothPriorities();
+        assertThat(pouch.getCounterCount(CounterType.COMPONENT)).isEqualTo(1);
+    }
+
+    @Test
+    void tappedPouchCannotActivateTheRollAbility() {
+        Permanent pouch = harness.addToBattlefieldAndReturn(player1, new ComponentPouch());
+        pouch.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void manaAbilityRejectsChoosingTheSameColorTwice() {
+        Permanent pouch = harness.addToBattlefieldAndReturn(player1, new ComponentPouch());
+        pouch.setCounterCount(CounterType.COMPONENT, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(pouch.isTapped()).isTrue();
+        assertThat(pouch.getCounterCount(CounterType.COMPONENT)).isEqualTo(1);
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, ManaColor.GREEN.name()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
     private void setRoll(int result) {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
     }

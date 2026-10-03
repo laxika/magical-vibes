@@ -25,7 +25,7 @@ public class AtemsisAllSeeing extends Card {
                 ),
                 "{2}{U}, {T}: Draw two cards, then discard a card."
         ));
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new MayEffect(
                         new RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEffect(),
                         "Reveal your hand?"

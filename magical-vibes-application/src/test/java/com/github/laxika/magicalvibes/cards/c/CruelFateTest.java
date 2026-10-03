@@ -36,8 +36,7 @@ class CruelFateTest extends BaseCardTest {
         Card c4 = new Plains();
         harness.setLibrary(player2, List.of(c0, c1, c2, c3, c4));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
@@ -71,8 +70,7 @@ class CruelFateTest extends BaseCardTest {
         Card c4 = new Plains();
         harness.setLibrary(player2, List.of(c0, c1, c2, c3, c4));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 2);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
@@ -92,8 +90,7 @@ class CruelFateTest extends BaseCardTest {
         Card bottom = new Forest();
         harness.setLibrary(player2, List.of(top, bottom));
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
@@ -116,8 +113,7 @@ class CruelFateTest extends BaseCardTest {
 
         harness.setLibrary(player2, List.of());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -131,5 +127,51 @@ class CruelFateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void singleCardLibraryPutsItsOnlyCardIntoOpponentsGraveyard() {
+        harness.setHand(player1, List.of(new CruelFate()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        Card onlyCard = new Island();
+        harness.setLibrary(player2, List.of(onlyCard));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(onlyCard.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void onlyTopFiveAreSelectableAndDeeperCardsKeepTheirOrder() {
+        harness.setHand(player1, List.of(new CruelFate()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        Card c0 = new Island();
+        Card c1 = new Forest();
+        Card c2 = new GrizzlyBears();
+        Card c3 = new Mountain();
+        Card c4 = new Plains();
+        Card c5 = new Island();
+        Card c6 = new Forest();
+        harness.setLibrary(player2, List.of(c0, c1, c2, c3, c4, c5, c6));
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 5))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 2);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(c4.getId(), c3.getId(), c1.getId(), c0.getId(), c5.getId(), c6.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(c2.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

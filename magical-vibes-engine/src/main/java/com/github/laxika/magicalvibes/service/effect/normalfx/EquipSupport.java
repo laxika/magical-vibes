@@ -70,7 +70,8 @@ public class EquipSupport {
     public boolean canAttachEquipment(GameData gameData, Permanent equipment, Permanent host,
                                       boolean permitsNonCreatureTarget,
                                       boolean permitsCreatureEquipment) {
-        if (!gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)
+        if (equipment.getId().equals(host.getId())
+                || !gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)
                 || (!permitsCreatureEquipment && gameQueryService.isCreature(gameData, equipment)
                 && !gameQueryService.hasReconfigure(gameData, equipment))
                 || (!permitsNonCreatureTarget && !gameQueryService.isCreature(gameData, host))

@@ -26,10 +26,8 @@ class DemonicAttorneyTest extends BaseCardTest {
         harness.castFromHand(player1, new DemonicAttorney(), "{1}{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(Card::getId).containsExactly(player1Top.getId());
-        assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .extracting(Card::getId).containsExactly(player2Top.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.antedCardIds)
                 .containsExactlyInAnyOrder(player1Top.getId(), player2Top.getId());
         assertThat(gd.playerDecks.get(player1.getId()))
@@ -47,7 +45,8 @@ class DemonicAttorneyTest extends BaseCardTest {
         harness.castFromHand(player1, new DemonicAttorney(), "{1}{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(player1Top);
+        assertThat(gd.antedCardIds).containsExactly(player1Top.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -63,10 +62,23 @@ class DemonicAttorneyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .extracting(Card::getId).containsExactly(player2Top.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.antedCardIds).containsExactly(player2Top.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell resolves with both libraries empty and no cards anted")
+    void bothLibrariesEmpty() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.castFromHand(player1, new DemonicAttorney(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.antedCardIds).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Demonic Attorney");
     }
 }

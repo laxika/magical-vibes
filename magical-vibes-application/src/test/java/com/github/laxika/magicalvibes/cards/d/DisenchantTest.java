@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BadMoon;
-import com.github.laxika.magicalvibes.cards.d.Desert;
-import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Disenchant.class, TormodsCrypt.class, Dodecapod.class, BadMoon.class,
@@ -23,12 +22,11 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact")
     void resolvesAndDestroysArtifact() {
-        harness.addToBattlefield(player2, new TormodsCrypt());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Tormod's Crypt");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Tormod's Crypt");
@@ -38,12 +36,11 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an artifact controlled by the caster")
     void resolvesAndDestroysOwnArtifact() {
-        harness.addToBattlefield(player1, new TormodsCrypt());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new TormodsCrypt()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Tormod's Crypt");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Tormod's Crypt");
@@ -53,12 +50,11 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target artifact creature")
     void resolvesAndDestroysArtifactCreature() {
-        harness.addToBattlefield(player2, new Dodecapod());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Dodecapod()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Dodecapod");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Dodecapod");
@@ -68,12 +64,11 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target enchantment")
     void resolvesAndDestroysEnchantment() {
-        harness.addToBattlefield(player2, new BadMoon());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BadMoon()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Bad Moon");
         harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Bad Moon");
@@ -83,12 +78,11 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target creature with Disenchant")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new Squire());
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new Squire()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID creatureId = harness.getPermanentId(player2, "Squire");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -96,13 +90,46 @@ class DisenchantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target land with Disenchant")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Desert());
+        UUID landId = harness.addToBattlefieldAndReturn(player2, new Desert()).getId();
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        UUID landId = harness.getPermanentId(player2, "Desert");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires a target even when an artifact is on the battlefield")
+    void cannotCastWithoutTarget() {
+        harness.addToBattlefield(player2, new TormodsCrypt());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not destroy another artifact when the target is sacrificed in response")
+    void targetSacrificedInResponse() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt()).getId();
+        harness.addToBattlefield(player2, new Dodecapod());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Tormod's Crypt");
+        harness.assertInGraveyard(player2, "Tormod's Crypt");
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        harness.assertNotInGraveyard(player2, "Dodecapod");
+        harness.assertInGraveyard(player1, "Disenchant");
+        assertThat(gd.stack).isEmpty();
     }
 }

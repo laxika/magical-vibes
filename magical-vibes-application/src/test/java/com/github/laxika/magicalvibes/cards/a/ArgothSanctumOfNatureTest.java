@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.t.TitaniaVoiceOfGaea;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.SachiDaughterOfSeshiro;
+import com.github.laxika.magicalvibes.cards.m.MishraClaimedByGix;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArgothSanctumOfNature.class, TitaniaVoiceOfGaea.class, ArgothianOpportunist.class,
+        Forest.class, Mountain.class, MishraClaimedByGix.class})
 class ArgothSanctumOfNatureTest extends BaseCardTest {
 
     @Test
@@ -30,7 +33,7 @@ class ArgothSanctumOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Enters untapped when you control a legendary green creature")
     void entersUntappedWithLegendaryGreenCreature() {
-        harness.addToBattlefield(player1, new SachiDaughterOfSeshiro());
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
 
         playArgoth();
 
@@ -40,7 +43,7 @@ class ArgothSanctumOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("A nonlegendary green creature does not satisfy the entry condition")
     void nonlegendaryGreenCreatureDoesNotSatisfyEntryCondition() {
-        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new ArgothianOpportunist());
 
         playArgoth();
 
@@ -102,9 +105,8 @@ class ArgothSanctumOfNatureTest extends BaseCardTest {
     }
 
     private Permanent addReadyArgoth(Player player) {
-        Permanent argoth = new Permanent(new ArgothSanctumOfNature());
+        Permanent argoth = harness.addToBattlefieldAndReturn(player, new ArgothSanctumOfNature());
         argoth.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(argoth);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -113,5 +115,69 @@ class ArgothSanctumOfNatureTest extends BaseCardTest {
 
     private Permanent findArgoth(Player player) {
         return findPermanent(player, "Argoth, Sanctum of Nature");
+    }
+
+    @Test
+    void opponentsLegendaryGreenCreatureDoesNotAllowUntappedEntry() {
+        harness.addToBattlefield(player2, new TitaniaVoiceOfGaea());
+
+        playArgoth();
+
+        assertThat(findArgoth(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void nongreenLegendaryCreatureDoesNotAllowUntappedEntry() {
+        harness.addToBattlefield(player1, new MishraClaimedByGix());
+
+        playArgoth();
+
+        assertThat(findArgoth(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void createsBearEvenWithEmptyLibrary() {
+        addReadyArgoth(player1);
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void millingThreeLandsWithTitaniaGainsLifeOnlyOnce() {
+        addReadyArgoth(player1);
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void tokenAbilityCannotBeActivatedWithNonemptyStack() {
+        Permanent argoth = addReadyArgoth(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.activateAbility(player1, 0, 1, null, null);
+        argoth.untap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
     }
 }

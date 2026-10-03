@@ -2,14 +2,17 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GavonyIronwright;
+import com.github.laxika.magicalvibes.cards.h.HighbornGhoul;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,15 +20,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeathsCaress.class, GavonyIronwright.class, HighbornGhoul.class})
 class DeathsCaressTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Death's Caress targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HighbornGhoul());
 
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -36,17 +37,13 @@ class DeathsCaressTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Death's Caress");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Destroying a Human gains life equal to its toughness")
     void destroyingHumanGainsLife() {
-        Permanent human = new Permanent(new EliteVanguard()); // 2/1 Human Soldier
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(human);
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
 
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -54,20 +51,18 @@ class DeathsCaressTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, human.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, human.getId());
 
-        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
-        harness.assertInGraveyard(player2, "Elite Vanguard");
-        // Elite Vanguard has toughness 1, so controller gains 1 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.assertNotOnBattlefield(player2, "Gavony Ironwright");
+        harness.assertInGraveyard(player2, "Gavony Ironwright");
+        // Gavony Ironwright has toughness 4, so controller gains 4 life
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 4);
     }
 
     @Test
     @DisplayName("Destroying a non-Human creature grants no life")
     void destroyingNonHumanGrantsNoLife() {
-        Permanent nonHuman = new Permanent(new GrizzlyBears()); // 2/2 Bear
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(nonHuman);
+        Permanent nonHuman = harness.addToBattlefieldAndReturn(player2, new HighbornGhoul());
 
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);
@@ -75,39 +70,139 @@ class DeathsCaressTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, nonHuman.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, nonHuman.getId());
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        // Grizzly Bears is not a Human, so no life is gained
+        harness.assertNotOnBattlefield(player2, "Highborn Ghoul");
+        harness.assertInGraveyard(player2, "Highborn Ghoul");
+        // Highborn Ghoul is not a Human, so no life is gained
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
     @Test
     @DisplayName("Death's Caress goes to the graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HighbornGhoul());
 
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Death's Caress");
     }
 
-    // ===== Fizzle =====
+    @Test
+    void indestructibleHumanStillGrantsLife() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
+        human.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, human.getId());
+
+        harness.assertOnBattlefield(player2, "Gavony Ironwright");
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void regeneratingHumanStillGrantsLife() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
+        human.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, human.getId());
+
+        harness.assertOnBattlefield(player2, "Gavony Ironwright");
+        assertThat(human.isTapped()).isTrue();
+        assertThat(human.getRegenerationShield()).isZero();
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    void usesModifiedToughnessAtResolution() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, human.getId());
+        human.setToughnessModifier(3);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Gavony Ironwright");
+        harness.assertLife(player1, 27);
+    }
+
+    @Test
+    void canDestroyYourOwnHumanAndGainLife() {
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, human.getId());
+
+        harness.assertInGraveyard(player1, "Gavony Ironwright");
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    void checksHumanSubtypeAtResolution() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, human.getId());
+        human.setTransientCreatureTypeOverride(CardSubtype.ZOMBIE);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Gavony Ironwright");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void creatureThatBecomesHumanGrantsLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HighbornGhoul());
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, target.getId());
+        target.setTransientCreatureTypeOverride(CardSubtype.HUMAN);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Highborn Ghoul");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void targetGainingHexproofPreventsDestructionAndLifeGain() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
+        harness.setHand(player1, List.of(new DeathsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, human.getId());
+        human.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gavony Ironwright");
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Death's Caress");
+    }
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent human = new Permanent(new EliteVanguard());
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(human);
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new GavonyIronwright());
 
         harness.setHand(player1, List.of(new DeathsCaress()));
         harness.addMana(player1, ManaColor.BLACK, 5);

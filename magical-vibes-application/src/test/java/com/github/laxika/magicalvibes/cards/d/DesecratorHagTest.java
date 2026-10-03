@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DesecratorHag.class, AirElemental.class, GrizzlyBears.class, HillGiant.class,
+        HolyDay.class, SerraAngel.class, Mortivore.class})
 class DesecratorHagTest extends BaseCardTest {
 
     /**
@@ -112,5 +116,44 @@ class DesecratorHagTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Holy Day");
+    }
+
+    @Test
+    @DisplayName("Uses characteristic-defining power in the graveyard, counting both players' creatures")
+    void returnsCreatureWithCharacteristicDefiningPower() {
+        harness.setGraveyard(player1, List.of(new Mortivore(), new HillGiant()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new AirElemental()));
+        castAndResolveEtb();
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Characteristic-defining power can tie with printed power")
+    void characteristicDefiningPowerCanTie() {
+        harness.setGraveyard(player1, List.of(new Mortivore(), new HillGiant()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        castAndResolveEtb();
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("An empty controller graveyard does not return an opponent's creature")
+    void emptyGraveyardDoesNotUseOpponentsCards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new HillGiant()));
+        castAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.assertNotInHand(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 }

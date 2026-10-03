@@ -80,4 +80,118 @@ class DeepwoodDrummerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    void canTargetItselfAndDiscardANonlandCardBeforeResolution() {
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        harness.setHand(player1, List.of(new DeepwoodDrummer(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int basePower = gqs.getEffectivePower(gd, drummer);
+        int baseToughness = gqs.getEffectiveToughness(gd, drummer);
+
+        harness.activateAbility(player1, 0, null, drummer.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(drummer.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Deepwood Drummer");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, drummer)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, drummer)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, drummer)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, drummer)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent drummer = harness.addToBattlefieldAndReturn(player1, new DeepwoodDrummer());
+        drummer.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, drummer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(drummer.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        drummer.tap();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, drummer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayGreenManaCostWithColorlessMana() {
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, drummer.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(drummer.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityStillResolvesAfterDrummerLeavesBattlefield() {
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        Permanent target = addCreatureReady(player2, new DeepwoodDrummer());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, drummer));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deepwood Drummer");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 2);
+    }
+
+    @Test
+    void removedTargetDoesNotRedirectBoostOrRefundDiscard() {
+        Permanent drummer = addCreatureReady(player1, new DeepwoodDrummer());
+        Permanent target = addCreatureReady(player2, new DeepwoodDrummer());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int basePower = gqs.getEffectivePower(gd, drummer);
+        int baseToughness = gqs.getEffectiveToughness(gd, drummer);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(drummer.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, drummer)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, drummer)).isEqualTo(baseToughness);
+    }
 }

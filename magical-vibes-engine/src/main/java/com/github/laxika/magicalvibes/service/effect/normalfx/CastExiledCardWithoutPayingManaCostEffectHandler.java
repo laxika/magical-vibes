@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Delegates an internal discard follow-up to the shared free-cast-from-exile support.
+ * Casts an exiled card through the shared support during the surrounding effect's resolution.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,6 +27,8 @@ public class CastExiledCardWithoutPayingManaCostEffectHandler implements NormalE
         CastExiledCardWithoutPayingManaCostEffect castEffect =
                 (CastExiledCardWithoutPayingManaCostEffect) effect;
         Player player = new Player(entry.getControllerId(), gameData.playerIdToName.get(entry.getControllerId()));
-        exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, castEffect.exiledCardId());
+        exileFreeCastSupport.castFromExileWithoutPaying(
+                gameData, player, castEffect.exiledCardId(), castEffect.grantHaste(), false,
+                castEffect.suspendHaste(), false);
     }
 }

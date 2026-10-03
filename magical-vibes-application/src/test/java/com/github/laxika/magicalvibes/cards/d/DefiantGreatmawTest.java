@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DefiantGreatmaw.class, AirElemental.class, GrizzlyBears.class, Skinrender.class})
 class DefiantGreatmawTest extends BaseCardTest {
 
     /** Drives the stack to completion. Bounded so a stuck state fails fast instead of hanging. */
@@ -25,8 +27,6 @@ class DefiantGreatmawTest extends BaseCardTest {
             harness.passBothPriorities();
         }
     }
-
-    // ===== ETB: two -1/-1 counters on target creature you control =====
 
     @Test
     @DisplayName("ETB puts two -1/-1 counters on a creature you control")
@@ -48,8 +48,7 @@ class DefiantGreatmawTest extends BaseCardTest {
     @Test
     @DisplayName("ETB cannot target a creature you don't control")
     void etbCannotTargetOpponentCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID opponentCreature = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         harness.setHand(player1, List.of(new DefiantGreatmaw()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -58,8 +57,6 @@ class DefiantGreatmawTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
-
-    // ===== Self-trigger: you put -1/-1 counters on it → remove one from another creature you control =====
 
     @Test
     @DisplayName("When you put -1/-1 counters on it, remove a -1/-1 counter from another target creature you control")
@@ -102,6 +99,59 @@ class DefiantGreatmawTest extends BaseCardTest {
         assertThat(greatmaw.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         // No target prompt was raised — the trigger did not fire for the opponent's counters.
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Two counters placed together trigger once and another Greatmaw is a legal target")
+    void anotherGreatmawCanBeTargetedAndOnlyOneCounterIsRemoved() {
+        Permanent affected = harness.addToBattlefieldAndReturn(player1, new DefiantGreatmaw());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DefiantGreatmaw());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DefiantGreatmaw());
+        recipient.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.setHand(player1, List.of(new DefiantGreatmaw()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0, affected.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).contains(recipient.getId())
+                .doesNotContain(affected.getId(), opponent.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(affected.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(recipient.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The removal trigger can target a creature with no -1/-1 counters")
+    void removalDoesNothingWhenTargetHasOnlyOtherCounters() {
+        Permanent affected = harness.addToBattlefieldAndReturn(player1, new DefiantGreatmaw());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DefiantGreatmaw());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.setHand(player1, List.of(new DefiantGreatmaw()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0, affected.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(affected.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(recipient.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

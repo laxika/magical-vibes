@@ -46,7 +46,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
         Permanent sourcePermanent = sourcePermanentId == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanent == null) {
+        if (sourcePermanent == null && sourcePermanentId == null) {
             sourcePermanentId = null;
             UUID controllerId = entry.getControllerId();
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);

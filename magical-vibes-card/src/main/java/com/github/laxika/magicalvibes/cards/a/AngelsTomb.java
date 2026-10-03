@@ -21,7 +21,7 @@ public class AngelsTomb extends Card {
     public AngelsTomb() {
         // Whenever a creature you control enters, you may have Angel's Tomb become a 3/3 white
         // Angel artifact creature with flying until end of turn. It stays an artifact.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new MayEffect(
                         new AnimatePermanentsEffect(3, 3,
                                 List.of(CardSubtype.ANGEL),

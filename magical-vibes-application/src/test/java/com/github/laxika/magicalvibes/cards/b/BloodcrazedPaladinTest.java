@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({BloodcrazedPaladin.class, GrizzlyBears.class, Shock.class})
 class BloodcrazedPaladinTest extends BaseCardTest {
-
-    // ===== ETB counter placement =====
 
     @Test
     @DisplayName("Enters as 1/1 with no counters when no creatures died this turn")
@@ -28,7 +29,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent paladin = findPaladin(player1);
+        Permanent paladin = findPermanent(player1, "Bloodcrazed Paladin");
         assertThat(paladin).isNotNull();
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -46,7 +47,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent paladin = findPaladin(player1);
+        Permanent paladin = findPermanent(player1, "Bloodcrazed Paladin");
         assertThat(paladin).isNotNull();
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -65,7 +66,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent paladin = findPaladin(player1);
+        Permanent paladin = findPermanent(player1, "Bloodcrazed Paladin");
         assertThat(paladin).isNotNull();
         // Counts all deaths across all players: 1 + 3 = 4
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -95,7 +96,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent paladin = findPaladin(player1);
+        Permanent paladin = findPermanent(player1, "Bloodcrazed Paladin");
         assertThat(paladin).isNotNull();
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -103,26 +104,60 @@ class BloodcrazedPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Counts only deaths from this turn, not from previous turns")
     void doesNotCountDeathsFromPreviousTurns() {
-        // Deaths from a previous turn would have been cleared by turn reset.
-        // creatureDeathCountThisTurn is empty by default, so casting with no deaths
-        // gives 0 counters. This test verifies that baseline.
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
         harness.setHand(player1, List.of(new BloodcrazedPaladin()));
+        harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent paladin = findPaladin(player1);
+        Permanent paladin = findPermanent(player1, "Bloodcrazed Paladin");
         assertThat(paladin).isNotNull();
         assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.setHand(player1, List.of(new BloodcrazedPaladin()));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLACK, 2);
 
-    private Permanent findPaladin(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodcrazed Paladin"))
-                .findFirst().orElse(null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bloodcrazed Paladin")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts a creature that dies after casting but before entering")
+    void countsDeathsWhilePaladinIsOnStack() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new BloodcrazedPaladin(), new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Bloodcrazed Paladin");
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bloodcrazed Paladin")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

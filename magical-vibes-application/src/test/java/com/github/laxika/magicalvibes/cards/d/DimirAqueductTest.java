@@ -80,4 +80,40 @@ class DimirAqueductTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(aqueduct.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("The controller may return Aqueduct even when another land is available")
+    void canReturnItselfWithAnotherLandAvailable() {
+        harness.addToBattlefield(player1, new BorosGarrison());
+        harness.setHand(player1, List.of(new DimirAqueduct()));
+        harness.playLand(player1, 0);
+        Permanent aqueduct = findPermanent(player1, "Dimir Aqueduct");
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, aqueduct.getId());
+
+        harness.assertInHand(player1, "Dimir Aqueduct");
+        harness.assertNotOnBattlefield(player1, "Dimir Aqueduct");
+        harness.assertOnBattlefield(player1, "Boros Garrison");
+    }
+
+    @Test
+    @DisplayName("The return choice excludes lands controlled by the opponent")
+    void cannotChooseOpponentsLand() {
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new BorosGarrison());
+        harness.setHand(player1, List.of(new DimirAqueduct()));
+        harness.playLand(player1, 0);
+        Permanent aqueduct = findPermanent(player1, "Dimir Aqueduct");
+
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(aqueduct.getId()).doesNotContain(opposingLand.getId());
+
+        harness.handlePermanentChosen(player1, aqueduct.getId());
+
+        harness.assertInHand(player1, "Dimir Aqueduct");
+        harness.assertOnBattlefield(player2, "Boros Garrison");
+    }
 }

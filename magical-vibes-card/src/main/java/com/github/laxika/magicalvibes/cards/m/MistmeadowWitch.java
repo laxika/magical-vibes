@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "MM3", collectorNumber = "210")
 @CardRegistration(set = "2X2", collectorNumber = "256")
 @CardRegistration(set = "C13", collectorNumber = "230")
+@CardRegistration(set = "KHC", collectorNumber = "88")
 public class MistmeadowWitch extends Card {
 
     public MistmeadowWitch() {

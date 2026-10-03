@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantBeaver;
+import com.github.laxika.magicalvibes.cards.s.SterlingHound;
+import com.github.laxika.magicalvibes.cards.t.TakeUpTheShield;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.g.GoldPan;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,18 +20,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BovineIntervention.class, GrizzlyBears.class, LeoninScimitar.class, Island.class})
+@CardUsed({BovineIntervention.class, GiantBeaver.class, SterlingHound.class, GoldPan.class, Island.class, TakeUpTheShield.class})
 class BovineInterventionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys a creature and gives its controller a 2/2 white Ox")
     void destroysCreatureAndCreatesOxForItsController() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GiantBeaver());
 
         castBovineIntervention(target);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Giant Beaver");
+        harness.assertInGraveyard(player2, "Giant Beaver");
         assertOxCreatedFor(player2);
         assertThat(findPermanents(player1, "Ox")).isEmpty();
     }
@@ -37,19 +39,19 @@ class BovineInterventionTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys an artifact and gives its controller a 2/2 white Ox")
     void destroysArtifactAndCreatesOxForItsController() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldPan());
 
         castBovineIntervention(target);
 
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Gold Pan");
+        harness.assertInGraveyard(player2, "Gold Pan");
         assertOxCreatedFor(player2);
     }
 
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SterlingHound());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
         prepareBovineIntervention();
 
@@ -58,10 +60,71 @@ class BovineInterventionTest extends BaseCardTest {
                 .hasMessageContaining("artifact or creature");
     }
 
-    private void castBovineIntervention(Permanent target) {
+    @Test
+    @DisplayName("Can destroy your own creature and give you the Ox")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SterlingHound());
+
+        castBovineIntervention(target);
+
+        harness.assertInGraveyard(player1, "Sterling Hound");
+        harness.assertNotOnBattlefield(player1, "Sterling Hound");
+        assertOxCreatedFor(player1);
+        assertThat(findPermanents(player2, "Ox")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Indestructible prevents destruction but not the Ox")
+    void indestructibleTargetStillCreatesOx() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SterlingHound());
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        castBovineIntervention(target);
+
+        harness.assertOnBattlefield(player2, "Sterling Hound");
+        harness.assertNotInGraveyard(player2, "Sterling Hound");
+        assertOxCreatedFor(player2);
+        assertThat(findPermanents(player1, "Ox")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Regeneration saves the creature but its controller still gets the Ox")
+    void regeneratedTargetStillCreatesOx() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SterlingHound());
+        target.setRegenerationShield(1);
+
+        castBovineIntervention(target);
+
+        harness.assertOnBattlefield(player2, "Sterling Hound");
+        harness.assertNotInGraveyard(player2, "Sterling Hound");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertOxCreatedFor(player2);
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution produces no Ox")
+    void missingTargetCreatesNoOx() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SterlingHound());
         prepareBovineIntervention();
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
         harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Ox")).isEmpty();
+        assertThat(findPermanents(player2, "Ox")).isEmpty();
+        harness.assertInGraveyard(player1, "Bovine Intervention");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castBovineIntervention(Permanent target) {
+        prepareBovineIntervention();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareBovineIntervention() {

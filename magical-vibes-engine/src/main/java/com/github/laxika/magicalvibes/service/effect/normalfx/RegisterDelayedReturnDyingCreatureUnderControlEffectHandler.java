@@ -51,6 +51,19 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
                 !permanent.getId().equals(sourcePermanentId) && gameQueryService.isCreature(gameData, permanent))) {
             return;
         }
+        if (e.returnUnderOwnersControl()) {
+            var returnEffect = com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect.builder()
+                    .destination(com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.BATTLEFIELD)
+                    .source(com.github.laxika.magicalvibes.model.GraveyardSearchScope.ALL_GRAVEYARDS)
+                    .filter(new com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate(
+                            java.util.Set.of(dyingCardId), java.util.Map.of(dyingCardId, gameData.graveyardEntryVersion(dyingCardId))))
+                    .returnAll(true).underOwnersControl(true)
+                    .enterWithCounter(e.counterType()).enterWithCounterCount(e.counterAmount())
+                    .grantColor(e.grantColor()).grantSubtype(e.grantSubtype()).build();
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
+                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, returnEffect));
+            return;
+        }
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
                 dyingCardId, returnControllerId, sourcePermanentId,
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),

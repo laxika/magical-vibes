@@ -169,4 +169,38 @@ class DisorderTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Voice of Law");
         assertThat(voiceOfLaw.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Multiple white creatures each take 2 damage, but their controller takes only 2")
+    void multipleWhiteCreaturesDoNotMultiplyPlayerDamage() {
+        harness.setLife(player2, 20);
+        var firstAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        var secondAngel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        castDisorder();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(firstAngel.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondAngel.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Leaves nonwhite creatures and both players undamaged when no white creature exists")
+    void noWhiteCreaturesMeansNoDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        var firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        var secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castDisorder();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(firstBear.getMarkedDamage()).isZero();
+        assertThat(secondBear.getMarkedDamage()).isZero();
+    }
 }

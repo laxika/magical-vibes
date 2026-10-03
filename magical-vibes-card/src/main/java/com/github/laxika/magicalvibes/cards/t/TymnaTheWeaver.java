@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThi
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToAmountEffect;
 
 @CardRegistration(set = "FCA", collectorNumber = "18")
+@CardRegistration(set = "C16", collectorNumber = "48")
 public class TymnaTheWeaver extends Card {
 
     public TymnaTheWeaver() {

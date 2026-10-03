@@ -19,6 +19,60 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BattlefieldScroungerTest extends BaseCardTest {
 
     @Test
+    void canActivateWhileTappedAndSummoningSickAndPaysBeforeResolution() {
+        Permanent scrounger = harness.addToBattlefieldAndReturn(player1, new BattlefieldScrounger());
+        scrounger.setSummoningSick(true);
+        scrounger.tap();
+        List<Card> graveyard = List.of(
+                new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote());
+        List<Card> selected = List.copyOf(graveyard.subList(0, 3));
+        harness.setGraveyard(player1, graveyard);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1, selected.stream().map(Card::getId).toList());
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyElementsOf(graveyard.subList(3, 7));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(selected);
+        assertThat(gqs.getEffectivePower(gd, scrounger)).isEqualTo(3);
+        assertThat(scrounger.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, scrounger)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, scrounger)).isEqualTo(6);
+    }
+
+    @Test
+    void eachScroungerCanActivateOnceInTheSameTurn() {
+        Permanent first = addCreatureReady(player1, new BattlefieldScrounger());
+        Permanent second = addCreatureReady(player1, new BattlefieldScrounger());
+        List<Card> graveyard = List.of(
+                new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote());
+        harness.setGraveyard(player1, graveyard);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleMultipleCardsChosen(player1,
+                graveyard.subList(0, 3).stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleMultipleCardsChosen(player1,
+                graveyard.subList(3, 6).stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyElementsOf(graveyard.subList(6, 10));
+    }
+
+    @Test
     void putsThreeGraveyardCardsOnLibraryBottomAndBoostsOncePerTurn() {
         Permanent scrounger = addCreatureReady(player1, new BattlefieldScrounger());
         List<Card> graveyard = List.of(

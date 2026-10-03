@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "242")
+@CardRegistration(set = "M21", collectorNumber = "385")
 public class AnimalSanctuary extends Card {
 
     private static final PermanentPredicate ANIMAL_CREATURE = new PermanentAllOfPredicate(List.of(

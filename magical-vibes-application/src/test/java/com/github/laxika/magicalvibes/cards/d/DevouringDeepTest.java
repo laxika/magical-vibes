@@ -18,6 +18,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DevouringDeepTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Island still prevents blocking, even by another islandwalker")
+    void tappedIslandStillPreventsBlockingByIslandwalker() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new DevouringDeep());
+        Permanent attacker = addCreatureReady(player1, new DevouringDeep());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Devouring Deep cannot be blocked when defending player controls an Island")
     void cannotBeBlockedWhenDefenderControlsIsland() {
         harness.addToBattlefield(player2, new Island());

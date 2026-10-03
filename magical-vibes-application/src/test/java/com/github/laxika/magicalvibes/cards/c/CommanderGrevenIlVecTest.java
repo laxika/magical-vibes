@@ -132,8 +132,7 @@ class CommanderGrevenIlVecTest extends BaseCardTest {
         Permanent artifactBlocker = addCreatureReady(player2, new BottleGnomes());
         Permanent blackBlocker = addCreatureReady(player2, new PitImp());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(
                         gd.playerBattlefields.get(player2.getId()).indexOf(artifactBlocker),
@@ -144,5 +143,36 @@ class CommanderGrevenIlVecTest extends BaseCardTest {
 
         assertThat(artifactBlocker.isBlocking()).isTrue();
         assertThat(blackBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers the creature sacrifice")
+    void enteringWithoutCastingStillRequiresSacrifice() {
+        harness.enterBattlefieldAndReturn(player1, new CommanderGrevenIlVec());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Commander Greven il-Vec");
+        harness.assertInGraveyard(player1, "Commander Greven il-Vec");
+    }
+
+    @Test
+    @DisplayName("Sacrifice choices use the creatures remaining when the trigger resolves")
+    void sacrificingOtherCreatureInResponseLeavesGrevenToSacrifice() {
+        harness.addToBattlefield(player1, new BottleGnomes());
+        harness.castFromHand(player1, new CommanderGrevenIlVec(), "{3}{B}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Commander Greven il-Vec");
+        harness.assertOnBattlefield(player1, "Bottle Gnomes");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bottle Gnomes");
+        harness.assertInGraveyard(player1, "Commander Greven il-Vec");
+        harness.assertNotOnBattlefield(player1, "Commander Greven il-Vec");
+        harness.assertLife(player1, 23);
     }
 }

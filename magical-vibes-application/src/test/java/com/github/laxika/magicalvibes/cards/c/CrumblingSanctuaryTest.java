@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CrumblingSanctuary.class, ShockTroops.class, GerrardsIrregulars.class,
-        VampireNighthawk.class, JhessianThief.class})
+        VampireNighthawk.class, JhessianThief.class, CurseOfBloodletting.class})
 class CrumblingSanctuaryTest extends BaseCardTest {
 
     @Test
@@ -92,8 +92,7 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(
                 new GerrardsIrregulars(), new CrumblingSanctuary(), new GerrardsIrregulars(), new CrumblingSanctuary()));
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GerrardsIrregulars());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GerrardsIrregulars());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -111,8 +110,7 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CrumblingSanctuary());
         harness.setLibrary(player2, List.of(new GerrardsIrregulars(), new CrumblingSanctuary()));
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new VampireNighthawk());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new VampireNighthawk());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -132,8 +130,7 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GerrardsIrregulars()));
         harness.setLibrary(player2, List.of(new GerrardsIrregulars()));
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new JhessianThief());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new JhessianThief());
         attacker.setAttacking(true);
 
         resolveCombat();
@@ -144,5 +141,61 @@ class CrumblingSanctuaryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only the top cards are exiled and multiple Sanctuaries do not multiply the exile")
+    void multipleSanctuariesExileTopCardsOnlyOnce() {
+        harness.addToBattlefield(player1, new CrumblingSanctuary());
+        harness.addToBattlefield(player2, new CrumblingSanctuary());
+        harness.addToBattlefield(player1, new ShockTroops());
+        GerrardsIrregulars first = new GerrardsIrregulars();
+        CrumblingSanctuary second = new CrumblingSanctuary();
+        ShockTroops remaining = new ShockTroops();
+        harness.setLibrary(player2, List.of(first, second, remaining));
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature is not replaced")
+    void creatureDamageIsNotReplaced() {
+        harness.addToBattlefield(player1, new CrumblingSanctuary());
+        harness.addToBattlefield(player1, new ShockTroops());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GerrardsIrregulars());
+        CrumblingSanctuary libraryCard = new CrumblingSanctuary();
+        harness.setLibrary(player2, List.of(libraryCard));
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Gerrard's Irregulars");
+        harness.assertInGraveyard(player2, "Gerrard's Irregulars");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses between Sanctuary and a damage doubler")
+    void competingDamageReplacementRequiresPlayerChoice() {
+        harness.addToBattlefield(player1, new CrumblingSanctuary());
+        harness.addToBattlefield(player1, new ShockTroops());
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfBloodletting());
+        curse.setAttachedTo(player2.getId());
+        harness.setLibrary(player2, List.of(
+                new GerrardsIrregulars(), new CrumblingSanctuary(),
+                new ShockTroops(), new GerrardsIrregulars(), new CrumblingSanctuary()));
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player2, 20);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }

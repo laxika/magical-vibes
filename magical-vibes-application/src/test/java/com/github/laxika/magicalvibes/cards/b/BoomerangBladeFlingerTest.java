@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,19 +12,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoomerangBladeFlinger.class, GrizzlyBears.class})
+@CardUsed({BoomerangBladeFlinger.class})
 class BoomerangBladeFlingerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking deals 1 damage to each opponent and gains 1 life")
     void attackingDealsDamageAndGainsLife() {
         Permanent flinger = addCreatureReady(player1, new BoomerangBladeFlinger());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BoomerangBladeFlinger());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -32,5 +31,43 @@ class BoomerangBladeFlingerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(flinger);
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after Boomerang leaves the battlefield")
+    void attackTriggerResolvesWithoutItsSource() {
+        Permanent flinger = addCreatureReady(player1, new BoomerangBladeFlinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+            gd.playerBattlefields.get(player1.getId()).remove(flinger);
+            gd.playerHands.get(player1.getId()).add(flinger.getCard());
+            resolveAllTriggers();
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        });
+    }
+
+    @Test
+    @DisplayName("The attacking controller gains life and their opponent takes damage")
+    void opponentControlledBoomerangReversesRecipients() {
+        addCreatureReady(player2, new BoomerangBladeFlinger());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        });
     }
 }

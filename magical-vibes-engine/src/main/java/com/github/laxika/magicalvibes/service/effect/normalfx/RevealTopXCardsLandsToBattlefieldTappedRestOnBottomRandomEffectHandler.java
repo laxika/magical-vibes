@@ -67,6 +67,8 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
                 gameData, typedEffect.untapCondition(), ConditionContext.forStackEntry(entry));
 
         List<Card> remaining = new ArrayList<>();
+        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Permanent> enteredLands = new ArrayList<>();
         for (Card card : revealedCards) {
             if (!card.hasType(CardType.LAND)) {
                 remaining.add(card);
@@ -74,11 +76,24 @@ public class RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffectHand
             }
             Permanent permanent = new Permanent(card);
             permanent.tap();
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent,
+                    enterTappedTypes, List.copyOf(enteredLands));
+            if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
+                continue;
+            }
+            enteredLands.add(permanent);
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
+        }
+        for (Permanent permanent : enteredLands) {
             if (untap && !gameQueryService.cantBecomeUntapped(gameData, permanent)) {
                 permanent.untap();
             }
-            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(card, playerName));
+        }
+        for (Permanent permanent : enteredLands) {
+            UUID enteredControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            if (enteredControllerId != null) {
+                battlefieldEntryService.processLandETBEffects(gameData, enteredControllerId, permanent.getCard());
+            }
         }
 
         if (!remaining.isEmpty()) {

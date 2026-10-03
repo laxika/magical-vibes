@@ -75,10 +75,100 @@ class CelestineTheLivingSaintTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Healing Tears resolves even if Celestine leaves the battlefield in response")
+    void returnsCreatureAfterCelestineLeavesBattlefield() {
+        harness.addToBattlefield(player1, new CelestineTheLivingSaint());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, gd.playerBattlefields.get(player1.getId()).getFirst());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Celestine, the Living Saint");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new CelestineTheLivingSaint());
+        harness.setGraveyard(player1, List.of(new Memnite()));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Only offers cards in the controller's graveyard")
+    void excludesOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new CelestineTheLivingSaint());
+        Card ownCard = new GrizzlyBears();
+        Card opponentsCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentsCard));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Counts all life gained before Celestine entered, regardless of life lost")
+    void countsTotalLifeGainedRatherThanNetLifeChange() {
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 6, "test");
+        harness.addToBattlefield(player1, new CelestineTheLivingSaint());
+        Card target = new HillGiant();
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that left the graveyard before resolution")
+    void doesNotReturnTargetThatLeftGraveyard() {
+        harness.addToBattlefield(player1, new CelestineTheLivingSaint());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(target));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

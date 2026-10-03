@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "156")
 @CardRegistration(set = "2X2", collectorNumber = "163")
 @CardRegistration(set = "CMM", collectorNumber = "328")
+@CardRegistration(set = "C16", collectorNumber = "173")
 public class TuskguardCaptain extends Card {
 
     public TuskguardCaptain() {

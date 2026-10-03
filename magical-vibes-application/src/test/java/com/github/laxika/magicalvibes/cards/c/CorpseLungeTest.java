@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BoneyardWurm;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +19,61 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CorpseLunge.class, GrizzlyBears.class, RagingGoblin.class, Shock.class, BoneyardWurm.class, WalkingCorpse.class})
 class CorpseLungeTest extends BaseCardTest {
 
-    // ===== Casting =====
+    @Test
+    @DisplayName("Damage uses Boneyard Wurm's power in exile, excluding the Wurm itself")
+    void characteristicDefiningPowerInExileDeterminesDamage() {
+        harness.setGraveyard(player1, List.of(new BoneyardWurm(), new WalkingCorpse()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.setHand(player1, List.of(new CorpseLunge()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithGraveyardExile(player1, 0, target.getId(), 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Walking Corpse");
+        harness.assertNotInGraveyard(player1, "Boneyard Wurm");
+    }
+
+    @Test
+    @DisplayName("Damage uses the exiled creature's power at resolution")
+    void characteristicDefiningPowerChangesBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new BoneyardWurm(), new WalkingCorpse()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.setHand(player1, List.of(new CorpseLunge()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithGraveyardExile(player1, 0, target.getId(), 0);
+        harness.setGraveyard(player1, List.of(new WalkingCorpse(), new WalkingCorpse()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Walking Corpse");
+    }
+
+    @Test
+    @DisplayName("Exiling a zero-power creature deals no damage")
+    void zeroPowerDealsNoDamage() {
+        harness.setGraveyard(player1, List.of(new BoneyardWurm()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.setHand(player1, List.of(new CorpseLunge()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstantWithGraveyardExile(player1, 0, target.getId(), 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player1, "Boneyard Wurm");
+    }
+
 
     @Test
     @DisplayName("Casting Corpse Lunge exiles a creature from graveyard and stores its power as X")
@@ -26,8 +81,7 @@ class CorpseLungeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears(); // 2/2
         harness.setGraveyard(player1, List.of(bears));
 
-        Permanent target = new Permanent(new RagingGoblin());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -38,7 +92,6 @@ class CorpseLungeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Corpse Lunge");
         assertThat(entry.getXValue()).isEqualTo(2); // Grizzly Bears has 2 power
 
         // Creature card should be exiled from graveyard
@@ -49,8 +102,7 @@ class CorpseLungeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast Corpse Lunge without a creature in graveyard")
     void cannotCastWithoutCreatureInGraveyard() {
-        Permanent target = new Permanent(new RagingGoblin());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -66,8 +118,7 @@ class CorpseLungeTest extends BaseCardTest {
         Shock shock = new Shock(); // Instant, not a creature
         harness.setGraveyard(player1, List.of(shock));
 
-        Permanent target = new Permanent(new RagingGoblin());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -78,7 +129,6 @@ class CorpseLungeTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Corpse Lunge deals damage equal to exiled creature's power to target creature")
@@ -86,8 +136,7 @@ class CorpseLungeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears(); // 2/2
         harness.setGraveyard(player1, List.of(bears));
 
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -107,8 +156,7 @@ class CorpseLungeTest extends BaseCardTest {
         RagingGoblin goblin = new RagingGoblin(); // 1/1
         harness.setGraveyard(player1, List.of(goblin));
 
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -127,8 +175,7 @@ class CorpseLungeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears(); // 2/2
         harness.setGraveyard(player1, List.of(bears));
 
-        Permanent target = new Permanent(new RagingGoblin());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -156,8 +203,7 @@ class CorpseLungeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears(); // 2/2
         harness.setGraveyard(player1, List.of(goblin, bears));
 
-        Permanent target = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new CorpseLunge()));
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -51,4 +51,34 @@ class CrosissAttendantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Crosis's Attendant");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+    @Test
+    @DisplayName("Crosis's Attendant can activate while tapped")
+    void canActivateWhileTapped() {
+        harness.addToBattlefieldAndReturn(player1, new CrosissAttendant()).setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Crosis's Attendant");
+        harness.assertInGraveyard(player1, "Crosis's Attendant");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Colored mana pays the generic cost and only the controller receives mana")
+    void canPayGenericCostWithColoredMana() {
+        harness.addToBattlefield(player1, new CrosissAttendant());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Crosis's Attendant");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
 }

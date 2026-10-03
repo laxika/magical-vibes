@@ -27,8 +27,7 @@ class DismantlingWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, List.of(artifact.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(artifact.getId()));
 
         harness.assertInGraveyard(player2, "Spellbook");
         harness.assertOnBattlefield(player1, "Spellbook");
@@ -41,8 +40,7 @@ class DismantlingWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         harness.assertInGraveyard(player1, "Dismantling Wave");
     }
@@ -74,7 +72,7 @@ class DismantlingWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertNotOnBattlefield(player1, "Enchantress's Presence");
@@ -84,5 +82,70 @@ class DismantlingWaveTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player1, "Dismantling Wave");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's enchantment")
+    void destroysTargetedOpponentEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new EnchantresssPresence());
+        harness.setHand(player1, List.of(new DismantlingWave()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(enchantment.getId()));
+
+        harness.assertInGraveyard(player2, "Enchantress's Presence");
+    }
+
+    @Test
+    @DisplayName("Cannot target two permanents controlled by the same opponent")
+    void cannotTargetTwoPermanentsOfOneOpponent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new EnchantresssPresence());
+        harness.setHand(player1, List.of(new DismantlingWave()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(artifact.getId(), enchantment.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target an ordinary creature")
+    void cannotTargetOrdinaryCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DismantlingWave()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cycling destruction resolves separately before the card draw")
+    void cyclingDestructionResolvesBeforeSeparateDraw() {
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DismantlingWave()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Dismantling Wave");
+        harness.assertOnBattlefield(player2, "Spellbook");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
     }
 }

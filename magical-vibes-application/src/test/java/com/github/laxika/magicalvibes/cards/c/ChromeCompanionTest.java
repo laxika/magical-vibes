@@ -70,10 +70,101 @@ class ChromeCompanionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void activationGainsLifeBeforeMovingOwnGraveyardCard() {
+        Card target = new Shock();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 20);
+        Permanent companion = addReadyCompanion();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+
+        assertThat(companion.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void lifeTriggerStillResolvesWhenGraveyardTargetDisappears() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player1, 20);
+        addReadyCompanion();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(target));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+    }
+
+    @Test
+    void eachCompanionOnlyTriggersForItselfAndItsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new ChromeCompanion());
+        Permanent opponentCompanion = harness.addToBattlefieldAndReturn(player2, new ChromeCompanion());
+
+        tap(opponentCompanion);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggersAgainAfterUntappingInTheSameTurn() {
+        harness.setLife(player1, 20);
+        Permanent companion = harness.addToBattlefieldAndReturn(player1, new ChromeCompanion());
+        tap(companion);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        companion.untap();
+        tap(companion);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    void cannotActivateTapAbilityWhileSummoningSick() {
+        Card target = new Shock();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent companion = harness.addToBattlefieldAndReturn(player1, new ChromeCompanion());
+        companion.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(companion.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
+
     private Permanent addReadyCompanion() {
-        Permanent companion = new Permanent(new ChromeCompanion());
+        Permanent companion = harness.addToBattlefieldAndReturn(player1, new ChromeCompanion());
         companion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(companion);
         return companion;
     }
 

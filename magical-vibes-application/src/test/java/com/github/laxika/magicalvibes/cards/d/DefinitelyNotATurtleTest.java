@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AprilONeilHumanElement;
+import com.github.laxika.magicalvibes.cards.c.CommandTower;
+import com.github.laxika.magicalvibes.cards.g.GameOver;
+import com.github.laxika.magicalvibes.cards.l.LeonardoWorldlyWarrior;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,8 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefinitelyNotATurtle.class, LightningBolt.class})
+@CardUsed({DefinitelyNotATurtle.class, LightningBolt.class, GameOver.class, CommandTower.class,
+        LeonardoWorldlyWarrior.class, AprilONeilHumanElement.class})
 class DefinitelyNotATurtleTest extends BaseCardTest {
 
     @Test
@@ -35,7 +41,7 @@ class DefinitelyNotATurtleTest extends BaseCardTest {
         Card enchantment = card("Top Enchantment", CardType.ENCHANTMENT);
         List<Card> topCards = List.of(ordinaryTurtle, legendaryCreature, land,
                 legendaryTurtle, artifact, enchantment);
-        setLibrary(topCards);
+        harness.setLibrary(player1, topCards);
 
         Permanent source = harness.addToBattlefieldAndReturn(player1, new DefinitelyNotATurtle());
         destroyWithLightningBolt(source);
@@ -65,7 +71,7 @@ class DefinitelyNotATurtleTest extends BaseCardTest {
         List<Card> topCards = List.of(land, legendaryTurtle,
                 card("Top One", CardType.CREATURE), card("Top Two", CardType.ARTIFACT),
                 card("Top Three", CardType.ENCHANTMENT), card("Top Four", CardType.SORCERY));
-        setLibrary(topCards);
+        harness.setLibrary(player1, topCards);
 
         Permanent source = harness.addToBattlefieldAndReturn(player1, new DefinitelyNotATurtle());
         destroyWithLightningBolt(source);
@@ -84,7 +90,7 @@ class DefinitelyNotATurtleTest extends BaseCardTest {
                 card("Top One", CardType.CREATURE), card("Top Two", CardType.ARTIFACT),
                 card("Top Three", CardType.ENCHANTMENT), card("Top Four", CardType.SORCERY),
                 card("Top Five", CardType.INSTANT), card("Top Six", CardType.BATTLE));
-        setLibrary(topCards);
+        harness.setLibrary(player1, topCards);
 
         Permanent source = harness.addToBattlefieldAndReturn(player1, new DefinitelyNotATurtle());
         destroyWithLightningBolt(source);
@@ -96,16 +102,103 @@ class DefinitelyNotATurtleTest extends BaseCardTest {
                 .containsExactlyInAnyOrderElementsOf(topCards);
     }
 
+    @Test
+    void onlyTheTopSixAreEligibleAndTheRestGoBelowUntouchedCards() {
+        CommandTower land = new CommandTower();
+        LeonardoWorldlyWarrior legendaryTurtle = new LeonardoWorldlyWarrior();
+        AprilONeilHumanElement legendaryNonTurtle = new AprilONeilHumanElement();
+        DefinitelyNotATurtle ordinaryTurtle = new DefinitelyNotATurtle();
+        List<Card> topCards = List.of(land, legendaryTurtle, legendaryNonTurtle,
+                ordinaryTurtle, new GameOver(), new GameOver());
+        CommandTower seventhCard = new CommandTower();
+        LeonardoWorldlyWarrior eighthCard = new LeonardoWorldlyWarrior();
+        harness.setLibrary(player1, List.of(land, legendaryTurtle, legendaryNonTurtle,
+                ordinaryTurtle, topCards.get(4), topCards.get(5), seventhCard, eighthCard));
+
+        resolveDeathWithGameOver();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(land.getId(), legendaryTurtle.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(seventhCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(land.getId(), legendaryTurtle.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(7);
+        assertThat(library.subList(0, 2)).containsExactly(seventhCard, eighthCard);
+        assertThat(library.subList(2, 7)).containsExactlyInAnyOrderElementsOf(topCards.subList(1, 6));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void shortLibraryStillAllowsTakingALegendaryTurtle() {
+        LeonardoWorldlyWarrior turtle = new LeonardoWorldlyWarrior();
+        AprilONeilHumanElement nonTurtle = new AprilONeilHumanElement();
+        harness.setLibrary(player1, List.of(nonTurtle, turtle));
+
+        resolveDeathWithGameOver();
+        harness.handleMultipleCardsChosen(player1, List.of(turtle.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(turtle);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonTurtle);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void takingTheOnlyCardLeavesTheLibraryEmpty() {
+        CommandTower land = new CommandTower();
+        harness.setLibrary(player1, List.of(land));
+
+        resolveDeathWithGameOver();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void takingTheOnlyEligibleCardIsOptionalEvenInASingleCardLibrary() {
+        CommandTower land = new CommandTower();
+        harness.setLibrary(player1, List.of(land));
+
+        resolveDeathWithGameOver();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryResolvesWithoutAChoiceOrDrawingACard() {
+        harness.setLibrary(player1, List.of());
+
+        resolveDeathWithGameOver();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void resolveDeathWithGameOver() {
+        harness.addToBattlefield(player1, new DefinitelyNotATurtle());
+        harness.castFromHand(player1, new GameOver(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
     private void destroyWithLightningBolt(Permanent source) {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, source.getId());
         harness.passBothPriorities();
-    }
-
-    private void setLibrary(List<Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
     }
 
     private static Card card(String name, CardType type) {

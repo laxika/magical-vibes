@@ -298,6 +298,53 @@ class DrudgeSkeletonsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration activated in response to lethal damage saves the creature only once")
+    void regenerationInResponseToDamageProtectsOnlyOnce() {
+        Permanent skele = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, skele.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(skele.getRegenerationShield()).isEqualTo(1);
+        assertThat(skele.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        assertThat(skele.isTapped()).isTrue();
+        assertThat(skele.getMarkedDamage()).isZero();
+        assertThat(skele.getRegenerationShield()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, skele.getId());
+
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Lethal damage in response to regeneration kills the creature before a shield exists")
+    void lethalDamageBeforeAbilityResolvesKillsCreature() {
+        Permanent skele = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, skele.getId());
+
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+    }
+
+    @Test
     @DisplayName("Without regeneration shield, direct damage kills Drudge Skeletons")
     void directDamageKillsWithoutShield() {
         Permanent skelePerm = addCreatureReady(player1, new DrudgeSkeletons());

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,11 +18,71 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrypticSerpent.class, Shock.class, LavaAxe.class, GrizzlyBears.class})
 class CrypticSerpentTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Cost reduction")
+    @CardUsed({CrypticSerpent.class, Shock.class, LavaAxe.class, GrizzlyBears.class})
     class CostReduction {
+
+        @Test
+        @DisplayName("An instant alone reduces the generic cost")
+        void instantAloneReducesCost() {
+            harness.setGraveyard(player1, List.of(new Shock()));
+            harness.setHand(player1, List.of(new CrypticSerpent()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("A sorcery alone reduces the generic cost")
+        void sorceryAloneReducesCost() {
+            harness.setGraveyard(player1, List.of(new LavaAxe()));
+            harness.setHand(player1, List.of(new CrypticSerpent()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Excess reduction cannot pay for the second blue mana")
+        void excessReductionCannotPayColoredMana() {
+            harness.setGraveyard(player1, List.of(
+                    new Shock(), new Shock(), new Shock(),
+                    new Shock(), new Shock(), new Shock()));
+            harness.setHand(player1, List.of(new CrypticSerpent()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+            assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Instants and sorceries in hand and exile do not reduce the cost")
+        void cardsOutsideGraveyardDoNotReduceCost() {
+            harness.setHand(player1, List.of(new CrypticSerpent(), new Shock(), new LavaAxe()));
+            harness.setExile(player1, List.of(new Shock(), new LavaAxe()));
+            harness.addMana(player1, ManaColor.BLUE, 6);
+
+            assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Can cast for full cost {5}{U}{U} with empty graveyard")

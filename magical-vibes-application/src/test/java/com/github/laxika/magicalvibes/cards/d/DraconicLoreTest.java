@@ -26,8 +26,7 @@ class DraconicLoreTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DraconicLore()));
         addMana(5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
     }
@@ -49,6 +48,55 @@ class DraconicLoreTest extends BaseCardTest {
     void requiresFullCostWithoutDragon() {
         harness.setHand(player1, List.of(new DraconicLore()));
         addMana(3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("An opponent's Dragon does not reduce the cost")
+    void opponentsDragonDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new ShivanDragon());
+        harness.setHand(player1, List.of(new DraconicLore()));
+        addMana(3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A Dragon in the graveyard does not reduce the cost")
+    void dragonInGraveyardDoesNotReduceCost() {
+        harness.setGraveyard(player1, List.of(new ShivanDragon()));
+        harness.setHand(player1, List.of(new DraconicLore()));
+        addMana(3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Multiple Dragons still reduce the cost by only two")
+    void multipleDragonsDoNotIncreaseReduction() {
+        harness.addToBattlefield(player1, new ShivanDragon());
+        harness.addToBattlefield(player1, new ShivanDragon());
+        harness.setHand(player1, List.of(new DraconicLore()));
+        addMana(3);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Dragon discount does not remove the blue mana requirement")
+    void reductionDoesNotRemoveBlueRequirement() {
+        harness.addToBattlefield(player1, new ShivanDragon());
+        harness.setHand(player1, List.of(new DraconicLore()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)

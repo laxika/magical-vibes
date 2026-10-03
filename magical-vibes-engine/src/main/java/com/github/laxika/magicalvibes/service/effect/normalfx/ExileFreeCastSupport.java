@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 public class ExileFreeCastSupport {
 
     private final GameLogService gameLogService;
+    private final AdditionalSpellCostService additionalSpellCostService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
@@ -45,8 +47,10 @@ public class ExileFreeCastSupport {
                                 @Lazy PlayerInputService playerInputService,
                                 @Lazy TriggerCollectionService triggerCollectionService,
                                 @Lazy InputCompletionService inputCompletionService,
-                                ExileCastTargetSupport exileCastTargetSupport) {
+                                ExileCastTargetSupport exileCastTargetSupport,
+                                AdditionalSpellCostService additionalSpellCostService) {
         this.gameLogService = gameLogService;
+        this.additionalSpellCostService = additionalSpellCostService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
@@ -64,10 +68,23 @@ public class ExileFreeCastSupport {
 
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
                                            boolean grantHaste, boolean returnToHandIfUnable) {
+        castFromExileWithoutPaying(gameData, player, exileCardId, grantHaste, returnToHandIfUnable, false);
+    }
+
+    public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
+                                           boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste) {
+        castFromExileWithoutPaying(gameData, player, exileCardId, grantHaste, returnToHandIfUnable,
+                suspendHaste, true);
+    }
+
+    /** Defers input completion when casting inside an effect resolution already in progress. */
+    public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId,
+                                           boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
+                                           boolean completeInput) {
         UUID playerId = player.getId();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(exileCardId);
         if (exiledEntry == null) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -81,7 +98,16 @@ public class ExileFreeCastSupport {
             } else {
                 gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile and stays exiled."));
             }
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (!additionalSpellCostService.satisfiable(gameData, playerId, card)) {
+            if (returnToHandIfUnable) {
+                returnExiledCardToHand(gameData, exileCardId);
+            }
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " cannot be cast because its additional cost cannot be paid."));
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         String playerName = player.getUsername();
@@ -97,6 +123,7 @@ public class ExileFreeCastSupport {
 
             if (!hasLegalTargets) {
                 gameData.spellsGrantedHasteOnEntry.remove(exileCardId);
+                gameData.spellsGrantedSuspendHasteOnEntry.remove(exileCardId);
                 if (returnToHandIfUnable) {
                     returnExiledCardToHand(gameData, exileCardId);
                     gameLogService.append(gameData,
@@ -105,7 +132,7 @@ public class ExileFreeCastSupport {
                     gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
                 }
                 log.info("Game {} - {} exile free-cast has no valid targets", gameData.id, card.getName());
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
 
@@ -116,6 +143,9 @@ public class ExileFreeCastSupport {
             }
             if (grantHaste && card.hasType(CardType.CREATURE)) {
                 gameData.spellsGrantedHasteOnEntry.add(exileCardId);
+            }
+            if (suspendHaste && card.hasType(CardType.CREATURE)) {
+                gameData.spellsGrantedSuspendHasteOnEntry.add(exileCardId);
             }
             gameData.recordCardPlayedFromExile(playerId);
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
@@ -137,6 +167,7 @@ public class ExileFreeCastSupport {
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
+        stackEntry.setSuspendHasteOnEntry(suspendHaste && card.hasType(CardType.CREATURE));
         if (grantHaste && card.hasType(CardType.CREATURE)) {
             gameData.spellsGrantedHasteOnEntry.add(exileCardId);
         }
@@ -152,7 +183,7 @@ public class ExileFreeCastSupport {
 
         triggerCollectionService.checkSpellCastTriggers(
                 gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public boolean returnExiledCardToHand(GameData gameData, UUID exileCardId) {

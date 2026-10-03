@@ -31,6 +31,38 @@ class DeathInTheFamilyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can exile your own creature and leaves other creatures untouched")
+    void exilesOwnCreatureOnly() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrayOgre());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrayOgre());
+
+        castDeathInTheFamily(target);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        harness.assertNotOnBattlefield(player1, "Gray Ogre");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+        harness.assertNotInGraveyard(player1, "Gray Ogre");
+        harness.assertInGraveyard(player1, "Death in the Family");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles a stolen creature into its owner's exile zone")
+    void exilesStolenCreatureForItsOwner() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrayOgre());
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+
+        castDeathInTheFamily(target);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getId().equals(target.getCard().getId()));
+        harness.assertNotOnBattlefield(player2, "Gray Ogre");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature with mana value greater than 3")
     void cannotTargetLargeCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -66,8 +98,7 @@ class DeathInTheFamilyTest extends BaseCardTest {
 
     private void castDeathInTheFamily(Permanent target) {
         prepareCast();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareCast() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageT
 
 @CardRegistration(set = "MMQ", collectorNumber = "56")
 @CardRegistration(set = "SOC", collectorNumber = "112")
+@CardRegistration(set = "C16", collectorNumber = "79")
 public class WaveOfReckoning extends Card {
 
     public WaveOfReckoning() {

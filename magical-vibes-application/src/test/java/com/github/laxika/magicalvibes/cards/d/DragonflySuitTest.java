@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearerOfMemory;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonflySuit.class, GrizzlyBears.class})
+@CardUsed({DragonflySuit.class, BearerOfMemory.class})
 class DragonflySuitTest extends BaseCardTest {
 
     @Test
@@ -24,7 +24,7 @@ class DragonflySuitTest extends BaseCardTest {
     @Test
     void crewAnimatesSuitAndTapsCrew() {
         Permanent suit = addSuitReady(player1);
-        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent crew = addCreatureReady(player1, new BearerOfMemory());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -47,7 +47,7 @@ class DragonflySuitTest extends BaseCardTest {
     @Test
     void crewAnimationResetsAtEndOfTurn() {
         Permanent suit = addSuitReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BearerOfMemory());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -60,10 +60,91 @@ class DragonflySuitTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, suit)).isFalse();
     }
 
+    @Test
+    void crewTapsAsACostButAnimatesOnlyWhenAbilityResolves() {
+        Permanent suit = addSuitReady(player1);
+        Permanent crew = addCreatureReady(player1, new BearerOfMemory());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(suit.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, suit)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, suit)).isTrue();
+        assertThat(suit.isTapped()).isFalse();
+    }
+
+    @Test
+    void summoningSickCreatureCanCrewNewSuit() {
+        Permanent suit = harness.addToBattlefieldAndReturn(player1, new DragonflySuit());
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
+        suit.setSummoningSick(true);
+        crew.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, suit)).isTrue();
+        assertThat(suit.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void tappedCreatureCannotCrew() {
+        addSuitReady(player1);
+        Permanent crew = addCreatureReady(player1, new BearerOfMemory());
+        crew.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+    }
+
+    @Test
+    void opposingCreatureCannotCrew() {
+        addSuitReady(player1);
+        Permanent opposingCreature = addCreatureReady(player2, new BearerOfMemory());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+        assertThat(opposingCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedSuitCanBeCrewed() {
+        Permanent suit = addSuitReady(player1);
+        suit.tap();
+        Permanent crew = addCreatureReady(player1, new BearerOfMemory());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, suit)).isTrue();
+        assertThat(suit.isTapped()).isTrue();
+        assertThat(crew.isTapped()).isTrue();
+    }
+
+    @Test
+    void animatedSuitCannotCrewItself() {
+        Permanent suit = addSuitReady(player1);
+        addCreatureReady(player1, new BearerOfMemory());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+        assertThat(suit.isTapped()).isFalse();
+    }
+
     private Permanent addSuitReady(Player player) {
-        Permanent permanent = new Permanent(new DragonflySuit());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DragonflySuit());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

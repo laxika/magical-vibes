@@ -121,4 +121,68 @@ class DownhillChargeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @DisplayName("Resolves with no boost when the caster controls no Mountains")
+    void resolvesWithNoMountains() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SkySpirit());
+        harness.setHand(player1, List.of(new DownhillCharge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Downhill Charge");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the last Mountain even when it is tapped")
+    void sacrificesLastTappedMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SkySpirit());
+        harness.setHand(player1, List.of(new DownhillCharge()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(mountain.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Downhill Charge");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Mountain for the alternate cost")
+    void alternateCostRejectsOpponentsMountain() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent opponentsMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SkySpirit());
+        harness.setHand(player1, List.of(new DownhillCharge()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(opponentsMountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("The resolved boost does not change when another Mountain enters")
+    void resolvedBoostRemainsFixed() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SkySpirit());
+        harness.setHand(player1, List.of(new DownhillCharge()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
 }

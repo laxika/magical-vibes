@@ -33,8 +33,7 @@ class DaruMenderTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(target.getRegenerationShield()).isZero();
@@ -54,6 +53,64 @@ class DaruMenderTest extends BaseCardTest {
                 .doesNotContain(land.getId());
         harness.handlePermanentChosen(player1, mender.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerRegeneration() {
+        harness.castFromHand(player1, new DaruMender(), "{W}");
+        harness.passBothPriorities();
+
+        Permanent mender = findPermanent(player1, "Daru Mender");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(mender.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void canRegenerateItselfButShieldOnlyPreventsOneDestruction() {
+        Permanent mender = castFaceDown();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mender));
+        harness.handlePermanentChosen(player1, mender.getId());
+        harness.passBothPriorities();
+
+        assertThat(mender.getRegenerationShield()).isEqualTo(1);
+        assertThat(mender.isTapped()).isFalse();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, mender.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mender);
+        assertThat(mender.isTapped()).isTrue();
+        assertThat(mender.getMarkedDamage()).isZero();
+        assertThat(mender.getRegenerationShield()).isZero();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, mender.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mender);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mender.getCard());
+    }
+
+    @Test
+    void targetDestroyedInResponseDoesNotRegenerateAnotherCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mender = castFaceDown();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mender));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(mender.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castFaceDown() {

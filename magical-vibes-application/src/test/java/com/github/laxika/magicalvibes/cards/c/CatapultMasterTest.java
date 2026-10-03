@@ -110,4 +110,102 @@ class CatapultMasterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
         assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
     }
+
+    @Test
+    @DisplayName("Summoning-sick Soldiers can pay the cost, including Catapult Master itself")
+    void summoningSickSoldiersCanPayCost() {
+        List<Permanent> soldiers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            soldiers.add(harness.addToBattlefieldAndReturn(player1, new CatapultMaster()));
+        }
+        Permanent target = addCreatureReady(player2, new CatapultMaster());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(soldiers).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A tapped Catapult Master can activate using five other Soldiers")
+    void tappedSourceCanActivate() {
+        Permanent source = addCreatureReady(player1, new CatapultMaster());
+        source.tap();
+        List<Permanent> soldiers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            soldiers.add(addCreatureReady(player1, new CatapultMaster()));
+        }
+        Permanent target = addCreatureReady(player2, new CatapultMaster());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(soldiers).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Untapped permanents without the Soldier subtype do not pay the cost")
+    void nonSoldiersDoNotCount() {
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new CatapultMaster());
+        }
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = addCreatureReady(player2, new CatapultMaster());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("With six Soldiers, the controller chooses exactly five and can leave the source untapped")
+    void choosesFiveOfSixSoldiers() {
+        Permanent source = addCreatureReady(player1, new CatapultMaster());
+        List<Permanent> soldiers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            soldiers.add(addCreatureReady(player1, new CatapultMaster()));
+        }
+        Permanent target = addCreatureReady(player2, new CatapultMaster());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        for (Permanent soldier : soldiers) {
+            harness.handlePermanentChosen(player1, soldier.getId());
+        }
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(soldiers).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after its source is exiled in response")
+    void resolvesAfterSourceIsExiled() {
+        Permanent source = addCreatureReady(player1, new CatapultMaster());
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new CatapultMaster());
+        }
+        Permanent target = addCreatureReady(player2, new CatapultMaster());
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player2, new CatapultMaster());
+        }
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(source.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
 }

@@ -82,7 +82,7 @@ class BarrinsCodexTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Barrin's Codex with no page counters draws no cards")
     void sacrificeSelfWithNoPageCountersDrawsNoCards() {
-        Permanent codex = harness.addToBattlefieldAndReturn(player1, new BarrinsCodex());
+        harness.addToBattlefield(player1, new BarrinsCodex());
         harness.setLibrary(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -93,5 +93,41 @@ class BarrinsCodexTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Barrin's Codex");
         harness.assertInGraveyard(player1, "Barrin's Codex");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Insufficient mana prevents activation without sacrificing or tapping the Codex")
+    void cannotActivateWithInsufficientMana() {
+        Permanent codex = harness.addToBattlefieldAndReturn(player1, new BarrinsCodex());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(codex.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Barrin's Codex");
+        harness.assertNotInGraveyard(player1, "Barrin's Codex");
+    }
+
+    @Test
+    @DisplayName("Only page counters count, and sacrifice is paid before the cards are drawn")
+    void sacrificeIsImmediateAndOnlyPageCountersCount() {
+        Permanent codex = harness.addToBattlefieldAndReturn(player1, new BarrinsCodex());
+        codex.setCounterCount(CounterType.PAGE, 2);
+        codex.setCounterCount(CounterType.CHARGE, 3);
+        harness.setLibrary(player1, List.of(new DarkRitual(), new DarkRitual(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Barrin's Codex");
+        harness.assertInGraveyard(player1, "Barrin's Codex");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

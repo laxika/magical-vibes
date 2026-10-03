@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "DKA", collectorNumber = "136")
 @CardRegistration(set = "SIS", collectorNumber = "60")
+@CardRegistration(set = "VOC", collectorNumber = "154")
 public class DrogskolCaptain extends Card {
 
     public DrogskolCaptain() {

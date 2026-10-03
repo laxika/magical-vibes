@@ -31,8 +31,24 @@ public record DiscardCardThenEffect(
         boolean useEntryTarget,
         CardType alternateCardType,
         CardEffect alternateThenEffect,
-        DiscardRecipient recipient
+        DiscardRecipient recipient,
+        boolean resolveThenDuringSameResolution
 ) implements CardEffect {
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 CardPredicate condition, boolean useEntryTarget,
+                                 CardType alternateCardType, CardEffect alternateThenEffect,
+                                 DiscardRecipient recipient) {
+        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
+                alternateThenEffect, recipient, false);
+    }
+
+    /** Continues resolving the current spell after the discard instead of creating a trigger. */
+    public static DiscardCardThenEffect continuing(CardPredicate filter, CardEffect thenEffect,
+                                                   String cardDescription) {
+        return new DiscardCardThenEffect(filter, thenEffect, cardDescription, null, false,
+                null, null, DiscardRecipient.CONTROLLER, true);
+    }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription) {
         this(filter, thenEffect, cardDescription, null, false, null, null, DiscardRecipient.CONTROLLER);

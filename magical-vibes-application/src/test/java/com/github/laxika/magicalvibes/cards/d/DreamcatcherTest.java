@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,11 +19,9 @@ class DreamcatcherTest extends BaseCardTest {
     @DisplayName("Accepting the trigger sacrifices Dreamcatcher and draws a card for an Arcane spell")
     void acceptingArcaneTriggerSacrificesAndDraws() {
         Permanent dreamcatcher = addDreamcatcher();
-        harness.setHand(player1, List.of(new SpiritualVisit()));
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -37,11 +34,9 @@ class DreamcatcherTest extends BaseCardTest {
     @DisplayName("Accepting the trigger sacrifices Dreamcatcher and draws a card for a Spirit spell")
     void acceptingSpiritTriggerSacrificesAndDraws() {
         Permanent dreamcatcher = addDreamcatcher();
-        harness.setHand(player1, List.of(new Dreamcatcher()));
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Dreamcatcher(), "{U}");
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -54,11 +49,9 @@ class DreamcatcherTest extends BaseCardTest {
     @DisplayName("Declining the trigger keeps Dreamcatcher and draws no card")
     void decliningTriggerKeepsDreamcatcherAndDoesNotDraw() {
         Permanent dreamcatcher = addDreamcatcher();
-        harness.setHand(player1, List.of(new SpiritualVisit()));
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -72,16 +65,69 @@ class DreamcatcherTest extends BaseCardTest {
     @DisplayName("A non-Spirit non-Arcane spell does not trigger Dreamcatcher")
     void unrelatedSpellDoesNotTrigger() {
         Permanent dreamcatcher = addDreamcatcher();
-        harness.setHand(player1, List.of(new ArabaMothrider()));
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArabaMothrider(), "{1}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(dreamcatcher);
+        harness.assertNotInHand(player1, "Araba Mothrider");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The sacrifice choice is made when the trigger resolves, after players can respond")
+    void sacrificeChoiceWaitsUntilTriggerResolution() {
+        Permanent dreamcatcher = addDreamcatcher();
+        harness.setLibrary(player1, List.of(new ArabaMothrider()));
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dreamcatcher);
+        harness.assertNotInHand(player1, "Araba Mothrider");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Dreamcatcher");
+        harness.assertInGraveyard(player1, "Dreamcatcher");
+        harness.assertInHand(player1, "Araba Mothrider");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("An opponent's Arcane spell does not trigger Dreamcatcher")
+    void opponentsArcaneSpellDoesNotTrigger() {
+        Permanent dreamcatcher = addDreamcatcher();
+        harness.setLibrary(player1, List.of(new ArabaMothrider()));
+
+        harness.castFromHand(player2, new SpiritualVisit(), "{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dreamcatcher);
+        harness.assertNotInHand(player1, "Araba Mothrider");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A departed Dreamcatcher cannot be sacrificed to draw a card")
+    void departedSourceDoesNotDraw() {
+        Permanent dreamcatcher = addDreamcatcher();
+        harness.setLibrary(player1, List.of(new ArabaMothrider()));
+
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dreamcatcher));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dreamcatcher");
         harness.assertNotInHand(player1, "Araba Mothrider");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

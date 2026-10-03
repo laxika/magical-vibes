@@ -21,7 +21,7 @@ class DeathgripTest extends BaseCardTest {
     @Test
     @DisplayName("Counters a target green spell")
     void countersGreenSpell() {
-        Permanent deathgrip = harness.addToBattlefieldAndReturn(player1, new Deathgrip());
+        harness.addToBattlefield(player1, new Deathgrip());
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         GrizzlyBears bears = new GrizzlyBears();
@@ -94,5 +94,48 @@ class DeathgripTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own green spell")
+    void countersOwnGreenSpell() {
+        harness.addToBattlefield(player1, new Deathgrip());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while tapped; an ability with a departed target does nothing")
+    void repeatedActivationsWithDepartedTarget() {
+        Permanent deathgrip = harness.addToBattlefieldAndReturn(player1, new Deathgrip());
+        deathgrip.setTapped(true);
+        harness.forceActivePlayer(player2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, bears.getId());
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getId().equals(bears.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(deathgrip.isTapped()).isTrue();
     }
 }

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.g.GideonBattleForged;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.k.KytheonHeroOfAkros;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.y.YevasForcemage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArchangelOfTithes.class, YevasForcemage.class, KytheonHeroOfAkros.class,
+        GideonBattleForged.class, TurnToFrog.class})
 class ArchangelOfTithesTest extends BaseCardTest {
 
     @Test
@@ -31,7 +36,7 @@ class ArchangelOfTithesTest extends BaseCardTest {
         addReadyCreature(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        declareAttackers(player2, List.of(0, 1), null);
+        declareAttackers(player2, List.of(0, 1));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
@@ -42,7 +47,7 @@ class ArchangelOfTithesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ArchangelOfTithes());
         addReadyCreature(player2);
 
-        assertThatThrownBy(() -> declareAttackers(player2, List.of(0), null))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay attack tax");
     }
@@ -54,7 +59,7 @@ class ArchangelOfTithesTest extends BaseCardTest {
         addReadyCreature(player2);
 
         // With no mana at all — untapped, the same declaration throws (see untappedBlocksUnpaidAttack).
-        assertThatCode(() -> declareAttackers(player2, List.of(0), null)).doesNotThrowAnyException();
+        assertThatCode(() -> declareAttackers(player2, List.of(0))).doesNotThrowAnyException();
     }
 
     @Test
@@ -96,15 +101,13 @@ class ArchangelOfTithesTest extends BaseCardTest {
 
     /** Archangel attacking (so the block tax is live) plus a blockable ground attacker; returns its index. */
     private int setUpArchangelAttackingAlongsideGroundCreature() {
-        Permanent archangel = new Permanent(new ArchangelOfTithes());
+        Permanent archangel = harness.addToBattlefieldAndReturn(player1, new ArchangelOfTithes());
         archangel.setSummoningSick(false);
         archangel.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(archangel);
 
-        Permanent ground = new Permanent(new GrizzlyBears());
+        Permanent ground = harness.addToBattlefieldAndReturn(player1, new YevasForcemage());
         ground.setSummoningSick(false);
         ground.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(ground);
         return gd.playerBattlefields.get(player1.getId()).indexOf(ground);
     }
 
@@ -112,16 +115,82 @@ class ArchangelOfTithesTest extends BaseCardTest {
     @DisplayName("When it is not attacking, blocking is free")
     void notAttackingLeavesBlockingFree() {
         harness.addToBattlefield(player1, new ArchangelOfTithes());
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new YevasForcemage());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         Permanent blocker = addReadyCreature(player2);
 
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         declareBlockers(List.of(new BlockerAssignment(0, attackerIdx)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void multipleUntappedArchangelsAddTheirAttackTaxes() {
+        harness.addToBattlefield(player1, new ArchangelOfTithes());
+        harness.addToBattlefield(player1, new ArchangelOfTithes());
+        addReadyCreature(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void attackingTaxesEveryBlocker() {
+        int attackerIdx = setUpArchangelAttackingAlongsideGroundCreature();
+        addReadyCreature(player2);
+        addReadyCreature(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        declareBlockers(List.of(new BlockerAssignment(0, attackerIdx),
+                new BlockerAssignment(1, attackerIdx)));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void losingAbilitiesRemovesAttackTax() {
+        Permanent archangel = harness.addToBattlefieldAndReturn(player1, new ArchangelOfTithes());
+        addReadyCreature(player2);
+        turnToFrog(archangel);
+
+        assertThatCode(() -> declareAttackers(player2, List.of(0))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void losingAbilitiesWhileAttackingRemovesBlockTax() {
+        int attackerIdx = setUpArchangelAttackingAlongsideGroundCreature();
+        Permanent archangel = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent blocker = addReadyCreature(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        turnToFrog(archangel);
+
+        assertThatCode(() -> declareBlockers(List.of(new BlockerAssignment(0, attackerIdx))))
+                .doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed({InvasionOfZendikar.class, AwakenedSkyclave.class})
+    void attackingABattleDoesNotRequirePayment() {
+        harness.addToBattlefield(player1, new ArchangelOfTithes());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        addReadyCreature(player2);
+
+        assertThatCode(() -> declareAttackers(player2, List.of(1), Map.of(1, battle.getId())))
+                .doesNotThrowAnyException();
+    }
+
+    private void turnToFrog(Permanent archangel) {
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, archangel.getId());
+        harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
@@ -133,28 +202,20 @@ class ArchangelOfTithesTest extends BaseCardTest {
     }
 
     private void declareBlockers(List<BlockerAssignment> assignments) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, assignments);
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new YevasForcemage());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
     private Permanent addPlaneswalker(Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(4);
-        Permanent planeswalker = new Permanent(card);
-        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player,
+                new KytheonHeroOfAkros().getBackFaceCard());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         return planeswalker;
     }
 }

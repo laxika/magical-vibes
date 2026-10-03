@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "418")
 @CardRegistration(set = "DSC", collectorNumber = "320")
 @CardRegistration(set = "BLC", collectorNumber = "351")
+@CardRegistration(set = "EOC", collectorNumber = "189")
 public class TwilightMire extends Card {
 
     public TwilightMire() {

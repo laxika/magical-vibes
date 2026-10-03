@@ -98,6 +98,58 @@ class CurseOfInertiaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Attacking the enchanted player triggers a curse controlled by the attacker")
+    void triggersWhenAttackerControlsCurseEnchantingDefender() {
+        Permanent curse = new Permanent(new CurseOfInertia());
+        curse.setAttachedTo(player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(curse);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(1));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, target.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attacking the curse controller does not trigger when another player is enchanted")
+    void doesNotTriggerForAttacksAgainstUnenchantedController() {
+        Permanent curse = addCurseToPlayer1();
+        curse.setAttachedTo(player2.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple attacking creatures produce only one resolved curse ability")
+    void multipleAttackersProduceOnlyOneAbility() {
+        addCurseToPlayer1();
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0, 1));
+        harness.handlePermanentChosen(player2, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingInteractions).isEmpty();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addCurseToPlayer1() {
         Permanent curse = new Permanent(new CurseOfInertia());
         curse.setAttachedTo(player1.getId());

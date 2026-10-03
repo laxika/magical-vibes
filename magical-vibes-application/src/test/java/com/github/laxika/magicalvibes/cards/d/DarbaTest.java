@@ -66,4 +66,51 @@ class DarbaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Darba");
     }
+
+    @Test
+    @DisplayName("Declining upkeep with enough mana sacrifices Darba without spending mana")
+    void decliningWithEnoughManaDoesNotSpendMana() {
+        harness.addToBattlefield(player1, new Darba());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Darba");
+        harness.assertInGraveyard(player1, "Darba");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Non-green mana cannot pay Darba's upkeep")
+    void wrongManaColorsCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new Darba());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Darba");
+        harness.assertInGraveyard(player1, "Darba");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's mana cannot pay Darba's upkeep")
+    void opponentsManaCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new Darba());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Darba");
+        harness.assertInGraveyard(player1, "Darba");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
 }

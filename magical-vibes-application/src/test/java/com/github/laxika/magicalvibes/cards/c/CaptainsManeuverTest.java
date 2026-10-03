@@ -25,5 +25,47 @@ class CaptainsManeuverTest extends BaseCardTest {
  private void cast(int x,UUID p,UUID d) { harness.setHand(player1,List.of(new CaptainsManeuver())); mana(x); harness.castInstantForX(player1,0,x,List.of(p,d)); harness.passBothPriorities(); }
  private void ping(Permanent h,UUID t) { harness.activateAbility(player2,gd.playerBattlefields.get(player2.getId()).indexOf(h),null,t); harness.passBothPriorities(); }
  private void mana(int x) { harness.addMana(player1,ManaColor.RED,1); harness.addMana(player1,ManaColor.WHITE,1); harness.addMana(player1,ManaColor.COLORLESS,x); }
- private Permanent walker(Player p,int loyalty) { var w=new Permanent(new ChandraNalaar()); w.setCounterCount(CounterType.LOYALTY,loyalty); gd.playerBattlefields.get(p.getId()).add(w); return w; }
+ @Test
+ void redirectedDamageCanBeRedirectedAgain() {
+     var first = addCreatureReady(player1, new AngelfireCrusader());
+     var second = addCreatureReady(player2, new AngelfireCrusader());
+     var third = addCreatureReady(player2, new AngelfireCrusader());
+     var hunter = addCreatureReady(player2, new RazorfinHunter());
+     cast(1, first.getId(), second.getId());
+     cast(1, second.getId(), third.getId());
+     ping(hunter, first.getId());
+     assertThat(first.getMarkedDamage()).isZero();
+     assertThat(second.getMarkedDamage()).isZero();
+     assertThat(third.getMarkedDamage()).isEqualTo(1);
+ }
+
+ @Test
+ void playerShieldIsExhaustedAcrossDamageEvents() {
+     var firstHunter = addCreatureReady(player2, new RazorfinHunter());
+     var secondHunter = addCreatureReady(player2, new RazorfinHunter());
+     var thirdHunter = addCreatureReady(player2, new RazorfinHunter());
+     harness.setLife(player1, 20);
+     harness.setLife(player2, 20);
+     cast(2, player1.getId(), player2.getId());
+     ping(firstHunter, player1.getId());
+     ping(secondHunter, player1.getId());
+     ping(thirdHunter, player1.getId());
+     assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+     assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+ }
+
+ @Test
+ void damageIsNotRedirectedToADestinationThatHasDied() {
+     var protectedCreature = addCreatureReady(player1, new AngelfireCrusader());
+     var destination = addCreatureReady(player2, new RazorfinHunter());
+     var firstHunter = addCreatureReady(player2, new RazorfinHunter());
+     var secondHunter = addCreatureReady(player2, new RazorfinHunter());
+     cast(1, protectedCreature.getId(), destination.getId());
+     ping(firstHunter, destination.getId());
+     assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(destination);
+     ping(secondHunter, protectedCreature.getId());
+     assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+ }
+
+ private Permanent walker(Player p,int loyalty) { var w=harness.addToBattlefieldAndReturn(p,new ChandraNalaar()); w.setCounterCount(CounterType.LOYALTY,loyalty); return w; }
 }

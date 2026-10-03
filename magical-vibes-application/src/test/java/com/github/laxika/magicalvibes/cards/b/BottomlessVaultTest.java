@@ -154,6 +154,22 @@ class BottomlessVaultTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("The mana ability removes only storage counters and resolves without using the stack")
+    void manaAbilityLeavesOtherCounterTypesAndDoesNotUseStack() {
+        Permanent vault = addVaultWithCounters(2);
+        vault.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(blackMana()).isEqualTo(2);
+        assertThat(vault.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(vault.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(vault.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
     private void beginPlayer1UntapChoice() {
         harness.forceActivePlayer(player2);
         harness.setHand(player1, List.of());

@@ -32,8 +32,7 @@ class AssimilationAegisTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, aegis.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aegis.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aegis);
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -92,15 +91,68 @@ class AssimilationAegisTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
     }
 
+    @Test
+    void equippingTheSameCreatureDoesNotEndItsCopyEffect() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aegis = castAndExile(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
+                null, host.getId());
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
+                null, host.getId());
+        resolveAllTriggers();
+
+        assertThat(aegis.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+    }
+
+    @Test
+    void attachingWithoutAnExiledCreatureDoesNotChangeTheHost() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aegis = harness.addToBattlefieldAndReturn(player1, new AssimilationAegis());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
+                null, host.getId());
+        resolveAllTriggers();
+
+        assertThat(aegis.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+    }
+
+    @Test
+    void destroyingEquipmentEndsTheCopyAndReturnsTheExiledCreature() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aegis = castAndExile(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aegis),
+                null, host.getId());
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, aegis.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(target.getOriginalCard().getId()));
+    }
+
     private Permanent castAndExile(Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AssimilationAegis()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AssimilationAegis(), "{1}{W}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

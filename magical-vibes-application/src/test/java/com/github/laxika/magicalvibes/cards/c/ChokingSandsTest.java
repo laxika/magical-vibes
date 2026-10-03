@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +26,7 @@ class ChokingSandsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Plains");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Plains");
         harness.assertInGraveyard(player2, "Plains");
@@ -41,8 +41,7 @@ class ChokingSandsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Crystal Vein");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Crystal Vein");
         harness.assertInGraveyard(player2, "Crystal Vein");
@@ -73,6 +72,37 @@ class ChokingSandsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("non-Swamp land");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own nonbasic land and damage you")
+    void destroysOwnNonbasicLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CrystalVein());
+        harness.setHand(player1, List.of(new ChokingSands()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, land.getId());
+
+        harness.assertNotOnBattlefield(player1, "Crystal Vein");
+        harness.assertInGraveyard(player1, "Crystal Vein");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Deals damage even if the nonbasic land regenerates")
+    void dealsDamageWhenLandRegenerates() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CrystalVein());
+        land.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new ChokingSands()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, land.getId());
+
+        harness.assertOnBattlefield(player2, "Crystal Vein");
+        harness.assertNotInGraveyard(player2, "Crystal Vein");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 
     @Test

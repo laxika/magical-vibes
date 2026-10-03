@@ -18,6 +18,10 @@ import java.util.UUID;
 @Service
 public class DayNightService {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final AnimationSupport animationSupport;
@@ -49,11 +53,13 @@ public class DayNightService {
     }
 
     public void checkAtUntap(GameData gameData, UUID activePlayerId) {
+        UUID previousPlayerId = gameData.previousTurnActivePlayerId != null
+                ? gameData.previousTurnActivePlayerId : activePlayerId;
         DayNight next = switch (gameData.dayNight) {
             case NEITHER -> DayNight.NEITHER;
-            case DAY -> gameData.spellsCastLastTurn.getOrDefault(activePlayerId, 0) == 0
+            case DAY -> gameData.spellsCastLastTurn.getOrDefault(previousPlayerId, 0) == 0
                     ? DayNight.NIGHT : DayNight.DAY;
-            case NIGHT -> gameData.spellsCastLastTurn.getOrDefault(activePlayerId, 0) >= 2
+            case NIGHT -> gameData.spellsCastLastTurn.getOrDefault(previousPlayerId, 0) >= 2
                     ? DayNight.DAY : DayNight.NIGHT;
         };
         if (next != gameData.dayNight) {
@@ -78,6 +84,16 @@ public class DayNightService {
     }
 
     private void changeDesignation(GameData gameData, DayNight next) {
+        if (next == DayNight.NIGHT) {
+            boolean[] prevented = {false};
+            gameData.forEachPermanent((controllerId, permanent) -> {
+                if (gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                        com.github.laxika.magicalvibes.model.effect.CantBecomeNightEffect.class)) {
+                    prevented[0] = true;
+                }
+            });
+            if (prevented[0]) return;
+        }
         DayNight previous = gameData.dayNight;
         gameData.dayNight = next;
         gameLogService.append(gameData, GameLog.text("It becomes " + next.name().toLowerCase() + "."));

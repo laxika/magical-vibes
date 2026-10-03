@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GallantCitizen;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,12 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DaughterOfTheDeep.class, GrizzlyBears.class})
+@CardUsed({DaughterOfTheDeep.class, GallantCitizen.class, MerrowCommerce.class})
 class DaughterOfTheDeepTest extends BaseCardTest {
 
     @Test
@@ -79,12 +78,109 @@ class DaughterOfTheDeepTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Merfolk creature")
     void cannotTargetNonMerfolk() {
         addReadyDaughter(player1);
-        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        Permanent citizen = addReadyCreature(player2, new GallantCitizen());
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, citizen.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Merfolk creature");
+    }
+
+    @Test
+    @DisplayName("Can target a noncreature Merfolk permanent")
+    void canTargetNoncreatureMerfolk() {
+        addReadyDaughter(player1);
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, commerce.getId());
+        harness.passBothPriorities();
+
+        assertThat(commerce.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's Merfolk")
+    void canTargetOpponentsMerfolk() {
+        Permanent source = addReadyDaughter(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DaughterOfTheDeep());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent draws do not trigger the controller's ability")
+    void doesNotTriggerOnOpponentDraws() {
+        harness.addToBattlefield(player1, new DaughterOfTheDeep());
+        setDeck(player2, 3);
+
+        drawCard(player2);
+        drawCard(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller's second draw triggers during an opponent's turn")
+    void triggersDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new DaughterOfTheDeep());
+        setDeck(player1, 3);
+
+        drawCard(player1);
+        drawCard(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counts the first draw even if it happened before this creature entered")
+    void countsDrawBeforeEntering() {
+        setDeck(player1, 3);
+        drawCard(player1);
+        harness.addToBattlefield(player1, new DaughterOfTheDeep());
+
+        drawCard(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when entering after the second draw")
+    void doesNotTriggerAfterSecondDrawAlreadyHappened() {
+        setDeck(player1, 4);
+        drawCard(player1);
+        drawCard(player1);
+        harness.addToBattlefield(player1, new DaughterOfTheDeep());
+
+        drawCard(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick source cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DaughterOfTheDeep());
+        source.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(source.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyDaughter(Player player) {
@@ -92,17 +188,14 @@ class DaughterOfTheDeepTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private void setDeck(Player player, int count) {
-        gd.playerDecks.get(player.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player.getId()).add(new GrizzlyBears());
-        }
+        harness.setLibrary(player, java.util.stream.IntStream.range(0, count)
+                .mapToObj(i -> new GallantCitizen()).toList());
     }
 
     private void drawCard(Player player) {

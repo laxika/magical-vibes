@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -142,6 +143,50 @@ class DeathmarkTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Deathmark");
+    }
+
+    @Test
+    @DisplayName("Resolving destroys target white creature")
+    void resolvingDestroysWhiteCreature() {
+        Permanent outrider = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
+        harness.setHand(player1, List.of(new Deathmark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, outrider.getId());
+
+        harness.assertNotOnBattlefield(player2, "Kjeldoran Outrider");
+        harness.assertInGraveyard(player2, "Kjeldoran Outrider");
+    }
+
+    @Test
+    @DisplayName("Resolving destroys the caster's own green creature")
+    void resolvingDestroysOwnGreenCreature() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.setHand(player1, List.of(new Deathmark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, druid.getId());
+
+        harness.assertNotOnBattlefield(player1, "Boreal Druid");
+        harness.assertInGraveyard(player1, "Boreal Druid");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that becomes only blue before resolution")
+    void targetLosingQualifyingColorIsIllegalOnResolution() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        harness.setHand(player1, List.of(new Deathmark()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castSorcery(player1, 0, druid.getId());
+
+        druid.setColorOverridden(true);
+        druid.getTransientColors().add(CardColor.BLUE);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Boreal Druid");
+        harness.assertNotInGraveyard(player2, "Boreal Druid");
+        harness.assertInGraveyard(player1, "Deathmark");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

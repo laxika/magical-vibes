@@ -105,4 +105,97 @@ class DimirMachinationsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(machinations);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
+    @Test
+    void canExileAllThreeWithoutTouchingTheFourthCard() {
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new Mountain();
+        Card fourth = new Island();
+        harness.setHand(player1, List.of(new DimirMachinations()));
+        harness.setLibrary(player2, List.of(top, second, third, fourth));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(top, second, third);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourth);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Dimir Machinations");
+    }
+
+    @Test
+    void canTargetYourOwnLibraryAndReturnTheSingleUnexiledCard() {
+        Card top = new Island();
+        Card second = new Forest();
+        harness.setHand(player1, List.of(new DimirMachinations()));
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void resolvesAgainstAnEmptyLibraryWithoutAChoice() {
+        harness.setHand(player1, List.of(new DimirMachinations()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Dimir Machinations");
+    }
+
+    @Test
+    void transmuteCanFailToFindEvenWhenAMatchingCardExists() {
+        DimirMachinations machinations = new DimirMachinations();
+        Card matchingCard = new DriftOfPhantasms();
+        Card land = new Island();
+        harness.setHand(player1, List.of(machinations));
+        harness.setLibrary(player1, List.of(matchingCard, land));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Dimir Machinations");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(matchingCard, land);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void transmuteCannotBeActivatedWithASpellOnTheStack() {
+        DimirMachinations machinations = new DimirMachinations();
+        harness.setHand(player1, List.of(new DimirMachinations(), machinations));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(machinations);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+    }
 }

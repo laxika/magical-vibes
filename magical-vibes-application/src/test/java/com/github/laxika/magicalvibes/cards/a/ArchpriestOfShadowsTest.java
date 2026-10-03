@@ -85,6 +85,57 @@ class ArchpriestOfShadowsTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(bears.getId()));
     }
 
+    @Test
+    @DisplayName("Backup grants another creature the combat damage reanimation ability")
+    void backedUpCreatureReturnsCreatureFromGraveyard() {
+        Card creatureCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creatureCard));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        castArchpriest();
+        resolveEtbTargeting(attacker);
+        attacker.setAttacking(true);
+
+        dealCombatDamage();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(creatureCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(creatureCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Backup can put its counter and grant deathtouch on an opponent's creature")
+    void backsUpOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castArchpriest();
+
+        resolveEtbTargeting(bears);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bears.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage with no creature cards in the graveyard does not request a target")
+    void noLegalGraveyardTarget() {
+        Card instant = new GiantGrowth();
+        harness.setGraveyard(player1, List.of(instant));
+        Permanent archpriest = addCreatureReady(player1, new ArchpriestOfShadows());
+        archpriest.setAttacking(true);
+
+        dealCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
+    }
     private void castArchpriest() {
         harness.setHand(player1, List.of(new ArchpriestOfShadows()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -99,10 +150,7 @@ class ArchpriestOfShadowsTest extends BaseCardTest {
     }
 
     private void dealCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();

@@ -14,13 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class AhnCropChampion extends Card {
 
     public AhnCropChampion() {
-        // Exert: "You may exert this creature as it attacks. When you do, untap all other creatures
-        // you control." Modeled as an optional attack trigger (matching Combat Celebrant). Choosing to
-        // exert also keeps the creature tapped through its next untap step.
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Ahn-Crop Champion as it attacks? (Untap all other creatures you control.)"
         ));

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "INR", collectorNumber = "167")
 @CardRegistration(set = "AVR", collectorNumber = "151")
+@CardRegistration(set = "C16", collectorNumber = "132")
 public class ReforgeTheSoul extends Card {
 
     public ReforgeTheSoul() {

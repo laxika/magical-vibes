@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,11 +20,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DihadaBinderOfWills.class, CaptainSisay.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DihadaBinderOfWills.class, CaptainSisay.class, Forest.class, GrizzlyBears.class, RestInPeace.class})
 class DihadaBinderOfWillsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("+2 grants the three keywords to up to one legendary creature you control")
+    @DisplayName("+2 grants the three keywords to a legendary creature")
     void plusTwoGrantsKeywordsToLegendaryCreatureYouControl() {
         Permanent dihada = addReadyDihada(player1, 5);
         Permanent sisay = harness.addToBattlefieldAndReturn(player1, new CaptainSisay());
@@ -91,11 +92,185 @@ class DihadaBinderOfWillsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    void plusTwoCanTargetOpponentsLegendaryCreature() {
+        addReadyDihada(player1, 5);
+        Permanent sisay = harness.addToBattlefieldAndReturn(player2, new CaptainSisay());
+
+        harness.activateAbility(player1, 0, 0, null, sisay.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void plusTwoCanResolveWithoutATarget() {
+        Permanent dihada = addReadyDihada(player1, 5);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dihada.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plusTwoKeywordsLastThroughOpponentsTurnAndExpireAtYourNextTurn() {
+        addReadyDihada(player1, 5);
+        Permanent sisay = harness.addToBattlefieldAndReturn(player1, new CaptainSisay());
+
+        harness.activateAbility(player1, 0, 0, null, sisay.getId());
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sisay, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void minusThreeCanDeclineAllLegendaryCards() {
+        addReadyDihada(player1, 5);
+        CaptainSisay sisay = new CaptainSisay();
+        DihadaBinderOfWills otherDihada = new DihadaBinderOfWills();
+        Forest land = new Forest();
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(sisay, otherDihada, land, bear));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(sisay, otherDihada, land, bear);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(sisay, otherDihada);
+        assertTreasureCount(4);
+    }
+
+    @Test
+    void minusThreeCanKeepLegendaryNoncreaturesAndAllFourCards() {
+        addReadyDihada(player1, 5);
+        DihadaBinderOfWills first = new DihadaBinderOfWills();
+        DihadaBinderOfWills second = new DihadaBinderOfWills();
+        CaptainSisay third = new CaptainSisay();
+        CaptainSisay fourth = new CaptainSisay();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId(), third.getId(), fourth.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second, third, fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertTreasureCount(0);
+    }
+
+    @Test
+    void minusThreeWithShortLibraryCreatesOnlyTreasuresForCardsPutInGraveyard() {
+        addReadyDihada(player1, 5);
+        CaptainSisay sisay = new CaptainSisay();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(sisay, land));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(sisay.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(sisay);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+        assertTreasureCount(1);
+    }
+
+    @Test
+    void minusThreeWithEmptyLibraryCreatesNoTreasures() {
+        addReadyDihada(player1, 5);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertTreasureCount(0);
+    }
+
+    @Test
+    void minusElevenControlAndHasteExpireAndLandsRemainUnaffected() {
+        addReadyDihada(player1, 12);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        ownLand.tap();
+        opposingLand.tap();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingLand);
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opposingLand.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownLand, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingLand, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({DihadaBinderOfWills.class, Forest.class, RestInPeace.class})
+    void minusThreeCreatesNoTreasuresWhenRevealedCardsAreExiledInstead() {
+        addReadyDihada(player1, 5);
+        harness.addToBattlefield(player2, new RestInPeace());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second, third, fourth);
+        assertTreasureCount(0);
+    }
+
+    @Test
+    void minusElevenAlsoStealsUntapsAndGrantsHasteToNoncreaturesAfterSourceDies() {
+        Permanent source = addReadyDihada(player1, 11);
+        Permanent opposingDihada = harness.addToBattlefieldAndReturn(player2, new DihadaBinderOfWills());
+        opposingDihada.setCounterCount(CounterType.LOYALTY, 5);
+        opposingDihada.tap();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source).contains(opposingDihada);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(source.getCard());
+        assertThat(opposingDihada.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingDihada, Keyword.HASTE)).isTrue();
+    }
+
+    private void assertTreasureCount(int expected) {
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREASURE)))
+                .hasSize(expected);
+    }
+
     private Permanent addReadyDihada(Player player, int loyalty) {
-        Permanent dihada = new Permanent(new DihadaBinderOfWills());
+        Permanent dihada = harness.addToBattlefieldAndReturn(player, new DihadaBinderOfWills());
         dihada.setCounterCount(CounterType.LOYALTY, loyalty);
         dihada.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(dihada);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return dihada;

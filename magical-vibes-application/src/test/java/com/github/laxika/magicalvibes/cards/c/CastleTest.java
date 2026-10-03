@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Castle.class, GrizzlyBears.class, Caltrops.class})
+@CardUsed({Castle.class, GrizzlyBears.class, Caltrops.class, Opalescence.class})
 class CastleTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -43,6 +43,25 @@ class CastleTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, castle)).isTrue();
         assertThat(gqs.getEffectivePower(gd, castle)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, castle)).isEqualTo(6);
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    void animatedCastleLosesItsOwnBonusWhenTapped() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new Castle());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castle.tap();
+
+        assertThat(gqs.getEffectivePower(gd, castle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, castle)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        castle.untap();
+
+        assertThat(gqs.getEffectiveToughness(gd, castle)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 
     @Test

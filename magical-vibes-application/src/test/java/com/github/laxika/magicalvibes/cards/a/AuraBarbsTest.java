@@ -24,14 +24,12 @@ class AuraBarbsTest extends BaseCardTest {
     private void castAuraBarbs() {
         harness.setHand(player1, List.of(new AuraBarbs()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void attachBlessingOfLeeches(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new BlessingOfLeeches());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new BlessingOfLeeches());
         aura.setAttachedTo(creature.getId());
-        harness.getGameData().playerBattlefields.get(controller.getId()).add(aura);
     }
 
     @Test
@@ -122,5 +120,37 @@ class AuraBarbsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         harness.assertOnBattlefield(player2, "Bile Urchin");
+    }
+
+    @Test
+    @DisplayName("A surviving creature has damage marked from the Aura, not Aura Barbs")
+    void survivingCreatureTakesDamageFromAura() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        attachBlessingOfLeeches(player2, creature);
+        Permanent aura = harness.getGameData().playerBattlefields.get(player2.getId()).get(1);
+
+        castAuraBarbs();
+
+        harness.assertLife(player2, 18);
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(creature.getMarkedDamageBySource()).containsEntry(aura.getId(), 2);
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("Regeneration saves the enchanted creature without preventing controller damage")
+    void enchantedCreatureCanRegenerate() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BileUrchin());
+        attachBlessingOfLeeches(player2, creature);
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        castAuraBarbs();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Bile Urchin");
+        harness.assertOnBattlefield(player2, "Blessing of Leeches");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 }

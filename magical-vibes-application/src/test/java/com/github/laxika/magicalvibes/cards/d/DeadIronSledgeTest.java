@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeadIronSledge.class, CopperMyr.class})
+@CardUsed({DeadIronSledge.class, CopperMyr.class, TrollAscetic.class})
 class DeadIronSledgeTest extends BaseCardTest {
 
     @Test
@@ -103,6 +104,60 @@ class DeadIronSledgeTest extends BaseCardTest {
         declareBlock(attacker, blocker);
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Dead-Iron Sledge"));
+    }
+
+    @Test
+    @DisplayName("The Sledge controller controls its becomes-blocked trigger")
+    void equipmentControllerControlsBecomesBlockedTrigger() {
+        Permanent attacker = addCreatureReady(player1, new CopperMyr());
+        Permanent blocker = addCreatureReady(player2, new CopperMyr());
+        Permanent sledge = harness.addToBattlefieldAndReturn(player2, new DeadIronSledge());
+        sledge.setAttachedTo(attacker.getId());
+
+        declareBlock(attacker, blocker);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        resolveAllTriggers();
+        assertDestroyed(player1, attacker, "Copper Myr");
+        assertDestroyed(player2, blocker, "Copper Myr");
+    }
+
+    @Test
+    @DisplayName("Hexproof does not prevent the Sledge from destroying a blocker")
+    void destroysHexproofBlocker() {
+        Permanent attacker = addCreatureReady(player1, new CopperMyr());
+        Permanent sledge = harness.addToBattlefieldAndReturn(player1, new DeadIronSledge());
+        sledge.setAttachedTo(attacker.getId());
+        Permanent blocker = addCreatureReady(player2, new TrollAscetic());
+
+        declareBlock(attacker, blocker);
+        resolveAllTriggers();
+
+        assertDestroyed(player1, attacker, "Copper Myr");
+        assertDestroyed(player2, blocker, "Troll Ascetic");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sledge);
+    }
+
+    @Test
+    @DisplayName("Regenerating one creature does not save the other creature")
+    void regenerationSavesOnlyRegeneratingCreature() {
+        Permanent attacker = addCreatureReady(player1, new CopperMyr());
+        Permanent sledge = harness.addToBattlefieldAndReturn(player1, new DeadIronSledge());
+        sledge.setAttachedTo(attacker.getId());
+        Permanent blocker = addCreatureReady(player2, new TrollAscetic());
+
+        declareBlock(attacker, blocker);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        assertDestroyed(player1, attacker, "Copper Myr");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        harness.assertNotInGraveyard(player2, "Troll Ascetic");
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getRegenerationShield()).isZero();
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {

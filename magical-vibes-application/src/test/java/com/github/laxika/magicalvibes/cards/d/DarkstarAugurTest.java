@@ -66,4 +66,80 @@ class DarkstarAugurTest extends BaseCardTest {
         assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
         assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
     }
+
+    @Test
+    @CardUsed(DarkstarAugur.class)
+    void unpaidOffspringDoesNotCreateAToken() {
+        harness.setHand(player1, List.of(new DarkstarAugur()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(DarkstarAugur.class)
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new DarkstarAugur());
+        Card topCard = new DarkstarAugur();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed(DarkstarAugur.class)
+    void emptyLibraryDoesNotCauseLifeLossOrADraw() {
+        harness.addToBattlefield(player1, new DarkstarAugur());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed(DarkstarAugur.class)
+    void offspringTokenAlsoRevealsACardAndLosesLifeOnUpkeep() {
+        harness.setHand(player1, List.of(new DarkstarAugur()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        Card firstCard = new DarkstarAugur();
+        Card secondCard = new DarkstarAugur();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 14);
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "SPG", collectorNumber = "16")
 @CardRegistration(set = "FCA", collectorNumber = "58")
+@CardRegistration(set = "C16", collectorNumber = "46")
 public class ThrasiosTritonHero extends Card {
 
     public ThrasiosTritonHero() {

@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PollenbrightDruid;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakeningOfVituGhazi.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AwakeningOfVituGhazi.class, Forest.class, PollenbrightDruid.class, Mountain.class})
 class AwakeningOfVituGhaziTest extends BaseCardTest {
 
     @Test
@@ -72,17 +74,126 @@ class AwakeningOfVituGhaziTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, opponentLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
-        Permanent creature = new Permanent(new GrizzlyBears());
-        creature.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = addCreatureReady(player1, new PollenbrightDruid());
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Animating a tapped land does not untap it")
+    void tappedLandRemainsTapped() {
+        Permanent land = addLand(player1);
+        land.tap();
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Haste lets a newly controlled animated land retain and use its mana ability")
+    void newlyControlledLandCanStillProduceMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting again adds another nine counters rather than replacing existing counters")
+    void repeatedCastAccumulatesCounters() {
+        Permanent land = addLand(player1);
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi(), new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(18);
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(18);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("All animation characteristics survive a real turn cleanup")
+    void animationSurvivesTurnBoundary() {
+        Permanent land = addLand(player1);
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectiveName(gd, land)).isEqualTo("Vitu-Ghazi");
+        assertThat(gqs.hasEffectiveSupertype(gd, land, CardSupertype.LEGENDARY)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Differently named lands animated as Vitu-Ghazi invoke the legend rule")
+    void differentLandsWithSameNewNameRequireLegendChoice() {
+        Permanent forest = addLand(player1);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi(), new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+
+        harness.castInstant(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveName(gd, forest)).isEqualTo("Vitu-Ghazi");
+        assertThat(gqs.getEffectiveName(gd, mountain)).isEqualTo("Vitu-Ghazi");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest).doesNotContain(mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mountain.getCard());
+    }
+
+    @Test
+    @DisplayName("The spell has no effect when its land changes controller before resolution")
+    void landMustStillBeControlledAtResolution() {
+        Permanent land = addLand(player1);
+        harness.setHand(player1, List.of(new AwakeningOfVituGhazi()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(gqs.hasEffectiveSupertype(gd, land, CardSupertype.LEGENDARY)).isFalse();
+        assertThat(gqs.getEffectiveName(gd, land)).isEqualTo("Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof AwakeningOfVituGhazi);
+    }
+
     private Permanent addLand(Player player) {
-        Permanent land = new Permanent(new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new Forest());
         land.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(land);
         return land;
     }
 }

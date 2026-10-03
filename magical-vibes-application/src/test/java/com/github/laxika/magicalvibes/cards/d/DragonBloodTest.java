@@ -113,4 +113,58 @@ class DragonBloodTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    @DisplayName("Ability resolves independently after Dragon Blood leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent dragonBlood = harness.addToBattlefieldAndReturn(player1, new DragonBlood());
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(dragonBlood.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dragonBlood);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated activations add counters rather than replacing existing counters")
+    void accumulatesCountersAfterUntapping() {
+        Permanent dragonBlood = harness.addToBattlefieldAndReturn(player1, new DragonBlood());
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+        dragonBlood.untap();
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(dragonBlood.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can activate on the opponent's turn outside a main phase")
+    void canActivateDuringOpponentsEndStep() {
+        Permanent dragonBlood = harness.addToBattlefieldAndReturn(player1, new DragonBlood());
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(dragonBlood.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

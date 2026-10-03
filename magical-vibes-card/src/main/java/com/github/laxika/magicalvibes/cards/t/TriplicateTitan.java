@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "AA2", collectorNumber = "22")
 @CardRegistration(set = "C21", collectorNumber = "79")
+@CardRegistration(set = "DRC", collectorNumber = "143")
 public class TriplicateTitan extends Card {
 
     public TriplicateTitan() {

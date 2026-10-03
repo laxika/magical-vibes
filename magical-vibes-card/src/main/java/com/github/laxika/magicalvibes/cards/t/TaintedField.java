@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "826")
 @CardRegistration(set = "C21", collectorNumber = "320")
 @CardRegistration(set = "DSC", collectorNumber = "302")
+@CardRegistration(set = "ONC", collectorNumber = "167")
 public class TaintedField extends Card {
 
     public TaintedField() {

@@ -13,8 +13,62 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DrakeHatchling.class)
+@CardUsed({DrakeHatchling.class})
 class DrakeHatchlingTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Pump ability works while summoning sick and tapped")
+    void pumpWorksWhileSummoningSickAndTapped() {
+        Permanent drake = addCreatureReady(player1, new DrakeHatchling());
+        drake.setSummoningSick(true);
+        drake.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(3);
+        assertThat(drake.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent drake = addCreatureReady(player1, new DrakeHatchling());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Drake Hatchling has its own activation limit")
+    void activationLimitIsPerPermanent() {
+        Permanent first = addCreatureReady(player1, new DrakeHatchling());
+        Permanent second = addCreatureReady(player1, new DrakeHatchling());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
 
     @Test
     @DisplayName("Pump ability grants +1/+0 until end of turn")

@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({CurseOfStalkedPrey.class, WalkingCorpse.class})
 class CurseOfStalkedPreyTest extends BaseCardTest {
-
-    // ===== Casting and attaching to player =====
 
     @Test
     @DisplayName("Can be cast targeting opponent, enters battlefield attached to that player")
@@ -47,19 +47,16 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
         assertThat(curse.getAttachedTo()).isEqualTo(player1.getId());
     }
 
-    // ===== Combat damage trigger =====
-
     @Test
     @DisplayName("Creature gets +1/+1 counter when dealing combat damage to enchanted player")
     void creatureGetsCounterOnCombatDamage() {
         // Put curse on player2
-        Permanent curse = addCurseOnPlayer2();
+        addCurseOnPlayer2();
 
         // Add an attacking creature for player1
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
@@ -80,17 +77,15 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple creatures each get a +1/+1 counter when dealing combat damage to enchanted player")
     void multipleCreaturesGetCounters() {
-        Permanent curse = addCurseOnPlayer2();
+        addCurseOnPlayer2();
 
-        Permanent attacker1 = new Permanent(new GrizzlyBears());
+        Permanent attacker1 = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker1.setSummoningSick(false);
         attacker1.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker1);
 
-        Permanent attacker2 = new Permanent(new GrizzlyBears());
+        Permanent attacker2 = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker2.setSummoningSick(false);
         attacker2.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker2);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
@@ -112,19 +107,17 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
     @Test
     @DisplayName("Blocked creature that deals no damage to player does not get a counter")
     void blockedCreatureDoesNotGetCounter() {
-        Permanent curse = addCurseOnPlayer2();
+        addCurseOnPlayer2();
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // Block with a creature (attacker is at battlefield index 1, curse is at index 0)
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
@@ -142,7 +135,7 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
     @Test
     @DisplayName("Curse is not removed as orphaned aura when attached to player")
     void curseNotRemovedAsOrphanedAura() {
-        Permanent curse = addCurseOnPlayer2();
+        addCurseOnPlayer2();
 
         // Advance through several steps to trigger SBA / orphan aura checks
         harness.forceStep(TurnStep.END_STEP);
@@ -156,13 +149,12 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
     @Test
     @DisplayName("Counter stacks — creature with existing counter gets another")
     void counterStacks() {
-        Permanent curse = addCurseOnPlayer2();
+        addCurseOnPlayer2();
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
         attacker.setSummoningSick(false);
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // already has a counter
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
@@ -179,13 +171,71 @@ class CurseOfStalkedPreyTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A creature controlled by the Curse controller's opponent also gets a counter")
+    void opponentCreatureGetsCounterWhenControllerIsEnchanted() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfStalkedPrey());
+        curse.setAttachedTo(player1.getId());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(curse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage to a player who is not enchanted does not trigger the Curse")
+    void damageToUnenchantedPlayerDoesNotTrigger() {
+        addCurseOnPlayer2();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the Curse after combat damage does not stop its pending trigger")
+    void pendingTriggerSurvivesCurseLeavingBattlefield() {
+        Permanent curse = addCurseOnPlayer2();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(curse);
+        gd.playerGraveyards.get(player1.getId()).add(curse.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     private Permanent addCurseOnPlayer2() {
-        CurseOfStalkedPrey curseCard = new CurseOfStalkedPrey();
-        Permanent curse = new Permanent(curseCard);
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfStalkedPrey());
         curse.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(curse);
         return curse;
     }
 }

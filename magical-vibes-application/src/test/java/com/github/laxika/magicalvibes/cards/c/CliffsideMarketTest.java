@@ -93,4 +93,69 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
     }
+
+    @Test
+    void lifeExchangeMayBeDeclined() {
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 23);
+        PlanarObject plane = gd.planechase.faceUp.getFirst();
+        harness.inMutationScope(() -> planar.trigger(gd, plane, EffectSlot.UPKEEP_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    void lifeExchangeCanTargetItsController() {
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 23);
+        PlanarObject plane = gd.planechase.faceUp.getFirst();
+        harness.inMutationScope(() -> planar.trigger(gd, plane, EffectSlot.UPKEEP_TRIGGERED, player1.getId()));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    void chaosCanExchangeLands() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentController(gd, first.getId())).isEqualTo(player2.getId());
+        assertThat(gqs.findPermanentController(gd, second.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void chaosMayTargetTwoPermanentsWithTheSameControllerButDoesNotChangeControl() {
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new HillGiant());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, first.getId());
+        PendingInteraction.PermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(secondChoice.validIds()).contains(second.getId()).doesNotContain(first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentController(gd, first.getId())).isEqualTo(player2.getId());
+        assertThat(gqs.findPermanentController(gd, second.getId())).isEqualTo(player2.getId());
+    }
 }

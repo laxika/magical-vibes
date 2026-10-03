@@ -8,15 +8,16 @@ import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DementiaBat.class, GrizzlyBears.class, Peek.class, Forest.class})
 class DementiaBatTest extends BaseCardTest {
 
     @Test
@@ -37,7 +38,7 @@ class DementiaBatTest extends BaseCardTest {
     @DisplayName("Resolving ability causes target player to discard two cards")
     void targetDiscardsTwoCards() {
         harness.addToBattlefield(player1, new DementiaBat());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek(), new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -69,7 +70,7 @@ class DementiaBatTest extends BaseCardTest {
     @DisplayName("Can target self with the ability")
     void canTargetSelf() {
         harness.addToBattlefield(player1, new DementiaBat());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Peek()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -89,7 +90,7 @@ class DementiaBatTest extends BaseCardTest {
     @DisplayName("Target with empty hand results in no discard prompt")
     void targetWithEmptyHandNoPrompt() {
         harness.addToBattlefield(player1, new DementiaBat());
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -104,7 +105,7 @@ class DementiaBatTest extends BaseCardTest {
     @DisplayName("Dementia Bat goes to graveyard after sacrifice")
     void goesToGraveyardAfterSacrifice() {
         harness.addToBattlefield(player1, new DementiaBat());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -114,5 +115,60 @@ class DementiaBatTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player1, "Dementia Bat");
+    }
+
+    @Test
+    @DisplayName("A target with one card discards it and completes resolution")
+    void targetWithOneCardDiscardsIt() {
+        harness.addToBattlefield(player1, new DementiaBat());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Dementia Bat");
+        harness.assertInHand(player2, "Forest");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Five generic mana cannot pay the black portion of the activation cost")
+    void cannotActivateWithoutBlackMana() {
+        harness.addToBattlefield(player1, new DementiaBat());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Dementia Bat");
+        harness.assertNotInGraveyard(player1, "Dementia Bat");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, newly entered Bat can activate during the opponent's turn")
+    void canActivateTappedBatDuringOpponentsTurn() {
+        var bat = harness.addToBattlefieldAndReturn(player1, new DementiaBat());
+        bat.setTapped(true);
+        bat.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Dementia Bat");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

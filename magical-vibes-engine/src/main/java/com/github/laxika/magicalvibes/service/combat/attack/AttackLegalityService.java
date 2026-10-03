@@ -110,6 +110,7 @@ public class AttackLegalityService {
         }
         if (creature.isTapped()) return false;
         if (creature.isCantAttackThisTurn()) return false;
+        if (!gameData.permanentsCantAttackUntilNextTurn.getOrDefault(creature.getId(), java.util.Set.of()).isEmpty()) return false;
         if (gameData.creaturesCantAttackThisTurn) return false;
         if (gameQueryService.isLockedFromAttacking(gameData, creature.getId())) return false;
         if (gameQueryService.isPeaceTalksActive(gameData)) return false;
@@ -559,7 +560,9 @@ public class AttackLegalityService {
 
     private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
                                         boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
-        boolean restrictionPresent = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean restrictionPresent = !attacker.isFaceDown()
+                && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()
+                && attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance)
                 || gameQueryService.getGrantedEffects(gameData, attacker).stream()
                 .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
@@ -815,14 +818,9 @@ public class AttackLegalityService {
                 .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
                 .count();
 
-        // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
-        // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement
-        // lapses once that permanent is no longer a legal attack target.
         if ((creature.isMustAttackThisTurn() || creature.isMustAttackThisCombat())
                 && (creature.getMustAttackTargetId() == null
-                        || gameData.playerIds.contains(creature.getMustAttackTargetId())
-                        || getValidAttackTargetIds(gameData, creatureControllerId)
-                                .contains(creature.getMustAttackTargetId()))) {
+                        || canAttackRequiredTarget(gameData, creature, creature.getMustAttackTargetId()))) {
             count[0]++;
         }
 

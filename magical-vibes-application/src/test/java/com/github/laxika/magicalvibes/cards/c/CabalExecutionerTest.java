@@ -42,9 +42,7 @@ class CabalExecutionerTest extends BaseCardTest {
                 .extracting(Permanent::getId)
                 .contains(secondEnemyCreature.getId())
                 .doesNotContain(enemyCreature.getId());
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(Permanent::getId)
-                .contains(ownCreature.getId());
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
@@ -100,6 +98,77 @@ class CabalExecutionerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void damagedPlayerSacrificesTheirOnlyCreatureAutomatically() {
+        Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
+        executioner.setAttacking(true);
+        addCreatureReady(player2, new ElvishWarrior());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertOnBattlefield(player1, "Cabal Executioner");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void sacrificeFollowsDamagedPlayerWhenOpponentAttacks() {
+        Permanent executioner = addCreatureReady(player2, new CabalExecutioner());
+        executioner.setAttacking(true);
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player2, new ElvishWarrior());
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        harness.assertOnBattlefield(player2, "Cabal Executioner");
+    }
+
+    @Test
+    void faceDownExecutionerDoesNotTriggerOnCombatDamage() {
+        Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
+        executioner.setFaceDown(true);
+        executioner.setAttacking(true);
+        addCreatureReady(player2, new ElvishWarrior());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        harness.assertNotInGraveyard(player2, "Elvish Warrior");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void turningFaceUpBeforeCombatDamageEnablesSacrificeTrigger() {
+        Permanent executioner = addCreatureReady(player1, new CabalExecutioner());
+        executioner.setFaceDown(true);
+        executioner.setAttacking(true);
+        addCreatureReady(player2, new ElvishWarrior());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.turnFaceUp(player1, 0));
+        assertThat(executioner.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Elvish Warrior");
     }
 
     @Test

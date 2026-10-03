@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "2XM", collectorNumber = "261")
 @CardRegistration(set = "HA5", collectorNumber = "24")
 @CardRegistration(set = "BRR", collectorNumber = "21")
+@CardRegistration(set = "BRC", collectorNumber = "143")
 @CardRegistration(set = "C14", collectorNumber = "241")
 @CardRegistration(set = "C21", collectorNumber = "245")
+@CardRegistration(set = "C16", collectorNumber = "258")
 public class IchorWellspring extends Card {
 
     public IchorWellspring() {

@@ -42,9 +42,7 @@ class BattleMenuTest extends BaseCardTest {
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(6);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
@@ -78,6 +76,71 @@ class BattleMenuTest extends BaseCardTest {
         cast(3, null);
 
         harness.assertLife(player1, 14);
+    }
+
+    @Test
+    @DisplayName("Magic destroys a creature with exactly 4 power, including power modifiers")
+    void magicDestroysCreatureAtPowerThreshold() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setPowerModifier(2);
+
+        cast(2, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Magic does not destroy a target whose power falls below 4 before resolution")
+    void magicRechecksPowerOnResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        prepareCard();
+        harness.castInstant(player1, 0, 2, creature.getId());
+
+        creature.setPowerModifier(-3);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Craw Wurm");
+        harness.assertNotInGraveyard(player2, "Craw Wurm");
+        harness.assertInGraveyard(player1, "Battle Menu");
+    }
+
+    @Test
+    @DisplayName("Magic can destroy its controller's creature")
+    void magicCanTargetOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
+
+        cast(2, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Craw Wurm");
+        harness.assertInGraveyard(player1, "Craw Wurm");
+    }
+
+    @Test
+    @DisplayName("Ability can boost an opponent's creature without changing its power")
+    void abilityCanTargetOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(1, creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Ability with a missing target does not resolve another mode")
+    void abilityDoesNotSwitchModesWhenTargetDisappears() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLife(player1, 10);
+        prepareCard();
+        harness.castInstant(player1, 0, 1, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertNotOnBattlefield(player1, "Knight");
+        harness.assertInGraveyard(player1, "Battle Menu");
     }
 
     private void cast(int mode, java.util.UUID targetId) {

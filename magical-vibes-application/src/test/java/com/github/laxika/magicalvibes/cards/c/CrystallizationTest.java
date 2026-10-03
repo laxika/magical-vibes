@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,22 +18,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Crystallization.class, GrizzlyBears.class, IcyManipulator.class, Naturalize.class, Shock.class})
 class CrystallizationTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Resolving Crystallization attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Crystallization()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -42,18 +41,14 @@ class CrystallizationTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Prevents attacking =====
-
     @Test
     @DisplayName("Enchanted creature cannot attack")
     void enchantedCreatureCannotAttack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new Crystallization());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player2, new Crystallization());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player2.getId()).add(auraPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -65,23 +60,18 @@ class CrystallizationTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
-    // ===== Prevents blocking =====
-
     @Test
     @DisplayName("Enchanted creature cannot block")
     void enchantedCreatureCannotBlock() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
-        Permanent auraPerm = new Permanent(new Crystallization());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Crystallization());
         auraPerm.setAttachedTo(blockerPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
-        Permanent atkPerm = new Permanent(new GrizzlyBears());
+        Permanent atkPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         atkPerm.setSummoningSick(false);
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -93,18 +83,14 @@ class CrystallizationTest extends BaseCardTest {
                 .hasMessageContaining("Invalid blocker index");
     }
 
-    // ===== Exiles enchanted creature when it becomes target of a spell =====
-
     @Test
     @DisplayName("Enchanted creature is exiled when it becomes the target of a spell")
     void exilesEnchantedCreatureWhenTargetedBySpell() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new Crystallization());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Crystallization());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Cast Shock targeting the enchanted creature
         harness.setHand(player1, List.of(new Shock()));
@@ -127,22 +113,17 @@ class CrystallizationTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Crystallization");
     }
 
-    // ===== Exiles enchanted creature when it becomes target of an ability =====
-
     @Test
     @DisplayName("Enchanted creature is exiled when it becomes the target of an ability")
     void exilesEnchantedCreatureWhenTargetedByAbility() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new Crystallization());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Crystallization());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Use Icy Manipulator to target the enchanted creature with an activated ability
-        harness.addToBattlefield(player1, new IcyManipulator());
-        Permanent icyPerm = findPermanent(player1, "Icy Manipulator");
+        Permanent icyPerm = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
         icyPerm.setSummoningSick(false);
 
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -158,30 +139,64 @@ class CrystallizationTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
 
-    // ===== Does NOT trigger when the Aura itself is targeted =====
-
     @Test
     @DisplayName("Targeting Crystallization itself does not exile the creature")
     void doesNotTriggerWhenAuraItselfIsTargeted() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new Crystallization());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new Crystallization());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Cast Naturalize targeting Crystallization itself (not the enchanted creature)
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castInstant(player1, 0, auraPerm.getId());
 
-        // Stack should only have Naturalize — no Crystallization trigger
+        // Stack should only have Naturalize, with no Crystallization trigger
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Naturalize");
     }
 
-    // ===== Targeting restriction =====
+    @Test
+    @DisplayName("Destroying Crystallization in response does not stop its exile trigger")
+    void exilesOriginalCreatureAfterAuraIsDestroyed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Crystallization());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock(), new Naturalize()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, creature.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Crystallization");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(creature.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("An opponent targeting the enchanted creature also triggers exile")
+    void exilesCreatureWhenItsControllerTargetsIt() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Crystallization());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(creature.getCard().getId()));
+    }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent with Crystallization")

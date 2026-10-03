@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DarkthicketWolf.class})
 class DarkthicketWolfTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Darkthicket Wolf puts it on the stack")
@@ -80,10 +80,78 @@ class DarkthicketWolfTest extends BaseCardTest {
     }
 
     private Permanent addReadyWolf(Player player) {
-        DarkthicketWolf card = new DarkthicketWolf();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new DarkthicketWolf());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("The boost expires at cleanup")
+    void boostExpiresAtCleanup() {
+        Permanent wolf = addReadyWolf(player1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(wolf.getEffectivePower()).isEqualTo(2);
+        assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A pending activation already consumes the turn's allowance")
+    void pendingActivationConsumesAllowance() {
+        Permanent wolf = addReadyWolf(player1);
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(wolf.getEffectivePower()).isEqualTo(4);
+        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each Wolf has its own activation allowance and boosts only itself")
+    void separateWolvesHaveIndependentAllowances() {
+        Permanent first = addReadyWolf(player1);
+        Permanent second = addReadyWolf(player1);
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Wolf can activate on the opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new DarkthicketWolf());
+        wolf.setSummoningSick(true);
+        wolf.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wolf.getEffectivePower()).isEqualTo(4);
+        assertThat(wolf.getEffectiveToughness()).isEqualTo(4);
+        assertThat(wolf.isTapped()).isTrue();
     }
 }

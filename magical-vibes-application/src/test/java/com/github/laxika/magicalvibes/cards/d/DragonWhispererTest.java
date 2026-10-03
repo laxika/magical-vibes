@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AtarkaBeastbreaker;
+import com.github.laxika.magicalvibes.cards.s.SarkhansRage;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonWhisperer.class, GrizzlyBears.class})
+@CardUsed({DragonWhisperer.class, AtarkaBeastbreaker.class, SarkhansRage.class})
 class DragonWhispererTest extends BaseCardTest {
 
     @Test
@@ -51,7 +54,7 @@ class DragonWhispererTest extends BaseCardTest {
     @DisplayName("Formidable ability cannot be activated below total power eight")
     void formidableRequiresTotalPowerEight() {
         addWhispererReady();
-        addBears(2);
+        addBeastbreakers(2);
         addFormidableMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
@@ -63,7 +66,7 @@ class DragonWhispererTest extends BaseCardTest {
     @DisplayName("Formidable ability creates a 4/4 flying Dragon token")
     void formidableCreatesDragonToken() {
         addWhispererReady();
-        addBears(3);
+        addBeastbreakers(3);
         addFormidableMana();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -75,13 +78,106 @@ class DragonWhispererTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("Repeated pump activations stack and expire at end of turn")
+    void repeatedPumpsStackAndExpire() {
+        Permanent whisperer = addWhispererReady();
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, whisperer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, whisperer)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, whisperer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolved power boosts count toward formidable")
+    void resolvedPumpsEnableFormidable() {
+        addWhispererReady();
+        addBeastbreakers(2);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+        addFormidableMana();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Dragon")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opposing creatures do not count toward formidable")
+    void opposingPowerDoesNotEnableFormidable() {
+        addWhispererReady();
+        addBeastbreakers(2);
+        addCreatureReady(player2, new AtarkaBeastbreaker());
+        addFormidableMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("total power");
+        assertThat(countPermanents(player1, "Dragon")).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Dragon Whisperer can activate its abilities")
+    void abilitiesDoNotRequireTappingOrHaste() {
+        Permanent whisperer = harness.addToBattlefieldAndReturn(player1, new DragonWhisperer());
+        whisperer.setSummoningSick(true);
+        whisperer.setTapped(true);
+        addBeastbreakers(3);
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, whisperer, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, whisperer)).isEqualTo(3);
+        assertThat(countPermanents(player1, "Dragon")).isEqualTo(1);
+        assertThat(whisperer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Formidable resolves after its source dies and total power drops below eight")
+    void formidableResolvesAfterSourceDies() {
+        Permanent whisperer = addWhispererReady();
+        addBeastbreakers(3);
+        addFormidableMana();
+        harness.setHand(player2, List.of(new SarkhansRage()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, whisperer.getId());
+
+        assertThat(countPermanents(player1, "Dragon Whisperer")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Dragon")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Dragon")).isZero();
+    }
+
     private Permanent addWhispererReady() {
         return addCreatureReady(player1, new DragonWhisperer());
     }
 
-    private void addBears(int count) {
+    private void addBeastbreakers(int count) {
         for (int i = 0; i < count; i++) {
-            addCreatureReady(player1, new GrizzlyBears());
+            addCreatureReady(player1, new AtarkaBeastbreaker());
         }
     }
 

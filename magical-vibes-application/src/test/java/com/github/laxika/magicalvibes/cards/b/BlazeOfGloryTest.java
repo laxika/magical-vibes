@@ -113,8 +113,7 @@ class BlazeOfGloryTest extends BaseCardTest {
     private void castBlaze(Permanent target) {
         harness.setHand(player1, List.of(new BlazeOfGlory()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     @Test
@@ -131,6 +130,36 @@ class BlazeOfGloryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("defending player controls");
+    }
+
+    @Test
+    @DisplayName("A defending creature can be targeted before attackers are declared")
+    void canTargetDuringBeginningOfCombat() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new BlazeOfGlory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatCode(() -> harness.castAndResolveInstant(player1, 0, blocker.getId()))
+                .doesNotThrowAnyException();
+        harness.assertInGraveyard(player1, "Blaze of Glory");
+    }
+
+    @Test
+    @DisplayName("A tapped target is not required to block")
+    void tappedTargetDoesNotHaveToBlock() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        castBlaze(blocker);
+        blocker.tap();
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+        assertThat(blocker.getBlockingTargets()).isEmpty();
     }
 
 }

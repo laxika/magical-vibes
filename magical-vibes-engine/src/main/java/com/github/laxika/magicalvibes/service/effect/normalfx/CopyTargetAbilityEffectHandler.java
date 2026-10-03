@@ -25,6 +25,7 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,6 +78,11 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
             log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
 
+            if (!targetEntry.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+                psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), copyControllerId,
+                        copyEntry.getTargetableId(), 0);
+                continue;
+            }
             boolean singleTarget = targetEntry.getTargetId() != null
                     && (targetEntry.getTargetIds() == null || targetEntry.getTargetIds().size() <= 1)
                     && !targetEntry.isNonTargeting();

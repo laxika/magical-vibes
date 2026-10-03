@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "55")
+@CardRegistration(set = "C16", collectorNumber = "81")
 public class AcademyElite extends Card {
 
     public AcademyElite() {

@@ -57,7 +57,7 @@ class DegavolverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new Degavolver()));
 
-        castWithRedKicker();
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{R}"));
         harness.passBothPriorities();
 
         Permanent degavolver = findDegavolver();
@@ -90,16 +90,36 @@ class DegavolverTest extends BaseCardTest {
         assertThat(degavolver.getRegenerationShield()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated repeatedly while summoning sick")
+    void regenerateRepeatedlyWhileSummoningSick() {
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player1, List.of(new Degavolver()));
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent degavolver = findDegavolver();
+        harness.setLife(player1, 20);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(degavolver.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(14);
+        assertThat(degavolver.getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(degavolver.getRegenerationShield()).isEqualTo(2);
+        assertThat(degavolver.isTapped()).isFalse();
+        assertThat(degavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent castDegavolver() {
         harness.castFromHand(player1, new Degavolver(), "{1}{W}");
         harness.passBothPriorities();
         return findDegavolver();
-    }
-
-    private void castWithRedKicker() {
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{R}"), false);
     }
 
     private void castWithBothKickers() {

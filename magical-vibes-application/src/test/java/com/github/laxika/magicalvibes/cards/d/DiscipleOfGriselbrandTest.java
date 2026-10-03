@@ -1,31 +1,32 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.h.HollowhengeScavenger;
+import com.github.laxika.magicalvibes.cards.t.TyphoidRats;
+import com.github.laxika.magicalvibes.cards.m.MomentOfHeroism;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DiscipleOfGriselbrand.class, WalkingCorpse.class, HollowhengeScavenger.class, TyphoidRats.class, MomentOfHeroism.class})
 class DiscipleOfGriselbrandTest extends BaseCardTest {
 
-    // ===== Sacrifice and gain life =====
 
     @Test
     @DisplayName("Sacrificing a 2/2 creature gains 2 life")
     void sacrificing2_2CreatureGains2Life() {
-        Permanent disciple = addDiscipleReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        UUID bearsId = harness.getPermanentId(player1, "Walking Corpse");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -36,15 +37,15 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
 
-        // Grizzly Bears should be in graveyard
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Walking Corpse should be in graveyard
+        harness.assertInGraveyard(player1, "Walking Corpse");
     }
 
     @Test
     @DisplayName("Sacrificing a creature with higher toughness gains more life")
     void sacrificingHighToughnessCreatureGainsMoreLife() {
-        Permanent disciple = addDiscipleReady(player1);
-        Permanent beefy = addCreatureReady(player1, createCreature("Beefy Beast", 1, 5));
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        Permanent beefy = addCreatureReady(player1, new HollowhengeScavenger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -58,8 +59,8 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a 1/1 creature gains 1 life")
     void sacrificing1_1CreatureGains1Life() {
-        Permanent disciple = addDiscipleReady(player1);
-        Permanent token = addCreatureReady(player1, createCreature("Goblin Token", 1, 1));
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        Permanent token = addCreatureReady(player1, new TyphoidRats());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -73,7 +74,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
     @Test
     @DisplayName("Can sacrifice Disciple of Griselbrand to its own ability")
     void canSacrificeItself() {
-        Permanent disciple = addDiscipleReady(player1);
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -89,19 +90,19 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate multiple times by sacrificing different creatures")
     void canActivateMultipleTimes() {
-        Permanent disciple = addDiscipleReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent token = addCreatureReady(player1, createCreature("Goblin Token", 1, 1));
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        Permanent bears = addCreatureReady(player1, new WalkingCorpse());
+        Permanent token = addCreatureReady(player1, new TyphoidRats());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int lifeBefore = gd.getLife(player1.getId());
 
-        // Sacrifice Grizzly Bears (toughness 2)
+        // Sacrifice Walking Corpse (toughness 2)
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        // Sacrifice Goblin Token (toughness 1) — 2 creatures left (disciple + token)
+        // Sacrifice Typhoid Rats (toughness 1) — 2 creatures left (disciple + token)
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, token.getId());
         harness.passBothPriorities();
@@ -110,26 +111,23 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
     }
 
-    // ===== Mana cost =====
 
     @Test
     @DisplayName("Requires {1} mana to activate")
     void requiresManaToActivate() {
-        Permanent disciple = addDiscipleReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        harness.addToBattlefield(player1, new WalkingCorpse());
         // No mana added
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Validation =====
 
     @Test
     @DisplayName("Auto-sacrifices Disciple when it is the only creature")
     void autoSacrificesSelfWhenOnlyCreature() {
-        Permanent disciple = addDiscipleReady(player1);
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());
@@ -141,24 +139,63 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Disciple of Griselbrand");
     }
 
-    // ===== Helper methods =====
 
-    private Permanent addDiscipleReady(Player player) {
-        DiscipleOfGriselbrand card = new DiscipleOfGriselbrand();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Uses boosted toughness when the creature is sacrificed")
+    void usesBoostedToughnessAtSacrifice() {
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        harness.setHand(player1, List.of(new MomentOfHeroism()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, corpse.getId());
+        harness.passBothPriorities();
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, corpse.getId());
+
+        harness.assertInGraveyard(player1, "Walking Corpse");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
-    private Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{G}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DiscipleOfGriselbrand());
+        disciple.setSummoningSick(true);
+        disciple.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Disciple of Griselbrand");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Pending activations retain their own toughness after Disciple is sacrificed")
+    void pendingActivationsRetainTheirOwnToughness() {
+        addCreatureReady(player1, new DiscipleOfGriselbrand());
+        Permanent corpse = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, corpse.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Walking Corpse");
+        harness.assertInGraveyard(player1, "Disciple of Griselbrand");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
     }
 }

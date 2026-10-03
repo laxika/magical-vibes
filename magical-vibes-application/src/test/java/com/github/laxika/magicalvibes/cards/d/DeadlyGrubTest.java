@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.f.FuryCharm;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DeadlyGrub.class)
+@CardUsed({DeadlyGrub.class, FuryCharm.class})
 class DeadlyGrubTest extends BaseCardTest {
 
     @Test
@@ -121,6 +122,57 @@ class DeadlyGrubTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, grub));
         harness.passBothPriorities();
 
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Vanishing does not trigger at upkeep without time counters")
+    void noUpkeepTriggerWithoutTimeCounters() {
+        addCreatureReady(player1, new DeadlyGrub());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Deadly Grub");
+    }
+
+    @Test
+    @DisplayName("Removing the last time counters with Fury Charm triggers sacrifice and creates an Insect")
+    void externalRemovalOfLastTimeCountersCausesSacrifice() {
+        Permanent grub = addCreatureReady(player1, new DeadlyGrub());
+        grub.setCounterCount(CounterType.TIME, 2);
+        harness.setHand(player1, List.of(new FuryCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 2, grub.getId());
+        harness.passBothPriorities();
+
+        assertThat(grub.getCounterCount(CounterType.TIME)).isZero();
+        harness.assertOnBattlefield(player1, "Deadly Grub");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Deadly Grub");
+        harness.assertInGraveyard(player1, "Deadly Grub");
+        assertThat(findPermanents(player1, "Insect")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Removing time counters with Fury Charm does not sacrifice while a counter remains")
+    void externalRemovalLeavesGrubAliveWhenTimeCounterRemains() {
+        Permanent grub = addCreatureReady(player1, new DeadlyGrub());
+        grub.setCounterCount(CounterType.TIME, 3);
+        harness.setHand(player1, List.of(new FuryCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 2, grub.getId());
+        resolveAllTriggers();
+
+        assertThat(grub.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Deadly Grub");
         assertThat(findPermanents(player1, "Insect")).isEmpty();
     }
 }

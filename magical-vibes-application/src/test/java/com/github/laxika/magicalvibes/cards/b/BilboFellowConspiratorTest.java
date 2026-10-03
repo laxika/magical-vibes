@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
+import com.github.laxika.magicalvibes.cards.e.EchoStorm;
 import com.github.laxika.magicalvibes.cards.f.ForswornPaladin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WitchsOven;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BilboFellowConspirator.class, BristlebudFarmer.class, ForswornPaladin.class,
-        GrizzlyBears.class, WitchsOven.class})
+        GrizzlyBears.class, WitchsOven.class, AcademyManufactor.class, EchoStorm.class})
 class BilboFellowConspiratorTest extends BaseCardTest {
 
     @Test
@@ -39,8 +41,7 @@ class BilboFellowConspiratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(2);
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
@@ -57,5 +58,68 @@ class BilboFellowConspiratorTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(countPermanents(player1, "Treasure")).isOne();
+    }
+
+    @Test
+    void doesNotReplaceOpponentsFoodCreation() {
+        harness.addToBattlefield(player1, new BilboFellowConspirator());
+        harness.addToBattlefield(player2, new WitchsOven());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Food")).isOne();
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    void doesNotApplyAfterBilboIsSacrificedToCreateFood() {
+        harness.addToBattlefield(player1, new BilboFellowConspirator());
+        harness.addToBattlefield(player1, new WitchsOven());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Bilbo, Fellow Conspirator"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bilbo, Fellow Conspirator");
+        assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    void addsTreasureWhenCreatingACopyOfFood() {
+        harness.setHand(player1, List.of(new BristlebudFarmer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new BilboFellowConspirator());
+        harness.setHand(player1, List.of(new EchoStorm()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Food"));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(3);
+        assertThat(countPermanents(player1, "Treasure")).isOne();
+    }
+
+    @Test
+    void addsTreasureToFoodIntroducedByAcademyManufactor() {
+        harness.addToBattlefield(player1, new BilboFellowConspirator());
+        harness.addToBattlefield(player1, new AcademyManufactor());
+        addCreatureReady(player1, new ForswornPaladin());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Clue")).isOne();
+        assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 }

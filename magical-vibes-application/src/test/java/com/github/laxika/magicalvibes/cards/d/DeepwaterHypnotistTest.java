@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeepwaterHypnotist.class, GrizzlyBears.class})
 class DeepwaterHypnotistTest extends BaseCardTest {
 
     @Test
@@ -63,13 +65,9 @@ class DeepwaterHypnotistTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        gd.interaction.clearAwaitingInput();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
         assertThat(bears.getToughnessModifier()).isEqualTo(0);
@@ -103,13 +101,56 @@ class DeepwaterHypnotistTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)).isFalse();
     }
 
+    @Test
+    @DisplayName("An already untapped Hypnotist does not trigger during the untap step")
+    void alreadyUntappedDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DeepwaterHypnotist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DeepwaterHypnotist());
+
+        runUntapStep(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The untap trigger resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent hypnotist = harness.addToBattlefieldAndReturn(player1, new DeepwaterHypnotist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DeepwaterHypnotist());
+        hypnotist.tap();
+
+        runUntapStep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hypnotist);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-3);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution receives no modifier")
+    void targetLeavesBeforeResolution() {
+        Permanent hypnotist = harness.addToBattlefieldAndReturn(player1, new DeepwaterHypnotist());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DeepwaterHypnotist());
+        hypnotist.tap();
+
+        runUntapStep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private void runUntapStep(Player untappingPlayer) {
         Player opponent = untappingPlayer.equals(player1) ? player2 : player1;
         harness.forceActivePlayer(opponent);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(untappingPlayer, TurnStep.UPKEEP);
     }
 }

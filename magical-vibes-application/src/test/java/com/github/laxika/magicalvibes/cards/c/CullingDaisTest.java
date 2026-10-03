@@ -1,34 +1,32 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({CullingDais.class, CarapaceForger.class})
 class CullingDaisTest extends BaseCardTest {
-
-    // ===== Ability 0: Sacrifice creature to add charge counter =====
 
     @Test
     @DisplayName("Sacrificing a creature adds a charge counter to Culling Dais")
     void sacrificeCreatureAddsChargeCounter() {
         Permanent dais = addReadyDais(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         harness.passBothPriorities(); // resolve ability
 
-        // Grizzly Bears should be sacrificed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Carapace Forger should be sacrificed
+        harness.assertNotOnBattlefield(player1, "Carapace Forger");
+        harness.assertInGraveyard(player1, "Carapace Forger");
 
         // Culling Dais should have 1 charge counter
         assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
@@ -39,7 +37,7 @@ class CullingDaisTest extends BaseCardTest {
     void ability0RequiresTap() {
         Permanent dais = addReadyDais(player1);
         dais.tap();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
 
         org.assertj.core.api.Assertions.assertThatThrownBy(
                 () -> harness.activateAbility(player1, 0, null, null)
@@ -52,7 +50,7 @@ class CullingDaisTest extends BaseCardTest {
         Permanent dais = addReadyDais(player1);
 
         // First sacrifice
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
@@ -62,14 +60,12 @@ class CullingDaisTest extends BaseCardTest {
         dais.untap();
 
         // Second sacrifice
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
-
-    // ===== Ability 1: Sacrifice self to draw =====
 
     @Test
     @DisplayName("Sacrificing Culling Dais draws cards equal to charge counters")
@@ -83,8 +79,6 @@ class CullingDaisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities(); // resolve ability
 
-        GameData gd = harness.getGameData();
-
         // Culling Dais should be in the graveyard
         harness.assertNotOnBattlefield(player1, "Culling Dais");
         harness.assertInGraveyard(player1, "Culling Dais");
@@ -96,7 +90,7 @@ class CullingDaisTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Culling Dais with 0 counters draws 0 cards")
     void sacrificeSelfWithZeroCountersDrawsNothing() {
-        Permanent dais = addReadyDais(player1);
+        addReadyDais(player1);
         // No charge counters
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -104,8 +98,6 @@ class CullingDaisTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-
-        GameData gd = harness.getGameData();
 
         // Culling Dais should be in the graveyard
         harness.assertNotOnBattlefield(player1, "Culling Dais");
@@ -127,13 +119,78 @@ class CullingDaisTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Culling Dais");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Creature sacrifice and tap are paid before the charge counter resolves")
+    void sacrificeAndTapAreImmediateCosts() {
+        Permanent dais = addReadyDais(player1);
+        harness.addToBattlefield(player1, new CarapaceForger());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Carapace Forger");
+        harness.assertNotOnBattlefield(player1, "Carapace Forger");
+        assertThat(dais.isTapped()).isTrue();
+        assertThat(dais.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent dais = addReadyDais(player1);
+        harness.addToBattlefield(player2, new CarapaceForger());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.activateAbility(player1, 0, null, null)
+        ).isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Carapace Forger");
+        assertThat(dais.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw ability can be activated while tapped and ignores other counter types")
+    void drawAbilityWorksWhileTappedAndCountsOnlyChargeCounters() {
+        Permanent dais = addReadyDais(player1);
+        dais.tap();
+        dais.setCounterCount(CounterType.CHARGE, 2);
+        dais.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertInGraveyard(player1, "Culling Dais");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Dais in response draws only its existing counters")
+    void pendingCounterAbilityDoesNotIncreaseDrawAfterSacrifice() {
+        Permanent dais = addReadyDais(player1);
+        dais.setCounterCount(CounterType.CHARGE, 2);
+        harness.addToBattlefield(player1, new CarapaceForger());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Culling Dais");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyDais(Player player) {
-        CullingDais card = new CullingDais();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CullingDais());
     }
 }

@@ -70,4 +70,39 @@ class BattlewingMysticTest extends BaseCardTest {
                 .containsExactly("Grizzly Bears", "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Kicked trigger discards the entire current hand only when it resolves")
+    void kickedTriggerUsesCurrentHandAndDoesNotAffectOpponent() {
+        BattlewingMystic originalHandCard = new BattlewingMystic();
+        BattlewingMystic laterHandCard = new BattlewingMystic();
+        BattlewingMystic anotherHandCard = new BattlewingMystic();
+        BattlewingMystic firstDraw = new BattlewingMystic();
+        BattlewingMystic secondDraw = new BattlewingMystic();
+        BattlewingMystic remainingLibraryCard = new BattlewingMystic();
+        BattlewingMystic opponentHandCard = new BattlewingMystic();
+        harness.setHand(player1, List.of(new BattlewingMystic(), originalHandCard));
+        harness.setHand(player2, List.of(opponentHandCard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingLibraryCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalHandCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(originalHandCard, laterHandCard, anotherHandCard));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(originalHandCard, laterHandCard, anotherHandCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingLibraryCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHandCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
 }

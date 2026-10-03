@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.k.KyrenToy;
 import com.github.laxika.magicalvibes.cards.s.SteadfastGuard;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,13 +13,66 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CustomsDepot.class, SteadfastGuard.class, KyrenToy.class})
+@CardUsed({CustomsDepot.class, SteadfastGuard.class, KyrenToy.class, Disenchant.class})
 class CustomsDepotTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The newly drawn card can be discarded before the creature resolves")
+    void canDiscardNewlyDrawnCard() {
+        SteadfastGuard cast = new SteadfastGuard();
+        SteadfastGuard kept = new SteadfastGuard();
+        KyrenToy drawn = new KyrenToy();
+        harness.addToBattlefield(player1, new CustomsDepot());
+        harness.setHand(player1, List.of(cast, kept));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == cast);
+        harness.assertNotOnBattlefield(player1, "Steadfast Guard");
+    }
+
+    @Test
+    @DisplayName("The paid loot trigger resolves after Customs Depot is destroyed")
+    void triggerResolvesAfterSourceIsDestroyed() {
+        CustomsDepot depot = new CustomsDepot();
+        SteadfastGuard cast = new SteadfastGuard();
+        SteadfastGuard kept = new SteadfastGuard();
+        KyrenToy drawn = new KyrenToy();
+        var source = harness.addToBattlefieldAndReturn(player1, depot);
+        harness.setHand(player1, List.of(cast, new Disenchant(), kept));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Customs Depot");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(depot, kept);
+    }
 
     @Test
     @DisplayName("Casting a creature offers to pay {1} to draw and discard")
@@ -28,7 +82,7 @@ class CustomsDepotTest extends BaseCardTest {
         KyrenToy drawn = new KyrenToy();
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player1, new CustomsDepot());
-        harness.setHand(player1, new ArrayList<>(List.of(cast, kept)));
+        harness.setHand(player1, List.of(cast, kept));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -55,7 +109,7 @@ class CustomsDepotTest extends BaseCardTest {
         KyrenToy drawn = new KyrenToy();
         harness.setLibrary(player1, List.of(drawn));
         harness.addToBattlefield(player1, new CustomsDepot());
-        harness.setHand(player1, new ArrayList<>(List.of(cast, kept)));
+        harness.setHand(player1, List.of(cast, kept));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -15,11 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BrudicladTelchorEngineer.class)
+@CardUsed({BrudicladTelchorEngineer.class})
 class BrudicladTelchorEngineerTest extends BaseCardTest {
 
     @Test
@@ -30,9 +29,7 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst().orElseThrow();
+        Permanent myr = findPermanent(player1, "Phyrexian Myr");
         assertThat(myr.getCard().getName()).isEqualTo("Phyrexian Myr");
         assertThat(myr.getCard().getPower()).isEqualTo(2);
         assertThat(myr.getCard().getToughness()).isEqualTo(1);
@@ -84,8 +81,8 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The temporary token copies revert at end of turn")
-    void copiesRevertAtEndOfTurn() {
+    @DisplayName("Token copies remain copies after cleanup")
+    void copiesRemainAfterCleanup() {
         harness.addToBattlefield(player1, new BrudicladTelchorEngineer());
         Permanent chosen = addToken(player1, "Goblin", CardType.CREATURE, 1, 1,
                 CardColor.RED, CardSubtype.GOBLIN);
@@ -102,8 +99,86 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(other.getCard().getName()).isEqualTo("Dragon");
-        assertThat(other.getCard().getPower()).isEqualTo(5);
+        assertThat(other.getCard().getName()).isEqualTo("Goblin");
+        assertThat(other.getCard().getPower()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A token copy of Brudiclad grants itself haste")
+    void tokenBrudicladHasHaste() {
+        BrudicladTelchorEngineer card = new BrudicladTelchorEngineer();
+        card.setToken(true);
+        Permanent brudiclad = harness.addToBattlefieldAndReturn(player1, card);
+
+        assertThat(gqs.hasKeyword(gd, brudiclad, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Haste applies only to controlled creature tokens and ends when Brudiclad leaves")
+    void hasteScopeAndSourceRemoval() {
+        Permanent brudiclad = harness.addToBattlefieldAndReturn(player1, new BrudicladTelchorEngineer());
+        Permanent ownToken = addToken(player1, "Goblin", CardType.CREATURE, 1, 1,
+                CardColor.RED, CardSubtype.GOBLIN);
+        Permanent opponentToken = addToken(player2, "Goblin", CardType.CREATURE, 1, 1,
+                CardColor.RED, CardSubtype.GOBLIN);
+        Permanent food = addToken(player1, "Food", CardType.ARTIFACT, 0, 0,
+                null, CardSubtype.FOOD);
+
+        assertThat(gqs.hasKeyword(gd, ownToken, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentToken, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, brudiclad, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, food, Keyword.HASTE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(brudiclad);
+        assertThat(gqs.hasKeyword(gd, ownToken, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Brudiclad does not trigger during the opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new BrudicladTelchorEngineer());
+
+        advanceToCombat(player2);
+
+        assertThat(countPermanents(player1, "Phyrexian Myr")).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The newly created Myr can be chosen to copy")
+    void canChooseNewMyr() {
+        harness.addToBattlefield(player1, new BrudicladTelchorEngineer());
+        Permanent goblin = addToken(player1, "Goblin", CardType.CREATURE, 1, 1,
+                CardColor.RED, CardSubtype.GOBLIN);
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent myr = findPermanent(player1, "Phyrexian Myr");
+        harness.handlePermanentChosen(player1, myr.getId());
+
+        assertThat(goblin.getCard().getName()).isEqualTo("Phyrexian Myr");
+        assertThat(goblin.getCard().getPower()).isEqualTo(2);
+        assertThat(goblin.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing a noncreature token turns the new Myr into a noncreature too")
+    void canChooseNoncreatureToken() {
+        harness.addToBattlefield(player1, new BrudicladTelchorEngineer());
+        Permanent food = addToken(player1, "Food", CardType.ARTIFACT, 0, 0,
+                null, CardSubtype.FOOD);
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent myr = findPermanent(player1, "Phyrexian Myr");
+        harness.handlePermanentChosen(player1, food.getId());
+
+        assertThat(myr.getCard().getName()).isEqualTo("Food");
+        assertThat(myr.getCard().getType()).isEqualTo(CardType.ARTIFACT);
+        assertThat(myr.getCard().getAdditionalTypes()).doesNotContain(CardType.CREATURE);
+        assertThat(gqs.hasKeyword(gd, myr, Keyword.HASTE)).isFalse();
     }
 
     private void advanceToCombat(Player activePlayer) {
@@ -111,9 +186,7 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        if (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
     }
 
     private Permanent addToken(Player player, String name, CardType type, int power, int toughness,
@@ -121,7 +194,6 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
         Card card = new Card();
         card.setName(name);
         card.setType(type);
-        card.setAdditionalTypes(type == CardType.CREATURE ? Set.of() : Set.of());
         card.setColor(color);
         card.setSubtypes(List.of(subtype));
         card.setToken(true);
@@ -130,9 +202,8 @@ class BrudicladTelchorEngineerTest extends BaseCardTest {
             card.setToughness(toughness);
         }
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

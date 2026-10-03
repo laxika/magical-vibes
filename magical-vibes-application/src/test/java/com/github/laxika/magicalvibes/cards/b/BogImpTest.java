@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.StormCrow;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BogImp.class, GrizzlyBears.class, StormCrow.class, GiantSpider.class})
+@CardUsed({BogImp.class, GrizzlyBears.class, GiantSpider.class})
 class BogImpTest extends BaseCardTest {
 
     @Test
@@ -39,7 +38,7 @@ class BogImpTest extends BaseCardTest {
     @DisplayName("A creature with flying can block Bog Imp")
     void flyingCreatureCanBlock() {
         Permanent imp = addCreatureReady(player1, new BogImp());
-        Permanent blocker = addCreatureReady(player2, new StormCrow());
+        Permanent blocker = addCreatureReady(player2, new BogImp());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -63,5 +62,20 @@ class BogImpTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bog Imp can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent imp = addCreatureReady(player2, new BogImp());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(imp);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(imp.isBlocking()).isTrue();
     }
 }

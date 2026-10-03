@@ -21,7 +21,7 @@ public class AprilONeilLiveOnTheScene extends Card {
                 new CardSubtypePredicate(CardSubtype.MUTANT),
                 new CardSubtypePredicate(CardSubtype.NINJA),
                 new CardSubtypePredicate(CardSubtype.TURTLE)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         mutantNinjaOrTurtle,
                         CreateTokenEffect.ofClueToken(1)));

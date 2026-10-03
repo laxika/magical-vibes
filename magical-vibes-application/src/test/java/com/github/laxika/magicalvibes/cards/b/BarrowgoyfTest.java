@@ -77,4 +77,125 @@ class BarrowgoyfTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Forest", "Shock", "Millstone");
     }
+    @Test
+    @DisplayName("Power and toughness update as graveyard card types change")
+    void updatesAsGraveyardTypesChange() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, barrowgoyf)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, barrowgoyf)).isEqualTo(1);
+
+        harness.setGraveyard(player2, List.of(new Ornithopter()));
+        assertThat(gqs.getEffectivePower(gd, barrowgoyf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, barrowgoyf)).isEqualTo(3);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.getEffectivePower(gd, barrowgoyf)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, barrowgoyf)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Accepting the mill does not require returning a creature")
+    void mayDeclineToReturnMilledCreature() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        barrowgoyf.setAttacking(true);
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new Millstone()));
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature, new Forest(), new Shock()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only one creature from this mill can be returned, including artifact creatures")
+    void choosesOneOfMultipleMilledCreatures() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        barrowgoyf.setAttacking(true);
+        GrizzlyBears oldCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new Millstone(), oldCreature));
+        GrizzlyBears firstCreature = new GrizzlyBears();
+        Ornithopter chosenCreature = new Ornithopter();
+        GrizzlyBears lastCreature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstCreature, chosenCreature, lastCreature, new Forest()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(chosenCreature).doesNotContain(firstCreature, lastCreature, oldCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstCreature, lastCreature, oldCreature).doesNotContain(chosenCreature).hasSize(7);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mill amount remembers combat damage rather than the current power")
+    void millsDamageAmountAfterGraveyardChanges() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        barrowgoyf.setAttacking(true);
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new Millstone()));
+        Forest first = new Forest();
+        Shock second = new Shock();
+        Millstone third = new Millstone();
+        GrizzlyBears fourth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+    @Test
+    @DisplayName("Zero power deals no combat damage and does not offer milling")
+    void zeroPowerDoesNotTriggerMill() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        barrowgoyf.setAttacking(true);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        Forest card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat damage gains life even when the mill is declined")
+    void lifelinkDoesNotDependOnAcceptingMill() {
+        Permanent barrowgoyf = addCreatureReady(player1, new Barrowgoyf());
+        barrowgoyf.setAttacking(true);
+        harness.setGraveyard(player1, List.of(new Forest(), new Shock(), new Millstone()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
 }

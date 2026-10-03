@@ -61,7 +61,7 @@ public class ExileTargetSpellUntilSourceLeavesEffectHandler implements NormalEff
         }
 
         UUID sourcePermanentId = findSourcePermanentId(gameData, entry);
-    exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard(), sourcePermanentId);
+        exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard(), sourcePermanentId);
 
         gameLogService.append(gameData,
                 GameLog.cardTextCard(target.getCard(), " is exiled by ", entry.getCard(), "."));
@@ -74,6 +74,7 @@ public class ExileTargetSpellUntilSourceLeavesEffectHandler implements NormalEff
      * source to be given back on.
      */
     private UUID findSourcePermanentId(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) return entry.getSourcePermanentId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) return null;
         for (Permanent permanent : battlefield) {

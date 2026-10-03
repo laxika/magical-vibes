@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +66,7 @@ class DarettiScrapSavantTest extends BaseCardTest {
     @Test
     @DisplayName("-2 only targets artifact cards in your graveyard")
     void minusTwoRejectsNonArtifactTarget() {
-        // The target is chosen before the sacrifice cost resolves.
+        // The target is chosen before the sacrifice instruction resolves.
         addReadyDaretti(5);
         harness.addToBattlefield(player1, new Spellbook());
         Card nonArtifact = new DarettiScrapSavant();
@@ -96,13 +94,58 @@ class DarettiScrapSavantTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(skullbomb.getCard().getId()));
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(skullbomb.getCard());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(skullbomb.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("+2 allows discarding zero without drawing")
+    void plusTwoCanDiscardZero() {
+        Permanent daretti = addReadyDaretti(3);
+        Card kept = new Spellbook();
+        Card libraryCard = new Spellbook();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(daretti.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("-2 does not return its target when no artifact can be sacrificed")
+    void minusTwoWithoutArtifactDoesNotReturnTarget() {
+        Permanent daretti = addReadyDaretti(3);
+        Card target = new Spellbook();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(daretti);
+        assertThat(daretti.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("-2 rejects an artifact in an opponent's graveyard")
+    void minusTwoRejectsOpponentGraveyard() {
+        addReadyDaretti(3);
+        harness.addToBattlefield(player1, new Spellbook());
+        Card target = new Spellbook();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyDaretti(int loyalty) {

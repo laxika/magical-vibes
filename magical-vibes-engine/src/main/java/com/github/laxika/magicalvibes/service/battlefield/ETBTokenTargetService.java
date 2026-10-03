@@ -833,6 +833,7 @@ public class ETBTokenTargetService {
                     gameData, pending.sourcePermanentId());
             if (sourcePermanent != null) {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                etbEntry.setAttackedTargetId(sourcePermanent.getAttackTarget());
             }
         }
         if (!pending.repeatedAdditionalCosts().isEmpty()) {

@@ -53,6 +53,79 @@ class DimensionXPizzasaurTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("All counter types contribute to the destruction limit")
+    void countsOtherCounterTypesAlongsidePlusOneCounters() {
+        Permanent counterTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        counterTarget.setCounterCount(CounterType.STUN, 2);
+        Permanent destructionTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        cast(counterTarget);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(destructionTarget.getId());
+        harness.handlePermanentChosen(player1, destructionTarget.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Losing counters in response makes the destruction target illegal")
+    void rechecksCounterTotalWhenDestructionResolves() {
+        Permanent counterTarget = addReadyPizzasaur();
+        Permanent destructionTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(counterTarget);
+        harness.handlePermanentChosen(player1, destructionTarget.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Destruction can be declined even when eligible creatures exist")
+    void mayDeclineEligibleDestructionTarget() {
+        Permanent counterTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(counterTarget);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Counters on opponents' permanents do not increase the limit")
+    void excludesOpponentsCounters() {
+        Permanent counterTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        cast(counterTarget);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(opponentCreature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Pizzasaur cannot pay the tap cost")
+    void sacrificeAbilityRequiresNoSummoningSickness() {
+        harness.addToBattlefield(player1, new DimensionXPizzasaur());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Dimension X Pizzasaur");
+        harness.assertNotInGraveyard(player1, "Dimension X Pizzasaur");
+    }
+
+    @Test
     @DisplayName("Sacrifice ability gains 3 life and makes each opponent lose 3 life")
     void sacrificeAbilityDrainsOpponent() {
         Permanent pizzasaur = addReadyPizzasaur();
@@ -92,9 +165,8 @@ class DimensionXPizzasaurTest extends BaseCardTest {
     }
 
     private Permanent addReadyPizzasaur() {
-        Permanent pizzasaur = new Permanent(new DimensionXPizzasaur());
+        Permanent pizzasaur = harness.addToBattlefieldAndReturn(player1, new DimensionXPizzasaur());
         pizzasaur.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pizzasaur);
         return pizzasaur;
     }
 }

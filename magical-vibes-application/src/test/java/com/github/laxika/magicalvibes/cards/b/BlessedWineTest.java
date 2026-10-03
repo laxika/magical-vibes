@@ -54,4 +54,40 @@ class BlessedWineTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
+
+    @Test
+    @DisplayName("An additional upkeep in the current turn does not trigger the delayed draw")
+    void waitsForNextTurnAndTriggersOnlyOnce() {
+        harness.castFromHand(player1, new BlessedWine(), "{1}{W}");
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+    }
 }

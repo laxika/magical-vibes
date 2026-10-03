@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,11 +60,48 @@ class DemonsDiscipleTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("An opponent without an eligible permanent does not prevent the controller sacrificing")
+    void skipsOpponentWithOnlyLand() {
+        harness.addToBattlefield(player2, new Forest());
+        castDemonsDisciple();
+
+        harness.assertInGraveyard(player1, "Demon's Disciple");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A player may choose a planeswalker even when they also control a creature")
+    void choosesPlaneswalkerInsteadOfCreature() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DemonsDisciple());
+        Permanent opponentPlaneswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        castDemonsDisciple();
+
+        PendingInteraction.MultiPermanentChoice controllerChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(controllerChoice).isNotNull();
+        assertThat(controllerChoice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Demon's Disciple")));
+
+        harness.assertOnBattlefield(player1, "Demon's Disciple");
+        PendingInteraction.MultiPermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(opponentChoice.validIds()).containsExactlyInAnyOrder(
+                opponentCreature.getId(), opponentPlaneswalker.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(opponentPlaneswalker.getId()));
+
+        harness.assertInGraveyard(player1, "Demon's Disciple");
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.assertOnBattlefield(player2, "Demon's Disciple");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castDemonsDisciple() {
-        harness.setHand(player1, List.of(new DemonsDisciple()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DemonsDisciple(), "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

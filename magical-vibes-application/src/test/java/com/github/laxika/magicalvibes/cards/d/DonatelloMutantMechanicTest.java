@@ -66,6 +66,67 @@ class DonatelloMutantMechanicTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
+    @Test
+    void canChooseNoTargetForCounterTransfer() {
+        harness.addToBattlefield(player1, new DonatelloMutantMechanic());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        relic.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, relic));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Donatello, Mutant Mechanic")
+                .getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerForArtifactWithoutCounters() {
+        harness.addToBattlefield(player1, new DonatelloMutantMechanic());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, relic));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsArtifact() {
+        harness.addToBattlefield(player1, new DonatelloMutantMechanic());
+        Permanent relic = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+        relic.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, relic));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void animationPersistsAfterDonatelloLeavesBattlefield() {
+        Permanent donatello = addCreatureReady(player1, new DonatelloMutantMechanic());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        activate(donatello, relic);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, donatello));
+        advanceToUpkeep(player2);
+
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.isArtifact(gd, relic)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, relic, CardSubtype.ROBOT)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, relic)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, relic)).isEqualTo(3);
+    }
+
     private void activate(Permanent donatello, Permanent target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -15,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Deconstruct.class, AetherSpellbomb.class, TelJiladChosen.class, YotianSoldier.class})
+@CardUsed({Deconstruct.class, AetherSpellbomb.class, TelJiladChosen.class, YotianSoldier.class, DarksteelIngot.class})
 class DeconstructTest extends BaseCardTest {
 
     @Test
@@ -76,5 +76,37 @@ class DeconstructTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         harness.assertInGraveyard(player1, "Deconstruct");
+    }
+
+    @Test
+    @DisplayName("Deconstruct can destroy its controller's own artifact")
+    void destroysOwnArtifactAndAddsMana() {
+        harness.addToBattlefield(player1, new AetherSpellbomb());
+        harness.setHand(player1, List.of(new Deconstruct()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Aether Spellbomb");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Aether Spellbomb");
+        harness.assertInGraveyard(player1, "Aether Spellbomb");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Deconstruct adds mana even when an indestructible artifact survives")
+    void addsManaWhenArtifactCannotBeDestroyed() {
+        harness.addToBattlefield(player2, new DarksteelIngot());
+        harness.setHand(player1, List.of(new Deconstruct()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Darksteel Ingot");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        harness.assertInGraveyard(player1, "Deconstruct");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
     }
 }

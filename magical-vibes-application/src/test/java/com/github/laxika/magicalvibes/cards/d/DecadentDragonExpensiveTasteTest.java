@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.e.ExpensiveTaste;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DecadentDragonExpensiveTaste.class, ExpensiveTaste.class, GrizzlyBears.class})
+@CardUsed({DecadentDragonExpensiveTaste.class, ExpensiveTaste.class, GrizzlyBears.class, Swamp.class})
 class DecadentDragonExpensiveTasteTest extends BaseCardTest {
 
     @Test
@@ -64,5 +65,87 @@ class DecadentDragonExpensiveTasteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castAdventure(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureCanPlayAnExiledLandButCannotExceedTheLandPlayLimit() {
+        Swamp first = new Swamp();
+        Swamp second = new Swamp();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new DecadentDragonExpensiveTaste()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, first.getId());
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        assertThat(gd.findExiledCard(first.getId())).isNull();
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(second.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureWithOnlyOneLibraryCardStillAllowsPlayingItAfterCastingTheDragon() {
+        Swamp stolen = new Swamp();
+        DecadentDragonExpensiveTaste dragon = new DecadentDragonExpensiveTaste();
+        harness.setLibrary(player2, List.of(stolen));
+        harness.setHand(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(stolen.getId()).faceDown()).isTrue();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, dragon.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Decadent Dragon");
+
+        harness.castFromExile(player1, stolen.getId());
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        assertThat(gd.findExiledCard(stolen.getId())).isNull();
+    }
+
+    @Test
+    void adventureResolvesAgainstAnEmptyLibraryAndStillExilesTheDragon() {
+        DecadentDragonExpensiveTaste dragon = new DecadentDragonExpensiveTaste();
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(dragon.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions).containsEntry(dragon.getId(), player1.getId());
+        harness.assertNotInGraveyard(player1, "Decadent Dragon");
+    }
+
+    @Test
+    void controllerCanStillLookAtTheFaceDownLandAfterUsingTheirLandPlay() {
+        Swamp stolen = new Swamp();
+        harness.setLibrary(player2, List.of(stolen));
+        harness.setHand(player1, List.of(new DecadentDragonExpensiveTaste()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"name\":\"Swamp\""))
+                .isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"name\":\"Swamp\""))
+                .isEmpty();
     }
 }

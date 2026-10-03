@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlackCat;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,15 +18,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CurseOfMisfortunes.class, CurseOfThirst.class, CurseOfExhaustion.class, BlackCat.class})
 class CurseOfMisfortunesTest extends BaseCardTest {
-
-    // ===== Upkeep trigger: search and attach =====
 
     @Test
     @DisplayName("At controller's upkeep, may search and attach a Curse to the enchanted player")
     void searchAttachesCurseToEnchantedPlayer() {
         placeCurseOnPlayer(player1, player2);
-        setupLibrary(player1, List.of(curse("Fake Curse"), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CurseOfThirst(), new BlackCat()));
 
         advanceToControllerUpkeep();
 
@@ -37,11 +34,11 @@ class CurseOfMisfortunesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactly("Fake Curse");
+                .containsExactly("Curse of Thirst");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        Permanent newCurse = findPermanent(player1, "Fake Curse");
+        Permanent newCurse = findPermanent(player1, "Curse of Thirst");
         assertThat(newCurse.getAttachedTo()).isEqualTo(player2.getId());
     }
 
@@ -49,7 +46,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
     @DisplayName("Declining the may trigger puts no Curse onto the battlefield")
     void decliningSearchesNothing() {
         placeCurseOnPlayer(player1, player2);
-        setupLibrary(player1, List.of(curse("Fake Curse"), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CurseOfThirst(), new BlackCat()));
 
         advanceToControllerUpkeep();
 
@@ -62,18 +59,15 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
     }
 
-    // ===== Name exclusion =====
-
     @Test
     @DisplayName("Curse sharing a name with one already attached is excluded from the search")
     void excludesCurseWithSameNameAsAttached() {
         placeCurseOnPlayer(player1, player2); // Curse of Misfortunes attached to player2
-        // An additional curse named "Shared" already attached to the enchanted player
-        Permanent shared = new Permanent(curse("Shared"));
+        // A second Curse is already attached to the enchanted player.
+        Permanent shared = harness.addToBattlefieldAndReturn(player1, new CurseOfExhaustion());
         shared.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shared);
 
-        setupLibrary(player1, List.of(curse("Shared"), curse("Unique")));
+        harness.setLibrary(player1, List.of(new CurseOfExhaustion(), new CurseOfThirst()));
 
         advanceToControllerUpkeep();
 
@@ -83,7 +77,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         // Only the differently-named curse may be searched for
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
-                .containsExactly("Unique");
+                .containsExactly("Curse of Thirst");
     }
 
     @Test
@@ -91,7 +85,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
     void noEligibleCurseFindsNothing() {
         placeCurseOnPlayer(player1, player2);
         // Only a same-named curse as one already attached (Curse of Misfortunes) plus a non-curse
-        setupLibrary(player1, List.of(new CurseOfMisfortunes(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CurseOfMisfortunes(), new BlackCat()));
 
         advanceToControllerUpkeep();
 
@@ -102,13 +96,11 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no eligible Curse cards"));
     }
 
-    // ===== Trigger timing =====
-
     @Test
     @DisplayName("Trigger does NOT fire during the enchanted player's upkeep")
     void triggerDoesNotFireDuringEnchantedPlayerUpkeep() {
         placeCurseOnPlayer(player1, player2);
-        setupLibrary(player1, List.of(curse("Fake Curse"), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CurseOfThirst(), new BlackCat()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UNTAP);
@@ -118,27 +110,91 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A resolved upkeep ability can fail to find an eligible Curse")
+    void mayFailToFind() {
+        placeCurseOnPlayer(player1, player2);
+        harness.setLibrary(player1, List.of(new CurseOfThirst()));
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Curses controlled by the enchanted player also exclude matching names")
+    void excludesNamesAcrossControllers() {
+        placeCurseOnPlayer(player1, player2);
+        Permanent attached = harness.addToBattlefieldAndReturn(player2, new CurseOfExhaustion());
+        attached.setAttachedTo(player2.getId());
+        harness.setLibrary(player1, List.of(new CurseOfExhaustion(), new CurseOfThirst()));
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .extracting(Card::getName).containsExactly("Curse of Thirst");
+    }
+
+    @Test
+    @DisplayName("Curses attached to another player do not exclude their names")
+    void otherPlayerCursesDoNotExcludeNames() {
+        placeCurseOnPlayer(player1, player2);
+        Permanent attached = harness.addToBattlefieldAndReturn(player1, new CurseOfExhaustion());
+        attached.setAttachedTo(player1.getId());
+        harness.setLibrary(player1, List.of(new CurseOfExhaustion()));
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof CurseOfExhaustion)
+                .extracting(Permanent::getAttachedTo).containsExactlyInAnyOrder(player1.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("The ability still searches after its source leaves the battlefield")
+    void sourceLeavingDoesNotStopSearch() {
+        Permanent source = placeCurseOnPlayer(player1, player2);
+        harness.setLibrary(player1, List.of(new CurseOfThirst()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(findPermanent(player1, "Curse of Thirst").getAttachedTo()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("The controller can be the enchanted player")
+    void canAttachFetchedCurseToController() {
+        placeCurseOnPlayer(player1, player1);
+        harness.setLibrary(player1, List.of(new CurseOfExhaustion()));
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(findPermanent(player1, "Curse of Exhaustion").getAttachedTo()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Searching an empty library finishes without putting a Curse onto the battlefield")
+    void emptyLibraryFindsNothing() {
+        placeCurseOnPlayer(player1, player2);
+        harness.setLibrary(player1, List.of());
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
 
     private Permanent placeCurseOnPlayer(Player controller, Player enchantedPlayer) {
-        Permanent cursePerm = new Permanent(new CurseOfMisfortunes());
+        Permanent cursePerm = harness.addToBattlefieldAndReturn(controller, new CurseOfMisfortunes());
         cursePerm.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(cursePerm);
         return cursePerm;
-    }
-
-    private Card curse(String name) {
-        GrizzlyBears fakeCurse = new GrizzlyBears();
-        fakeCurse.setName(name);
-        fakeCurse.setSubtypes(List.of(CardSubtype.AURA, CardSubtype.CURSE));
-        fakeCurse.setType(CardType.ENCHANTMENT);
-        return fakeCurse;
-    }
-
-    private void setupLibrary(Player player, List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(cards);
     }
 
     private void advanceToControllerUpkeep() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "MRD", collectorNumber = "168")
+@CardRegistration(set = "C16", collectorNumber = "251")
 public class EmpyrialPlate extends Card {
 
     public EmpyrialPlate() {

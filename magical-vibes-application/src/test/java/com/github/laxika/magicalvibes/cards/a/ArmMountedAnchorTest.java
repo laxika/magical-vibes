@@ -101,6 +101,82 @@ class ArmMountedAnchorTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    void canDeclinePirateDiscardAndDiscardTwoNonPirates() {
+        Permanent attacker = addCreatureReady(player1);
+        addAnchorReady(player1).setAttachedTo(attacker.getId());
+        CloudPirates pirate = new CloudPirates();
+        harness.setHand(player1, List.of(pirate));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        resolveCombatAndTrigger();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)
+                .remainingCount()).isEqualTo(2);
+        int bearIndex = gd.playerHands.get(player1.getId()).indexOf(
+                gd.playerHands.get(player1.getId()).stream()
+                        .filter(GrizzlyBears.class::isInstance).findFirst().orElseThrow());
+        harness.handleCardChosen(player1, bearIndex);
+        bearIndex = gd.playerHands.get(player1.getId()).indexOf(
+                gd.playerHands.get(player1.getId()).stream()
+                        .filter(GrizzlyBears.class::isInstance).findFirst().orElseThrow());
+        harness.handleCardChosen(player1, bearIndex);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pirate);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    void equipIsFreeWithExactlyOneCardInHand() {
+        Permanent anchor = addAnchorReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(anchor.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void unattachedAnchorDoesNotTriggerForCombatDamage() {
+        addCreatureReady(player1);
+        addAnchorReady(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void equipmentControllerLootsWhenOpponentsEquippedCreatureDealsDamage() {
+        Permanent attacker = addCreatureReady(player2);
+        addAnchorReady(player1).setAttachedTo(attacker.getId());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)
+                .remainingCount()).isEqualTo(2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
     private Permanent addAnchorReady(Player player) {
         Permanent anchor = harness.addToBattlefieldAndReturn(player, new ArmMountedAnchor());
         anchor.setSummoningSick(false);
@@ -108,15 +184,11 @@ class ArmMountedAnchorTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private void resolveCombatAndTrigger() {
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow();
+        Permanent attacker = findPermanent(player1, "Grizzly Bears");
         attacker.setAttacking(true);
         resolveCombat();
         harness.passBothPriorities();

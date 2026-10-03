@@ -22,8 +22,7 @@ class DjinnOfTheLampTest extends BaseCardTest {
         addCreatureReady(player1, new DjinnOfTheLamp());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -36,8 +35,20 @@ class DjinnOfTheLampTest extends BaseCardTest {
         addCreatureReady(player1, new DjinnOfTheLamp());
         addCreatureReady(player2, new GiantSpider());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Flying allows Djinn of the Lamp to be blocked by another flying creature")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new DjinnOfTheLamp());
+        addCreatureReady(player2, new DjinnOfTheLamp());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

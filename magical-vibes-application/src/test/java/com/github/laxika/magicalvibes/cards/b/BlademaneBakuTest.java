@@ -137,6 +137,59 @@ class BlademaneBakuTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Accepting an Arcane cast trigger adds a ki counter before the spell resolves")
+    void arcaneSpellAddsKiCounter() {
+        Permanent baku = addBaku();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new NourishingShoal()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Ki counters are paid immediately and repeated activations use their own X values")
+    void repeatedActivationsHaveIndependentBoosts() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, baku)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, 1, null);
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, baku)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, baku)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, baku)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The pump ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent baku = addBaku();
+        baku.tap();
+        baku.setSummoningSick(true);
+        baku.setCounterCount(CounterType.KI, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, baku)).isEqualTo(3);
+        assertThat(baku.isTapped()).isTrue();
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+    }
+
     private Permanent addBaku() {
         return harness.addToBattlefieldAndReturn(player1, new BlademaneBaku());
     }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.s.SpikeshotGoblin;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.cards.t.Triskelion;
 import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AweStrike.class, SpikeshotGoblin.class, YotianSoldier.class})
+@CardUsed({AweStrike.class, SpikeshotGoblin.class, YotianSoldier.class, Shatter.class, Triskelion.class})
 class AweStrikeTest extends BaseCardTest {
 
     @Test
@@ -110,11 +112,62 @@ class AweStrikeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Only the first damage event is prevented")
+    void doesNotPreventSecondDamageEvent() {
+        harness.setLife(player1, 20);
+        Permanent source = addCreatureReady(player2, new SpikeshotGoblin());
+        castAweStrike(source.getId());
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        source.untap();
+        harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and gains life for damage prevented to an opponent")
+    void preventsOwnCreaturesDamageToOpponent() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent source = addCreatureReady(player1, new SpikeshotGoblin());
+        castAweStrike(source.getId());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, indexOf(player1, source), null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents an activated ability's damage after its creature source leaves the battlefield")
+    void preventsDamageAfterSourceLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        Permanent source = harness.enterBattlefieldAndReturn(player2, new Triskelion());
+        castAweStrike(source.getId());
+
+        harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        harness.assertNotOnBattlefield(player2, "Triskelion");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
     private void castAweStrike(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new AweStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private YotianSoldier creatureWithPower(int power) {

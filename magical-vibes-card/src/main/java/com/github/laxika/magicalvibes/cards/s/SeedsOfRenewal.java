@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "260")
+@CardRegistration(set = "C16", collectorNumber = "24")
 public class SeedsOfRenewal extends Card {
 
     public SeedsOfRenewal() {

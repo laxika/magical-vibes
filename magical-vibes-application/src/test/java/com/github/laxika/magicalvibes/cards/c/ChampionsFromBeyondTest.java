@@ -101,8 +101,98 @@ class ChampionsFromBeyondTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void zeroXCreatesNoHeroTokens() {
+        harness.setHand(player1, List.of(new ChampionsFromBeyond()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Hero")).isEmpty();
+        assertThat(findPermanents(player1, "Champions from Beyond")).hasSize(1);
+    }
+
+    @Test
+    void lightPartyDrawsAfterPuttingBothScriedCardsOnTheBottom() {
+        addSourceAndAttackers(7);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(attackerIndices(7));
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isAttacking)).allSatisfy(attacker ->
+                assertThat(attacker.getEffectivePower()).isEqualTo(2));
+    }
+
+    @Test
+    void eightAttackersPutTwoSeparatePartyAbilitiesOnTheStack() {
+        addSourceAndAttackers(8);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(attackerIndices(8)));
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void fullPartyStillBoostsADeclaredAttackerRemovedFromCombat() {
+        addSourceAndAttackers(8);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent removedAttacker = gd.playerBattlefields.get(player1.getId()).get(1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(attackerIndices(8));
+            removedAttacker.setAttacking(false);
+            resolveAllTriggers();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry) {
+                gs.handleInteractionAnswer(gd, player1,
+                        new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+            }
+            resolveAllTriggers();
+        });
+
+        assertThat(removedAttacker.getEffectivePower()).isEqualTo(6);
+        assertThat(removedAttacker.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    void fullPartyDoesNotBoostACreaturePutOntoTheBattlefieldAttackingAfterDeclaration() {
+        addSourceAndAttackers(8);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(attackerIndices(8));
+            Permanent laterAttacker = addCreatureReady(player1, new GrizzlyBears());
+            laterAttacker.setAttacking(true);
+            resolveAllTriggers();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.Scry) {
+                gs.handleInteractionAnswer(gd, player1,
+                        new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+            }
+            resolveAllTriggers();
+
+            assertThat(laterAttacker.getEffectivePower()).isEqualTo(2);
+            assertThat(laterAttacker.getEffectiveToughness()).isEqualTo(2);
+        });
+    }
+
     private void addSourceAndAttackers(int attackerCount) {
-        addCreatureReady(player1, new ChampionsFromBeyond());
+        harness.addToBattlefield(player1, new ChampionsFromBeyond());
         for (int i = 0; i < attackerCount; i++) {
             addCreatureReady(player1, new GrizzlyBears());
         }

@@ -30,6 +30,12 @@ public class DrawCardThenMayPutPermanentWithManaValueAtMostLandsEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (!((DrawCardThenMayPutPermanentWithManaValueAtMostLandsEffect) effect).drawCompleted()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    new DrawCardEffect(1),
+                    new DrawCardThenMayPutPermanentWithManaValueAtMostLandsEffect(true)));
+            return;
+        }
         int landCount = gameData.playerBattlefields
                 .getOrDefault(entry.getControllerId(), List.of())
                 .stream()
@@ -43,7 +49,6 @@ public class DrawCardThenMayPutPermanentWithManaValueAtMostLandsEffectHandler
                         new CardMaxManaValuePredicate(landCount))),
                 "permanent", true);
         List<CardEffect> followUps = List.of(
-                new DrawCardEffect(1),
                 new MayEffect(putPermanent,
                         "You may put a permanent card with mana value " + landCount
                                 + " or less from your hand onto the battlefield tapped."));

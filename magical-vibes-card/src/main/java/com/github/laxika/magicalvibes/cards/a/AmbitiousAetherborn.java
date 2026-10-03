@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
@@ -16,16 +15,11 @@ import java.util.Set;
 public class AmbitiousAetherborn extends Card {
 
     public AmbitiousAetherborn() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption(
-                        "Put a +1/+1 counter on Ambitious Aetherborn",
-                        new PutCountersOnSourceEffect(1, 1, 1)
-                ),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Create a 1/1 colorless Servo artifact creature token",
-                        new CreateTokenEffect(1, "Servo", 1, 1, null,
-                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))
-                )
-        )));
+        CreateTokenEffect servo = new CreateTokenEffect(1, "Servo", 1, 1, null,
+                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect(
+                new com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield(), servo,
+                new com.github.laxika.magicalvibes.model.effect.MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
+                        "Put a +1/+1 counter on Ambitious Aetherborn?", servo)));
     }
 }

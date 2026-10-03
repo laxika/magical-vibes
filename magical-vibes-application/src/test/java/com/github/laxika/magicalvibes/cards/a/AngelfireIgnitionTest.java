@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngelfireIgnition.class, GrizzlyBears.class, Plains.class, InfernalGrasp.class})
 class AngelfireIgnitionTest extends BaseCardTest {
 
     @Test
@@ -30,8 +33,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -52,8 +54,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -92,8 +93,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Angelfire Ignition");
         assertThat(gd.stack).isEmpty();
@@ -109,8 +109,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -131,8 +130,7 @@ class AngelfireIgnitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         harness.assertNotInGraveyard(player1, "Angelfire Ignition");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -168,5 +166,51 @@ class AngelfireIgnitionTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can put counters and grant all five keywords to an opponent's creature")
+    void canTargetOpponentsCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AngelfireIgnition()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flashback is exiled even when its only target leaves before resolution")
+    void flashbackExilesWhenTargetLeaves() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AngelfireIgnition()));
+        harness.setHand(player2, List.of(new InfernalGrasp()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castFlashback(player1, 0, targetId);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotInGraveyard(player1, "Angelfire Ignition");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Angelfire Ignition"));
     }
 }

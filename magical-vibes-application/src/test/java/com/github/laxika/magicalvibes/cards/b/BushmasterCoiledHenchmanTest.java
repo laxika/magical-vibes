@@ -37,6 +37,54 @@ class BushmasterCoiledHenchmanTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
     }
 
+    @Test
+    void grantsDeathtouchWhenFirstPlusOnePlusOneCounterIsAdded() {
+        addBushmaster();
+        Permanent creature = addCreature(player1, 0);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void otherCounterTypesDoNotQualifyForDeathtouch() {
+        addBushmaster();
+        Permanent creature = addCreature(player1, 0);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+        creature.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void grantEndsWhenBushmasterLeavesBattlefield() {
+        Permanent bushmaster = addBushmaster();
+        Permanent creature = addCreature(player1, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(bushmaster);
+        gd.playerHands.get(player1.getId()).add(bushmaster.getCard());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void grantTracksWhichPlayerControlsCounteredCreature() {
+        addBushmaster();
+        Permanent creature = addCreature(player1, 1);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+    }
+
     private Permanent addBushmaster() {
         return harness.addToBattlefieldAndReturn(player1, new BushmasterCoiledHenchman());
     }

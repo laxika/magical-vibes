@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "321")
 @CardRegistration(set = "M3C", collectorNumber = "362")
 @CardRegistration(set = "FIC", collectorNumber = "410")
+@CardRegistration(set = "DRC", collectorNumber = "165")
 public class OverflowingBasin extends Card {
 
     public OverflowingBasin() {

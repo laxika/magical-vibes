@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DovinsVeto.class, Cancel.class, GrizzlyBears.class, MightOfOaks.class})
@@ -30,8 +31,7 @@ class DovinsVetoTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, might.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, might.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertInGraveyard(player2, "Dovin's Veto");
@@ -72,12 +72,73 @@ class DovinsVetoTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castInstant(player1, 0, veto.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, veto.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Might of Oaks");
         harness.assertInGraveyard(player1, "Cancel");
         harness.assertInGraveyard(player2, "Dovin's Veto");
+    }
+
+    @Test
+    @DisplayName("Can target another Dovin's Veto but cannot counter it")
+    void cannotCounterAnotherVeto() {
+        MightOfOaks might = new MightOfOaks();
+        DovinsVeto firstVeto = new DovinsVeto();
+        DovinsVeto secondVeto = new DovinsVeto();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(might, secondVeto));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(firstVeto));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.castAndResolveInstant(player1, 0, firstVeto.getId());
+
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId())
+                .containsExactly(might.getId(), firstVeto.getId());
+        harness.assertNotInGraveyard(player2, "Dovin's Veto");
+        harness.assertInGraveyard(player1, "Dovin's Veto");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player2, "Dovin's Veto");
+    }
+
+    @Test
+    @DisplayName("Leaves the stack when its only target has already been countered")
+    void leavesStackWhenTargetIsGone() {
+        MightOfOaks might = new MightOfOaks();
+        DovinsVeto veto = new DovinsVeto();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(might, new Cancel()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(veto));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.castAndResolveInstant(player1, 0, might.getId());
+
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId())
+                .containsExactly(veto.getId());
+        harness.assertInGraveyard(player1, "Might of Oaks");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cancel");
+        harness.assertInGraveyard(player2, "Dovin's Veto");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }

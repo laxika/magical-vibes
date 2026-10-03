@@ -29,7 +29,6 @@ class CuriousForagerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, food.getId());
-        harness.passBothPriorities();
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -70,6 +69,66 @@ class CuriousForagerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Giant Growth");
     }
 
+    @Test
+    void decliningForageKeepsFoodAndGraveyardCards() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent food = addFoodToken();
+        castForager();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(food);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fewerThanThreeGraveyardCardsWithoutFoodCannotForage() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest()));
+        castForager();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exilingExactlyThreeCardsCanForageWithoutLeavingAReturnTarget() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
+        castForager();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificingFoodImmediatelyCreatesATargetedLandReturnAbility() {
+        Forest forest = new Forest();
+        harness.setGraveyard(player1, List.of(forest));
+        Permanent food = addFoodToken();
+        castForager();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, food.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(forest.getId());
+        harness.assertInGraveyard(player1, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void castForager() {
         harness.setHand(player1, List.of(new CuriousForager()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -88,9 +147,8 @@ class CuriousForagerTest extends BaseCardTest {
         food.setToken(true);
         food.setSubtypes(List.of(CardSubtype.FOOD));
 
-        Permanent permanent = new Permanent(food);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, food);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
     }
 }

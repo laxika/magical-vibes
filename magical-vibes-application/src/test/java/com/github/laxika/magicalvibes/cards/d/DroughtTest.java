@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
 import com.github.laxika.magicalvibes.cards.h.HoarShade;
 import com.github.laxika.magicalvibes.cards.k.KnightOfStromgald;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Drought.class, FyndhornElves.class, HoarShade.class, KnightOfStromgald.class, Swamp.class})
+@CardUsed({Drought.class, FyndhornElves.class, HoarShade.class, KnightOfStromgald.class,
+        SongOfTheDryads.class, Swamp.class})
 class DroughtTest extends BaseCardTest {
 
     @Test
@@ -48,8 +50,7 @@ class DroughtTest extends BaseCardTest {
     @DisplayName("Casting a black spell requires sacrificing a Swamp")
     void blackSpellRequiresSwampSacrifice() {
         harness.addToBattlefield(player2, new Drought());
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         harness.setHand(player1, List.of(new HoarShade()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -111,8 +112,7 @@ class DroughtTest extends BaseCardTest {
     @DisplayName("Activating a {B} ability requires sacrificing a Swamp")
     void blackAbilityRequiresSwampSacrifice() {
         harness.addToBattlefield(player2, new Drought());
-        harness.addToBattlefield(player1, new HoarShade());
-        Permanent shade = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new HoarShade());
         harness.addToBattlefield(player1, new Swamp());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -166,5 +166,108 @@ class DroughtTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(elves.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Drought also taxes spells cast by its controller")
+    void taxesControllersSpell() {
+        harness.addToBattlefield(player1, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new HoarShade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithImposedSacrifice(player1, 0, List.of(swamp.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hoar Shade");
+        harness.assertInGraveyard(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Two Droughts require two Swamps for a spell with one black symbol")
+    void multipleDroughtsAccumulateSpellTax() {
+        harness.addToBattlefield(player1, new Drought());
+        harness.addToBattlefield(player2, new Drought());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new HoarShade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithImposedSacrifice(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hoar Shade");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("One Swamp cannot pay the tax for two black symbols")
+    void insufficientSwampsCannotPaySpellTax() {
+        harness.addToBattlefield(player2, new Drought());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new KnightOfStromgald()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithImposedSacrifice(
+                player1, 0, List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertInHand(player1, "Knight of Stromgald");
+    }
+
+    @Test
+    @DisplayName("Drought does not trigger during the opponent's upkeep")
+    void opponentsUpkeepDoesNotSacrificeDrought() {
+        harness.addToBattlefield(player1, new Drought());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Drought");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(SongOfTheDryads.class)
+    @DisplayName("Drought turned into a Forest no longer taxes spells")
+    void forestDroughtDoesNotTaxSpells() {
+        Permanent drought = harness.addToBattlefieldAndReturn(player2, new Drought());
+        harness.setHand(player1, List.of(new SongOfTheDryads(), new HoarShade()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, drought.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hoar Shade");
+        harness.assertOnBattlefield(player2, "Drought");
+    }
+
+    @Test
+    @CardUsed(SongOfTheDryads.class)
+    @DisplayName("Drought turned into a Forest no longer taxes activated abilities")
+    void forestDroughtDoesNotTaxAbilities() {
+        Permanent drought = harness.addToBattlefieldAndReturn(player2, new Drought());
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new HoarShade());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, drought.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(3);
     }
 }

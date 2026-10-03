@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KrosanGrip;
 import com.github.laxika.magicalvibes.cards.w.WipeAway;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -106,6 +107,62 @@ class AspectOfMongooseTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Aspect of Mongoose");
         harness.assertNotInGraveyard(player1, "Aspect of Mongoose");
         harness.assertInHand(player1, "Aspect of Mongoose");
+    }
+
+    @Test
+    @DisplayName("The player controlling Aspect of Mongoose controls its graveyard trigger")
+    void lastControllerControlsReturnTrigger() {
+        Permanent creature = addCreature(player2);
+        AspectOfMongoose auraCard = new AspectOfMongoose();
+        auraCard.setOwnerId(player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, auraCard);
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new KrosanGrip()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.assertInGraveyard(player1, "Aspect of Mongoose");
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Aspect of Mongoose");
+        harness.assertNotInHand(player2, "Aspect of Mongoose");
+    }
+
+    @Test
+    @DisplayName("Aspect of Mongoose returns when its enchanted creature dies in combat")
+    void returnsWhenEnchantedCreatureDies() {
+        Permanent creature = addCreature();
+        attachAura(creature);
+        addCreature(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player1, "Aspect of Mongoose");
+        harness.assertNotInGraveyard(player1, "Aspect of Mongoose");
+        harness.assertInHand(player1, "Aspect of Mongoose");
+    }
+
+    @Test
+    @DisplayName("Bouncing the Aura removes shroud without a graveyard trigger")
+    void bouncingAuraRemovesShroudWithoutTriggering() {
+        Permanent creature = addCreature();
+        Permanent aura = attachAura(creature);
+        harness.setHand(player1, List.of(new WipeAway()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Aspect of Mongoose");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
     }
 
     private Permanent addCreature() {

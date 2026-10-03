@@ -55,6 +55,36 @@ class AirborneAidTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Counts Birds that enter after casting but before resolution")
+    void countsBirdsAtResolution() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.castFromHand(player1, new AirborneAid(), "{3}{U}");
+
+        harness.addToBattlefield(player2, new AvenSoulgazer());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not count Birds in hands, graveyards, exile, or libraries")
+    void ignoresBirdsOutsideBattlefield() {
+        harness.setHand(player2, List.of(new AvenSoulgazer()));
+        harness.setGraveyard(player1, List.of(new AvenSoulgazer()));
+        harness.setExile(player2, List.of(new AvenSoulgazer()));
+        harness.setLibrary(player1, List.of(new AvenSoulgazer(), new Forest()));
+
+        castAirborneAid();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
     private void castAirborneAid() {
         harness.castFromHand(player1, new AirborneAid(), "{3}{U}");
         harness.passBothPriorities();

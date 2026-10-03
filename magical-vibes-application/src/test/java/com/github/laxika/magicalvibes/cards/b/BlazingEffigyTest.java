@@ -26,8 +26,7 @@ class BlazingEffigyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChainLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castSorcery(player1, 0, effigy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, effigy.getId());
         harness.handleMayAbilityChosen(player1, false);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -52,8 +51,7 @@ class BlazingEffigyTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ChainLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, dyingEffigy.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, dyingEffigy.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -65,5 +63,28 @@ class BlazingEffigyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Death-trigger damage from another Effigy increases the next death trigger")
+    void deathTriggersChainAcrossControllers() {
+        Permanent firstEffigy = addCreatureReady(player1, new BlazingEffigy());
+        Permanent secondEffigy = addCreatureReady(player2, new BlazingEffigy());
+        Permanent target = addCreatureReady(player1, new MossMonster());
+        harness.setHand(player1, List.of(new ChainLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, firstEffigy.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, secondEffigy.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstEffigy, target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondEffigy);
+        harness.assertInGraveyard(player1, "Moss Monster");
+        harness.assertInGraveyard(player1, "Blazing Effigy");
+        harness.assertInGraveyard(player2, "Blazing Effigy");
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffectHandler implements NormalEffectHandlerBean {
 
     private final LibrarySearchSupport librarySearchSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +34,9 @@ public class TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffectHan
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 targetPlayerId,
-                card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
+                card -> card.hasType(CardType.LAND)
+                        && gameQueryService.cardHasSupertype(
+                        card, CardSupertype.BASIC, gameData, targetPlayerId),
                 "basic land cards",
                 "Search your library for a basic land card and put it onto the battlefield tapped.",
                 false,

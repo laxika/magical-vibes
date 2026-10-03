@@ -23,8 +23,7 @@ class BloodcurdlerTest extends BaseCardTest {
     @DisplayName("Mills a card at the beginning of its controller's upkeep")
     void millsAtUpkeep() {
         harness.setGraveyard(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new AngelicWall());
+        harness.setLibrary(player1, List.of(new AngelicWall()));
         harness.addToBattlefield(player1, new Bloodcurdler());
 
         advanceToUpkeep(player1);
@@ -109,6 +108,69 @@ class BloodcurdlerTest extends BaseCardTest {
         Permanent bloodcurdler = findBloodcurdler();
         assertThat(gqs.getEffectivePower(gd, bloodcurdler)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bloodcurdler)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not mill during the opponent upkeep")
+    void doesNotMillDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(new AngelicWall()));
+        harness.addToBattlefield(player1, new Bloodcurdler());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Upkeep mill enables threshold with the seventh graveyard card")
+    void upkeepMillEnablesThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        harness.setLibrary(player1, List.of(new AngelicWall()));
+        harness.addToBattlefield(player1, new Bloodcurdler());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        Permanent bloodcurdler = findBloodcurdler();
+        assertThat(gqs.getEffectivePower(gd, bloodcurdler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bloodcurdler)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("End step trigger resolves after threshold is lost")
+    void endStepTriggerSurvivesThresholdLoss() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addToBattlefield(player1, new Bloodcurdler());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 3));
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("End step trigger exiles as much as possible with one remaining card")
+    void endStepTriggerExilesAsMuchAsPossible() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.addToBattlefield(player1, new Bloodcurdler());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new AngelicWall()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void advanceToEndStep(Player activePlayer) {

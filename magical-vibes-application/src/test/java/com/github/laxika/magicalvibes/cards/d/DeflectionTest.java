@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Index;
 import com.github.laxika.magicalvibes.cards.m.MasterDecoy;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.cards.v.VolcanicHammer;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Deflection.class, Boomerang.class, Index.class, Pyrotechnics.class,
-        GrizzlyBears.class, MasterDecoy.class, VolcanicHammer.class, Zombify.class})
+        GrizzlyBears.class, MasterDecoy.class, VolcanicHammer.class, Zombify.class, Pacifism.class})
 class DeflectionTest extends BaseCardTest {
 
     @Test
@@ -140,10 +141,8 @@ class DeflectionTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bears2PermId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(bears2PermId));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(bears1PermId));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -179,10 +178,8 @@ class DeflectionTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bears2PermId);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(bears1PermId));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(bears2PermId));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -280,4 +277,72 @@ class DeflectionTest extends BaseCardTest {
         harness.assertLife(player1, p1LifeBefore - 3);
         harness.assertLife(player2, p2LifeBefore);
     }
+
+    @Test
+    @DisplayName("Deflection redirects an Aura spell to a different creature")
+    void canRetargetAuraSpell() {
+        UUID originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        UUID newTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        Pacifism pacifism = new Pacifism();
+        harness.setHand(player1, List.of(pacifism));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, originalTarget);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, pacifism.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(newTarget)
+                .doesNotContain(originalTarget, player1.getId(), player2.getId());
+        harness.handlePermanentChosen(player2, newTarget);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(pacifism.getId())
+                        && newTarget.equals(p.getAttachedTo()));
+    }
+
+    @Test
+    @DisplayName("Deflection respects the original spell controller's graveyard restriction")
+    void graveyardRetargetCannotUseOpponentsGraveyard() {
+        GrizzlyBears firstBears = new GrizzlyBears();
+        GrizzlyBears secondBears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(firstBears, secondBears));
+        GrizzlyBears opposingBears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opposingBears));
+
+        Zombify zombify = new Zombify();
+        harness.setHand(player1, List.of(zombify));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.setHand(player2, List.of(new Deflection()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, firstBears.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, zombify.getId());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(secondBears.getId())
+                .doesNotContain(firstBears.getId(), opposingBears.getId());
+
+        harness.handlePermanentChosen(player2, secondBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(secondBears.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(firstBears.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstBears)
+                .doesNotContain(secondBears);
+    }
+
 }

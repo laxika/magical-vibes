@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
 import com.github.laxika.magicalvibes.cards.s.ScentOfJasmine;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -74,9 +76,92 @@ class CurseOfUnbindingTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The Aura can be cast enchanting an opponent")
+    void castsEnchantingOpponent() {
+        harness.setHand(player1, List.of(new CurseOfUnbinding()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getAttachedTo())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A creature on top enters without milling cards or revealing the next creature")
+    void stopsAtTopCreature() {
+        placeCurseOnPlayer(player1, player2);
+        Card firstCreature = new AncientSilverback();
+        Card secondCreature = new AncientSilverback();
+        harness.setLibrary(player2, List.of(firstCreature, secondCreature));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(firstCreature).doesNotContain(secondCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enchanting yourself puts the revealed creature under your control")
+    void canEnchantController() {
+        placeCurseOnPlayer(player1, player1);
+        Card creature = new AncientSilverback();
+        Card remaining = new ScentOfJasmine();
+        harness.setLibrary(player1, List.of(creature, remaining));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library reveals nothing and does not make the enchanted player lose")
+    void emptyLibraryDoesNothing() {
+        placeCurseOnPlayer(player1, player2);
+        harness.setLibrary(player2, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability still resolves after the Curse leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        placeCurseOnPlayer(player1, player2);
+        Card nonCreature = new ScentOfJasmine();
+        Card creature = new AncientSilverback();
+        Card remaining = new ScentOfJasmine();
+        harness.setLibrary(player2, List.of(nonCreature, creature, remaining));
+
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(nonCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+    }
+
     private void placeCurseOnPlayer(Player controller, Player enchantedPlayer) {
-        Permanent curse = new Permanent(new CurseOfUnbinding());
+        Permanent curse = harness.addToBattlefieldAndReturn(controller, new CurseOfUnbinding());
         curse.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(curse);
     }
 }

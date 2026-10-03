@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.f.FellwarStone;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.s.ScarwoodBandits;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CurseArtifact.class, FellwarStone.class, BogRats.class, ScarwoodBandits.class})
+@CardUsed({CurseArtifact.class, FellwarStone.class, BogRats.class, ScarwoodBandits.class, HithlainRope.class})
 class CurseArtifactTest extends BaseCardTest {
 
     @Test
@@ -167,6 +168,24 @@ class CurseArtifactTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
         harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @CardUsed(HithlainRope.class)
+    @DisplayName("An artifact that cannot be sacrificed does not let its controller avoid the damage")
+    void dealsDamageWhenArtifactCannotBeSacrificed() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HithlainRope());
+        attachCurseArtifact(artifact);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        harness.assertLife(player2, lifeBefore - 2);
     }
 
     private Permanent attachCurseArtifact(Permanent artifact) {

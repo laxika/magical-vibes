@@ -58,4 +58,49 @@ class DragonlordsServantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void oneServantDoesNotReduceDragonCostByTwo() {
+        harness.addToBattlefield(player1, new DragonlordsServant());
+        harness.setHand(player1, List.of(new DragonEgg()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void excessReductionCannotPayColoredMana() {
+        harness.addToBattlefield(player1, new DragonlordsServant());
+        harness.addToBattlefield(player1, new DragonlordsServant());
+        harness.addToBattlefield(player1, new DragonlordsServant());
+        harness.setHand(player1, List.of(new DragonEgg()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void servantInHandDoesNotReduceDragonCost() {
+        harness.setHand(player1, List.of(new DragonEgg(), new DragonlordsServant()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void servantInGraveyardDoesNotReduceDragonCost() {
+        harness.setGraveyard(player1, List.of(new DragonlordsServant()));
+        harness.setHand(player1, List.of(new DragonEgg()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }

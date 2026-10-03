@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DayOfDestiny.class, GnarledMass.class, YomijiWhoBarsTheWay.class})
+@CardUsed({DayOfDestiny.class, GnarledMass.class, YomijiWhoBarsTheWay.class, Opalescence.class})
 class DayOfDestinyTest extends BaseCardTest {
 
     @Test
@@ -58,7 +58,6 @@ class DayOfDestinyTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("An animated Day of Destiny buffs itself")
     void animatedDayOfDestinyAlsoGetsBonus() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -81,5 +80,29 @@ class DayOfDestinyTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, yomiji)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, yomiji)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The bonus starts on resolution, not while Day of Destiny is on the stack")
+    void bonusStartsWhenSpellResolves() {
+        Permanent yomiji = harness.addToBattlefieldAndReturn(player1, new YomijiWhoBarsTheWay());
+        Permanent opposingYomiji = harness.addToBattlefieldAndReturn(player2, new YomijiWhoBarsTheWay());
+        Permanent gnarledMass = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
+
+        harness.castFromHand(player1, new DayOfDestiny(), "{3}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, yomiji)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, yomiji)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Day of Destiny");
+        assertThat(gqs.getEffectivePower(gd, yomiji)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, yomiji)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opposingYomiji)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingYomiji)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gnarledMass)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, gnarledMass)).isEqualTo(3);
     }
 }

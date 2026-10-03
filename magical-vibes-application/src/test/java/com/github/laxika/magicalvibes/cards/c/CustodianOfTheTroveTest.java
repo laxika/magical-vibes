@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(CustodianOfTheTrove.class)
 class CustodianOfTheTroveTest extends BaseCardTest {
@@ -26,5 +27,36 @@ class CustodianOfTheTroveTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Custodian of the Trove");
         Permanent custodian = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(custodian.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Custodian of the Trove enters tapped even when it is not cast")
+    void entersTappedWithoutBeingCast() {
+        Permanent custodian = harness.enterBattlefieldAndReturn(player2, new CustodianOfTheTrove());
+
+        harness.assertOnBattlefield(player2, "Custodian of the Trove");
+        assertThat(custodian.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Custodian of the Trove untaps normally during its controller's untap step")
+    void untapsNormally() {
+        Permanent custodian = harness.enterBattlefieldAndReturn(player1, new CustodianOfTheTrove());
+        assertThat(custodian.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(custodian.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Defender prevents an untapped Custodian of the Trove from attacking")
+    void defenderPreventsAttacking() {
+        Permanent custodian = harness.addToBattlefieldAndReturn(player1, new CustodianOfTheTrove());
+        custodian.setSummoningSick(false);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -36,15 +36,60 @@ class DarksteelHydraTest extends BaseCardTest {
         harness.assertInHand(player1, "Darksteel Plate");
     }
 
+    @Test
+    void zeroXDiesDespiteIndestructibleAndStillConjuresBothCards() {
+        castHydra(0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Hydra");
+        harness.assertInGraveyard(player1, "Darksteel Hydra");
+        harness.assertInHand(player1, "Darksteel Ingot");
+        harness.assertInHand(player1, "Darksteel Plate");
+    }
+
+    @Test
+    void oilCountersArePresentBeforeTheConjureTriggerResolves() {
+        castHydra(2);
+        harness.passBothPriorities();
+
+        Permanent hydra = findPermanent(player1, "Darksteel Hydra");
+        assertThat(hydra.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(4);
+        harness.assertNotInHand(player1, "Darksteel Ingot");
+        harness.assertNotInHand(player1, "Darksteel Plate");
+
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Darksteel Ingot");
+        harness.assertInHand(player1, "Darksteel Plate");
+        harness.assertNotInHand(player2, "Darksteel Ingot");
+        harness.assertNotInHand(player2, "Darksteel Plate");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void otherCounterTypesDoNotCountAsOilAndCounterBonusesApplyAfterBasePowerAndToughness() {
+        Permanent hydra = castHydraForX(3);
+        hydra.setCounterCount(CounterType.CHARGE, 5);
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        hydra.setCounterCount(CounterType.OIL, 1);
+
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
+    }
+
     private Permanent castHydraForX(int xValue) {
+        castHydra(xValue);
+        resolveAllTriggers();
+        return findPermanent(player1, "Darksteel Hydra");
+    }
+
+    private void castHydra(int xValue) {
         harness.setHand(player1, List.of(new DarksteelHydra()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
         harness.castCreature(player1, 0, xValue);
-        harness.passBothPriorities();
-        resolveAllTriggers();
-        return findPermanent(player1, "Darksteel Hydra");
     }
 }

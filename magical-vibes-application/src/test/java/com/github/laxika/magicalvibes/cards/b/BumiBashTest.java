@@ -43,8 +43,7 @@ class BumiBashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BumiBash()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 1, harness.getPermanentId(player2, "Field of Ruin"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, harness.getPermanentId(player2, "Field of Ruin"));
 
         harness.assertInGraveyard(player2, "Field of Ruin");
     }
@@ -59,8 +58,7 @@ class BumiBashTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BumiBash()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 1, village.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1, village.getId());
 
         harness.assertInGraveyard(player1, "Treetop Village");
     }
@@ -74,6 +72,50 @@ class BumiBashTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(
                 player1, 0, 1, harness.getPermanentId(player2, "Plains")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("land creature or nonbasic land");
+    }
+
+    @Test
+    @DisplayName("Damage mode ignores opposing lands and counts nonbasic lands")
+    void damageModeCountsOnlyControlledLands() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new FieldOfRuin());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new BumiBash()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Damage mode deals no damage when the caster controls no lands")
+    void damageModeWithNoControlledLands() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new BumiBash()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Bumi Bash");
+    }
+
+    @Test
+    @DisplayName("Destroy mode cannot target a nonland creature")
+    void destroyModeCannotTargetNonlandCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new BumiBash()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("land creature or nonbasic land");
     }

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DisappearingAct.class, GrizzlyBears.class, Island.class})
 class DisappearingActTest extends BaseCardTest {
 
     @Test
@@ -54,7 +57,67 @@ class DisappearingActTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(
                 player2, 0, spell.getId(), opponentPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .contains(opponentPermanent);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A land is returned immediately as a casting cost before the spell resolves")
+    void returnsLandBeforeResolution() {
+        GrizzlyBears spell = new GrizzlyBears();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new DisappearingAct()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstantWithSacrifice(player2, 0, spell.getId(), land.getId());
+
+        harness.assertInHand(player2, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Disappearing Act");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without choosing a permanent to return")
+    void cannotOmitAdditionalCost() {
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new DisappearingAct()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Disappearing Act");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A controlled permanent owned by an opponent returns to its owner's hand")
+    void returnsBorrowedPermanentToOwner() {
+        GrizzlyBears spell = new GrizzlyBears();
+        Permanent borrowedLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        gd.stolenCreatures.put(borrowedLand.getId(), player1.getId());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new DisappearingAct()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        harness.castInstantWithSacrifice(player2, 0, spell.getId(), borrowedLand.getId());
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

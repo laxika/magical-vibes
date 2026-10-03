@@ -70,4 +70,104 @@ class CravingOfYeenoghuTest extends BaseCardTest {
                 .hasMessageContaining("creature you control");
     }
 
+    @Test
+    void repeatedReturnsAccumulatePerpetualPenalties() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateGraveyardAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Craving of Yeenoghu");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.activateGraveyardAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Craving of Yeenoghu").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void graveyardAbilityRejectsOpponentCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Craving of Yeenoghu");
+    }
+
+    @Test
+    void graveyardAbilityCannotActivateOutsideMainPhase() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void graveyardAbilityCannotActivateDuringOpponentsTurn() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardAbilityCannotActivateWithSpellOnStack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.setHand(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void illegalTargetDoesNotReturnAuraOrAddPerpetualPenalty() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent survivor = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new CravingOfYeenoghu()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Craving of Yeenoghu");
+        harness.assertNotOnBattlefield(player1, "Craving of Yeenoghu");
+        harness.activateGraveyardAbility(player1, 0, survivor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(3);
+    }
+
 }

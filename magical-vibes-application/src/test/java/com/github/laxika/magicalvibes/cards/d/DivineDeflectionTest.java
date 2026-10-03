@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiselaBladeOfGoldnight;
+import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DivineDeflection.class, MoorlandInquisitor.class, GiselaBladeOfGoldnight.class})
 class DivineDeflectionTest extends BaseCardTest {
 
     @Test
@@ -35,8 +38,7 @@ class DivineDeflectionTest extends BaseCardTest {
         castDeflection(3, player2.getId());
 
         Permanent attacker = addAttacker(player2);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent blocker = gd.playerBattlefields.get(player1.getId()).getLast();
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new MoorlandInquisitor());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -54,8 +56,7 @@ class DivineDeflectionTest extends BaseCardTest {
     @Test
     @DisplayName("Prevented damage can be dealt to a target creature, killing it")
     void dealsPreventedDamageToTargetCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent victim = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new MoorlandInquisitor());
 
         castDeflection(2, victim.getId());
         addAttacker(player2);
@@ -63,7 +64,7 @@ class DivineDeflectionTest extends BaseCardTest {
         runCombatDamage();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Moorland Inquisitor");
     }
 
     @Test
@@ -101,6 +102,53 @@ class DivineDeflectionTest extends BaseCardTest {
         assertThat(gd.damageRedirectShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Gisela doubles the damage Divine Deflection deals to the opponent")
+    void reflectedPlayerDamageIsDoubledByGisela() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        castDeflection(1, player2.getId());
+        addAttacker(player2);
+
+        runCombatDamage();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The resolved shield still prevents damage when its target leaves the battlefield")
+    void resolvedShieldSurvivesTargetLeavingBattlefield() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new MoorlandInquisitor());
+        castDeflection(2, victim.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        addAttacker(player2);
+
+        runCombatDamage();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An illegal target on resolution prevents the shield from being created")
+    void illegalTargetOnResolutionCreatesNoShield() {
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new MoorlandInquisitor());
+        harness.setHand(player1, List.of(new DivineDeflection()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 2, victim.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        harness.passBothPriorities();
+        addAttacker(player2);
+
+        runCombatDamage();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
     /** Casts Divine Deflection from player1's hand for the given X at the given target and resolves it. */
     private void castDeflection(int xValue, java.util.UUID targetId) {
         harness.setLife(player1, 20);
@@ -113,10 +161,9 @@ class DivineDeflectionTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    /** Adds an attacking Grizzly Bears (2/2) for the given player and makes them the active player. */
+    /** Adds an attacking Moorland Inquisitor (2/2) for the given player and makes them the active player. */
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player player) {
-        harness.addToBattlefield(player, new GrizzlyBears());
-        Permanent attacker = gd.playerBattlefields.get(player.getId()).getLast();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player, new MoorlandInquisitor());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         harness.forceActivePlayer(player);

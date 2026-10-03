@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TravelThroughCaradhrasEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "44")
 @CardRegistration(set = "LTC", collectorNumber = "127")
+@CardRegistration(set = "LTC", collectorNumber = "446")
 public class TravelThroughCaradhras extends Card {
 
     public TravelThroughCaradhras() {

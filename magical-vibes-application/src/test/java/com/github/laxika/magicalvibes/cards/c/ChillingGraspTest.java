@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChillingGrasp.class, GrizzlyBears.class, Forest.class, RavensCrime.class})
 class ChillingGraspTest extends BaseCardTest {
 
     @Test
@@ -85,11 +87,107 @@ class ChillingGraspTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Chilling Grasp");
     }
 
+    @Test
+    void mayResolveWithoutTargets() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castChillingGrasp(List.of());
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(bears.getSkipUntapCount()).isZero();
+        harness.assertInGraveyard(player1, "Chilling Grasp");
+    }
+
+    @Test
+    void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setTapped(true);
+        castChillingGrasp(List.of(bears.getId()));
+
+        harness.performUntapStep(player1);
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void mayTargetCreaturesControlledByDifferentPlayers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castChillingGrasp(List.of(own.getId(), opposing.getId()));
+
+        harness.performUntapStep(player1);
+        assertThat(own.isTapped()).isTrue();
+        assertThat(opposing.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(own.isTapped()).isFalse();
+        harness.performUntapStep(player2);
+        assertThat(opposing.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(opposing.isTapped()).isFalse();
+    }
+
+    @Test
+    void decliningMadnessMovesCardFromExileToGraveyard() {
+        ChillingGrasp grasp = discardViaRavensCrime();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(grasp.getId()));
+        harness.assertInGraveyard(player1, "Chilling Grasp");
+    }
+
+    @Test
+    void madnessCanBeCastWithoutAnyCreaturesOnBattlefield() {
+        discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Chilling Grasp");
+    }
+    @Test
+    void remainingLegalTargetStillGetsTappedAndLocked() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ChillingGrasp()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(second.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotChooseMoreThanTwoCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ChillingGrasp()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void castChillingGrasp(List<UUID> targets) {
         harness.setHand(player1, List.of(new ChillingGrasp()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castInstant(player1, 0, targets);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targets);
     }
 
     private ChillingGrasp discardViaRavensCrime() {
@@ -100,8 +198,7 @@ class ChillingGraspTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return grasp;
     }

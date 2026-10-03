@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "DMU", collectorNumber = "183")
 @CardRegistration(set = "TDC", collectorNumber = "273")
 @CardRegistration(set = "BLC", collectorNumber = "241")
+@CardRegistration(set = "EOC", collectorNumber = "109")
 public class TearAsunder extends Card {
 
     public TearAsunder() {

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LurkerInTheDeep;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarigaazsWhelp.class, FurnaceWhelp.class, GrizzlyBears.class})
+@CardUsed({DarigaazsWhelp.class, FurnaceWhelp.class, GrizzlyBears.class,
+        LurkerInTheDeep.class, PsychogenicProbe.class})
 class DarigaazsWhelpTest extends BaseCardTest {
 
     @Test
@@ -51,7 +54,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent whelp = findPermanent(player1, DarigaazsWhelp.class);
+        Permanent whelp = findPermanent(player1, "Darigaaz's Whelp");
         assertThat(gqs.getEffectivePower(gd, whelp)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, whelp)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).contains(dragon);
@@ -77,6 +80,113 @@ class DarigaazsWhelpTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void unkickedEntryDoesNotSeekOrBoost() {
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+        harness.setHand(player1, List.of(new DarigaazsWhelp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent whelp = findPermanent(player1, "Darigaaz's Whelp");
+        assertThat(gqs.getEffectivePower(gd, whelp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, whelp)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(dragon);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedEntryStillBoostsWhelpWhenNoDragonCanBeSought() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.setHand(player1, List.of(new DarigaazsWhelp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent whelp = findPermanent(player1, "Darigaaz's Whelp");
+        assertThat(gqs.getEffectivePower(gd, whelp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, whelp)).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    void opponentDrawingDragonDoesNotTriggerWhelp() {
+        harness.addToBattlefield(player1, new DarigaazsWhelp());
+        harness.setLibrary(player2, List.of(new FurnaceWhelp()));
+
+        draw(player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoWhelpsEachBoostTheSameDrawnDragon() {
+        harness.addToBattlefield(player1, new DarigaazsWhelp());
+        harness.addToBattlefield(player1, new DarigaazsWhelp());
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+
+        draw(player1.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent drawnDragon = findPermanent(player1, dragon);
+        assertThat(gqs.getEffectivePower(gd, drawnDragon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, drawnDragon)).isEqualTo(4);
+    }
+
+    @Test
+    void seekingDoesNotCauseShuffleTriggers() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+        harness.setHand(player1, List.of(new DarigaazsWhelp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(dragon);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void seekingDragonTriggersAbilitiesThatWatchSeeking() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new LurkerInTheDeep());
+        FurnaceWhelp dragon = new FurnaceWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+        harness.setHand(player1, List.of(new DarigaazsWhelp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(dragon);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(Permanent::isFaceDown).hasSize(1);
+    }
+
     private void draw(UUID playerId) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, playerId));
     }
@@ -88,10 +198,4 @@ class DarigaazsWhelpTest extends BaseCardTest {
                 .orElseThrow();
     }
 
-    private Permanent findPermanent(Player player, Class<? extends Card> cardClass) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> cardClass.isInstance(permanent.getCard()))
-                .findFirst()
-                .orElseThrow();
-    }
 }

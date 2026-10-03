@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.FreePowerUpEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -158,7 +159,7 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect, new CostModificationSource(perm, pid)));
@@ -1328,6 +1329,7 @@ public class CastingCostService {
     public boolean hasFreePowerUpAbilityCost(GameData gameData, UUID activatingPlayerId,
                                              ActivatedAbility ability) {
         if (!ability.isPowerUpAbility()
+                || !activatingPlayerId.equals(gameData.activePlayerId)
                 || gameData.playersWhoActivatedPowerUpAbilityThisTurn.contains(activatingPlayerId)) {
             return false;
         }
@@ -2008,10 +2010,20 @@ public class CastingCostService {
                         && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
                         && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                         && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
-                    if (altCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
+                    if (altCost.nonManaCost() instanceof AlternativeSpellCost alternativeSpellCost
+                            && alternativeSpellCost.kind()
+                            == AlternativeSpellCost.Kind.PAY_LIFE_EQUAL_TO_SPELL_MANA_VALUE
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
                             && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                            && canPayAdditionalManaCost(pool, additionalCost)) {
+                        return new AlternativeCostSelection(null, altCost.castsWithWarp(),
+                                altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());
+                    }
+                    if (altCost.nonManaCost() instanceof AlternativeSpellCost alternativeSpellCost
+                            && alternativeSpellCost.kind() == AlternativeSpellCost.Kind.PAY_ENERGY
+                            && gameData.playerEnergyCounters.getOrDefault(playerId, 0)
+                            >= alternativeSpellCost.amount()
                             && canPayAdditionalManaCost(pool, additionalCost)) {
                         return new AlternativeCostSelection(null, altCost.castsWithWarp(),
                                 altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());
@@ -2621,6 +2633,8 @@ public class CastingCostService {
         for (Permanent perm : defenderBattlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof RequirePaymentToAttackEffect tax
+                        && !perm.isFaceDown()
+                        && !gameQueryService.hasLostAllAbilities(gameData, perm)
                         && (!tax.planeswalkersOnly() || attackingPlaneswalker)
                         && (!attackingPlaneswalker || tax.protectsPlaneswalkers())
                         && (tax.activeCondition() == null || conditionEvaluationService.isMet(

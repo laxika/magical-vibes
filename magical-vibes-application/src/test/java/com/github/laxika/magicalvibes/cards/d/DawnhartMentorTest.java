@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -26,8 +27,7 @@ class DawnhartMentorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent human = findPermanent(player1, "Human");
         assertThat(human.getCard().isToken()).isTrue();
@@ -66,6 +66,69 @@ class DawnhartMentorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(mentor), null, mentor.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("different powers");
+    }
+
+    @Test
+    void covenIsNotRequiredAtResolution() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new DawnhartMentor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(giant);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mentor, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void boostAndTrampleExpireAtEndOfTurn() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new DawnhartMentor());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, mentor.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, mentor, Keyword.TRAMPLE)).isTrue();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectivePower(gd, mentor)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, mentor, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void cannotTargetOpponentCreature() {
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void opponentCreaturesDoNotEnableCoven() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new DawnhartMentor());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mentor.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("different powers");
     }

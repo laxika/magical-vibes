@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FemerefScouts;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Delirium.class, FemerefScouts.class, Forest.class})
+@CardUsed({Delirium.class, FemerefScouts.class, Forest.class, Incinerate.class})
 class DeliriumTest extends BaseCardTest {
 
     @Test
@@ -113,6 +114,77 @@ class DeliriumTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses the creature's current power when the spell resolves")
+    void usesPowerAtResolution() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player2, 20);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+
+        target.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with negative power deals no damage but is still tapped")
+    void negativePowerDealsNoDamage() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player2, 20);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        target.setPowerModifier(-2);
+
+        castDelirium(target);
+
+        harness.assertLife(player2, 20);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.creaturesWithCombatDamagePrevented).contains(target.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(target.getId());
+    }
+
+    @Test
+    @DisplayName("Does nothing if the target leaves the active player's control before resolution")
+    void targetChangingControllerBecomesIllegal() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.creaturesWithCombatDamagePrevented).doesNotContain(target.getId());
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(target.getId());
+    }
+
+    @Test
+    @DisplayName("Combat prevention does not prevent later noncombat damage to the creature")
+    void doesNotPreventNoncombatDamageToTarget() {
+        harness.forceActivePlayer(player2);
+        harness.setLife(player2, 20);
+        Permanent target = addCreatureReady(player2, new FemerefScouts());
+        castDelirium(target);
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertLife(player2, 19);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
     private void prepareCast() {
         harness.setHand(player1, List.of(new Delirium()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -122,8 +194,7 @@ class DeliriumTest extends BaseCardTest {
 
     private void castDelirium(Permanent target) {
         prepareCast();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addCreature(Player owner, int power, int toughness) {

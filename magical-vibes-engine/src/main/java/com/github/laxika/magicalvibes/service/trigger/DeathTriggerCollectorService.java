@@ -623,8 +623,10 @@ public class DeathTriggerCollectorService {
                 effect.counterType(), counters, effect.optional(), effect.targetPredicate(), modular);
         // "you may …" (Soulstinger): the target is still chosen now (CR 603.3d), but the controller
         // may decline placing the counters when the trigger resolves — gate it behind a MayEffect.
+        String counterDescription = effect.counterType() == CounterType.PLUS_ONE_PLUS_ONE ? "+1/+1" : "-1/-1";
         CardEffect queued = effect.optional()
-                ? new MayEffect(baked, "put a -1/-1 counter on target creature for each -1/-1 counter on "
+                ? new MayEffect(baked, "put a " + counterDescription + " counter on target creature for each "
+                        + counterDescription + " counter on "
                         + sd.dyingCard().getName() + "?")
                 : baked;
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
@@ -935,6 +937,9 @@ public class DeathTriggerCollectorService {
             triggerEffect = aware.boundToDyingCreatureAttachments(
                     attachmentSnapshot.auraCardIds(), attachmentSnapshot.equipmentPermanentIds());
         }
+        if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware) {
+            triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(dyingPermanent));
+        }
 
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -1116,8 +1121,17 @@ public class DeathTriggerCollectorService {
         if (wrapped instanceof DyingCreatureCardAwareEffect aware && death.dyingCard() != null) {
             wrapped = aware.boundToDyingCard(death.dyingCard().getId());
         }
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
-                new MayEffect(wrapped, may.prompt()), null, match.permanent().getId());
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(wrapped, may.prompt()))),
+                null, match.permanent().getId());
+        if (death.dyingCard() != null) {
+            entry.setTriggeringCardId(death.dyingCard().getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(death.dyingCard().getId()));
+        }
+        match.gameData().stack.add(entry);
         return true;
     }
 
@@ -3998,7 +4012,8 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(match.permanent().getId())))
+                new ArrayList<>(List.of(new ExileTokensCreatedWithSourceEffect(
+                        match.permanent().getId(), effect.atNextEndStep())))
         ));
         logSelfLeaves(match);
         return true;

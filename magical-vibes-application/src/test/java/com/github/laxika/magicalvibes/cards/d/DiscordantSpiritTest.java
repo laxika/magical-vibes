@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(DiscordantSpirit.class)
+@CardUsed({DiscordantSpirit.class, Incinerate.class})
 class DiscordantSpiritTest extends BaseCardTest {
 
     private Permanent addSpirit() {
@@ -40,8 +40,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         Permanent spirit = addSpirit();
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         advanceToEndStepAndResolve(player2);
 
@@ -49,7 +48,6 @@ class DiscordantSpiritTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Incinerate.class)
     @DisplayName("Counts damage dealt after the opponent's end-step trigger is put on the stack")
     void countsDamageDealtAfterTriggerIsPutOnStack() {
         Permanent spirit = addSpirit();
@@ -58,8 +56,7 @@ class DiscordantSpiritTest extends BaseCardTest {
         harness.passPriority(player2);
         harness.setHand(player1, List.of(new Incinerate()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
         resolveAllTriggers();
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -118,5 +115,48 @@ class DiscordantSpiritTest extends BaseCardTest {
         advanceToEndStepAndResolve(player2);
 
         assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counts damage dealt earlier in the turn before it entered the battlefield")
+    void countsDamageBeforeEnteringBattlefield() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        Permanent spirit = addSpirit();
+
+        advanceToEndStepAndResolve(player2);
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Adds together damage from multiple sources even if life is subsequently gained")
+    void accumulatesDamageRegardlessOfLifeGain() {
+        Permanent spirit = addSpirit();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.setLife(player1, 20);
+
+        advanceToEndStepAndResolve(player2);
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Removing +1/+1 counters leaves other counter types intact")
+    void preservesOtherCountersOnControllerEndStep() {
+        Permanent spirit = addSpirit();
+        spirit.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        spirit.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToEndStepAndResolve(player1);
+
+        assertThat(spirit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spirit.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 }

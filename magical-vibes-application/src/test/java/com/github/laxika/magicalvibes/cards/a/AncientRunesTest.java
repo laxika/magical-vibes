@@ -74,4 +74,34 @@ class AncientRunesTest extends BaseCardTest {
         harness.assertLife(player2, 19);
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("An artifact sacrificed in response is not counted when the trigger resolves")
+    void excludesArtifactsSacrificedInResponse() {
+        harness.addToBattlefield(player1, new AncientRunes());
+        harness.addToBattlefield(player1, new BottleGnomes());
+        harness.addToBattlefield(player1, new BottleGnomes());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each Ancient Runes deals damage independently during the same upkeep")
+    void multipleRunesTriggerIndependently() {
+        harness.addToBattlefield(player1, new AncientRunes());
+        harness.addToBattlefield(player2, new AncientRunes());
+        harness.addToBattlefield(player2, new BottleGnomes());
+        harness.addToBattlefield(player2, new BottleGnomes());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+    }
 }

@@ -83,15 +83,52 @@ class DreamLeashTest extends BaseCardTest {
 
         Permanent aura = findPermanent(player1, "Dream Leash");
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new LeaveNoTrace()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Control continues when the enchanted permanent untaps")
+    void retainsControlAfterUntapping() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        creature.tap();
+
+        castDreamLeash(creature);
+        harness.passBothPriorities();
+        creature.untap();
+        harness.runStateBasedActions();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(findPermanent(player1, "Dream Leash").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Changing Dream Leash's controller changes control of the enchanted permanent")
+    void enchantedPermanentFollowsAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        creature.tap();
+
+        castDreamLeash(creature);
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Dream Leash");
+        aura.tap();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new DreamLeash()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castEnchantment(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura, creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura, creature);
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
     }
 
     private void castDreamLeash(Permanent target) {

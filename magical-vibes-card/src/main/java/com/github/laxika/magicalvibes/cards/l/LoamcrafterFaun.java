@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "WOC", collectorNumber = "19")
 @CardRegistration(set = "WOC", collectorNumber = "55")
+@CardRegistration(set = "EOC", collectorNumber = "99")
 public class LoamcrafterFaun extends Card {
 
     public LoamcrafterFaun() {

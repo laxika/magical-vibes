@@ -1881,7 +1881,14 @@ public class GraveyardChoiceHandlerService {
                     null, Map.of(), spellEntryTargetZone, new ArrayList<>(cardIds),
                     pendingPermanentTargetIds == null ? List.of() : new ArrayList<>(pendingPermanentTargetIds)
             );
-            spellEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+            Map<CardEffect, List<UUID>> effectCardTargets = new java.util.IdentityHashMap<>(pendingTargetCardIdsByEffect);
+            List<ReturnTargetCardsFromGraveyardToHandEffect> returnsToHand = pendingEffects.stream()
+                    .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                    .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast).toList();
+            if (returnsToHand.size() == 1 && !effectCardTargets.containsKey(returnsToHand.getFirst())) {
+                effectCardTargets.put(returnsToHand.getFirst(), List.copyOf(cardIds));
+            }
+            spellEntry.setTargetCardIdsByEffect(effectCardTargets);
             spellEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
             spellEntry.setChosenCreatureType(pendingChosenCreatureType);
             if (pendingFlashback) {
@@ -1967,6 +1974,17 @@ public class GraveyardChoiceHandlerService {
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
+            if (mixedZoneEffect != null) {
+                for (UUID cardId : cardIds) {
+                    Permanent permanent = findPermanentByCardId(gameData, cardId);
+                    if (permanent != null) {
+                        triggeredEntry.getMixedZoneTargetPermanentIds().put(cardId, permanent.getId());
+                    } else {
+                        triggeredEntry.getMixedZoneTargetGraveyardVersions().put(cardId,
+                                gameData.graveyardEntryVersion(cardId));
+                    }
+                }
+            }
             gameData.stack.add(triggeredEntry);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
 

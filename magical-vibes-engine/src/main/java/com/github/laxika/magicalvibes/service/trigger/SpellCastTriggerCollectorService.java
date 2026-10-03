@@ -1529,7 +1529,8 @@ public class SpellCastTriggerCollectorService {
                         trigger.additionalTypes(), trigger.removedSupertypes(), trigger.tokenCopy(),
                         trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
                         markOnAcceptance, false, trigger.permanentSpellToken(),
-                        trigger.sacrificeAtEndStep());
+                        trigger.sacrificeAtEndStep(), trigger.additionalSubtypes(),
+                        trigger.powerOverride(), trigger.toughnessOverride());
         if (trigger.beforeCopyEffect() != null) {
             copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
         }
@@ -3117,7 +3118,11 @@ public class SpellCastTriggerCollectorService {
             // ability (Bloodlord of Vaasgoth's bloodthirst grant).
             entry.setTriggeringCardId(spellCard.getId());
             if (carriesTriggeringSpellManaValue) {
+                entry.setTriggeringCardSnapshot(spellCard);
                 entry.setEventValue(triggeringSpellManaValue);
+            }
+            if (resolved.stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringCreatureToHandEffect.class::isInstance)) {
+                entry.setTriggeringCardSnapshot(spellCard);
             }
             if (interveningSpellManaValueCondition) {
                 entry.setEventValue(interveningSpellManaValue);
@@ -3135,6 +3140,8 @@ public class SpellCastTriggerCollectorService {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             preservePlanarSource(entry, match);
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                    && once.markOnAcceptance());
             match.gameData().stack.add(entry);
         }
         if (match.permanent() != null) {

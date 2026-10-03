@@ -43,4 +43,37 @@ class CeremonialGuardTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(guard);
         harness.assertInGraveyard(player2, "Ceremonial Guard");
     }
+
+    @Test
+    @DisplayName("End-of-combat destruction uses the stack and allows responses")
+    void destructionWaitsForDelayedTriggerToResolve() {
+        addCreatureReady(player1, new CeremonialGuard());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Ceremonial Guard");
+        harness.assertNotInGraveyard(player1, "Ceremonial Guard");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ceremonial Guard");
+        harness.assertInGraveyard(player1, "Ceremonial Guard");
+    }
+
+    @Test
+    @DisplayName("Ceremonial Guard survives combat when it neither attacks nor blocks")
+    void survivesWithoutAttackingOrBlocking() {
+        addCreatureReady(player1, new FreshVolunteers());
+        addCreatureReady(player1, new CeremonialGuard());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Ceremonial Guard");
+        harness.assertNotInGraveyard(player1, "Ceremonial Guard");
+    }
 }

@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,9 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AdmiralBeckettBrass.class, GrizzlyBears.class, SailorOfMeans.class})
 class AdmiralBeckettBrassTest extends BaseCardTest {
 
-    // ===== Helper: create a simple Pirate card =====
 
     private Card createPirateCard(String name) {
         Card card = new Card() {};
@@ -51,21 +53,12 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
         }
     }
 
-    // ===== Card properties =====
 
-    @Nested
-    @DisplayName("Card properties")
-    class CardProperties {
 
-        
-
-        
-    }
-
-    // ===== Lord effect =====
 
     @Nested
     @DisplayName("Lord effect — other Pirates get +1/+1")
+    @CardUsed({AdmiralBeckettBrass.class, GrizzlyBears.class})
     class LordEffect {
 
         @Test
@@ -109,11 +102,107 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
         }
     }
 
-    // ===== End-step trigger =====
 
     @Nested
     @DisplayName("End-step trigger — gain control if 3+ Pirates dealt combat damage")
+    @CardUsed({AdmiralBeckettBrass.class, GrizzlyBears.class, SailorOfMeans.class})
     class EndStepTrigger {
+
+        @Test
+        void countsCreatureThatBecamePirateBetweenCombats() {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.COMBAT_DAMAGE);
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+            bears.setAttacking(true);
+            bears.setAttackTarget(player2.getId());
+            harness.resolveCombatDamage();
+
+            bears.getGrantedSubtypes().add(CardSubtype.PIRATE);
+            bears.setAttacking(true);
+            for (int i = 0; i < 2; i++) {
+                Permanent pirate = harness.addToBattlefieldAndReturn(player1, new SailorOfMeans());
+                pirate.setAttacking(true);
+                pirate.setAttackTarget(player2.getId());
+            }
+            harness.resolveCombatDamage();
+
+            harness.addToBattlefield(player1, new AdmiralBeckettBrass());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new SailorOfMeans());
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.passUntil(TurnStep.END_STEP);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        }
+
+        @Test
+        void canTargetOwnPermanentWhenControllerWasDamagedByThreePirates() {
+            Permanent admiral = harness.addToBattlefieldAndReturn(player1, new AdmiralBeckettBrass());
+            for (int i = 0; i < 3; i++) {
+                Permanent pirate = harness.addToBattlefieldAndReturn(player2, new SailorOfMeans());
+                recordCombatDamageToPlayer(pirate, player1.getId());
+            }
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.passUntil(TurnStep.END_STEP);
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                    .contains(admiral.getId());
+        }
+
+        @Test
+        void countsPiratesThatLeftBeforeAdmiralEnteredAndControlPersistsWithoutAdmiral() {
+            for (int i = 0; i < 3; i++) {
+                Permanent pirate = harness.addToBattlefieldAndReturn(player1, new SailorOfMeans());
+                recordCombatDamageToPlayer(pirate, player2.getId());
+                gd.playerBattlefields.get(player1.getId()).remove(pirate);
+                gd.playerGraveyards.get(player1.getId()).add(pirate.getCard());
+            }
+            Permanent admiral = harness.addToBattlefieldAndReturn(player1, new AdmiralBeckettBrass());
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new SailorOfMeans());
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.passUntil(TurnStep.END_STEP);
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+            gd.playerBattlefields.get(player1.getId()).remove(admiral);
+            gd.playerGraveyards.get(player1.getId()).add(admiral.getCard());
+            harness.setHand(player1, List.of());
+            harness.setHand(player2, List.of());
+            gd.interaction.clearAwaitingInput();
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
+            harness.passUntil(player2, TurnStep.UPKEEP);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        }
+
+        @Test
+        void repeatedDamageByTwoPiratesDoesNotMeetThreshold() {
+            harness.addToBattlefield(player1, new AdmiralBeckettBrass());
+            for (int i = 0; i < 2; i++) {
+                Permanent pirate = harness.addToBattlefieldAndReturn(player1, new SailorOfMeans());
+                recordCombatDamageToPlayer(pirate, player2.getId());
+                recordCombatDamageToPlayer(pirate, player2.getId());
+            }
+            harness.addToBattlefield(player2, new SailorOfMeans());
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.passUntil(TurnStep.END_STEP);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Trigger fires when 3 Pirates dealt combat damage to an opponent")
@@ -133,10 +222,10 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
+
 
             // Advance to end step → triggers Admiral's ability
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_STEP);
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -170,10 +259,10 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
+
 
             // Advance to end step — trigger should NOT fire (only 2 Pirates, need 3)
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_STEP);
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
             harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -191,9 +280,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
 
-            harness.passBothPriorities();
+
+            harness.passUntil(TurnStep.END_STEP);
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
             harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -220,9 +309,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
 
-            harness.passBothPriorities();
+
+            harness.passUntil(TurnStep.END_STEP);
 
             // Opponent's Grizzly Bears should still be on their battlefield (not stolen)
             harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -248,9 +337,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
 
-            harness.passBothPriorities();
+
+            harness.passUntil(TurnStep.END_STEP);
 
             // The trigger condition is met (3 Pirates), but there are no valid targets (opponent has no nonland permanents).
             // Player1's battlefield should not have gained any permanents from player2.
@@ -281,9 +370,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
 
-            harness.passBothPriorities();
+
+            harness.passUntil(TurnStep.END_STEP);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
@@ -309,9 +398,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
 
-            harness.passBothPriorities();
+
+            harness.passUntil(TurnStep.END_STEP);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 

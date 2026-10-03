@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AladdinsLamp.class, Forest.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class,
-        Swamp.class})
+        Swamp.class, ThoughtReflection.class})
 class AladdinsLampTest extends BaseCardTest {
 
     private void activateLamp(int x) {
@@ -61,7 +60,7 @@ class AladdinsLampTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1)); // keep Forest, draw it
+        harness.handleCardChosen(player1, 1); // keep Forest, draw it
 
         assertThat(handNames()).containsExactly("Forest");
         // The untouched card below the looked-at three is now on top.
@@ -84,7 +83,7 @@ class AladdinsLampTest extends BaseCardTest {
         activateLamp(2);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // keep Llanowar Elves
+        harness.handleCardChosen(player1, 0); // keep Llanowar Elves
 
         // A second draw is ordinary — no look-at interaction is offered.
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
@@ -121,7 +120,7 @@ class AladdinsLampTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         assertThat(handNames()).containsExactly("Forest");
         assertThat(deck()).hasSize(1);
@@ -129,7 +128,7 @@ class AladdinsLampTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Multiple Lamp activations replace successive draws in the same draw event")
+    @DisplayName("Equivalent Lamp replacements chain their looks before a single card is drawn")
     void multipleReplacementsChain() {
         harness.addToBattlefield(player1, new AladdinsLamp());
         harness.addToBattlefield(player1, new AladdinsLamp());
@@ -138,22 +137,22 @@ class AladdinsLampTest extends BaseCardTest {
                 new LlanowarElves(), new Forest(), new Swamp(), new GrizzlyBears(), new HillGiant()));
 
         activateLamp(0, 2);
-        activateLamp(1, 3);
+        activateLamp(1, 2);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         PendingInteraction.LibrarySearch firstSearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(firstSearch).isNotNull();
-        assertThat(firstSearch.params().cards()).hasSizeBetween(2, 3);
+        assertThat(firstSearch.params().cards()).hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         PendingInteraction.LibrarySearch secondSearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(secondSearch).isNotNull();
-        assertThat(secondSearch.params().cards()).hasSizeBetween(2, 3);
+        assertThat(secondSearch.params().cards()).hasSize(2);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(handNames()).hasSize(1);
         assertThat(deck()).hasSize(4);
@@ -171,6 +170,67 @@ class AladdinsLampTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("X must be at least 1");
+    }
+
+    @Test
+    @DisplayName("The drawing player chooses which Lamp replacement applies first")
+    void multipleLampsOfferReplacementOrderBeforeLooking() {
+        harness.addToBattlefield(player1, new AladdinsLamp());
+        harness.addToBattlefield(player1, new AladdinsLamp());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new LlanowarElves(), new Forest(), new Swamp(), new GrizzlyBears(), new HillGiant()));
+
+        activateLamp(0, 2);
+        activateLamp(1, 3);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        // Neither look may begin until the affected player chooses which replacement to apply.
+        assertThat(deck()).hasSize(5);
+        assertThat(handNames()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's draw does not consume the controller's delayed replacement")
+    void opponentDrawDoesNotConsumeReplacement() {
+        harness.addToBattlefield(player1, new AladdinsLamp());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new Forest(), new Swamp()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new HillGiant()));
+
+        activateLamp(2);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Grizzly Bears");
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(handNames()).containsExactly("Forest");
+        assertThat(deck().getFirst().getName()).isEqualTo("Swamp");
+    }
+
+    @Test
+    @DisplayName("A multi-card draw finishes the Lamp replacement before drawing the remaining cards")
+    void multiCardDrawResumesAfterLampChoice() {
+        harness.addToBattlefield(player1, new AladdinsLamp());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new LlanowarElves(), new Forest(), new Swamp(), new GrizzlyBears(), new HillGiant()));
+
+        activateLamp(3);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        assertThat(handNames()).isEmpty();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(handNames()).containsExactly("Forest", "Grizzly Bears");
+        assertThat(deck().getFirst().getName()).isEqualTo("Hill Giant");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

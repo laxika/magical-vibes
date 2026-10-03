@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.e.EbonyOwlNetsuke;
 import com.github.laxika.magicalvibes.cards.g.GodosIrregulars;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.s.StampedingSerow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CurtainOfLight.class, EbonyOwlNetsuke.class, GodosIrregulars.class})
+@CardUsed({CurtainOfLight.class, EbonyOwlNetsuke.class, GodosIrregulars.class,
+        PhantomWarrior.class, StampedingSerow.class})
 class CurtainOfLightTest extends BaseCardTest {
 
     @Test
@@ -96,7 +98,7 @@ class CurtainOfLightTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent attacker = addCreatureReady(player1, new GodosIrregulars());
+        addCreatureReady(player1, new GodosIrregulars());
         addCreatureReady(player2, new GodosIrregulars());
         harness.addToBattlefield(player2, new EbonyOwlNetsuke());
         declareAttackers(List.of(0));
@@ -112,7 +114,6 @@ class CurtainOfLightTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PhantomWarrior.class)
     @DisplayName("Works on a creature that cannot be blocked")
     void worksOnCreatureThatCannotBeBlocked() {
         Permanent attacker = addCreatureReady(player1, new PhantomWarrior());
@@ -125,6 +126,84 @@ class CurtainOfLightTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that is not attacking")
+    void cannotTargetNonAttackingCreature() {
+        addCreatureReady(player1, new GodosIrregulars());
+        Permanent nonAttacker = addCreatureReady(player1, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+        declareAttackers(List.of(0));
+        giveSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, nonAttacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an unblocked attacking creature");
+    }
+
+    @Test
+    @DisplayName("Can be cast during the end of combat step")
+    void castableDuringEndOfCombat() {
+        Permanent attacker = addCreatureReady(player1, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setLibrary(player2, List.of(new GodosIrregulars()));
+
+        castCurtain(attacker.getId());
+
+        harness.assertInHand(player2, "Godo's Irregulars");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast during the postcombat main phase")
+    void cannotCastOutsideCombat() {
+        Permanent attacker = addCreatureReady(player1, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        giveSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("An earlier Curtain does not draw when another Curtain has already blocked its target")
+    void doesNotDrawWhenTargetBecomesBlockedBeforeResolution() {
+        Permanent attacker = addCreatureReady(player1, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+        declareAttackers(List.of(0));
+        harness.setLibrary(player2, List.of(new GodosIrregulars(), new EbonyOwlNetsuke()));
+        harness.setHand(player2, List.of(new CurtainOfLight(), new CurtainOfLight()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.castInstant(player2, 0, attacker.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Godo's Irregulars");
+        harness.assertNotInHand(player2, "Ebony Owl Netsuke");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A trampling attacker still deals its full damage when blocked without blockers")
+    void trampleStillDealsDamage() {
+        Permanent attacker = addCreatureReady(player1, new StampedingSerow());
+        addCreatureReady(player2, new GodosIrregulars());
+        declareAttackers(List.of(0));
+
+        castCurtain(attacker.getId());
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
     }
 
     private void castCurtain(UUID targetId) {

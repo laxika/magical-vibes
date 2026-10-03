@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "256")
+@CardRegistration(set = "EOC", collectorNumber = "168")
 public class TheMycosynthGardens extends Card {
 
     public TheMycosynthGardens() {

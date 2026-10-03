@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CurrencyConverter.class, Forest.class, GrizzlyBears.class})
 class CurrencyConverterTest extends BaseCardTest {
@@ -62,25 +61,79 @@ class CurrencyConverterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target an exiled card not exiled with Currency Converter")
-    void conversionRequiresSourceTrackedTarget() {
+    @DisplayName("Conversion can be activated with no cards exiled and does nothing")
+    void conversionCanBeActivatedWithoutExiledCards() {
         Permanent converter = addConverter();
-        Card untracked = new GrizzlyBears();
-        gd.addToExile(player1.getId(), untracked);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 1, null, null);
+        assertThat(converter.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player1, "Rogue")).isEmpty();
+    }
 
-        assertThatThrownBy(() -> harness.activateAbility(
-                player1,
-                gd.playerBattlefields.get(player1.getId()).indexOf(converter),
-                1,
-                null,
-                untracked.getId(),
-                Zone.EXILE))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("exiled with this permanent");
+    @Test
+    @DisplayName("Declining exile leaves the discarded card in the graveyard")
+    void mayDeclineExile() {
+        Permanent converter = addConverter();
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.findExiledCard(discarded.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Conversion returns a card to its owner and gives the controller the token")
+    void conversionRespectsCardOwner() {
+        Permanent converter = addConverter();
+        Card forest = new Forest();
+        gd.addToExile(player2.getId(), forest, converter.getId());
+        activateConversion(converter, forest.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(forest);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
     }
 
     private Permanent addConverter() {
         return harness.addToBattlefieldAndReturn(player1, new CurrencyConverter());
+    }
+
+    @Test
+    @DisplayName("A discarded card that leaves and reenters the graveyard is a new object")
+    void cannotExileCardAfterItLeavesAndReentersGraveyard() {
+        Permanent converter = addConverter();
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(converter), 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        gd.playerGraveyards.get(player1.getId()).remove(discarded);
+        gd.addToExile(player1.getId(), discarded);
+        gd.removeFromExile(discarded.getId());
+        harness.setGraveyard(player1, List.of(discarded));
+        gd.markGraveyardEntry(discarded);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.findExiledCard(discarded.getId())).isNull();
     }
 
     private void setUpDiscard(Permanent converter, Card discarded) {

@@ -40,4 +40,32 @@ class DiscordantPiperTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Goat")).hasSize(1);
         assertThat(findPermanents(player1, "Goat")).isEmpty();
     }
+
+    @Test
+    @DisplayName("The Goat is created only when the death trigger resolves")
+    void goatWaitsForDeathTriggerToResolve() {
+        Permanent piper = harness.addToBattlefieldAndReturn(player1, new DiscordantPiper());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, piper));
+
+        assertThat(findPermanents(player1, "Goat")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goat")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling Discordant Piper does not create a Goat")
+    void exileDoesNotTriggerDeathAbility() {
+        Permanent piper = harness.addToBattlefieldAndReturn(player1, new DiscordantPiper());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, piper));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Goat")).isEmpty();
+        assertThat(findPermanents(player2, "Goat")).isEmpty();
+    }
 }

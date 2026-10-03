@@ -63,6 +63,80 @@ class BantTest extends BaseCardTest {
     }
 
     @Test
+    void loneAttackerGetsExaltedFromEachCreatureItsControllerControls() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent supporter = addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, supporter)).isEqualTo(3);
+    }
+
+    @Test
+    void opposingPlayerAlsoGetsExaltedFromEachOfTheirCreatures() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new HillGiant());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    void creaturesDoNotGetExaltedAfterBantStopsBeingFaceUp() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        gd.planechase.faceUp.clear();
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void chaosCanProtectAnOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.DIVINITY)).isOne();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void chaosProtectionDoesNotRestartWhenANewDivinityCounterIsAdded() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        target.setCounterCount(CounterType.DIVINITY, 2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        target.setCounterCount(CounterType.DIVINITY, 1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        target.setCounterCount(CounterType.DIVINITY, 0);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        target.setCounterCount(CounterType.DIVINITY, 1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
     void chaosPutsDivinityCounterOnEligibleCreatureAndGrantsCounterBoundIndestructible() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         Permanent ineligible = addCreatureReady(player2, new HillGiant());

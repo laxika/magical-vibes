@@ -16,8 +16,87 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DailyRegimen.class, ElvishWarrior.class, MurmuringBosk.class})
+@CardUsed({DailyRegimen.class, Disperse.class, ElvishWarrior.class, MurmuringBosk.class})
 class DailyRegimenTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counters remain on the creature after Daily Regimen leaves")
+    void countersRemainAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInHand(player1, "Daily Regimen");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated ability still adds a counter after the Aura leaves the battlefield")
+    void abilityResolvesAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.assertInHand(player1, "Daily Regimen");
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activated ability does nothing if the enchanted creature leaves before resolution")
+    void abilityDoesNothingAfterCreatureLeaves() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertInHand(player1, "Elvish Warrior");
+        harness.assertInGraveyard(player1, "Daily Regimen");
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability requires both white mana and the full generic cost")
+    void cannotActivateWithoutFullManaCost() {
+        Permanent creature = addCreatureReady(player1, new ElvishWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DailyRegimen());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     // ===== Casting and resolving =====
 

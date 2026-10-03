@@ -63,6 +63,83 @@ class DevourerOfMemoryTest extends BaseCardTest {
         assertThat(devourer.isCantBeBlocked()).isFalse();
     }
 
+    @Test
+    @DisplayName("Separate mill events each boost Devourer of Memory")
+    void separateMillEventsStackBoosts() {
+        Permanent devourer = addCreatureReady(player1, new DevourerOfMemory());
+        harness.setLibrary(player1, List.of(new DevourerOfMemory(), new DevourerOfMemory()));
+
+        activateMillAbility();
+        activateMillAbility();
+
+        assertThat(devourer.getEffectivePower()).isEqualTo(4);
+        assertThat(devourer.getEffectiveToughness()).isEqualTo(3);
+        assertThat(devourer.isCantBeBlocked()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library does not trigger the boost")
+    void emptyLibraryDoesNotTrigger() {
+        Permanent devourer = addCreatureReady(player1, new DevourerOfMemory());
+        harness.setLibrary(player1, List.of());
+
+        activateMillAbility();
+
+        assertThat(devourer.getEffectivePower()).isEqualTo(2);
+        assertThat(devourer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(devourer.isCantBeBlocked()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Milling the opponent's library boosts only their Devourer")
+    void opponentMillDoesNotBoostYourDevourer() {
+        Permanent ownDevourer = addCreatureReady(player1, new DevourerOfMemory());
+        Permanent opposingDevourer = addCreatureReady(player2, new DevourerOfMemory());
+        harness.setLibrary(player2, List.of(new DevourerOfMemory()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.ensurePriority(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(ownDevourer.getEffectivePower()).isEqualTo(2);
+        assertThat(ownDevourer.getEffectiveToughness()).isEqualTo(1);
+        assertThat(ownDevourer.isCantBeBlocked()).isFalse();
+        assertThat(opposingDevourer.getEffectivePower()).isEqualTo(3);
+        assertThat(opposingDevourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opposingDevourer.isCantBeBlocked()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mill ability works while tapped and summoning sick and mills only the top card")
+    void millAbilityNeedsNoTapAndMillsOneCard() {
+        harness.addToBattlefield(player1, new DevourerOfMemory());
+        Permanent devourer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        devourer.setSummoningSick(true);
+        devourer.setTapped(true);
+        DevourerOfMemory topCard = new DevourerOfMemory();
+        DevourerOfMemory nextCard = new DevourerOfMemory();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        activateMillAbility();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(devourer.getEffectivePower()).isEqualTo(3);
+        assertThat(devourer.getEffectiveToughness()).isEqualTo(2);
+        assertThat(devourer.isCantBeBlocked()).isTrue();
+        assertThat(devourer.isTapped()).isTrue();
+    }
+
     private void activateMillAbility() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

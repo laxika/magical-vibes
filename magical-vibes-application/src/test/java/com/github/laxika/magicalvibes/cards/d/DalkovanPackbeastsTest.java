@@ -50,13 +50,59 @@ class DalkovanPackbeastsTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .count()).isEqualTo(3);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Vigilance leaves Packbeasts untapped while its Warriors deal combat damage")
+    void vigilanceAndWarriorCombatDamage() {
+        Permanent packbeasts = addCreatureReady(player1, new DalkovanPackbeasts());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(packbeasts.isTapped()).isFalse();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Mobilize resolves and sacrifices its tokens even if Packbeasts leaves in response")
+    void mobilizeSurvivesSourceLeavingBattlefield() {
+        Permanent packbeasts = addCreatureReady(player1, new DalkovanPackbeasts());
+
+        declareAttackers(List.of(0));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, packbeasts));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(3);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        harness.assertInHand(player1, "Dalkovan Packbeasts");
+    }
+
+    @Test
+    @DisplayName("Mobilize creates one delayed trigger that sacrifices all three Warriors together")
+    void sacrificesWarriorsInOneDelayedTrigger() {
+        addCreatureReady(player1, new DalkovanPackbeasts());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(countPermanents(player1, "Warrior")).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
+
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        assertThat(gd.stack).isEmpty();
     }
 }

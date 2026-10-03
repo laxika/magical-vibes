@@ -100,6 +100,94 @@ class DarigaazTheIgniterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("A multicolored card counts once when it includes the chosen color")
+    void multicoloredCardCountsOnce() {
+        harness.setLife(player2, 20);
+        addAttackingDarigaaz();
+        harness.setHand(player2, List.of(new DarigaazTheIgniter(), new KavuClimber()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty hand still permits paying and choosing a color, but deals no additional damage")
+    void emptyHandDealsNoAdditionalDamage() {
+        harness.setLife(player2, 20);
+        addAttackingDarigaaz();
+        harness.setHand(player2, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLACK");
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability counts the damaged player's hand at resolution")
+    void countsHandAtResolution() {
+        harness.setLife(player2, 20);
+        addAttackingDarigaaz();
+        harness.setHand(player2, List.of(new KavuClimber()));
+
+        resolveCombat();
+        harness.setHand(player2, List.of(new MetathranTransport(), new MetathranTransport()));
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLUE");
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The triggered ability deals damage after Darigaaz leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent darigaaz = addAttackingDarigaaz();
+        harness.setHand(player2, List.of(new MetathranTransport()));
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(darigaaz);
+        harness.setGraveyard(player1, List.of(darigaaz.getCard()));
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLUE");
+
+        harness.assertLife(player2, 13);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Three mana without red cannot pay for the ability")
+    void paymentRequiresRedMana() {
+        harness.setLife(player2, 20);
+        addAttackingDarigaaz();
+        harness.setHand(player2, List.of(new MetathranTransport()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog).noneMatch(log -> log.plainText().contains("reveals their hand"));
+    }
+
     private Permanent addAttackingDarigaaz() {
         Permanent darigaaz = addCreatureReady(player1, new DarigaazTheIgniter());
         darigaaz.setAttacking(true);

@@ -63,11 +63,8 @@ class BrineComberTest extends BaseCardTest {
     @Test
     @DisplayName("Brinebound Gift creates a Spirit when its enchanted creature is targeted by an Aura")
     void backFaceTriggersWhenEnchantedCreatureIsTargetedByAuraSpell() {
-        Permanent aura = castWithDisturb();
-        Permanent enchantedCreature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(aura.getAttachedTo()))
-                .findFirst()
-                .orElseThrow();
+        castWithDisturb();
+        Permanent enchantedCreature = findPermanent(player1, "Grizzly Bears");
 
         harness.setHand(player2, List.of(new Pacifism()));
         harness.addMana(player2, ManaColor.WHITE, 2);
@@ -81,18 +78,14 @@ class BrineComberTest extends BaseCardTest {
     @Test
     @DisplayName("Brinebound Gift does not trigger when its enchanted creature is targeted by a non-Aura spell")
     void backFaceDoesNotTriggerForNonAuraSpell() {
-        Permanent aura = castWithDisturb();
-        Permanent enchantedCreature = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(aura.getAttachedTo()))
-                .findFirst()
-                .orElseThrow();
+        castWithDisturb();
+        Permanent enchantedCreature = findPermanent(player1, "Grizzly Bears");
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, enchantedCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, enchantedCreature.getId());
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 
@@ -132,13 +125,126 @@ class BrineComberTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castFlashback(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof BrineComber)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Brinebound Gift");
+    }
+
+    @Test
+    @DisplayName("A disturbed Aura triggers Brine Comber before the Aura resolves")
+    void disturbedAuraTriggersFrontFace() {
+        Permanent comber = harness.addToBattlefieldAndReturn(player1, new BrineComber());
+        harness.setGraveyard(player1, List.of(new BrineComber()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0, comber.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player1, "Brinebound Gift")).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A second disturbed Aura triggers the Gift already enchanting the creature")
+    void disturbedAuraTriggersBackFace() {
+        castWithDisturb();
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new BrineComber()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player1, "Brinebound Gift")).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A disturbed Gift with an illegal target is exiled without creating a Spirit")
+    void disturbedAuraIsExiledWhenTargetDiesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        BrineComber card = new BrineComber();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castFlashback(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Brinebound Gift")).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
+                .contains(card.getId());
+    }
+
+    @Test
+    @DisplayName("Gift's controller gets the Spirit even when it enchants an opponent's creature")
+    void backFaceTriggerBelongsToAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new BrineComber()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new Pacifism()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Brine Comber's Aura trigger resolves even if it dies before the trigger resolves")
+    void frontFaceAuraTriggerSurvivesSourceDeath() {
+        BrineComber card = new BrineComber();
+        Permanent comber = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player2, List.of(new Pacifism(), new Shock()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castEnchantment(player2, 0, comber.getId());
+        harness.castAndResolveInstant(player2, 0, comber.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId()))
+                .doesNotContain(card.getId());
+        harness.assertInGraveyard(player2, "Pacifism");
+    }
+
+    @Test
+    @DisplayName("Gift does not trigger when an Aura targets a different creature")
+    void backFaceDoesNotTriggerForUnrelatedCreature() {
+        castWithDisturb();
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Pacifism()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castEnchantment(player2, 0, other.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 }

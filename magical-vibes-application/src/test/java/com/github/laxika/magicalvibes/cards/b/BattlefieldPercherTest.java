@@ -23,8 +23,7 @@ class BattlefieldPercherTest extends BaseCardTest {
         Permanent percher = addCreatureReady(player2, new BattlefieldPercher());
         addCreatureReady(player1, new StrongholdZeppelin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(percher.isBlocking()).isTrue();
@@ -60,5 +59,46 @@ class BattlefieldPercherTest extends BaseCardTest {
 
         assertThat(percher.getEffectivePower()).isEqualTo(2);
         assertThat(percher.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void repeatedActivationsBoostOnlyTheirSource() {
+        Permanent percher = addCreatureReady(player1, new BattlefieldPercher());
+        Permanent otherPercher = addCreatureReady(player1, new BattlefieldPercher());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(percher.getEffectivePower()).isEqualTo(4);
+        assertThat(percher.getEffectiveToughness()).isEqualTo(4);
+        assertThat(otherPercher.getEffectivePower()).isEqualTo(2);
+        assertThat(otherPercher.getEffectiveToughness()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(percher.getEffectivePower()).isEqualTo(2);
+        assertThat(percher.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent percher = harness.addToBattlefieldAndReturn(player1, new BattlefieldPercher());
+        percher.tap();
+        percher.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(percher.getEffectivePower()).isEqualTo(3);
+        assertThat(percher.getEffectiveToughness()).isEqualTo(3);
+        assertThat(percher.isTapped()).isTrue();
     }
 }

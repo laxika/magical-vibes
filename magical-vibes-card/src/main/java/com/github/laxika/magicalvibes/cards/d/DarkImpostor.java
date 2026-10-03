@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "92")
+@CardRegistration(set = "VOC", collectorNumber = "127")
 public class DarkImpostor extends Card {
 
     public DarkImpostor() {

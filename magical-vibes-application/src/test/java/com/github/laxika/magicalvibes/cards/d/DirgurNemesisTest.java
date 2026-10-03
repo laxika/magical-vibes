@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(DirgurNemesis.class)
 class DirgurNemesisTest extends BaseCardTest {
@@ -35,4 +36,59 @@ class DirgurNemesisTest extends BaseCardTest {
         assertThat(dirgur.isFaceDown()).isFalse();
         assertThat(dirgur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    void castingFaceUpDoesNotPutAMegamorphCounterOnIt() {
+        harness.setHand(player1, List.of(new DirgurNemesis()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent dirgur = findPermanent(player1, "Dirgur Nemesis");
+        assertThat(dirgur.isFaceDown()).isFalse();
+        assertThat(dirgur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotPayPrintedManaCostInsteadOfMegamorphCost() {
+        harness.setHand(player1, List.of(new DirgurNemesis()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent dirgur = findPermanent(player1, "Dirgur Nemesis");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(dirgur)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(dirgur.isFaceDown()).isTrue();
+        assertThat(dirgur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void turningFaceUpWithoutPayingMegamorphDoesNotPutACounterOnIt() {
+        harness.setHand(player1, List.of(new DirgurNemesis()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent dirgur = findPermanent(player1, "Dirgur Nemesis");
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, dirgur);
+
+        assertThat(dirgur.isFaceDown()).isFalse();
+        assertThat(dirgur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void faceUpDefenderCannotAttack() {
+        addCreatureReady(player1, new DirgurNemesis());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
 }

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BallistaWatcher.class, BallistaWielder.class, GrizzlyBears.class})
+@CardUsed({BallistaWatcher.class, BallistaWielder.class, DawnhartDisciple.class})
 class BallistaWatcherTest extends BaseCardTest {
 
     @Test
     void watcherDealsDamageToAnyTargetAndTaps() {
         Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player2, new DawnhartDisciple());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -30,7 +30,7 @@ class BallistaWatcherTest extends BaseCardTest {
     @Test
     void wielderMakesCreatureUnableToBlockAfterDamagingIt() {
         Permanent wielder = addTransformedWatcher(player1);
-        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player2, new DawnhartDisciple());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, bear.getId());
@@ -60,18 +60,94 @@ class BallistaWatcherTest extends BaseCardTest {
         Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
 
         gd.spellsCastLastTurn.clear();
-        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(watcher.isTransformed()).isTrue();
         assertThat(watcher.getCard()).isInstanceOf(BallistaWielder.class);
 
         gd.spellsCastLastTurn.put(player1.getId(), 2);
-        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(watcher.isTransformed()).isFalse();
         assertThat(watcher.getCard()).isInstanceOf(BallistaWatcher.class);
+    }
+
+    @Test
+    void watcherCanDamageAPlayer() {
+        addCreatureReady(player1, new BallistaWatcher());
+        harness.setLife(player2, 20);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void enteringWatcherEstablishesDay() {
+        Permanent watcher = harness.enterBattlefieldAndReturn(player1, new BallistaWatcher());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(watcher.isTransformed()).isFalse();
+    }
+
+    @Test
+    void wielderCanActivateRepeatedlyWhileTappedAndSummoningSick() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent wielder = harness.enterBattlefieldAndReturn(player1, new BallistaWatcher());
+        wielder.tap();
+        harness.setLife(player2, 20);
+        addAbilityMana();
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(wielder.isTapped()).isTrue();
+    }
+
+    @Test
+    void preventedDamageDoesNotStopCreatureFromBlocking() {
+        addTransformedWatcher(player1);
+        Permanent target = addCreatureReady(player2, new DawnhartDisciple());
+        target.setDamagePreventionShield(1);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    @Test
+    void dayRemainsWhenPreviousActivePlayerCastOneSpell() {
+        gd.dayNight = DayNight.DAY;
+        Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(watcher.isTransformed()).isFalse();
+    }
+
+    @Test
+    void nonactivePlayersSpellsDoNotPreventNight() {
+        gd.dayNight = DayNight.DAY;
+        Permanent watcher = addCreatureReady(player1, new BallistaWatcher());
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(watcher.isTransformed()).isTrue();
     }
 
     private void addAbilityMana() {
@@ -80,12 +156,9 @@ class BallistaWatcherTest extends BaseCardTest {
     }
 
     private Permanent addTransformedWatcher(Player player) {
-        BallistaWatcher card = new BallistaWatcher();
-        Permanent watcher = new Permanent(card);
+        gd.dayNight = DayNight.NIGHT;
+        Permanent watcher = harness.enterBattlefieldAndReturn(player, new BallistaWatcher());
         watcher.setSummoningSick(false);
-        watcher.setCard(card.getBackFaceCard());
-        watcher.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(watcher);
         return watcher;
     }
 }

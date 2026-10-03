@@ -39,10 +39,9 @@ class DarlingOfTheMassesTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        Permanent token = findPermanents(player1, "Citizen").stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Citizen");
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
@@ -50,6 +49,39 @@ class DarlingOfTheMassesTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.CITIZEN);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A lone Darling does not boost itself or opposing Citizens")
+    void excludesSelfAndOpposingCitizens() {
+        Permanent darling = harness.addToBattlefieldAndReturn(player1, new DarlingOfTheMasses());
+        Permanent opposingDarling = harness.addToBattlefieldAndReturn(player2, new DarlingOfTheMasses());
+
+        assertThat(gqs.getEffectivePower(gd, darling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, darling)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingDarling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDarling)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each attacking Darling creates one Citizen and both boosts apply")
+    void eachAttackingDarlingCreatesOneToken() {
+        addCreatureReady(player1, new DarlingOfTheMasses());
+        addCreatureReady(player1, new DarlingOfTheMasses());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
+        });
+        assertThat(findPermanents(player2, "Citizen")).isEmpty();
     }
 
     @Test

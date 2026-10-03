@@ -73,11 +73,84 @@ class DreamSpoilersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The debuff expires at cleanup")
+    void debuffExpiresAtCleanup() {
+        harness.addToBattlefield(player1, new DreamSpoilers());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castDuringOpponentTurn();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each spell triggers and cumulative debuffs can kill a creature")
+    void triggersForEachSpell() {
+        harness.addToBattlefield(player1, new DreamSpoilers());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castDuringOpponentTurn();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's spell does not trigger the ability")
+    void doesNotTriggerForOpponentSpell() {
+        harness.addToBattlefield(player1, new DreamSpoilers());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Casting is allowed when there are no opposing creatures to target")
+    void worksWithoutLegalTargets() {
+        harness.addToBattlefield(player1, new DreamSpoilers());
+        castDuringOpponentTurn();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 18);
     }
 
     private void castDuringOpponentTurn() {

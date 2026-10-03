@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "75")
 @CardRegistration(set = "LTC", collectorNumber = "155")
+@CardRegistration(set = "LTC", collectorNumber = "485")
 public class CrownOfGondor extends Card {
 
     public CrownOfGondor() {

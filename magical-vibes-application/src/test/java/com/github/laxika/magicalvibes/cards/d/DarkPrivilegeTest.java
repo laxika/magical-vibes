@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoralAtoll.class, DarkPrivilege.class, LongbowArcher.class})
+@CardUsed({CoralAtoll.class, DarkPrivilege.class, Fireblast.class, LongbowArcher.class})
 class DarkPrivilegeTest extends BaseCardTest {
 
     @Test
@@ -89,7 +89,6 @@ class DarkPrivilegeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Fireblast.class)
     @DisplayName("Regeneration shield saves the enchanted creature from lethal damage")
     void regenerationShieldPreventsLethalDamage() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
@@ -114,8 +113,7 @@ class DarkPrivilegeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate regenerate without a creature to sacrifice")
     void cannotActivateWithoutCreatureToSacrifice() {
-        Permanent aura = new Permanent(new DarkPrivilege());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        harness.addToBattlefield(player1, new DarkPrivilege());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -133,5 +131,78 @@ class DarkPrivilegeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Aura controller sacrifices their creature to regenerate an opponent's enchanted creature")
+    void regeneratesOpponentsCreatureUsingAuraControllersSacrifice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LongbowArcher());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        harness.setHand(player1, List.of(new DarkPrivilege()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.assertInGraveyard(player1, "Longbow Archer");
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Longbow Archer");
+        harness.assertOnBattlefield(player1, "Dark Privilege");
+    }
+
+    @Test
+    @DisplayName("The enchanted creature can be sacrificed but regeneration does not bring it back")
+    void canSacrificeEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DarkPrivilege());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Longbow Archer");
+        harness.assertInGraveyard(player1, "Longbow Archer");
+        harness.assertNotOnBattlefield(player1, "Dark Privilege");
+        harness.assertInGraveyard(player1, "Dark Privilege");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple activations create separate shields without tapping the enchanted creature")
+    void multipleActivationsCreateSeparateShields() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent firstFodder = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent secondFodder = harness.addToBattlefieldAndReturn(player1, new LongbowArcher());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new DarkPrivilege());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 3, null, null);
+        harness.handlePermanentChosen(player1, firstFodder.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, null, null);
+        harness.handlePermanentChosen(player1, secondFodder.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(creature.isTapped()).isFalse();
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Longbow Archer");
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
     }
 }

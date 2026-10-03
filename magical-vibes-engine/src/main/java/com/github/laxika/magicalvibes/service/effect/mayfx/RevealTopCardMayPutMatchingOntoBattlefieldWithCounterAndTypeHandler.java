@@ -48,10 +48,10 @@ public class RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeHandler
             Card topCard = deck.removeFirst();
             Permanent permanent = new Permanent(topCard);
             permanent.getPersistentGrantedCardTypes().add(effect.addedCardType());
-            if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
-                permanent.setCounterCount(effect.counterType(),
-                        permanent.getCounterCount(effect.counterType()) + 1);
-            }
+            int count = gameQueryService.cantHaveCountersForController(gameData, permanent, ability.controllerId())
+                    ? 0 : gameQueryService.replaceCounters(gameData, permanent, ability.controllerId(),
+                    effect.counterType(), 1, ability.controllerId());
+            permanent.setCounterCount(effect.counterType(), permanent.getCounterCount(effect.counterType()) + count);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ability.controllerId(), permanent);
 
             UUID enteringControllerId = gameData.playerBattlefields.entrySet().stream()
@@ -59,7 +59,7 @@ public class RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeHandler
                     .map(java.util.Map.Entry::getKey)
                     .findFirst()
                     .orElse(null);
-            if (enteringControllerId != null && permanent.getCard().hasType(CardType.CREATURE)) {
+            if (enteringControllerId != null) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(
                         gameData, enteringControllerId, permanent.getCard(), null, false);
             }

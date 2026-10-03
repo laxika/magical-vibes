@@ -18,6 +18,6 @@ public class AetherTide extends Card {
                 new CardTypePredicate(CardType.CREATURE), "creature cards"));
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Targets must be creatures"
-        ), 100).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

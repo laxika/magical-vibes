@@ -48,7 +48,9 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
         Permanent source = sourcePermanentId == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !source.isTapped()) {
+        if (source == null || !source.isTapped()
+                || (entry.getSourcePermanentSnapshot() != null
+                && source.getUntapSequence() != entry.getSourcePermanentSnapshot().getUntapSequence())) {
             return;
         }
 

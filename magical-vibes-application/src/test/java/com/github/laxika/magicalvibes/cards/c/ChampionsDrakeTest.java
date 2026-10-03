@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.k.KeeningStone;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChampionsDrake.class, CaravanEscort.class, KeeningStone.class})
 class ChampionsDrakeTest extends BaseCardTest {
 
     @Test
@@ -45,6 +49,70 @@ class ChampionsDrakeTest extends BaseCardTest {
         levelUpThreeTimes(player2, escort);
 
         assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void countersOnDifferentCreaturesDoNotCombine() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        first.setCounterCount(CounterType.LEVEL, 2);
+        second.setCounterCount(CounterType.LEVEL, 2);
+
+        assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void multipleQualifyingCreaturesGiveOnlyOneBoost() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        first.setCounterCount(CounterType.LEVEL, 3);
+        second.setCounterCount(CounterType.LEVEL, 5);
+
+        assertStats(drake, 4, 4);
+        first.setCounterCount(CounterType.LEVEL, 2);
+        assertStats(drake, 4, 4);
+        second.setCounterCount(CounterType.LEVEL, 2);
+        assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void losesBoostWhenQualifyingCreatureLeaves() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        Permanent escort = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        levelUpThreeTimes(player1, escort);
+        assertStats(drake, 4, 4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(escort);
+
+        assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void levelCountersOnNoncreatureDoNotQualify() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new KeeningStone());
+        artifact.setCounterCount(CounterType.LEVEL, 3);
+
+        assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void otherCounterTypesDoNotQualify() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        Permanent escort = harness.addToBattlefieldAndReturn(player1, new CaravanEscort());
+        escort.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertStats(drake, 1, 1);
+    }
+
+    @Test
+    void drakeItselfCanBeTheQualifyingCreature() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new ChampionsDrake());
+        drake.setCounterCount(CounterType.LEVEL, 3);
+
+        assertStats(drake, 4, 4);
     }
 
     private void levelUpThreeTimes(Player player, Permanent escort) {

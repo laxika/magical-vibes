@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DragonskullSummit.class, Forest.class, Mountain.class, Swamp.class})
 class DragonskullSummitTest extends BaseCardTest {
-
-    // ===== Enters tapped (no qualifying lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control no lands")
@@ -46,8 +46,6 @@ class DragonskullSummitTest extends BaseCardTest {
         Permanent summit = findSummit(player1);
         assertThat(summit.isTapped()).isTrue();
     }
-
-    // ===== Enters untapped (qualifying lands present) =====
 
     @Test
     @DisplayName("Enters untapped when you control a Swamp")
@@ -95,8 +93,6 @@ class DragonskullSummitTest extends BaseCardTest {
         assertThat(summit.isTapped()).isFalse();
     }
 
-    // ===== Only checks your lands, not opponent's =====
-
     @Test
     @DisplayName("Opponent's Swamp does not satisfy the check")
     void opponentSwampDoesNotCount() {
@@ -112,12 +108,10 @@ class DragonskullSummitTest extends BaseCardTest {
         assertThat(summit.isTapped()).isTrue();
     }
 
-    // ===== Mana production =====
-
     @Test
     @DisplayName("Tapping for black mana produces one black")
     void tappingProducesBlackMana() {
-        addSummitReady(player1);
+        harness.addToBattlefield(player1, new DragonskullSummit());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -128,7 +122,7 @@ class DragonskullSummitTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for red mana produces one red")
     void tappingProducesRedMana() {
-        addSummitReady(player1);
+        harness.addToBattlefield(player1, new DragonskullSummit());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -136,13 +130,60 @@ class DragonskullSummitTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A tapped Swamp still allows the Summit to enter untapped")
+    void tappedSwampStillQualifies() {
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
 
-    private Permanent addSummitReady(Player player) {
-        Permanent perm = new Permanent(new DragonskullSummit());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent summit = harness.enterBattlefieldAndReturn(player1, new DragonskullSummit());
+
+        assertThat(summit.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain still allows the Summit to enter untapped")
+    void tappedMountainStillQualifies() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+
+        Permanent summit = harness.enterBattlefieldAndReturn(player1, new DragonskullSummit());
+
+        assertThat(summit.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's Mountain does not satisfy the check")
+    void opponentMountainDoesNotCount() {
+        harness.addToBattlefield(player2, new Mountain());
+
+        Permanent summit = harness.enterBattlefieldAndReturn(player1, new DragonskullSummit());
+
+        assertThat(summit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Another Summit does not count as a Swamp or Mountain")
+    void anotherSummitDoesNotQualify() {
+        harness.addToBattlefield(player1, new DragonskullSummit());
+
+        Permanent summit = harness.enterBattlefieldAndReturn(player1, new DragonskullSummit());
+
+        assertThat(summit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Summit can produce mana on the turn it enters")
+    void canProduceManaImmediatelyAfterEntering() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player1, List.of(new DragonskullSummit()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findSummit(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent findSummit(Player player) {

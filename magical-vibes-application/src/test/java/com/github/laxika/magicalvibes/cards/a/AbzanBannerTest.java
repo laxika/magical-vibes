@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AbzanBanner.class})
 class AbzanBannerTest extends BaseCardTest {
 
     @Test
@@ -52,7 +53,7 @@ class AbzanBannerTest extends BaseCardTest {
     @DisplayName("Paying white, black, and green mana sacrifices Abzan Banner and draws a card")
     void payingColoredManaSacrificesAndDraws() {
         Permanent banner = addReadyBanner();
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AbzanBanner()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -70,7 +71,7 @@ class AbzanBannerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof GrizzlyBears);
+        harness.assertInHand(player1, "Abzan Banner");
     }
 
     @Test
@@ -86,10 +87,44 @@ class AbzanBannerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Abzan Banner");
     }
 
+    @Test
+    @DisplayName("A newly entered noncreature Banner can immediately produce mana without using the stack")
+    void newlyEnteredBannerCanProduceMana() {
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new AbzanBanner());
+        banner.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(banner.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Banner cannot activate either ability")
+    void tappedBannerCannotActivateEitherAbility() {
+        Permanent banner = addReadyBanner();
+        banner.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Abzan Banner");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
     private Permanent addReadyBanner() {
-        Permanent banner = new Permanent(new AbzanBanner());
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new AbzanBanner());
         banner.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(banner);
         return banner;
     }
 }

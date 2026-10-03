@@ -95,4 +95,46 @@ class DrifterIlDalTest extends BaseCardTest {
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Non-blue mana cannot pay the upkeep cost")
+    void nonBlueManaCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new DrifterIlDal());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Drifter il-Dal");
+        harness.assertInGraveyard(player1, "Drifter il-Dal");
+    }
+
+    @Test
+    @DisplayName("The upkeep payment can be declined even when blue mana is available")
+    void mayDeclineWithManaAvailable() {
+        harness.addToBattlefield(player1, new DrifterIlDal());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Drifter il-Dal");
+        harness.assertInGraveyard(player1, "Drifter il-Dal");
+    }
+
+    @Test
+    @DisplayName("A creature with shadow can block Drifter il-Dal")
+    void canBeBlockedByShadowCreature() {
+        addCreatureReady(player1, new DrifterIlDal());
+        addCreatureReady(player2, new DrifterIlDal());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Drifter il-Dal");
+        harness.assertInGraveyard(player2, "Drifter il-Dal");
+    }
 }

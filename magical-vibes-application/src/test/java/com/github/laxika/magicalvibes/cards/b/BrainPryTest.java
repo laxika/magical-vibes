@@ -97,6 +97,62 @@ class BrainPryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(brainPry);
     }
 
+    @Test
+    @DisplayName("Draws exactly one card when the target has an empty hand")
+    void drawsWhenTargetHandIsEmpty() {
+        Card drawnCard = new CoilingOracle();
+        Card nextCard = new StompAndHowl();
+        harness.setLibrary(player1, List.of(drawnCard, nextCard));
+        cast(List.of());
+
+        harness.handleListChoice(player1, "Coiling Oracle");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A successful discard is mandatory and does not draw a card")
+    void successfulDiscardDoesNotDraw() {
+        Card matchingCard = new StompAndHowl();
+        Card otherCard = new CoilingOracle();
+        Card libraryCard = new CoilingOracle();
+        harness.setLibrary(player1, List.of(libraryCard));
+        cast(List.of(matchingCard, otherCard));
+
+        harness.handleListChoice(player1, "Stomp and Howl");
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(otherCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Rejects naming a land without consuming the name choice")
+    void rejectsLandName() {
+        Card matchingCard = new StompAndHowl();
+        cast(List.of(new BloodCrypt(), matchingCard));
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Blood Crypt"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, "Stomp and Howl");
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Blood Crypt");
+    }
+
     private void cast(List<Card> targetHand) {
         harness.setHand(player1, List.of(new BrainPry()));
         harness.setHand(player2, targetHand);

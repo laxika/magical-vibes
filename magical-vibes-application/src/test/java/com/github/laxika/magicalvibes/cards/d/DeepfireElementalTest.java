@@ -106,4 +106,59 @@ class DeepfireElementalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, targetPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target itself without tapping or waiting for summoning sickness to end")
+    void canDestroyItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DeepfireElemental());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 13);
+
+        harness.activateAbility(player1, 0, 6, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Deepfire Elemental");
+        harness.assertInGraveyard(player1, "Deepfire Elemental");
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain their independently chosen X values")
+    void repeatedActivationsKeepSeparateXValues() {
+        harness.addToBattlefield(player1, new DeepfireElemental());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 14);
+
+        harness.activateAbility(player1, 0, 4, artifact.getId());
+        harness.activateAbility(player1, 0, 2, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        harness.assertOnBattlefield(player1, "Deepfire Elemental");
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after Deepfire Elemental is destroyed")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DeepfireElemental());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 22);
+
+        harness.activateAbility(player1, 0, 4, artifact.getId());
+        harness.activateAbility(player1, 0, 6, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deepfire Elemental");
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+    }
 }

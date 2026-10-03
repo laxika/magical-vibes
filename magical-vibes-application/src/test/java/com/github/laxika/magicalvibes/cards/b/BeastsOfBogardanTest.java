@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.i.IvoryGuardians;
+import com.github.laxika.magicalvibes.cards.e.EternalWarrior;
+import com.github.laxika.magicalvibes.cards.p.PresenceOfTheMaster;
 import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
 import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BeastsOfBogardan.class, IvoryGuardians.class, RagingBull.class, Pyrotechnics.class})
+@CardUsed({BeastsOfBogardan.class, IvoryGuardians.class, RagingBull.class, Pyrotechnics.class,
+        PresenceOfTheMaster.class, EternalWarrior.class})
 class BeastsOfBogardanTest extends BaseCardTest {
 
     @Test
@@ -78,8 +81,7 @@ class BeastsOfBogardanTest extends BaseCardTest {
         Permanent beasts = addCreatureReady(player1, new BeastsOfBogardan());
         addCreatureReady(player2, new RagingBull());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -96,6 +98,47 @@ class BeastsOfBogardanTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 5);
 
         assertThatThrownBy(() -> harness.castSorcery(player2, 0, Map.of(beasts.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("White noncreature permanents grant the boost until the last one leaves")
+    void boostFromWhiteNoncreaturePermanentsDoesNotStackAndEndsWhenTheyLeave() {
+        Permanent beasts = harness.addToBattlefieldAndReturn(player1, new BeastsOfBogardan());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new PresenceOfTheMaster());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new PresenceOfTheMaster());
+
+        assertThat(gqs.getEffectivePower(gd, beasts)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beasts)).isEqualTo(4);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, first);
+        assertThat(gqs.getEffectivePower(gd, beasts)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, beasts)).isEqualTo(4);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, second);
+        assertThat(gqs.getEffectivePower(gd, beasts)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beasts)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's nontoken red permanent does not grant the boost")
+    void noBoostFromNonwhitePermanent() {
+        Permanent beasts = harness.addToBattlefieldAndReturn(player1, new BeastsOfBogardan());
+        harness.addToBattlefield(player2, new RagingBull());
+
+        assertThat(gqs.getEffectivePower(gd, beasts)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beasts)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents targeting by a red Aura controlled by its controller")
+    void ownRedAuraCannotTargetBeasts() {
+        Permanent beasts = harness.addToBattlefieldAndReturn(player1, new BeastsOfBogardan());
+        harness.setHand(player1, List.of(new EternalWarrior()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, beasts.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }

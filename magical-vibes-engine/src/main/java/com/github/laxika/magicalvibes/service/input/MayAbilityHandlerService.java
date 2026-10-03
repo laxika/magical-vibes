@@ -181,6 +181,41 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
 
+        boolean exertChoice = !gameData.resolvingMayEffectFromStack && ability.effects().stream().anyMatch(effect ->
+                effect instanceof SequenceEffect sequence && sequence.steps().stream().anyMatch(step ->
+                        step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
+                                && skip.controllerStepOnly()));
+        if (exertChoice) {
+            if (accepted) {
+                List<CardEffect> exertCosts = new ArrayList<>();
+                List<CardEffect> triggeredEffects = new ArrayList<>();
+                for (CardEffect effect : ability.effects()) {
+                    List<CardEffect> steps = effect instanceof SequenceEffect sequence
+                            ? sequence.steps() : List.of(effect);
+                    for (CardEffect step : steps) {
+                        if (step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
+                                && skip.controllerStepOnly()) exertCosts.add(step);
+                        else triggeredEffects.add(step);
+                    }
+                }
+                StackEntry exert = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
+                        exertCosts, null, ability.sourcePermanentId());
+                exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                effectResolutionService.resolveEffects(gameData, exert);
+                if (!triggeredEffects.isEmpty()) {
+                    StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + "'s exert ability",
+                            triggeredEffects, null, ability.sourcePermanentId());
+                    trigger.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+                }
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (ability.effects().stream().anyMatch(PlayCardFromHandByWordOfCommandEffect.class::isInstance)) {
             mayCastHandlerService.handleWordOfCommandPlay(gameData, player, accepted, ability);
             return;
@@ -757,7 +792,8 @@ public class MayAbilityHandlerService {
             boolean targetAlreadySet = pendingEntry != null
                     && (pendingEntry.getTargetId() != null
                     || !pendingEntry.getTargetIds().isEmpty()
-                    || !pendingEntry.getTargetCardIds().isEmpty());
+                    || !pendingEntry.getTargetCardIds().isEmpty()
+                    || !pendingEntry.getTargetGroupSizes().isEmpty());
             if ((innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect
                     || innerEffect instanceof AttachTargetAuraOrEquipmentToTargetCreatureEffect)
                     && !targetAlreadySet) {
@@ -822,7 +858,8 @@ public class MayAbilityHandlerService {
         boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
         boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
         boolean targetAlreadySet = pendingEntry != null
-                && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
+                && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty()
+                || !pendingEntry.getTargetGroupSizes().isEmpty());
         if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
             gameData.resolvedMayAccepted = true;
             handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GuardianIdol;
+import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DisruptionAura.class, GuardianIdol.class, DrossCrocodile.class})
+@CardUsed({DisruptionAura.class, GuardianIdol.class, DrossCrocodile.class, ParadiseMantle.class, DarksteelCitadel.class})
 class DisruptionAuraTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,55 @@ class DisruptionAuraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertOnBattlefield(player2, "Guardian Idol");
+    }
+
+    @Test
+    @DisplayName("A zero mana cost can be paid without mana")
+    void zeroManaCostCanBePaid() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ParadiseMantle());
+        attachDisruptionAura(artifact);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Paradise Mantle");
+        harness.assertOnBattlefield(player1, "Disruption Aura");
+    }
+
+    @Test
+    @DisplayName("An artifact with no mana cost must be sacrificed, even if indestructible")
+    void artifactWithoutManaCostIsSacrificed() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        attachDisruptionAura(artifact);
+        harness.addMana(player2, ManaColor.COLORLESS, 10);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Darksteel Citadel");
+        harness.assertInGraveyard(player1, "Disruption Aura");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Payment on one upkeep does not prevent the next upkeep trigger")
+    void paymentIsRequiredAgainNextUpkeep() {
+        Permanent artifact = addArtifact(player2);
+        attachDisruptionAura(artifact);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertOnBattlefield(player2, "Guardian Idol");
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Guardian Idol");
+        harness.assertInGraveyard(player1, "Disruption Aura");
     }
 
     private void attachDisruptionAura(Permanent artifact) {

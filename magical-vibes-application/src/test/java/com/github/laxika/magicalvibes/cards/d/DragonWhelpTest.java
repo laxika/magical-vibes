@@ -160,8 +160,8 @@ class DragonWhelpTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Dragon Whelp");
         harness.assertInGraveyard(player1, "Dragon Whelp");
@@ -186,6 +186,47 @@ class DragonWhelpTest extends BaseCardTest {
 
         assertThat(whelp.getPowerModifier()).isEqualTo(0);
         assertThat(whelp.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Separate Dragon Whelps track their own activations")
+    void activationCountsAreSeparateForEachWhelp() {
+        Permanent first = addCreatureReady(player1, new DragonWhelp());
+        Permanent second = addCreatureReady(player1, new DragonWhelp());
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(first.getPowerModifier()).isEqualTo(3);
+        assertThat(second.getPowerModifier()).isEqualTo(3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Dragon Whelp")).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Firebreathing can be activated while tapped and summoning sick")
+    void abilityDoesNotRequireUntappedOrReadyCreature() {
+        Permanent whelp = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+        whelp.setSummoningSick(true);
+        whelp.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(whelp.getPowerModifier()).isEqualTo(1);
+        assertThat(whelp.getToughnessModifier()).isEqualTo(0);
+        assertThat(whelp.isTapped()).isTrue();
     }
 
 }

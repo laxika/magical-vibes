@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithFewerCreaturesTh
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "C19", collectorNumber = "36")
+@CardRegistration(set = "KHC", collectorNumber = "77")
 public class VoiceOfMany extends Card {
 
     public VoiceOfMany() {

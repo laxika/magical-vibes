@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FCA", collectorNumber = "50")
+@CardRegistration(set = "C16", collectorNumber = "30")
 public class BruseTarlBoorishHerder extends Card {
 
     public BruseTarlBoorishHerder() {

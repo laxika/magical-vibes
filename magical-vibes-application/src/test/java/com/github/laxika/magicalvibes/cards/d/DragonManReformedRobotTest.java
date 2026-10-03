@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.CoalitionRelic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DragonManReformedRobot.class, CoalitionRelic.class, Divination.class,
-        Forest.class, HillGiant.class, WrathOfGod.class})
+        Forest.class, HillGiant.class, WrathOfGod.class, MarchOfTheMachines.class})
 class DragonManReformedRobotTest extends BaseCardTest {
 
     @Test
@@ -47,7 +48,7 @@ class DragonManReformedRobotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null, List.of(), 0);
+        harness.castFlashbackWithDiscard(player1, 0, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -67,8 +68,86 @@ class DragonManReformedRobotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null))
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must discard");
+    }
+
+    @Test
+    void powerIsZeroWhenThereAreNoQualifyingCards() {
+        Permanent dragonMan = harness.addToBattlefieldAndReturn(player1, new DragonManReformedRobot());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setGraveyard(player1, List.of(new HillGiant()));
+        harness.addToBattlefield(player2, new CoalitionRelic());
+        harness.setGraveyard(player2, List.of(new WrathOfGod()));
+
+        assertThat(gqs.getEffectivePower(gd, dragonMan)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, dragonMan)).isEqualTo(5);
+    }
+
+    @Test
+    void battlefieldManaValueCanExceedGraveyardManaValue() {
+        Permanent dragonMan = harness.addToBattlefieldAndReturn(player1, new DragonManReformedRobot());
+        harness.addToBattlefield(player1, new CoalitionRelic());
+        harness.setGraveyard(player1, List.of(new Forest(), new HillGiant()));
+
+        assertThat(gqs.getEffectivePower(gd, dragonMan)).isEqualTo(3);
+    }
+
+    @Test
+    void continuouslyAnimatedArtifactsDoNotContributeToPower() {
+        Permanent dragonMan = harness.addToBattlefieldAndReturn(player1, new DragonManReformedRobot());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new CoalitionRelic());
+        harness.addToBattlefield(player2, new MarchOfTheMachines());
+
+        assertThat(gqs.isCreature(gd, relic)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, dragonMan)).isZero();
+    }
+
+    @Test
+    void characteristicPowerWorksInTheGraveyard() {
+        DragonManReformedRobot dragonMan = new DragonManReformedRobot();
+        harness.setGraveyard(player1, List.of(dragonMan, new WrathOfGod()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, dragonMan)).isEqualTo(4);
+    }
+
+    @Test
+    void discardedNoncreatureCardImmediatelyContributesToPower() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new DragonManReformedRobot()));
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashbackWithDiscard(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).allMatch(card -> card instanceof WrathOfGod);
+        harness.passBothPriorities();
+        Permanent dragonMan = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof DragonManReformedRobot)
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, dragonMan)).isEqualTo(4);
+    }
+
+    @Test
+    void castingFromHandDoesNotRequireDiscarding() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DragonManReformedRobot()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof DragonManReformedRobot);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

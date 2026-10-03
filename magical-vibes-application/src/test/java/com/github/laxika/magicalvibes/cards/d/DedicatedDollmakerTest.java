@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.Cromat;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,12 +17,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DedicatedDollmaker.class, Cromat.class, GrizzlyBears.class, Plains.class})
+@CardUsed({DedicatedDollmaker.class, Cromat.class, GrizzlyBears.class, Plains.class, Pacifism.class})
 class DedicatedDollmakerTest extends BaseCardTest {
 
     @Test
@@ -53,9 +52,7 @@ class DedicatedDollmakerTest extends BaseCardTest {
         assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(copy);
     }
@@ -82,10 +79,62 @@ class DedicatedDollmakerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, dollmakerIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void entersWithoutExilingAnythingWhenThereAreNoLegalTargets() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard());
+
+        Permanent dollmaker = harness.enterBattlefieldAndReturn(player1, new DedicatedDollmaker());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(land, token, dollmaker);
+    }
+
+    @Test
+    void auraCopyEntersAttachedToTheCreatureChosenByItsController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new DedicatedDollmaker());
+        harness.handlePermanentChosen(player1, aura.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice attachmentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(attachmentChoice).isNotNull();
+        assertThat(attachmentChoice.validIds()).contains(creature.getId());
+        harness.handlePermanentChosen(player2, creature.getId());
+
+        Permanent copy = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(copy.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    void indestructibleAffectsOnlyTokensControlledAtResolution() {
+        harness.addToBattlefield(player1, new DedicatedDollmaker());
+        Permanent ownToken = harness.addToBattlefieldAndReturn(player1, tokenCard());
+        Permanent opposingToken = harness.addToBattlefieldAndReturn(player2, tokenCard());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        Permanent tokenCreatedInResponse = harness.addToBattlefieldAndReturn(player1, tokenCard());
+        harness.passBothPriorities();
+        Permanent laterToken = harness.addToBattlefieldAndReturn(player1, tokenCard());
+
+        assertThat(gqs.hasKeyword(gd, ownToken, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tokenCreatedInResponse, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingToken, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterToken, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private Card tokenCard() {

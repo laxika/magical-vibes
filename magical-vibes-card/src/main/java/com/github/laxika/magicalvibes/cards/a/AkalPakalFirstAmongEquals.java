@@ -16,6 +16,6 @@ public class AkalPakalFirstAmongEquals extends Card {
     public AkalPakalFirstAmongEquals() {
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
-                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1)));
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)));
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CultHealer.class, GloriousAnthem.class})
+@CardUsed({CultHealer.class, GloriousAnthem.class, CentralElevatorPromisingStairs.class})
 class CultHealerTest extends BaseCardTest {
 
     @Test
@@ -58,7 +58,6 @@ class CultHealerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isFalse();
@@ -74,6 +73,57 @@ class CultHealerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void unlockingTheSecondDoorTriggersOnlyAfterTheAbilityResolves() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new CultHealer());
+        Permanent room = harness.addToBattlefieldAndReturn(player1, new CentralElevatorPromisingStairs());
+        room.unlockRoomDoor(0);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.unlockRoomDoor(player1, 1, 1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void unlockingOnlyOneDoorDoesNotTrigger() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new CultHealer());
+        harness.addToBattlefield(player1, new CentralElevatorPromisingStairs());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.unlockRoomDoor(player1, 1, 1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void fullyUnlockingAnOpponentsRoomDoesNotTrigger() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new CultHealer());
+        Permanent room = harness.addToBattlefieldAndReturn(player2, new CentralElevatorPromisingStairs());
+        room.unlockRoomDoor(0);
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.unlockRoomDoor(player2, 0, 1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void aNonEnchantmentCreatureEnteringDoesNotTrigger() {
+        Permanent healer = harness.addToBattlefieldAndReturn(player1, new CultHealer());
+
+        harness.enterBattlefieldAndReturn(player1, new CultHealer());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, healer, Keyword.LIFELINK)).isFalse();
     }
 
     private Card testRoom() {

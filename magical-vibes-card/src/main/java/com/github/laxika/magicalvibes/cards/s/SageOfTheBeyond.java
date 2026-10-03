@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonHandSpellCastCostEffect;
 
 @CardRegistration(set = "OTC", collectorNumber = "111")
+@CardRegistration(set = "KHC", collectorNumber = "6")
 public class SageOfTheBeyond extends Card {
 
     public SageOfTheBeyond() {

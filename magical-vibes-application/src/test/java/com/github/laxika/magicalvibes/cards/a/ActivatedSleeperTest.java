@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RavenousRats;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ActivatedSleeper.class, GrizzlyBears.class, Shock.class})
+@CardUsed({ActivatedSleeper.class, GrizzlyBears.class, Shock.class, RavenousRats.class})
 class ActivatedSleeperTest extends BaseCardTest {
 
     @Test
@@ -67,5 +69,111 @@ class ActivatedSleeperTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sleeper);
+    }
+
+    @Test
+    void mayDeclineCopyEvenWithAnEligibleCreature() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+
+        ActivatedSleeper sleeper = new ActivatedSleeper();
+        harness.setHand(player1, List.of(sleeper));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sleeper);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    void canCopyFromOwnGraveyardAtInstantSpeedOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, bears);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, permanent.getId());
+
+        ActivatedSleeper sleeper = new ActivatedSleeper();
+        harness.setHand(player1, List.of(sleeper));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(copy.getOriginalCard()).isSameAs(sleeper);
+        assertThat(copy.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.PHYREXIAN);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears).doesNotContain(sleeper);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, copy.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears, sleeper);
+    }
+
+    @Test
+    void doesNotOfferCreatureThatDiedOnPreviousTurn() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, bears);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        ActivatedSleeper sleeper = new ActivatedSleeper();
+        harness.setHand(player1, List.of(sleeper));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sleeper);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    void copiedEnterAbilityRetainsItsOpponentOnlyTargetRestriction() {
+        RavenousRats rats = new RavenousRats();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, rats);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+
+        harness.setHand(player1, List.of(new ActivatedSleeper()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(rats.getId()));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+        assertThat(choice.validPermanentIds()).isEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(rats);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

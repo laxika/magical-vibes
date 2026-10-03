@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "217")
 @CardRegistration(set = "C13", collectorNumber = "265")
+@CardRegistration(set = "C16", collectorNumber = "277")
 @CardRegistration(set = "LCC", collectorNumber = "117")
 public class TempleBell extends Card {
 

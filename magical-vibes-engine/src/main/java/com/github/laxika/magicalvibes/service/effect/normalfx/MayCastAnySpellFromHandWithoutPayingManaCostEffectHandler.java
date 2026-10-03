@@ -34,6 +34,8 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
     private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,6 +49,11 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
         UUID controllerId = entry.getControllerId();
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) return;
+        if (e.revealDrawnCards()) {
+            cardRevealService.revealToAllPlayers(gameData, controllerId,
+                    com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,
+                    hand.stream().filter(card -> entry.getDrawnCardIdsThisResolution().contains(card.getId())).toList());
+        }
         int maxManaValue = e.maxManaValue() == null
                 ? Integer.MAX_VALUE
                 : amountEvaluationService.evaluate(gameData, e.maxManaValue(),
@@ -55,18 +62,21 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
 
         List<Card> eligible = hand.stream()
+                .filter(c -> !e.drawnCardsOnly() || entry.getDrawnCardIdsThisResolution().contains(c.getId()))
                 .filter(c -> !c.hasType(CardType.LAND))
+                .filter(c -> castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, c))
                 .filter(c -> c.getManaValue() <= maxManaValue)
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(
                         c, e.spellFilter(), null, gameData, controllerId))
                 .toList();
 
+        UUID choiceGroupId = UUID.randomUUID();
         for (int i = eligible.size() - 1; i >= 0; i--) {
             Card c = eligible.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
-                            true, e.afterSuccessfulCastEffect())),
+                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())),
                     "Cast " + c.getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));

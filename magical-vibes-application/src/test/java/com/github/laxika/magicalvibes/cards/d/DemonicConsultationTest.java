@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,14 +14,13 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DemonicConsultation.class, Counterspell.class, DarkRitual.class})
 class DemonicConsultationTest extends BaseCardTest {
 
     private void cast() {
-        harness.setHand(player1, List.of(new DemonicConsultation()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DemonicConsultation(), "{B}");
         harness.passBothPriorities();
     }
 
@@ -133,5 +131,58 @@ class DemonicConsultationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Demonic Consultation");
+    }
+
+    @Test
+    @DisplayName("A library shorter than six is entirely exiled, including the named card")
+    void handlesLibraryShorterThanSix() {
+        Card hit = new Counterspell();
+        List<Card> deck = List.of(new DarkRitual(), hit, new DarkRitual());
+        harness.setLibrary(player1, deck);
+
+        cast();
+        harness.handleListChoice(player1, "Counterspell");
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(deck);
+        harness.assertNotInHand(player1, "Counterspell");
+        harness.assertInGraveyard(player1, "Demonic Consultation");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A real card name absent from the game may be chosen")
+    void allowsNameAbsentFromGame() {
+        List<Card> deck = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            deck.add(new DarkRitual());
+        }
+        harness.setLibrary(player1, deck);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
+
+        cast();
+        harness.handleListChoice(player1, "Counterspell");
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(deck);
+        harness.assertNotInHand(player1, "Counterspell");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Text that is not an Oracle card name must be rejected without changing the library")
+    void rejectsNonexistentCardName() {
+        Card card = new DarkRitual();
+        harness.setLibrary(player1, List.of(card));
+        cast();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1,
+                "This is not an actual Oracle card name"))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromTargetGrave
 
 @CardRegistration(set = "FRF", collectorNumber = "70")
 @CardRegistration(set = "C19", collectorNumber = "115")
+@CardRegistration(set = "C16", collectorNumber = "111")
 public class GhastlyConscription extends Card {
 
     public GhastlyConscription() {

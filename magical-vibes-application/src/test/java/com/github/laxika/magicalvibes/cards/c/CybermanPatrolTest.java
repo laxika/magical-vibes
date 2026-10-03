@@ -44,10 +44,61 @@ class CybermanPatrolTest extends BaseCardTest {
     }
 
     private void declareBlockers(int blockerIndex, int attackerIndex) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+    }
+
+    @Test
+    void patrolGrantsAfflictToItself() {
+        addCreatureReady(player1, new CybermanPatrol());
+        addCreatureReady(player2, new CybermanPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void afflictTriggersOnlyOnceWhenSeveralCreaturesBlock() {
+        addCreatureReady(player1, new CybermanPatrol());
+        addCreatureReady(player2, new CybermanPatrol());
+        addCreatureReady(player2, new CybermanPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void multiplePatrolsGrantSeparatelyResolvingAfflictAbilities() {
+        addCreatureReady(player1, new CybermanPatrol());
+        addCreatureReady(player1, new CybermanPatrol());
+        addCreatureReady(player2, new CybermanPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void opponentsArtifactCreaturesDoNotReceiveAfflict() {
+        addCreatureReady(player1, new CybermanPatrol());
+        addCreatureReady(player2, new Memnite());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
     }
 }

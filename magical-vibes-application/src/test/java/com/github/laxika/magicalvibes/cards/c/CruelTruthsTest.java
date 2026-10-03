@@ -34,8 +34,7 @@ class CruelTruthsTest extends BaseCardTest {
         GameData gameData = harness.getGameData();
         int startingLife = gameData.playerLifeTotals.get(player1.getId());
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.Scry surveil = gameData.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(surveil).isNotNull();
@@ -47,6 +46,61 @@ class CruelTruthsTest extends BaseCardTest {
         assertThat(gameData.playerHands.get(player1.getId())).containsExactly(keptCard, drawnCard);
         assertThat(gameData.playerDecks.get(player1.getId())).containsExactly(secondDrawnCard);
         assertThat(gameData.playerGraveyards.get(player1.getId())).contains(surveilledCard);
+        harness.assertLife(player1, startingLife - 2);
+        assertThat(gameData.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can keep both surveilled cards in a chosen order before drawing them")
+    void keepsBothCardsInChosenOrder() {
+        Card firstCard = new Island();
+        Card secondCard = new Island();
+        Card remainingCard = new Island();
+        harness.setLibrary(player1, List.of(firstCard, secondCard, remainingCard));
+        harness.setHand(player1, List.of(new CruelTruths()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        GameData gameData = harness.getGameData();
+        int startingLife = gameData.playerLifeTotals.get(player1.getId());
+        int opponentLife = gameData.playerLifeTotals.get(player2.getId());
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gameData.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, startingLife);
+        harness.getGameService().handleInteractionAnswer(gameData, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(secondCard, firstCard);
+        assertThat(gameData.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gameData.playerGraveyards.get(player1.getId()))
+                .doesNotContain(firstCard, secondCard);
+        harness.assertLife(player1, startingLife - 2);
+        harness.assertLife(player2, opponentLife);
+        assertThat(gameData.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can put both surveilled cards into the graveyard and draw the next two")
+    void putsBothCardsIntoGraveyard() {
+        Card firstCard = new Island();
+        Card secondCard = new Island();
+        Card firstDraw = new Island();
+        Card secondDraw = new Island();
+        harness.setLibrary(player1, List.of(firstCard, secondCard, firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new CruelTruths()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        GameData gameData = harness.getGameData();
+        int startingLife = gameData.playerLifeTotals.get(player1.getId());
+        harness.castAndResolveInstant(player1, 0);
+        harness.getGameService().handleInteractionAnswer(gameData, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gameData.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gameData.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameData.playerGraveyards.get(player1.getId())).contains(firstCard, secondCard);
         harness.assertLife(player1, startingLife - 2);
         assertThat(gameData.interaction.activeInteraction()).isNull();
     }

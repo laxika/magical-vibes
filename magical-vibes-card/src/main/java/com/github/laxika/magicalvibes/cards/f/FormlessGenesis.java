@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "34")
 @CardRegistration(set = "DSC", collectorNumber = "61")
+@CardRegistration(set = "EOC", collectorNumber = "96")
 public class FormlessGenesis extends Card {
 
     public FormlessGenesis() {

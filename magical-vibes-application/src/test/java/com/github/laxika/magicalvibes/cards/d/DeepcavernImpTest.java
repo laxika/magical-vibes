@@ -16,6 +16,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DeepcavernImpTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateEchoTrigger() {
+        harness.castFromHand(player1, new DeepcavernImp(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Deepcavern Imp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Echo allows choosing any one card to discard")
+    void echoDiscardsOnlyTheChosenCard() {
+        castAndResolveImp(false);
+        harness.setHand(player1, List.of(new FomoriNomad(), new DeathRattle()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Deepcavern Imp");
+        harness.assertInHand(player1, "Fomori Nomad");
+        harness.assertInGraveyard(player1, "Death Rattle");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Discarding a card pays echo and keeps Deepcavern Imp for one turn")
     void discardingPaysEchoAndEchoIsOneShot() {
         castAndResolveImp(true);
@@ -86,8 +113,7 @@ class DeepcavernImpTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DeathRattle()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, findPermanent(player1, "Deepcavern Imp").getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Deepcavern Imp").getId());
 
         advanceToUpkeep(player1);
 
@@ -102,8 +128,7 @@ class DeepcavernImpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Deepcavern Imp");
     }
 }

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CurseOfTheBloodyTome.class})
 class CurseOfTheBloodyTomeTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Curse of the Bloody Tome targeting a player puts it on the stack")
@@ -43,14 +44,11 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
                         && p.getAttachedTo().equals(player2.getId()));
     }
 
-    // ===== Upkeep mill trigger =====
-
     @Test
     @DisplayName("Enchanted player mills 2 cards at their upkeep")
     void enchantedPlayerMillsAtUpkeep() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         int graveyardSizeBefore = gd.playerGraveyards.get(player2.getId()).size();
@@ -65,9 +63,8 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Mill trigger does NOT fire during aura controller's upkeep")
     void millDoesNotFireDuringAuraControllerUpkeep() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -81,9 +78,8 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Mill accumulates over multiple upkeeps")
     void millAccumulatesOverUpkeeps() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -96,14 +92,11 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 4);
     }
 
-    // ===== Removal =====
-
     @Test
     @DisplayName("No mill after Curse is removed")
     void noMillAfterRemoval() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Remove the curse
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
@@ -116,14 +109,11 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
     }
 
-    // ===== Curse attached to player is not orphaned =====
-
     @Test
     @DisplayName("Curse attached to player is not removed as orphaned aura")
     void curseAttachedToPlayerNotOrphaned() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Advance through several steps to trigger SBA / orphan aura checks
         harness.forceStep(TurnStep.END_STEP);
@@ -133,8 +123,6 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
         // Curse should still be on the battlefield
         harness.assertOnBattlefield(player1, "Curse of the Bloody Tome");
     }
-
-    // ===== Can curse self =====
 
     @Test
     @DisplayName("Can cast Curse targeting yourself")
@@ -154,9 +142,8 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
     @Test
     @DisplayName("Self-cursed player mills at their own upkeep")
     void selfCursedPlayerMillsAtUpkeep() {
-        Permanent auraPerm = new Permanent(new CurseOfTheBloodyTome());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
         auraPerm.setAttachedTo(player1.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -166,5 +153,91 @@ class CurseOfTheBloodyTomeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The upkeep trigger mills the top two cards and leaves the controller's library alone")
+    void millsTopTwoCardsOnly() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        aura.setAttachedTo(player2.getId());
+        CurseOfTheBloodyTome top = new CurseOfTheBloodyTome();
+        CurseOfTheBloodyTome second = new CurseOfTheBloodyTome();
+        CurseOfTheBloodyTome third = new CurseOfTheBloodyTome();
+        harness.setLibrary(player2, List.of(top, second, third));
+        int controllerLibrarySize = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top, second, third);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(top, second).doesNotContain(third);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(controllerLibrarySize);
+    }
+
+    @Test
+    @DisplayName("A library with one card mills just that card")
+    void millsOnlyAvailableCard() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        aura.setAttachedTo(player2.getId());
+        CurseOfTheBloodyTome remaining = new CurseOfTheBloodyTome();
+        harness.setLibrary(player2, List.of(remaining));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(remaining);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Milling an empty library does nothing")
+    void emptyLibraryDoesNotPreventResolution() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        aura.setAttachedTo(player2.getId());
+        harness.setLibrary(player2, List.of());
+        int graveyardSize = gd.playerGraveyards.get(player2.getId()).size();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardSize);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("An already triggered ability still mills after the Curse leaves the battlefield")
+    void triggerResolvesAfterCurseLeaves() {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        aura.setAttachedTo(player2.getId());
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 2);
+    }
+
+    @Test
+    @DisplayName("Each Curse triggers independently for the enchanted player's upkeep")
+    void multipleCursesMillFourCards() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CurseOfTheBloodyTome());
+        first.setAttachedTo(player2.getId());
+        second.setAttachedTo(player2.getId());
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 4);
+    }
 }

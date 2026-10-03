@@ -40,4 +40,27 @@ class DeadlyInsectTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Shroud prevents opponents' spells from targeting Deadly Insect")
+    void opponentsSpellsCannotTargetDeadlyInsect() {
+        Permanent insect = addCreatureReady(player1, new DeadlyInsect());
+        harness.setHand(player2, List.of(new Vendetta()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, insect.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud prevents opponents' abilities from targeting Deadly Insect")
+    void opponentsAbilitiesCannotTargetDeadlyInsect() {
+        Permanent insect = addCreatureReady(player1, new DeadlyInsect());
+        addCreatureReady(player2, new ShockTroops());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, insect.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
 }

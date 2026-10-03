@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "71")
+@CardRegistration(set = "EOC", collectorNumber = "78")
 public class TekuthalInquiryDominus extends Card {
 
     public TekuthalInquiryDominus() {

@@ -30,6 +30,6 @@ public class Ambuscade extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature an opponent controls"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
+        ), 1, 1).addEffect(EffectSlot.SPELL, new TargetDealsPowerDamageToTargetEffect());
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "371")
 @CardRegistration(set = "CMM", collectorNumber = "600")
+@CardRegistration(set = "C16", collectorNumber = "52")
 public class Boompile extends Card {
 
     public Boompile() {

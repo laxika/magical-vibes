@@ -121,6 +121,56 @@ class CrystalShardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller may produce mana when asked to pay during resolution")
+    void controllerWithUntappedLandGetsPaymentOpportunity() {
+        harness.addToBattlefield(player1, new CrystalShard());
+        Permanent target = addCreatureReady(player2, new AlphaMyr());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInHand(player2, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("Crystal Shard can return its controller's own creature")
+    void canReturnOwnCreature() {
+        harness.addToBattlefield(player1, new CrystalShard());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        harness.assertInHand(player1, "Alpha Myr");
+        harness.assertNotInHand(player2, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Crystal Shard leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent shard = harness.addToBattlefieldAndReturn(player1, new CrystalShard());
+        Permanent target = addCreatureReady(player2, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(shard);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        harness.assertInHand(player2, "Alpha Myr");
+    }
+
+    @Test
     @DisplayName("The ability cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
         harness.addToBattlefield(player1, new CrystalShard());

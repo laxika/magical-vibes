@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.w.WayfarersBauble;
-import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
+import com.github.laxika.magicalvibes.cards.a.AstrologiansPlanisphere;
+import com.github.laxika.magicalvibes.cards.b.BusterSword;
+import com.github.laxika.magicalvibes.cards.w.WorldMap;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,17 +14,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeliveryMoogle.class, LeoninScimitar.class, WayfarersBauble.class,
-        WornPowerstone.class, GrizzlyBears.class})
+@CardUsed({DeliveryMoogle.class, WorldMap.class, AstrologiansPlanisphere.class, BusterSword.class})
 class DeliveryMoogleTest extends BaseCardTest {
 
     @Test
     @DisplayName("The enter-the-battlefield ability offers artifact cards with mana value 2 or less")
     void searchesEligibleArtifactsFromLibraryAndGraveyard() {
-        Card libraryArtifact = new LeoninScimitar();
-        Card graveyardArtifact = new WayfarersBauble();
-        Card expensiveArtifact = new WornPowerstone();
-        Card nonArtifact = new GrizzlyBears();
+        Card libraryArtifact = new WorldMap();
+        Card graveyardArtifact = new AstrologiansPlanisphere();
+        Card expensiveArtifact = new BusterSword();
+        Card nonArtifact = new DeliveryMoogle();
         setLibrary(libraryArtifact, expensiveArtifact, nonArtifact);
         harness.setGraveyard(player1, List.of(graveyardArtifact));
         castMoogle();
@@ -50,8 +47,8 @@ class DeliveryMoogleTest extends BaseCardTest {
     @Test
     @DisplayName("The enter-the-battlefield ability does nothing when no eligible artifact exists")
     void doesNotFindIneligibleCards() {
-        Card expensiveArtifact = new WornPowerstone();
-        Card nonArtifact = new GrizzlyBears();
+        Card expensiveArtifact = new BusterSword();
+        Card nonArtifact = new DeliveryMoogle();
         setLibrary(expensiveArtifact, nonArtifact);
         castMoogle();
 
@@ -63,11 +60,65 @@ class DeliveryMoogleTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(expensiveArtifact, nonArtifact);
     }
 
+    @Test
+    @DisplayName("An artifact with mana value exactly two can be taken from the library")
+    void putsLibraryArtifactIntoHand() {
+        Card artifact = new AstrologiansPlanisphere();
+        Card remaining = new BusterSword();
+        Card opposingArtifact = new WorldMap();
+        setLibrary(artifact, remaining);
+        harness.setGraveyard(player2, List.of(opposingArtifact));
+        castMoogle();
+
+        resolveEnterTheBattlefieldTrigger();
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(artifact.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingArtifact);
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A search of the library may fail to find an eligible artifact")
+    void canFailToFindLibraryArtifact() {
+        Card artifact = new WorldMap();
+        setLibrary(artifact);
+        castMoogle();
+
+        resolveEnterTheBattlefieldTrigger();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Taking an artifact into hand does not cause its battlefield entry ability to trigger")
+    void returningArtifactDoesNotTriggerItsEntryAbility() {
+        Card artifact = new AstrologiansPlanisphere();
+        setLibrary();
+        harness.setGraveyard(player1, List.of(artifact));
+        castMoogle();
+
+        resolveEnterTheBattlefieldTrigger();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castMoogle() {
-        harness.setHand(player1, List.of(new DeliveryMoogle()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DeliveryMoogle(), "{3}{W}");
     }
 
     private void resolveEnterTheBattlefieldTrigger() {
@@ -76,7 +127,6 @@ class DeliveryMoogleTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }

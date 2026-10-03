@@ -49,8 +49,7 @@ class DazeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elemental.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -118,5 +117,63 @@ class DazeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
                 player2, 0, elemental.getId(), List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Island can be returned and the cost is paid before resolution")
+    void returnsTappedIslandBeforeResolution() {
+        AirElemental elemental = new AirElemental();
+        harness.setHand(player1, List.of(elemental));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.tap();
+        harness.setHand(player2, List.of(new Daze()));
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstantWithAlternateCost(player2, 0, elemental.getId(), List.of(island.getId()));
+
+        harness.assertInHand(player2, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertNotInGraveyard(player1, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Daze");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player2, "Daze");
+    }
+
+    @Test
+    @DisplayName("The target's controller can decline payment even with mana available")
+    void countersWhenPaymentIsDeclined() {
+        AirElemental elemental = new AirElemental();
+        harness.setHand(player1, List.of(elemental));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setHand(player2, List.of(new Daze()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elemental.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player2, "Daze");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Daze can target its controller's own spell")
+    void countersOwnSpell() {
+        AirElemental elemental = new AirElemental();
+        harness.setHand(player1, List.of(elemental, new Daze()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Daze");
     }
 }

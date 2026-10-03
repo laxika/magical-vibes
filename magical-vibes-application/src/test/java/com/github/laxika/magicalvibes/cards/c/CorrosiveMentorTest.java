@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AshenmoorCohort;
+import com.github.laxika.magicalvibes.cards.a.AshenmoorGouger;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CorrosiveMentor.class, AshenmoorCohort.class, SafeholdSentry.class})
+@CardUsed({CorrosiveMentor.class, AshenmoorCohort.class, AshenmoorGouger.class, SafeholdSentry.class})
 class CorrosiveMentorTest extends BaseCardTest {
 
     // ===== Grant: "Black creatures you control have wither" =====
@@ -90,5 +91,66 @@ class CorrosiveMentorTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Grants wither to a creature that is black and another color")
+    void grantsWitherToMulticoloredBlackCreature() {
+        addCreatureReady(player1, new CorrosiveMentor());
+        Permanent creature = addCreatureReady(player1, new AshenmoorGouger());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.WITHER)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Another Mentor continues granting wither after the first leaves")
+    void overlappingMentorsContinueGrantingWither() {
+        Permanent firstMentor = addCreatureReady(player1, new CorrosiveMentor());
+        Permanent secondMentor = addCreatureReady(player1, new CorrosiveMentor());
+        Permanent creature = addCreatureReady(player1, new AshenmoorCohort());
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstMentor);
+
+        assertThat(gqs.hasKeyword(gd, secondMentor, Keyword.WITHER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.WITHER)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondMentor);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.WITHER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A black creature granted wither kills a blocker with counters")
+    void grantedWitherDealsLethalCounterDamage() {
+        addCreatureReady(player1, new CorrosiveMentor());
+        Permanent attacker = addCreatureReady(player1, new AshenmoorCohort());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SafeholdSentry());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(1);
+
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player2, "Safehold Sentry");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+    }
+
+    @Test
+    @DisplayName("Mentor deals damage as counters while blocking")
+    void witherAppliesToBlockingDamage() {
+        Permanent attacker = addCreatureReady(player1, new SafeholdSentry());
+        attacker.setAttacking(true);
+        Permanent mentor = addCreatureReady(player2, new CorrosiveMentor());
+        mentor.setBlocking(true);
+        mentor.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mentor);
+    }
     // ===== Helpers =====
 }

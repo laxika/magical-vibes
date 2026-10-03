@@ -34,8 +34,7 @@ class DoctorDoomKingOfLatveriaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -49,8 +48,7 @@ class DoctorDoomKingOfLatveriaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
@@ -61,8 +59,7 @@ class DoctorDoomKingOfLatveriaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DoctorDoomKingOfLatveria());
         Permanent villain = harness.addToBattlefieldAndReturn(player1, new MODOK());
         Permanent nonVillain = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new MODOK());
-        Permanent opponentVillain = findPermanent(player2, "M.O.D.O.K.");
+        Permanent opponentVillain = harness.addToBattlefieldAndReturn(player2, new MODOK());
         harness.setHand(player1, List.of(new Forest()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -87,11 +84,77 @@ class DoctorDoomKingOfLatveriaTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, villain, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Discarding multiple lands together causes only one life-loss trigger")
+    void multipleLandsInOneDiscardEventTriggerOnce() {
+        harness.addToBattlefield(player1, new DoctorDoomKingOfLatveria());
+        harness.setHand(player1, List.of(new DangerousWager(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent discarding lands does not trigger Doctor Doom")
+    void opponentsLandDiscardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DoctorDoomKingOfLatveria());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DangerousWager(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Conniving with a land grants menace without a counter and triggers life loss")
+    void landConniveTriggersLifeLossWithoutCounter() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new DoctorDoomKingOfLatveria());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, doom.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, doom, Keyword.MENACE)).isTrue();
+        assertThat(doom.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The combat ability does not trigger during an opponent's turn")
+    void doesNotTriggerAtOpponentsCombat() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new DoctorDoomKingOfLatveria());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToCombat(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, doom, Keyword.MENACE)).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void discardByName(String cardName) {

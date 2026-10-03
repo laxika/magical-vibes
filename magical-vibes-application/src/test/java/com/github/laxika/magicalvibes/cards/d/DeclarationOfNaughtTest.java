@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeclarationOfNaught.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DeclarationOfNaught.class, GrizzlyBears.class, HillGiant.class, Disperse.class})
 class DeclarationOfNaughtTest extends BaseCardTest {
 
     @Test
@@ -90,6 +90,67 @@ class DeclarationOfNaughtTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The name is chosen before the enchantment enters, without a triggered ability")
+    void choosesNameBeforeEntering() {
+        harness.setHand(player1, List.of(new DeclarationOfNaught()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Declaration of Naught");
+        harness.handleListChoice(player1, "Declaration of Naught");
+
+        harness.assertOnBattlefield(player1, "Declaration of Naught");
+        assertThat(declaration(player1).getChosenName()).isEqualTo("Declaration of Naught");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters a matching enchantment even after the source returns to hand")
+    void countersMatchingEnchantmentAfterSourceLeaves() {
+        Permanent source = addReadyDeclaration(player1, "Declaration of Naught");
+        DeclarationOfNaught spell = new DeclarationOfNaught();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castEnchantment(player2, 0);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Declaration of Naught");
+        harness.assertNotOnBattlefield(player1, "Declaration of Naught");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Declaration of Naught");
+        harness.assertNotOnBattlefield(player2, "Declaration of Naught");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A matching spell cannot be countered without paying blue mana")
+    void requiresBlueManaToActivate() {
+        addReadyDeclaration(player1, "Declaration of Naught");
+        DeclarationOfNaught spell = new DeclarationOfNaught();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.castEnchantment(player2, 0);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInGraveyard(player2, "Declaration of Naught");
     }
 
     private Permanent declaration(Player player) {

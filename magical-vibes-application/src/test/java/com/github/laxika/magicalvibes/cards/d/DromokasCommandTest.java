@@ -99,4 +99,58 @@ class DromokasCommandTest extends BaseCardTest {
                 List.of(counterTarget.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A creature can receive the counter and then fight with its increased power")
+    void counterIsAppliedBeforeSameCreatureFights() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DromokasCommand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{2, 3}, null,
+                List.of(fighter.getId(), fighter.getId(), opponent.getId()));
+        harness.passBothPriorities();
+
+        assertThat(fighter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(fighter.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Sacrifice and fight modes still fight when the player has no enchantments")
+    void fightResolvesWhenSacrificeDoesNothing() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DromokasCommand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 3}, null,
+                List.of(player2.getId(), fighter.getId(), opponent.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(fighter.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifice mode can target the caster")
+    void casterCanSacrificeOwnEnchantment() {
+        harness.addToBattlefield(player1, new GhostlyPrison());
+        Permanent counterTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DromokasCommand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, new int[]{1, 2}, null,
+                List.of(player1.getId(), counterTarget.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ghostly Prison");
+        assertThat(counterTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }

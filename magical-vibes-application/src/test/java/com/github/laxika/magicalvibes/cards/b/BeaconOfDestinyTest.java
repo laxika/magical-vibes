@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Sparksmith;
+import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({BeaconOfDestiny.class, FugitiveWizard.class, Shock.class})
+@CardUsed({BeaconOfDestiny.class, FugitiveWizard.class, Shock.class, Sparksmith.class, VampireNighthawk.class})
 class BeaconOfDestinyTest extends BaseCardTest {
 
     @Test
@@ -81,10 +84,8 @@ class BeaconOfDestinyTest extends BaseCardTest {
 
         attacker.untap();
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
         assertThat(beacon.getMarkedDamage()).isEqualTo(1);
     }
@@ -102,10 +103,8 @@ class BeaconOfDestinyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
         assertThat(beacon.getMarkedDamage()).isZero();
@@ -127,6 +126,73 @@ class BeaconOfDestinyTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         assertThat(beacon.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void canChooseDepartedSourceOfAnAbilityStillOnTheStack() {
+        Permanent beacon = addCreatureReady(player1, new BeaconOfDestiny());
+        Permanent sparksmith = addCreatureReady(player1, new Sparksmith());
+
+        harness.activateAbility(player1, indexOf(player1, sparksmith), 0, null, beacon.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, sparksmith.getId());
+        harness.assertInGraveyard(player1, "Sparksmith");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, indexOf(player1, beacon), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatCode(() -> harness.handlePermanentChosen(player1, sparksmith.getId()))
+                .doesNotThrowAnyException();
+        resolveAllTriggers();
+    }
+
+    @Test
+    void doesNotRedirectDamageAfterBeaconDies() {
+        Permanent beacon = addCreatureReady(player1, new BeaconOfDestiny());
+        Permanent attacker = addCreatureReady(player2, new FugitiveWizard());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        activateAndChooseSource(beacon, attacker);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, beacon.getId());
+        harness.castAndResolveInstant(player1, 0, beacon.getId());
+        harness.assertInGraveyard(player1, "Beacon of Destiny");
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void redirectedCombatDamageRetainsDeathtouch() {
+        Permanent beacon = addCreatureReady(player1, new BeaconOfDestiny());
+        Permanent attacker = addCreatureReady(player2, new VampireNighthawk());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        activateAndChooseSource(beacon, attacker);
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertInGraveyard(player1, "Beacon of Destiny");
+        harness.assertNotOnBattlefield(player1, "Beacon of Destiny");
+    }
+
+    @Test
+    void redirectedCombatDamageStillCausesLifelinkLifeGain() {
+        Permanent beacon = addCreatureReady(player1, new BeaconOfDestiny());
+        Permanent attacker = addCreatureReady(player2, new VampireNighthawk());
+        int sourceControllerLifeBefore = gd.getLife(player2.getId());
+
+        activateAndChooseSource(beacon, attacker);
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(sourceControllerLifeBefore + 2);
     }
 
     private void activateAndChooseSource(Permanent beacon, Permanent source) {

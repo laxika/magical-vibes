@@ -27,8 +27,7 @@ class AssertAuthorityTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, transfixer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, transfixer.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -51,8 +50,7 @@ class AssertAuthorityTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Auriok Transfixer"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bolt.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -119,5 +117,50 @@ class AssertAuthorityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, transfixer.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void excessArtifactsStillAllowCastingForTwoBlueMana() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player2, new Bonesplitter());
+        }
+
+        AuriokTransfixer transfixer = new AuriokTransfixer();
+        harness.setHand(player1, List.of(transfixer));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new AssertAuthority()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, transfixer.getId());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(transfixer);
+        harness.assertInGraveyard(player2, "Assert Authority");
+        harness.assertNotInGraveyard(player1, "Auriok Transfixer");
+    }
+
+    @Test
+    void excessArtifactsCannotReduceBlueManaRequirement() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player2, new Bonesplitter());
+        }
+
+        AuriokTransfixer transfixer = new AuriokTransfixer();
+        harness.setHand(player1, List.of(transfixer));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+
+        harness.setHand(player2, List.of(new AssertAuthority()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, transfixer.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInHand(player2, "Assert Authority");
     }
 }

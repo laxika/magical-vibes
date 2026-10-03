@@ -54,6 +54,55 @@ class DonatelloRadScientistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Already tapped creatures receive stun counters and skip their next untap")
+    void alreadyTappedCreatureReceivesStunCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DonatelloRadScientist());
+        target.tap();
+
+        castDonatello(List.of(target.getId()));
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing only one target leaves other opposing creatures unaffected")
+    void canChooseOnlyOneTarget() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castDonatello(List.of(chosen.getId()));
+
+        assertThat(chosen.isTapped()).isTrue();
+        assertThat(chosen.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(unchosen.isTapped()).isFalse();
+        assertThat(unchosen.getCounterCount(CounterType.STUN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target leaving before resolution does not prevent tapping and stunning remaining targets")
+    void resolvesForRemainingTargets() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DonatelloRadScientist()));
+        addManaForDonatello();
+        harness.castCreature(player1, 0, List.of(removed.getId(), remaining.getId()));
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.setGraveyard(player2, List.of(removed.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(remaining.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(removed.getCounterCount(CounterType.STUN)).isZero();
+    }
     private void castDonatello(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new DonatelloRadScientist()));
         addManaForDonatello();

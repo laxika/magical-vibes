@@ -102,4 +102,64 @@ class AuraFractureTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Aura Fracture");
         harness.assertInGraveyard(player1, "Forest");
     }
+    @Test
+    @DisplayName("A tapped land is sacrificed immediately as a cost, before destruction resolves")
+    void tappedLandIsSacrificedBeforeResolution() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        var land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        var target = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new AuraFracture());
+        harness.addToBattlefield(player2, new Forest());
+        var target = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @DisplayName("Aura Fracture can activate repeatedly without tapping or paying mana")
+    void canActivateRepeatedly() {
+        var source = harness.addToBattlefieldAndReturn(player1, new AuraFracture());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        var firstTarget = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+        var secondTarget = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+
+        harness.activateAbility(player1, 0, 0, null, firstTarget.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Forest"));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Angelic Chorus")).isEqualTo(1);
+        assertThat(source.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, secondTarget.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player1, "Aura Fracture");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(source.isTapped()).isFalse();
+    }
 }

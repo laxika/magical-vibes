@@ -161,4 +161,41 @@ class DeathOfAThousandStingsTest extends BaseCardTest {
                 .extracting(card -> card.getId())
                 .containsExactly(unrelatedCard.getId());
     }
+
+    @Test
+    @DisplayName("The upkeep trigger does nothing when hand sizes become equal before resolution")
+    void doesNotReturnWhenOpponentCatchesUp() {
+        DeathOfAThousandStings stings = new DeathOfAThousandStings();
+        harness.setGraveyard(player1, List.of(stings));
+        harness.setHand(player1, List.of(new Secretkeeper(), new Secretkeeper()));
+        harness.setHand(player2, List.of(new Secretkeeper()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new Secretkeeper(), new Secretkeeper()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(stings);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(stings);
+    }
+
+    @Test
+    @DisplayName("A departed source does not cause another copy in the graveyard to return")
+    void doesNotReturnAnotherCopyWhenSourceLeavesGraveyard() {
+        DeathOfAThousandStings stings = new DeathOfAThousandStings();
+        DeathOfAThousandStings otherCopy = new DeathOfAThousandStings();
+        harness.setGraveyard(player1, List.of(stings));
+        harness.setHand(player1, List.of(new Secretkeeper(), new Secretkeeper()));
+        harness.setHand(player2, List.of(new Secretkeeper()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(otherCopy));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(stings, otherCopy);
+    }
 }

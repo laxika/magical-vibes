@@ -92,6 +92,58 @@ class BogardanLancerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Bloodthirst grants only one counter even after several damage events")
+    void bloodthirstDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 3);
+        gd.recordDamageToPlayer(player2.getId(), 4);
+        castLancer();
+
+        assertThat(findPermanent(player1, "Bogardan Lancer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst applies when entering without being cast and creates no trigger")
+    void bloodthirstAppliesWithoutCasting() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        Permanent lancer = harness.enterBattlefieldAndReturn(player1, new BogardanLancer());
+
+        assertThat(lancer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flanking debuffs each non-flanking blocker separately")
+    void flankingDebuffsEachBlocker() {
+        addCreatureReady(player1, new BogardanLancer());
+        Permanent firstBlocker = addCreatureReady(player2, new BlindPhantasm());
+        Permanent secondBlocker = addCreatureReady(player2, new BlindPhantasm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger when the Lancer blocks")
+    void flankingDoesNotTriggerOnBlocking() {
+        addCreatureReady(player2, new BlindPhantasm());
+        addCreatureReady(player1, new BogardanLancer());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castLancer() {
         harness.castFromHand(player1, new BogardanLancer(), "{1}{R}");
         resolveAllTriggers();

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Deathlace.class, GrizzlyBears.class, Forest.class, DarkRitual.class})
+@CardUsed({Deathlace.class, GrizzlyBears.class, Forest.class, DarkRitual.class, GiantGrowth.class, Unsummon.class})
 class DeathlaceTest extends BaseCardTest {
 
     @Test
@@ -73,8 +75,7 @@ class DeathlaceTest extends BaseCardTest {
         harness.castCreature(player1, 1);
         UUID bearsSpellId = gd.stack.getFirst().getCard().getId();
 
-        harness.castInstant(player1, 0, bearsSpellId);
-        harness.passBothPriorities(); // resolve Deathlace on the spell
+        harness.castAndResolveInstant(player1, 0, bearsSpellId);
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -89,11 +90,51 @@ class DeathlaceTest extends BaseCardTest {
         harness.castInstant(player1, 1);
         Card targetSpell = gd.stack.getFirst().getCard();
 
-        harness.castInstant(player1, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
 
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
 
         harness.passBothPriorities();
+    }
+
+    @Test
+    void greenInstantBecomesBlackWithoutChangingItsEffect() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Deathlace(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 1, target.getId());
+        Card targetSpell = gd.stack.getFirst().getCard();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
+
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Giant Growth");
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.GREEN);
+    }
+
+    @Test
+    void colorChangeDoesNotFollowCreatureThroughHandAndRecasting() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Deathlace(), new Unsummon()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertInHand(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, findPermanent(player1, "Grizzly Bears")))
+                .containsExactly(CardColor.GREEN);
     }
 }
