@@ -50,7 +50,6 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         harness.castInstant(player1, 0, DOUBLE_JUMP, creature.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.FLYING)).isEqualTo(1);
@@ -101,6 +100,74 @@ class DoubleJumpFlyingKickTest extends BaseCardTest {
         UUID sourceId = source.getId();
         UUID victimId = victim.getId();
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FLYING_KICK, List.of(sourceId, victimId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Fuse can boost a different creature from the one dealing damage")
+    void fuseUsesIndependentCreatureTargets() {
+        Permanent boosted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DoubleJumpFlyingKick()));
+        addFuseMana();
+
+        harness.castModalInstant(player1, 0, FUSE,
+                List.of(boosted.getId(), source.getId(), victim.getId()));
+        harness.passBothPriorities();
+
+        assertThat(boosted.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(boosted.getEffectivePower()).isEqualTo(5);
+        assertThat(source.getCounterCount(CounterType.FLYING)).isZero();
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Fuse still resolves Double Jump when Flying Kick's victim has left")
+    void fuseBoostsCreatureWhenVictimIsGone() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DoubleJumpFlyingKick()));
+        addFuseMana();
+
+        harness.castModalInstant(player1, 0, FUSE,
+                List.of(source.getId(), source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(source.getEffectivePower()).isEqualTo(5);
+        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Double Jump // Flying Kick");
+    }
+
+    @Test
+    @DisplayName("Flying Kick does not deal damage if its source leaves before resolution")
+    void flyingKickNeedsItsSourceToRemainLegal() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DoubleJumpFlyingKick()));
+        addRedMana();
+
+        harness.castModalInstant(player1, 0, FLYING_KICK, List.of(source.getId(), victim.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Double Jump // Flying Kick");
+    }
+
+    @Test
+    @DisplayName("Double Jump cannot target an opponent's creature")
+    void doubleJumpRequiresYourCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoubleJumpFlyingKick()));
+        addBlueMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, DOUBLE_JUMP, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
