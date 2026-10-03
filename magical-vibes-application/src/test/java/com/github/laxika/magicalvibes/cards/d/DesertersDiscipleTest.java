@@ -71,8 +71,7 @@ class DesertersDiscipleTest extends BaseCardTest {
     @Test
     @DisplayName("The ability cannot target Deserter's Disciple itself")
     void cannotTargetSelf() {
-        addDisciple(player1);
-        Permanent disciple = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent disciple = addDisciple(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, disciple.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -86,6 +85,80 @@ class DesertersDiscipleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetAnotherDisciple() {
+        addDisciple(player1);
+        Permanent target = addDisciple(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void summoningSickDiscipleCannotActivate() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DesertersDisciple());
+        Permanent target = addDisciple(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(disciple.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetWithIncreasedPowerIsIllegalOnResolution() {
+        addDisciple(player1);
+        Permanent target = addDisciple(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void targetControlledByOpponentIsIllegalOnResolution() {
+        addDisciple(player1);
+        Permanent target = addDisciple(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void increasedPowerAfterResolutionDoesNotEndUnblockability() {
+        addDisciple(player1);
+        Permanent target = addDisciple(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        target.setPowerModifier(1);
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void abilityStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent disciple = addDisciple(player1);
+        Permanent target = addDisciple(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(disciple);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isTrue();
     }
 
     private Permanent addDisciple(Player player) {
