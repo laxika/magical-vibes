@@ -26,8 +26,7 @@ class DarkEnduranceTest extends BaseCardTest {
         setupSpell();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -40,8 +39,7 @@ class DarkEnduranceTest extends BaseCardTest {
         setupSpell();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -60,6 +58,63 @@ class DarkEnduranceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A nonblocking creature receives both effects when the full cost is paid")
+    void boostsNonblockingCreatureAtFullCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        setupSpell();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting a blocker does not reduce the black mana requirement")
+    void blockingTargetStillRequiresBlackMana() {
+        Permanent blocker = addBlockingBear(player2);
+        setupSpell();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature that stops blocking before resolution still receives both effects")
+    void blockingConditionIsCheckedOnlyWhenCasting() {
+        Permanent blocker = addBlockingBear(player2);
+        setupSpell();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted indestructible lets the creature survive lethal marked damage")
+    void indestructiblePreventsLethalDamageDestruction() {
+        Permanent blocker = addBlockingBear(player2);
+        setupSpell();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        blocker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
     }
 
     private void setupSpell() {
