@@ -88,6 +88,70 @@ class CyclopeanGiantTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }
 
+    @Test
+    void giantRemainsInGraveyardWhenTargetLandLeavesBeforeResolution() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CyclopeanGiant());
+        Permanent expanse = harness.addToBattlefieldAndReturn(player2, new TerramorphicExpanse());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.handlePermanentChosen(player1, expanse.getId());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cyclopean Giant");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(giant.getCard().getId()));
+        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    void giantRemainsInGraveyardWhenThereIsNoLandToTarget() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CyclopeanGiant());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cyclopean Giant");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(giant.getCard().getId()));
+    }
+
+    @Test
+    void swampConversionOfOwnLandPersistsIntoNextTurn() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new CyclopeanGiant());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+        harness.assertNotInGraveyard(player1, "Cyclopean Giant");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(giant.getCard().getId()));
+    }
+
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
