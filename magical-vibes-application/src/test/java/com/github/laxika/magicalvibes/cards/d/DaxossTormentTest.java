@@ -41,8 +41,7 @@ class DaxossTormentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.isCreature(gd, torment)).isTrue();
         assertThat(gqs.getEffectivePower(gd, torment)).isEqualTo(6);
@@ -91,16 +90,87 @@ class DaxossTormentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        return findPermanentByCardId(card.getId());
+        resolveAllTriggers();
+        return findPermanent(player1, "Daxos's Torment");
     }
 
-    private Permanent findPermanentByCardId(java.util.UUID cardId) {
-        return gd.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> permanent.getCard().getId().equals(cardId))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Its own entry triggers once and animation waits for resolution")
+    void ownEntryAnimationUsesTheStack() {
+        harness.setHand(player1, List.of(new DaxossTorment()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent torment = findPermanent(player1, "Daxos's Torment");
+        assertThat(gqs.isCreature(gd, torment)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, torment)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, torment)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A second Torment animates itself and the first Torment")
+    void secondTormentAnimatesBothEnchantments() {
+        castDaxossTorment();
+        harness.setHand(player1, List.of(new DaxossTorment()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Daxos's Torment")).hasSize(2)
+                .allSatisfy(torment -> {
+                    assertThat(gqs.isCreature(gd, torment)).isTrue();
+                    assertThat(gqs.isEnchantment(gd, torment)).isTrue();
+                    assertThat(gqs.getEffectivePower(gd, torment)).isEqualTo(5);
+                    assertThat(gqs.getEffectiveToughness(gd, torment)).isEqualTo(5);
+                    assertThat(gqs.hasKeyword(gd, torment, Keyword.FLYING)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, torment, Keyword.HASTE)).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("Haste lets Torment attack on the turn it enters")
+    void canAttackImmediately() {
+        castDaxossTorment();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("After animation expires, another enchantment can animate it again")
+    void canAnimateAgainAfterCleanup() {
+        Permanent torment = castDaxossTorment();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, torment)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torment, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torment, Keyword.HASTE)).isFalse();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GloriousAnthem()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, torment)).isTrue();
+        assertThat(gqs.isEnchantment(gd, torment)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, torment)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, torment)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, torment, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, torment, Keyword.HASTE)).isTrue();
     }
 }
