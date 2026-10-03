@@ -44,6 +44,32 @@ class DamnationTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Hedge Troll");
     }
 
+    @Test
+    @DisplayName("Resolves without creatures on the battlefield")
+    void resolvesWithoutCreatures() {
+        castDamnation();
+
+        harness.assertInGraveyard(player1, "Damnation");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple regeneration shields cannot save a creature from Damnation")
+    void bypassesMultipleRegenerationShields() {
+        Permanent troll = addCreatureReady(player2, new HedgeTroll());
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player2, 0, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+
+        castDamnation();
+
+        harness.assertNotOnBattlefield(player2, "Hedge Troll");
+        harness.assertInGraveyard(player2, "Hedge Troll");
+    }
+
     private void castDamnation() {
         harness.castFromHand(player1, new Damnation(), "{2}{B}{B}");
         harness.passBothPriorities();
