@@ -76,7 +76,44 @@ class CurseOfClingingWebsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Each Curse creates a Spider even when another Curse already exiled the creature")
+    void twoCursesBothCreateSpiders() {
+        placeCurseOnPlayer2();
+        placeCurseOnPlayer2();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        destroyWithShock(bears);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards)
+                .filteredOn(entry -> entry.card().getId().equals(bears.getCard().getId()))
+                .hasSize(1);
+        assertThat(findPermanents(player1, "Spider")).hasSize(2);
+        assertThat(findPermanents(player2, "Spider")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can enchant its controller and creates a Spider for that player's creature")
+    void canEnchantController() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new CurseOfClingingWebs()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castEnchantment(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        Permanent curse = findPermanent(player1, "Curse of Clinging Webs");
+        assertThat(curse.getAttachedTo()).isEqualTo(player1.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        destroyWithShock(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bears.getCard().getId()));
+        assertThat(findPermanents(player1, "Spider")).hasSize(1);
     }
 }
