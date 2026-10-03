@@ -27,10 +27,7 @@ class DecreeOfJusticeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2);
 
-        List<Permanent> angels = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> "Angel".equals(permanent.getCard().getName()))
-                .toList();
+        List<Permanent> angels = findPermanents(player1, "Angel");
         assertThat(angels).hasSize(2);
         assertThat(angels).allSatisfy(angel -> {
             assertThat(angel.getCard().isToken()).isTrue();
@@ -68,6 +65,7 @@ class DecreeOfJusticeTest extends BaseCardTest {
         });
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Decree of Justice");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Gilded Light");
     }
 
@@ -88,6 +86,65 @@ class DecreeOfJusticeTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Soldier")).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         harness.assertInGraveyard(player1, "Decree of Justice");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Gilded Light");
+    }
+
+    @Test
+    @DisplayName("Casting with X=0 creates no tokens and pays the fixed mana cost")
+    void hardCastWithZeroCreatesNoTokens() {
+        harness.setHand(player1, List.of(new DecreeOfJustice()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Decree of Justice");
+    }
+
+    @Test
+    @DisplayName("Soldiers are created before a separate cycling ability draws the card")
+    void soldiersResolveBeforeCyclingDraw() {
+        harness.setHand(player1, List.of(new DecreeOfJustice()));
+        harness.setLibrary(player1, List.of(new GildedLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        harness.assertNotInHand(player1, "Gilded Light");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gilded Light");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling with only its activation cost still draws without creating Soldiers")
+    void cyclingWithNoManaForSoldiersStillDraws() {
+        harness.setHand(player1, List.of(new DecreeOfJustice()));
+        harness.setLibrary(player1, List.of(new GildedLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotInHand(player1, "Gilded Light");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gilded Light");
+        harness.assertInGraveyard(player1, "Decree of Justice");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
