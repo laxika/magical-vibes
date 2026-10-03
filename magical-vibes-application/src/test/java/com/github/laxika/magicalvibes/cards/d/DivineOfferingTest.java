@@ -140,4 +140,21 @@ class DivineOfferingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Divine Offering");
     }
+
+    @Test
+    @DisplayName("Divine Offering can destroy your own artifact and only its caster gains life")
+    void destroysOwnArtifactAndGainsLife() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new BrassSquire()).getId();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new DivineOffering()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Brass Squire");
+        harness.assertInGraveyard(player1, "Brass Squire");
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 10);
+    }
 }
