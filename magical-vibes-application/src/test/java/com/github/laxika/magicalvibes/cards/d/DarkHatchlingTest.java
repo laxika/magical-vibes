@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DarkHatchling.class, GrizzlyBears.class, ScatheZombies.class})
+@CardUsed({DarkHatchling.class, GrizzlyBears.class, ScatheZombies.class, Unsummon.class})
 class DarkHatchlingTest extends BaseCardTest {
 
     @Test
@@ -67,8 +68,8 @@ class DarkHatchlingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when there are no legal targets")
-    void etbDoesNotTriggerWithoutLegalTarget() {
+    @DisplayName("ETB leaves no ability on the stack when there are no legal targets")
+    void etbLeavesNoAbilityOnStackWithoutLegalTarget() {
         prepareCard();
 
         harness.castCreature(player1, 0);
@@ -78,6 +79,49 @@ class DarkHatchlingTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dark Hatchling");
     }
 
+    @Test
+    @DisplayName("ETB resolves after Dark Hatchling leaves the battlefield")
+    void etbResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        prepareCard();
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Dark Hatchling"));
+        harness.assertInHand(player1, "Dark Hatchling");
+        harness.assertNotOnBattlefield(player1, "Dark Hatchling");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not destroy a replacement creature when its target leaves")
+    void etbDoesNotDestroyReplacementCreatureWhenTargetLeaves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        prepareCard();
+        harness.castCreature(player1, 0, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Dark Hatchling");
+        assertThat(gd.stack).isEmpty();
+    }
     private void castAndResolve(UUID targetId) {
         prepareCard();
         harness.castCreature(player1, 0, 0, targetId);
