@@ -129,6 +129,79 @@ class DidgeridooTest extends BaseCardTest {
         harness.assertInHand(player1, "Didgeridoo");
     }
 
+    @Test
+    @DisplayName("A tapped Didgeridoo can activate repeatedly, putting one Minotaur per activation")
+    void tappedDidgeridooCanActivateRepeatedly() {
+        addDidgeridoo();
+        findPermanent(player1, "Didgeridoo").setTapped(true);
+        harness.setHand(player1, List.of(new AnabaShaman(), new AnabaShaman()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof AnabaShaman)
+                .hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof AnabaShaman)
+                .hasSize(2);
+        assertThat(findPermanent(player1, "Didgeridoo").isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The ability cannot put a Minotaur from an opponent's hand onto the battlefield")
+    void doesNotUseOpponentsHand() {
+        addDidgeridoo();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new AnabaShaman()));
+        giveManaForAbility();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Anaba Shaman");
+        harness.assertNotOnBattlefield(player1, "Anaba Shaman");
+        harness.assertNotOnBattlefield(player2, "Anaba Shaman");
+    }
+
+    @Test
+    @DisplayName("Declining does not refund the activation cost")
+    void decliningDoesNotRefundMana() {
+        addDidgeridoo();
+        harness.setHand(player1, List.of(new AnabaShaman()));
+        giveManaForAbility();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Anaba Shaman");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
     private void addDidgeridoo() {
         harness.addToBattlefield(player1, new Didgeridoo());
     }
