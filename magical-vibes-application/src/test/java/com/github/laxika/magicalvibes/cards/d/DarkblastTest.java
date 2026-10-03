@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Transluminant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Darkblast.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Darkblast.class, Transluminant.class})
 class DarkblastTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives target creature -1/-1 until end of turn")
     void debuffsTargetCreatureUntilEndOfTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Transluminant());
 
         harness.setHand(player1, List.of(new Darkblast()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -43,7 +42,7 @@ class DarkblastTest extends BaseCardTest {
     @DisplayName("May dredge Darkblast instead of drawing")
     void dredgesInsteadOfDrawing() {
         Darkblast darkblast = new Darkblast();
-        List<Card> milled = List.of(new Forest(), new GrizzlyBears(), new Forest());
+        List<Card> milled = List.of(new Transluminant(), new Transluminant(), new Transluminant());
         harness.setGraveyard(player1, List.of(darkblast));
         harness.setLibrary(player1, milled);
 
@@ -62,9 +61,9 @@ class DarkblastTest extends BaseCardTest {
     @DisplayName("Can decline dredge and draw normally")
     void declinesDredge() {
         Darkblast darkblast = new Darkblast();
-        Card topCard = new Forest();
+        Card topCard = new Transluminant();
         harness.setGraveyard(player1, List.of(darkblast));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(topCard, new Transluminant(), new Transluminant()));
 
         resolveDraw();
         harness.handleGraveyardCardChosen(player1, -1);
@@ -78,15 +77,70 @@ class DarkblastTest extends BaseCardTest {
     @DisplayName("Cannot dredge when the library has too few cards")
     void cannotDredgeWithTooFewLibraryCards() {
         Darkblast darkblast = new Darkblast();
-        Card topCard = new Forest();
+        Card topCard = new Transluminant();
         harness.setGraveyard(player1, List.of(darkblast));
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(topCard, new Transluminant()));
 
         resolveDraw();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(darkblast);
+    }
+
+    @Test
+    @DisplayName("Two Darkblasts reduce a creature's toughness to zero")
+    void repeatedCastsKillCreatureWithZeroToughness() {
+        Transluminant creature = new Transluminant();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, creature);
+        harness.setHand(player1, List.of(new Darkblast(), new Darkblast()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Dredge mills only three cards and leaves the rest of the library")
+    void dredgeLeavesRemainingLibraryUntouched() {
+        Darkblast darkblast = new Darkblast();
+        List<Card> milled = List.of(new Transluminant(), new Transluminant(), new Transluminant());
+        Card remaining = new Transluminant();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(darkblast));
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2), remaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(darkblast);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dredge returns only the chosen copy of Darkblast")
+    void dredgeReturnsChosenCopy() {
+        Darkblast first = new Darkblast();
+        Darkblast chosen = new Darkblast();
+        List<Card> milled = List.of(new Transluminant(), new Transluminant(), new Transluminant());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(first, chosen));
+        harness.setLibrary(player1, milled);
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(first, milled.get(0), milled.get(1), milled.get(2));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void resolveDraw() {
