@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
+import com.github.laxika.magicalvibes.cards.s.SonicBurst;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(CinderCrawler.class)
+@CardUsed({CinderCrawler.class, DazzlingBeauty.class, SonicBurst.class})
 class CinderCrawlerTest extends BaseCardTest {
 
     @Test
@@ -126,6 +127,56 @@ class CinderCrawlerTest extends BaseCardTest {
 
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("A blocking Cinder Crawler cannot activate its ability")
+    void cannotActivateWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new CinderCrawler());
+        Permanent blocker = addCreatureReady(player2, new CinderCrawler());
+        setupBlockedCrawler(attacker, blocker);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("this creature is blocked");
+    }
+
+    @Test
+    @CardUsed(SonicBurst.class)
+    @DisplayName("Remains blocked and can activate after its last blocker dies")
+    void canActivateAfterLastBlockerDies() {
+        Permanent crawler = addCreatureReady(player1, new CinderCrawler());
+        Permanent blocker = addCreatureReady(player2, new CinderCrawler());
+        setupBlockedCrawler(crawler, blocker);
+        harness.setHand(player1, List.of(new SonicBurst(), new CinderCrawler()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Cinder Crawler");
+        harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
+        harness.passBothPriorities();
+
+        assertThat(crawler.getPowerModifier()).isEqualTo(1);
+        assertThat(crawler.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Leaving combat does not stop an already activated pump from resolving")
+    void pumpResolvesAfterSourceLeavesCombat() {
+        Permanent crawler = addCreatureReady(player1, new CinderCrawler());
+        Permanent blocker = addCreatureReady(player2, new CinderCrawler());
+        setupBlockedCrawler(crawler, blocker);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, battlefieldIndex(crawler), null, null);
+        crawler.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(crawler.getPowerModifier()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(crawler), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("this creature is blocked");
     }
 
     private void setupBlockedCrawler(Permanent crawler, Permanent blocker) {
