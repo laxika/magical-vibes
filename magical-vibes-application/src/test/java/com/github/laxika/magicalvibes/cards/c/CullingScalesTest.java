@@ -97,8 +97,7 @@ class CullingScalesTest extends BaseCardTest {
     @Test
     @DisplayName("Can destroy itself when it has the lowest mana value")
     void canDestroyItself() {
-        harness.addToBattlefield(player1, new CullingScales());
-        Permanent scales = findPermanent(player1, "Culling Scales");
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
 
         advanceToUpkeep(player1);
 
@@ -135,5 +134,36 @@ class CullingScalesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("Destroys a face-down target with mana value zero")
+    void destroysFaceDownTarget() {
+        harness.addToBattlefield(player1, new CullingScales());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player2, new Bonesplitter());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertOnBattlefield(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves after Culling Scales leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent scales = harness.addToBattlefieldAndReturn(player1, new CullingScales());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, scales);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Culling Scales");
+        harness.assertInGraveyard(player2, "Bonesplitter");
     }
 }
