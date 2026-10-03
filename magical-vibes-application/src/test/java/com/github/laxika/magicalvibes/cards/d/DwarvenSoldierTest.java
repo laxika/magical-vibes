@@ -26,8 +26,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new DwarvenSoldier());
         addReadyCreature(player2, true); // Orc blocker
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -41,8 +40,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new DwarvenSoldier());
         addReadyCreature(player2, false); // non-Orc blocker
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -56,8 +54,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         addReadyCreature(player1, true); // Orc attacker
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -71,8 +68,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         addReadyCreature(player1, false); // non-Orc attacker
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -87,8 +83,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         addReadyCreature(player2, true);  // Orc blocker
         addReadyCreature(player2, false); // non-Orc blocker
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -105,12 +100,11 @@ class DwarvenSoldierTest extends BaseCardTest {
         addReadyCreature(player1, true);
         addReadyCreature(player1, true);
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(1, 1)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(soldier.getToughnessModifier()).isEqualTo(2);
     }
@@ -122,8 +116,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         addReadyCreature(player2, true);
         addReadyCreature(player2, true);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -138,8 +131,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new DwarvenSoldier());
         addReadyCreature(player2, true); // Orc blocker
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -158,8 +150,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new DwarvenSoldier());
         Permanent blocker = addReadyCreature(player2, false);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         blocker.getGrantedSubtypes().add(CardSubtype.ORC);
         harness.passBothPriorities();
@@ -173,8 +164,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent attacker = addReadyCreature(player1, false);
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         attacker.getGrantedSubtypes().add(CardSubtype.ORC);
         harness.passBothPriorities();
@@ -188,8 +178,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent soldier = addCreatureReady(player1, new DwarvenSoldier());
         Permanent blocker = addMutableOrcCreature(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         blocker.getGrantedSubtypes().remove(CardSubtype.ORC);
         harness.passBothPriorities();
@@ -203,8 +192,7 @@ class DwarvenSoldierTest extends BaseCardTest {
         Permanent attacker = addMutableOrcCreature(player1);
         Permanent soldier = addCreatureReady(player2, new DwarvenSoldier());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         attacker.getGrantedSubtypes().remove(CardSubtype.ORC);
         harness.passBothPriorities();
