@@ -29,6 +29,7 @@ class DracoTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Domain cost reduction")
+    @CardUsed({Draco.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class})
     class CostReduction {
 
         @Test
@@ -113,7 +114,52 @@ class DracoTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Domain upkeep tax")
+    @CardUsed({Draco.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class})
     class UpkeepTax {
+
+        @Test
+        @DisplayName("Paying the full upkeep cost with no land types keeps Draco")
+        void payFullCostWithoutLands() {
+            harness.addToBattlefield(player1, new Draco());
+
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+            harness.addMana(player1, ManaColor.COLORLESS, 10);
+            harness.handleMayAbilityChosen(player1, true);
+
+            harness.assertOnBattlefield(player1, "Draco");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("A zero-cost upkeep payment can still be declined")
+        void declineZeroCostSacrifices() {
+            harness.addToBattlefield(player1, new Draco());
+            addAllBasicLandTypes(player1);
+
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, false);
+
+            harness.assertNotOnBattlefield(player1, "Draco");
+            harness.assertInGraveyard(player1, "Draco");
+        }
+
+        @Test
+        @DisplayName("Duplicate land types reduce the upkeep payment only once")
+        void duplicateTypesCountOnceForUpkeep() {
+            harness.addToBattlefield(player1, new Draco());
+            harness.addToBattlefield(player1, new Forest());
+            harness.addToBattlefield(player1, new Forest());
+
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+            harness.addMana(player1, ManaColor.COLORLESS, 8);
+            harness.handleMayAbilityChosen(player1, true);
+
+            harness.assertOnBattlefield(player1, "Draco");
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
 
         @Test
         @DisplayName("Declining the payment sacrifices Draco")
