@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronBully;
+import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DovinHandOfControl.class, AngelsFeather.class, Divination.class, GrizzlyBears.class, Shock.class})
+@CardUsed({DovinHandOfControl.class, AngelsFeather.class, Divination.class, GrizzlyBears.class,
+        Shock.class, IronBully.class, JayaVeneratedFiremage.class})
 class DovinHandOfControlTest extends BaseCardTest {
 
     @Test
@@ -85,11 +88,8 @@ class DovinHandOfControlTest extends BaseCardTest {
     @Test
     void doesNotTaxCreatureSpells() {
         harness.addToBattlefield(player1, new DovinHandOfControl());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
         prepareMainPhase(player2);
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -108,8 +108,7 @@ class DovinHandOfControlTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
 
@@ -127,6 +126,107 @@ class DovinHandOfControlTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, ownPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    void taxesArtifactCreatureSpellsOnlyOnce() {
+        harness.addToBattlefield(player1, new DovinHandOfControl());
+        prepareMainPhase(player2);
+        harness.setHand(player2, List.of(new IronBully()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void minusOneCanTargetNoncreatureArtifact() {
+        Permanent dovin = addReadyDovin(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(dovin.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusOnePreventsNoncombatDamageToPlaneswalker() {
+        addReadyDovin(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        int loyalty = target.getCounterCount(CounterType.LOYALTY);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(loyalty);
+    }
+
+    @Test
+    void minusOnePreventsCombatDamageToPlaneswalker() {
+        addReadyDovin(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new IronBully());
+        int loyalty = target.getCounterCount(CounterType.LOYALTY);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(target.getId());
+        resolveCombat(player1);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(loyalty);
+    }
+
+    @Test
+    void minusOnePreventsNoncombatDamageDealtByPlaneswalker() {
+        addReadyDovin(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        harness.setLife(player1, 20);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        prepareMainPhase(player2);
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void preventionSurvivesDovinLeavingAndExpiresOnControllersNextTurn() {
+        Permanent dovin = addReadyDovin(player1);
+        dovin.setCounterCount(CounterType.LOYALTY, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dovin);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
     private Permanent addReadyDovin(Player player) {
