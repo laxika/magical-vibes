@@ -79,6 +79,47 @@ class DontMoveTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void destroysOpponentsCreatureDuringTheirTurn() {
+        addReadySpellcaster(player2);
+        castDontMove();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Zuran Spellcaster");
+        harness.assertInGraveyard(player2, "Zuran Spellcaster");
+    }
+
+    @Test
+    void untappingAfterTriggerDoesNotPreventDestruction() {
+        Permanent creature = addReadySpellcaster(player1);
+        castDontMove();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        creature.untap();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Zuran Spellcaster");
+        harness.assertInGraveyard(player1, "Zuran Spellcaster");
+    }
+
+    @Test
+    void destroyingTappedSourceDoesNotCounterItsActivatedAbility() {
+        addReadySpellcaster(player1);
+        castDontMove();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Zuran Spellcaster");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
     private Permanent addReadySpellcaster(com.github.laxika.magicalvibes.model.Player player) {
         return addCreatureReady(player, new ZuranSpellcaster());
     }
