@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -63,8 +64,7 @@ class CradleGuardTest extends BaseCardTest {
         addCreatureReady(player1, new CradleGuard());
         Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -74,6 +74,35 @@ class CradleGuardTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player2, "Gorilla Warrior");
+    }
+
+    @Test
+    void enteringDoesNotCreateAnEchoRegistrationTrigger() {
+        harness.setHand(player1, List.of(new CradleGuard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castCreature(player1, 0, 0);
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Cradle Guard");
+            assertThat(gd.stack).isEmpty();
+        });
+    }
+
+    @Test
+    void opponentUpkeepDoesNotConsumePendingEcho() {
+        castAndResolveCradleGuard();
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Cradle Guard");
+        harness.assertInGraveyard(player1, "Cradle Guard");
     }
 
     private void castAndResolveCradleGuard() {
