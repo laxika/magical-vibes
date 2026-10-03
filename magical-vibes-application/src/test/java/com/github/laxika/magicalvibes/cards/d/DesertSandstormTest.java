@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.w.WeiScout;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,9 +39,42 @@ class DesertSandstormTest extends BaseCardTest {
         harness.castFromHand(player1, new DesertSandstorm(), "{2}{R}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Repeated Desert Sandstorms accumulate lethal damage on creatures")
+    void repeatedDamageIsLethal() {
+        addCreatureReady(player1, new AlertShuInfantry());
+        addCreatureReady(player2, new AlertShuInfantry());
+
+        harness.castFromHand(player1, new DesertSandstorm(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alert Shu Infantry");
+        harness.assertOnBattlefield(player2, "Alert Shu Infantry");
+
+        harness.castFromHand(player1, new DesertSandstorm(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Alert Shu Infantry");
+        harness.assertNotOnBattlefield(player2, "Alert Shu Infantry");
+        harness.assertInGraveyard(player1, "Alert Shu Infantry");
+        harness.assertInGraveyard(player2, "Alert Shu Infantry");
+    }
+
+    @Test
+    @DisplayName("Desert Sandstorm damages creatures present at resolution")
+    void damagesCreatureEnteringAfterCast() {
+        harness.castFromHand(player1, new DesertSandstorm(), "{2}{R}");
+        harness.addToBattlefield(player2, new WeiScout());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wei Scout");
+        harness.assertInGraveyard(player2, "Wei Scout");
+        harness.assertInGraveyard(player1, "Desert Sandstorm");
     }
 
     @Test
