@@ -63,4 +63,104 @@ class DreadhoundTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+
+    @Test
+    @DisplayName("Its own enter trigger drains once for each creature card milled")
+    void enterTriggerDrainsForEachCreatureCard() {
+        harness.setLibrary(player1, List.of(new Dreadhound(), new Forest(), new Dreadhound(), new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new Dreadhound());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A short library mills only its remaining cards")
+    void enterTriggerMillsShortLibrary() {
+        harness.setLibrary(player1, List.of(new Dreadhound()));
+
+        harness.enterBattlefieldAndReturn(player1, new Dreadhound());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Dreadhound triggers for its own death")
+    void ownDeathMakesOpponentLoseLife() {
+        Permanent dreadhound = harness.addToBattlefieldAndReturn(player1, new Dreadhound());
+        dreadhound.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dreadhound");
+        harness.assertNotOnBattlefield(player1, "Dreadhound");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Dreadhound sees its own death and the death of an opposing creature simultaneously")
+    void simultaneousDeathsIncludeDreadhoundItself() {
+        Permanent dreadhound = harness.addToBattlefieldAndReturn(player1, new Dreadhound());
+        Permanent opposingDreadhound = harness.addToBattlefieldAndReturn(player2, new Dreadhound());
+        dreadhound.setMarkedDamage(6);
+        opposingDreadhound.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dreadhound");
+        harness.assertInGraveyard(player2, "Dreadhound");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A surviving Dreadhound sees an allied creature die")
+    void alliedCreatureDeathMakesOpponentLoseLife() {
+        harness.addToBattlefield(player1, new Dreadhound());
+        Permanent dyingDreadhound = harness.addToBattlefieldAndReturn(player1, new Dreadhound());
+        dyingDreadhound.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Entering with an empty library causes no life loss")
+    void enterTriggerWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new Dreadhound());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Milling only noncreature cards causes no life loss")
+    void millingNoncreatureCardsDoesNotDrain() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new Dreadhound());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
