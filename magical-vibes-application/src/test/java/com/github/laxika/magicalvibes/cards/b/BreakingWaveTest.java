@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarVanguard;
+import com.github.laxika.magicalvibes.cards.s.SnapcasterMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreakingWave.class, LlanowarVanguard.class, Forest.class})
+@CardUsed({BreakingWave.class, LlanowarVanguard.class, Forest.class, SnapcasterMage.class})
 class BreakingWaveTest extends BaseCardTest {
 
     @Test
@@ -68,6 +69,59 @@ class BreakingWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The flash casting option requires the full six mana")
+    void cannotPayFlashOptionWithOnlyNormalManaCost() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BreakingWave()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses creature tap states at resolution rather than at casting")
+    void flipsStatesAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LlanowarVanguard());
+        harness.setHand(player1, List.of(new BreakingWave()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        creature.tap();
+        Permanent arrivingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarVanguard());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(arrivingCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flashback during the opponent's turn still requires the flash surcharge")
+    void flashbackCannotSkipFlashSurcharge() {
+        BreakingWave wave = new BreakingWave();
+        harness.setGraveyard(player1, List.of(wave));
+        harness.setHand(player1, List.of(new SnapcasterMage()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(wave.getId()));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
