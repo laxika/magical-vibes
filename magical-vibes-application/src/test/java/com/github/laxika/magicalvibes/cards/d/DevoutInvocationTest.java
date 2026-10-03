@@ -1,23 +1,27 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DevoutInvocation.class, CoralMerfolk.class})
 class DevoutInvocationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping all creatures creates a 4/4 Angel for each")
     void tapsAllCreaturesCreatesAngelForEach() {
-        Permanent a = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent b = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent b = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
 
         castDevoutInvocation();
         harness.handleMultiplePermanentsChosen(player1, List.of(a.getId(), b.getId()));
@@ -34,8 +38,8 @@ class DevoutInvocationTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping a subset creates an Angel only for the creatures tapped")
     void tapsSubsetCreatesAngelPerTapped() {
-        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
 
         castDevoutInvocation();
         harness.handleMultiplePermanentsChosen(player1, List.of(tapped.getId()));
@@ -48,7 +52,7 @@ class DevoutInvocationTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping no creatures creates no Angels")
     void tapsNoneCreatesNoAngels() {
-        Permanent a = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
 
         castDevoutInvocation();
         harness.handleMultiplePermanentsChosen(player1, List.of());
@@ -60,13 +64,65 @@ class DevoutInvocationTest extends BaseCardTest {
     @Test
     @DisplayName("Resolves harmlessly with no untapped creatures")
     void noUntappedCreaturesResolvesHarmlessly() {
-        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
         tapped.tap();
 
         castDevoutInvocation();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(angels()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Angels enter untapped and not attacking with flying")
+    void angelsEnterUntappedAndNotAttacking() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        castDevoutInvocation();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        assertThat(angels()).hasSize(1).allSatisfy(angel -> {
+            assertThat(angel.isTapped()).isFalse();
+            assertThat(angel.isAttacking()).isFalse();
+            assertThat(angel.getCard().getKeywords()).contains(Keyword.FLYING);
+        });
+    }
+
+    @Test
+    @DisplayName("Angels remain on the battlefield after combat")
+    void angelsRemainAfterCombat() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        castDevoutInvocation();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        Permanent angel = angels().getFirst();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(angel);
+    }
+
+    @Test
+    @DisplayName("Only untapped creatures controlled by the caster can be chosen")
+    void excludesTappedAndOpposingCreatures() {
+        Permanent eligible = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        tapped.tap();
+
+        castDevoutInvocation();
+
+        assertThatThrownBy(() ->
+                harness.handleMultiplePermanentsChosen(player1, List.of(tapped.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() ->
+                harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(eligible.getId()));
+
+        assertThat(eligible.isTapped()).isTrue();
+        assertThat(opponent.isTapped()).isFalse();
+        assertThat(angels()).hasSize(1);
     }
 
     private List<Permanent> angels() {
@@ -76,10 +132,7 @@ class DevoutInvocationTest extends BaseCardTest {
     }
 
     private void castDevoutInvocation() {
-        harness.setHand(player1, List.of(new DevoutInvocation()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DevoutInvocation(), "{6}{W}");
         harness.passBothPriorities();
     }
 }
