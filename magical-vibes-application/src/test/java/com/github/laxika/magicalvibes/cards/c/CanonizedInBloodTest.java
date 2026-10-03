@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DeepCavernBat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
@@ -17,11 +18,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CanonizedInBlood.class, Forest.class, GrizzlyBears.class, ZuranOrb.class})
+@CardUsed({CanonizedInBlood.class, DeepCavernBat.class, Forest.class, GrizzlyBears.class, ZuranOrb.class})
 class CanonizedInBloodTest extends BaseCardTest {
 
     @Test
@@ -88,10 +87,84 @@ class CanonizedInBloodTest extends BaseCardTest {
         assertThat(token.getCard().hasKeyword(Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("Descending on an opponent's turn does not trigger at their end step")
+    void doesNotTriggerAtOpponentsEndStep() {
+        addCanonizedInBlood();
+        harness.addToBattlefield(player1, new CanonizedInBlood());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Vampire Demon");
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent descending does not enable your end-step trigger")
+    void opponentsDescentDoesNotEnableTrigger() {
+        addCanonizedInBlood();
+        Permanent bat = harness.addToBattlefieldAndReturn(player1, new DeepCavernBat());
+        harness.addToBattlefield(player2, new CanonizedInBlood());
+        harness.addMana(player2, ManaColor.BLACK, 7);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves even if the enchantment is sacrificed in response")
+    void triggerResolvesAfterSourceIsSacrificed() {
+        Permanent canonized = addCanonizedInBlood();
+        harness.addToBattlefield(player1, new CanonizedInBlood());
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Vampire Demon");
+
+        advanceToEndStep(player1);
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(canonized);
+        harness.assertInGraveyard(player1, "Canonized in Blood");
+        resolveAllTriggers();
+
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Vampire Demon")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Descending after the end step begins does not retroactively trigger the ability")
+    void descendingAfterEndStepBeginsDoesNotTrigger() {
+        addCanonizedInBlood();
+        harness.addToBattlefield(player1, new CanonizedInBlood());
+        Permanent bat = harness.addToBattlefieldAndReturn(player1, new DeepCavernBat());
+        advanceToEndStep(player1);
+
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Vampire Demon")).isEqualTo(1);
+    }
+
     private Permanent addCanonizedInBlood() {
-        Permanent canonized = harness.addToBattlefieldAndReturn(player1, new CanonizedInBlood());
-        canonized.setSummoningSick(false);
-        return canonized;
+        return harness.addToBattlefieldAndReturn(player1, new CanonizedInBlood());
     }
 
     private void sacrificeForestToDescend() {
@@ -104,7 +177,6 @@ class CanonizedInBloodTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
