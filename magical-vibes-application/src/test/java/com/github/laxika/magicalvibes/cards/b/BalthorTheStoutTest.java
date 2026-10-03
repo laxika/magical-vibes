@@ -94,7 +94,7 @@ class BalthorTheStoutTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent balthor = harness.addToBattlefieldAndReturn(player1, new BalthorTheStout());
         balthor.setSummoningSick(true);
-        balthor.setTapped(true);
+        balthor.tap();
         Permanent barbarian = addCreatureReady(player1, new PardicCollaborator());
         harness.addMana(player1, ManaColor.RED, 2);
 

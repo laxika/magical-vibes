@@ -19,9 +19,9 @@ class BattleHurdaTest extends BaseCardTest {
         addCreatureReady(player1, new BattleHurda());
         harness.setLife(player2, 20);
 
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
-            harness.passUntil(player1, TurnStep.END_COMBAT);
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         });
 
         harness.assertLife(player2, 17);

@@ -46,7 +46,7 @@ class BeamtownBeatstickTest extends BaseCardTest {
         creature.setAttackTarget(player2.getId());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).hasSize(1);
     }
@@ -64,7 +64,7 @@ class BeamtownBeatstickTest extends BaseCardTest {
         creature.setAttackTarget(battle.getId());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).hasSize(1);
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
@@ -88,7 +88,7 @@ class BeamtownBeatstickTest extends BaseCardTest {
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0,
                 Map.of(blocker.getId(), 2, secondBlocker.getId(), 1));
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).isEmpty();
     }
@@ -150,7 +150,7 @@ class BeamtownBeatstickTest extends BaseCardTest {
         creature.setAttackTarget(player2.getId());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).isEmpty();
     }
@@ -164,7 +164,7 @@ class BeamtownBeatstickTest extends BaseCardTest {
         creature.setAttackTarget(player2.getId());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).isEmpty();
         assertThat(treasuresFor(player2)).hasSize(1);

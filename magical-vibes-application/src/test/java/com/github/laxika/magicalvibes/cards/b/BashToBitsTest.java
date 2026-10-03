@@ -133,6 +133,6 @@ class BashToBitsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Darkwater Egg");
         harness.assertInGraveyard(player1, "Bash to Bits");
-        assertThat(gd.getStack()).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

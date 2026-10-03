@@ -78,7 +78,7 @@ class BenalishHeraldsTest extends BaseCardTest {
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenTapped() {
         Permanent heralds = addCreatureReady(player1, new BenalishHeralds());
-        heralds.setTapped(true);
+        heralds.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

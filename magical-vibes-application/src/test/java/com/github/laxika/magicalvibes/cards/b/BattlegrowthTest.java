@@ -42,7 +42,7 @@ class BattlegrowthTest extends BaseCardTest {
     void successiveCastsAccumulateCountersOnTappedTarget() {
         Permanent target = addCreatureReady(player2, new AlphaMyr());
         Permanent other = addCreatureReady(player2, new AlphaMyr());
-        target.setTapped(true);
+        target.tap();
 
         cast(target);
         cast(target);

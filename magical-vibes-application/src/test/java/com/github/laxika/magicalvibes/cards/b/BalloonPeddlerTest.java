@@ -114,7 +114,7 @@ class BalloonPeddlerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent peddler = addCreatureReady(player1, new BalloonPeddler());
-        peddler.setTapped(true);
+        peddler.tap();
         harness.setHand(player1, List.of(new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

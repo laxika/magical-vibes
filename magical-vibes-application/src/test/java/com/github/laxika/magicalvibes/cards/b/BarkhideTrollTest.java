@@ -122,7 +122,7 @@ class BarkhideTrollTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent troll = addTrollReady(player1);
-        troll.setTapped(true);
+        troll.tap();
         troll.setSummoningSick(true);
         troll.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

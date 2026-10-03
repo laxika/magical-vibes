@@ -24,7 +24,7 @@ class BlazingBladeAskariTest extends BaseCardTest {
     void tappedSourceBecomesColorlessOnlyOnResolution() {
         Permanent askari = harness.addToBattlefieldAndReturn(player1, new BlazingBladeAskari());
         Permanent otherAskari = harness.addToBattlefieldAndReturn(player1, new BlazingBladeAskari());
-        askari.setTapped(true);
+        askari.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

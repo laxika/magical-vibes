@@ -107,7 +107,7 @@ class AuraFractureTest extends BaseCardTest {
     void tappedLandIsSacrificedBeforeResolution() {
         harness.addToBattlefield(player1, new AuraFracture());
         var land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         var target = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
 
         harness.activateAbility(player1, 0, 0, null, target.getId());

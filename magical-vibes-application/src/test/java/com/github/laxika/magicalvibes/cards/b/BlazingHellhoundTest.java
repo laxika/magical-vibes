@@ -120,7 +120,7 @@ class BlazingHellhoundTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var hellhound = harness.addToBattlefieldAndReturn(player1, new BlazingHellhound());
-        hellhound.setTapped(true);
+        hellhound.tap();
         hellhound.setSummoningSick(true);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLife(player2, 20);

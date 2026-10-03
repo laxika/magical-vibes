@@ -88,7 +88,7 @@ class BarrageTyrantTest extends BaseCardTest {
     void activatesWithoutTappingOrHasteAndCanTargetController() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new BarrageTyrant());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         addCreatureReady(player1, new BarrageTyrant());
         harness.setLife(player1, 20);
         addManaForAbility();

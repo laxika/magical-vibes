@@ -98,7 +98,7 @@ class BlisteringDieflynTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent dieflyn = harness.addToBattlefieldAndReturn(player1, new BlisteringDieflyn());
         dieflyn.setSummoningSick(true);
-        dieflyn.setTapped(true);
+        dieflyn.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

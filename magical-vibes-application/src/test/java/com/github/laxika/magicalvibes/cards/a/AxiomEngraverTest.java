@@ -86,7 +86,7 @@ class AxiomEngraverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         engraver.setSummoningSick(false);
-        engraver.setTapped(true);
+        engraver.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -109,7 +109,7 @@ class AxiomEngraverTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInHand(player1, "Axiom Engraver");
 
-        engraver.setTapped(false);
+        engraver.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("counter");

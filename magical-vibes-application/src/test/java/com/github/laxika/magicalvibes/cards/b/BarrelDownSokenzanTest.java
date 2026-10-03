@@ -123,9 +123,9 @@ class BarrelDownSokenzanTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent third = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        first.setTapped(true);
-        second.setTapped(true);
-        third.setTapped(true);
+        first.tap();
+        second.tap();
+        third.tap();
 
         castAndResolveBarrelDownSokenzan(target);
         harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));

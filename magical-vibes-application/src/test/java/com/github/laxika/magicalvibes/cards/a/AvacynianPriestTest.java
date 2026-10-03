@@ -137,7 +137,7 @@ class AvacynianPriestTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped priest")
     void cannotActivateTappedPriest() {
         Permanent priest = addCreatureReady(player1, new AvacynianPriest());
-        priest.setTapped(true);
+        priest.tap();
         Permanent target = addCreatureReady(player2, new WalkingCorpse());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -166,7 +166,7 @@ class AvacynianPriestTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new AvacynianPriest());
         Permanent target = addCreatureReady(player2, new WalkingCorpse());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());

@@ -96,7 +96,7 @@ class BeastbreakerOfBalaGedTest extends BaseCardTest {
     void canLevelWhileTappedAndSummoningSickInPostcombatMainPhase() {
         Permanent beastbreaker = harness.addToBattlefieldAndReturn(player1, new BeastbreakerOfBalaGed());
         beastbreaker.setSummoningSick(true);
-        beastbreaker.setTapped(true);
+        beastbreaker.tap();
         prepareForLeveling(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 

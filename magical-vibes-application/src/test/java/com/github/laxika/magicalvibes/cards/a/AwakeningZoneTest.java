@@ -113,7 +113,7 @@ class AwakeningZoneTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         Permanent spawn = findPermanent(player1, "Eldrazi Spawn");
-        spawn.setTapped(true);
+        spawn.tap();
         int spawnIndex = gd.playerBattlefields.get(player1.getId()).indexOf(spawn);
         harness.activateAbility(player1, spawnIndex, null, null);
 

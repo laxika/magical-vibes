@@ -89,7 +89,7 @@ class BattlesongBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking with multiple other creatures triggers only once")
     void triggersOnceForMultipleAttackers() {
-        addReadyBerserker(player1).setTapped(true);
+        addReadyBerserker(player1).tap();
         Permanent firstAttacker = addCreatureReady(player1, new SavannahLions());
         addCreatureReady(player1, new SavannahLions());
 

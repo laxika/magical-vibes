@@ -87,7 +87,7 @@ class BattlefieldButcherTest extends BaseCardTest {
     @Test
     void tappedCreatureCannotActivateEvenWithFullReduction() {
         var butcher = addCreatureReady(player1, new BattlefieldButcher());
-        butcher.setTapped(true);
+        butcher.tap();
         harness.setGraveyard(player1, List.of(new BattlefieldButcher(), new BattlefieldButcher(),
                 new BattlefieldButcher(), new BattlefieldButcher(), new BattlefieldButcher()));
 

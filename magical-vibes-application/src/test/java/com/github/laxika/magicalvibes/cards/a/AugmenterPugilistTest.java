@@ -111,7 +111,7 @@ class AugmenterPugilistTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent other = addCreatureReady(player1, new BayouGroff());
         other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        other.setTapped(true);
+        other.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.setHand(player1, List.of(new AugmenterPugilist()));

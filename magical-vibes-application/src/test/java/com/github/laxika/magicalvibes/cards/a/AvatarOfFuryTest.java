@@ -119,7 +119,7 @@ class AvatarOfFuryTest extends BaseCardTest {
     void repeatedActivationsWhileTappedAndSummoningSick() {
         Permanent avatar = harness.addToBattlefieldAndReturn(player1, new AvatarOfFury());
         avatar.setSummoningSick(true);
-        avatar.setTapped(true);
+        avatar.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

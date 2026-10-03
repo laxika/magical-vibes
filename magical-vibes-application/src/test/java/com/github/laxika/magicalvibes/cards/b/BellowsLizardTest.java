@@ -62,7 +62,7 @@ class BellowsLizardTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent lizard = harness.addToBattlefieldAndReturn(player1, new BellowsLizard());
         lizard.setSummoningSick(true);
-        lizard.setTapped(true);
+        lizard.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

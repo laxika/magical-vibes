@@ -57,7 +57,7 @@ class BattleHymnTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped creatures but not noncreature permanents")
     void countsTappedCreaturesButNotLands() {
-        addCreatureReady(player1, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player1, new GrizzlyBears()).tap();
         harness.addToBattlefield(player1, new Mountain());
 
         castBattleHymn();

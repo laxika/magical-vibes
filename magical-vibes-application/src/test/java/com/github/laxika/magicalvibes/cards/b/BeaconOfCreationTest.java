@@ -81,9 +81,9 @@ class BeaconOfCreationTest extends BaseCardTest {
 
     @Test
     void countsTappedForestsPresentAtResolution() {
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
         harness.castFromHand(player1, new BeaconOfCreation(), "{3}{G}");
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
 
         harness.passBothPriorities();
 

@@ -82,7 +82,7 @@ class BlightedBatTest extends BaseCardTest {
     @DisplayName("The haste ability can be activated while the bat is tapped")
     void canActivateWhileTapped() {
         Permanent bat = addCreatureReady(player1, new BlightedBat());
-        bat.setTapped(true);
+        bat.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

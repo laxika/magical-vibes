@@ -128,7 +128,7 @@ class BaskingRootwallaTest extends BaseCardTest {
     @DisplayName("The pump can be activated while tapped and summoning sick")
     void pumpDoesNotRequireTappingOrHaste() {
         Permanent rootwalla = harness.addToBattlefieldAndReturn(player1, new BaskingRootwalla());
-        rootwalla.setTapped(true);
+        rootwalla.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

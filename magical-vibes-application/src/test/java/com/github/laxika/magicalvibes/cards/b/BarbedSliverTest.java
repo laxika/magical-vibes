@@ -113,7 +113,7 @@ class BarbedSliverTest extends BaseCardTest {
         addCreatureReady(player1, new BarbedSliver());
         Permanent otherSliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
         otherSliver.setSummoningSick(true);
-        otherSliver.setTapped(true);
+        otherSliver.tap();
         int basePower = gqs.getEffectivePower(gd, otherSliver);
 
         harness.forceActivePlayer(player2);

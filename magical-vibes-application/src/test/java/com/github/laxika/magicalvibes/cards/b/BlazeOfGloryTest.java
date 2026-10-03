@@ -154,7 +154,7 @@ class BlazeOfGloryTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(player1, List.of(0)));
         castBlaze(blocker);
-        blocker.setTapped(true);
+        blocker.tap();
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))

@@ -178,7 +178,7 @@ class AvishkarRacewayTest extends BaseCardTest {
     @Test
     void cannotLootWithTappedRaceway() {
         Permanent raceway = addRaceway(player1);
-        raceway.setTapped(true);
+        raceway.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         gd.playerSpeeds.put(player1.getId(), 4);

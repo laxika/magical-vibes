@@ -76,7 +76,7 @@ class BlasterMageTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent mage = addCreatureReady(player1, new BlasterMage());
-        mage.setTapped(true);
+        mage.tap();
         Permanent wall = addCreatureReady(player2, new WallOfDistortion());
         prepareActivation();
 

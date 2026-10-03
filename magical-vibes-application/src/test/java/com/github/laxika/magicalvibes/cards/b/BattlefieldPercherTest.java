@@ -89,7 +89,7 @@ class BattlefieldPercherTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent percher = harness.addToBattlefieldAndReturn(player1, new BattlefieldPercher());
-        percher.setTapped(true);
+        percher.tap();
         percher.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -124,7 +124,7 @@ class AweStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 21);
 
-        source.setTapped(false);
+        source.untap();
         harness.activateAbility(player2, indexOf(player2, source), null, player1.getId());
         harness.passBothPriorities();
 

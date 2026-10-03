@@ -62,7 +62,7 @@ class BlackLotusTest extends BaseCardTest {
     @DisplayName("A tapped Black Lotus cannot activate or pay its sacrifice cost")
     void tappedLotusCannotActivate() {
         var lotus = harness.addToBattlefieldAndReturn(player1, new BlackLotus());
-        lotus.setTapped(true);
+        lotus.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

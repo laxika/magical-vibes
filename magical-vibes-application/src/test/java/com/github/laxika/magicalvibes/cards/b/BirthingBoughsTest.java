@@ -82,7 +82,7 @@ class BirthingBoughsTest extends BaseCardTest {
     @DisplayName("A tapped Birthing Boughs cannot activate even with sufficient mana")
     void tappedBoughsCannotActivate() {
         harness.addToBattlefield(player1, new BirthingBoughs());
-        findPermanent(player1, "Birthing Boughs").setTapped(true);
+        findPermanent(player1, "Birthing Boughs").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

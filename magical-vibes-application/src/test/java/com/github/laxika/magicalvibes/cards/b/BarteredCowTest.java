@@ -119,7 +119,7 @@ class BarteredCowTest extends BaseCardTest {
         cow.setMarkedDamage(3);
         harness.runStateBasedActions();
         resolveAllTriggers();
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

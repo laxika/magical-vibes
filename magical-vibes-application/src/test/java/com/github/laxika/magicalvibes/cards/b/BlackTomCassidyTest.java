@@ -56,7 +56,7 @@ class BlackTomCassidyTest extends BaseCardTest {
     void tappedMutantGrantsLifeAndManaAbilityResolvesWithoutUsingStack() {
         addCreatureReady(player1, new BlackTomCassidy());
         Permanent otherMutant = addCreatureReady(player1, new ColossusSteelStalwart());
-        otherMutant.setTapped(true);
+        otherMutant.tap();
         int lifeBefore = gd.getLife(player1.getId());
         int opponentLifeBefore = gd.getLife(player2.getId());
 

@@ -34,8 +34,10 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -72,6 +74,8 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GraveyardService graveyardService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
+    @Mock private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @Mock private CastingCostService castingCostService;
     @Mock private LegendRuleService legendRuleService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameLogService gameLogService;
@@ -103,7 +107,8 @@ class LibraryChoiceHandlerServiceTest {
                         () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
                 mock(LibraryChoiceHandlerService.class)));
-        service = new LibraryChoiceHandlerService(gameQueryService,
+        service = new LibraryChoiceHandlerService(battlefieldEntryBatchSupport, gameQueryService,
+                castingCostService,
                 predicateEvaluationService,
                 graveyardService, battlefieldEntryService, legendRuleService,
                 stateBasedActionService, gameLogService, inputCompletionService,

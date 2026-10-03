@@ -121,7 +121,7 @@ class BalduvianDeadTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         int idx = setUpBoard();
         Permanent dead = findPermanent(player1, "Balduvian Dead");
-        dead.setTapped(true);
+        dead.tap();
         dead.setSummoningSick(true);
         harness.setGraveyard(player1, List.of(new StormCrow()));
 

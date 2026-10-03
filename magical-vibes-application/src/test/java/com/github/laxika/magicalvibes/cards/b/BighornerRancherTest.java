@@ -109,7 +109,7 @@ class BighornerRancherTest extends BaseCardTest {
     void sacrificeCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent rancher = harness.addToBattlefieldAndReturn(player1, new BighornerRancher());
         rancher.setSummoningSick(true);
-        rancher.setTapped(true);
+        rancher.tap();
         harness.addToBattlefield(player1, new BighornerRancher());
         harness.setLife(player1, 10);
 

@@ -66,7 +66,7 @@ class BiogenicOozeTest extends BaseCardTest {
     void tappedSummoningSickOozeCanActivateRepeatedly() {
         castBiogenicOoze();
         Permanent source = findPermanent(player1, "Biogenic Ooze");
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 6);
         int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(source);

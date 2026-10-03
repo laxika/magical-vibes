@@ -136,7 +136,7 @@ class BalduvianConjurerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent conjurer = addCreatureReady(player1, new BalduvianConjurer());
         Permanent snowLand = harness.addToBattlefieldAndReturn(player1, new SnowCoveredPlains());
-        conjurer.setTapped(true);
+        conjurer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, snowLand.getId()))
                 .isInstanceOf(IllegalStateException.class);

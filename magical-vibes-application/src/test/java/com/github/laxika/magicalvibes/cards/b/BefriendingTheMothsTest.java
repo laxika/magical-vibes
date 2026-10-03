@@ -120,7 +120,7 @@ class BefriendingTheMothsTest extends BaseCardTest {
     void returnedMothIsNewObjectAndCannotAttackUntilNextTurn() {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new BefriendingTheMoths());
         saga.setCounterCount(CounterType.LORE, 2);
-        saga.setTapped(true);
+        saga.tap();
         advanceToNextChapter(player1);
         harness.passBothPriorities();
 

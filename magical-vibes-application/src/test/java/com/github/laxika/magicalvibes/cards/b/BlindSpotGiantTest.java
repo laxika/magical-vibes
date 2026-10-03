@@ -90,7 +90,7 @@ class BlindSpotGiantTest extends BaseCardTest {
     void tappedSummoningSickGiantEnablesAttack() {
         addCreatureReady(player1, new BlindSpotGiant());
         var support = addCreatureReady(player1, new AxegrinderGiant());
-        support.setTapped(true);
+        support.tap();
         support.setSummoningSick(true);
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));

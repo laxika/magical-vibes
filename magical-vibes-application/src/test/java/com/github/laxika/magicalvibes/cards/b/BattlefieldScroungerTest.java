@@ -22,7 +22,7 @@ class BattlefieldScroungerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndPaysBeforeResolution() {
         Permanent scrounger = harness.addToBattlefieldAndReturn(player1, new BattlefieldScrounger());
         scrounger.setSummoningSick(true);
-        scrounger.setTapped(true);
+        scrounger.tap();
         List<Card> graveyard = List.of(
                 new MentalNote(), new MentalNote(), new MentalNote(),
                 new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote());

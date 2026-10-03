@@ -99,7 +99,7 @@ class AvenSoulgazerTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick to look at its own creature")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent soulgazer = harness.addToBattlefieldAndReturn(player1, new AvenSoulgazer());
-        soulgazer.setTapped(true);
+        soulgazer.tap();
         soulgazer.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AscendingAven());
         target.setFaceDown(2, 2, Set.of(CardType.CREATURE));

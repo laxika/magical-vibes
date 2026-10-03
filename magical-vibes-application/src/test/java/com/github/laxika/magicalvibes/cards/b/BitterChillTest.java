@@ -141,7 +141,7 @@ class BitterChillTest extends BaseCardTest {
     void lockEndsWhenAuraLeaves() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArmoryMice());
         Permanent aura = attachAura(creature);
-        creature.setTapped(true);
+        creature.tap();
         harness.performUntapStep(player2);
         assertThat(creature.isTapped()).isTrue();
 

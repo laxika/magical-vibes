@@ -60,7 +60,7 @@ class AuroraGriffinTest extends BaseCardTest {
     @DisplayName("A tapped Griffin can activate repeatedly for separate permanents")
     void tappedGriffinCanActivateRepeatedly() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new AuroraGriffin());
-        source.setTapped(true);
+        source.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DralnusPet());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -53,7 +53,7 @@ class BearerOfGloryTest extends BaseCardTest {
     void tappedBearerCanActivateRepeatedlyDuringOpponentsTurn() {
         Permanent bearer = harness.addToBattlefieldAndReturn(player1, new BearerOfGlory());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new BearerOfGlory());
-        bearer.setTapped(true);
+        bearer.tap();
         harness.forceActivePlayer(player2);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);

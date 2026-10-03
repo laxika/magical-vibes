@@ -166,7 +166,7 @@ class BladebackSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        sliver.setTapped(false);
+        sliver.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(sliver), null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

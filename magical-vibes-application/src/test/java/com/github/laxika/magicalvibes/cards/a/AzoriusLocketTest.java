@@ -115,7 +115,7 @@ class AzoriusLocketTest extends BaseCardTest {
     @DisplayName("A tapped Locket cannot activate either ability")
     void tappedLocketCannotActivateEitherAbility() {
         Permanent locket = addReadyLocket();
-        locket.setTapped(true);
+        locket.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

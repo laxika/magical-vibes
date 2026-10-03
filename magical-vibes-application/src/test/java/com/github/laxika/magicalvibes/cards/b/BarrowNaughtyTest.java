@@ -70,7 +70,7 @@ class BarrowNaughtyTest extends BaseCardTest {
     @DisplayName("Repeated activations work while tapped and their boosts accumulate")
     void repeatedActivationsWhileTapped() {
         Permanent naughty = harness.addToBattlefieldAndReturn(player1, new BarrowNaughty());
-        naughty.setTapped(true);
+        naughty.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

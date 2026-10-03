@@ -66,7 +66,7 @@ class BagEndBanquetTest extends BaseCardTest {
     @Test
     void tappedFoodStillCountsForMana() {
         castBanquet();
-        findPermanents(player1, "Food").forEach(food -> food.setTapped(true));
+        findPermanents(player1, "Food").forEach(food -> food.tap());
         Permanent banquet = findPermanent(player1, "Bag End Banquet");
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(banquet), null, null);

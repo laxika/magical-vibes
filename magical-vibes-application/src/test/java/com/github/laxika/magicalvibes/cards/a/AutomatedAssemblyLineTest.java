@@ -105,7 +105,7 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
     @Test
     void paysEnergyImmediatelyAndCanActivateTwiceWithoutTapping() {
         Permanent assemblyLine = addAssemblyLine();
-        assemblyLine.setTapped(true);
+        assemblyLine.tap();
         gd.playerEnergyCounters.put(player1.getId(), 6);
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(assemblyLine);
 
@@ -133,7 +133,7 @@ class AutomatedAssemblyLineTest extends BaseCardTest {
         resolveAllTriggers();
         Permanent robot = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
-        robot.setTapped(false);
+        robot.untap();
         robot.setSummoningSick(false);
         robot.setAttacking(true);
 

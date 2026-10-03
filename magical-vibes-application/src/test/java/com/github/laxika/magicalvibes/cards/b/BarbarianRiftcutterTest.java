@@ -92,7 +92,7 @@ class BarbarianRiftcutterTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Riftcutter can destroy its controller's land")
     void canActivateWhileTappedAndSummoningSickTargetingOwnLand() {
         Permanent riftcutter = harness.addToBattlefieldAndReturn(player1, new BarbarianRiftcutter());
-        riftcutter.setTapped(true);
+        riftcutter.tap();
         riftcutter.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.RED, 1);

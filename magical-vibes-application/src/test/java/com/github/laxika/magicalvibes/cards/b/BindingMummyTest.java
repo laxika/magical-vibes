@@ -146,7 +146,7 @@ class BindingMummyTest extends BaseCardTest {
     void canTargetTappedCreature() {
         harness.addToBattlefield(player1, new BindingMummy());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        victim.setTapped(true);
+        victim.tap();
 
         castScatheZombies(player1);
         harness.passBothPriorities();

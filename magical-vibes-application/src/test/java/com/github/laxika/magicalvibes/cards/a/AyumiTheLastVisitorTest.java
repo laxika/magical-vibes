@@ -106,7 +106,7 @@ class AyumiTheLastVisitorTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped legendary land still enables legendary landwalk")
     void cannotBeBlockedWhenDefendersLegendaryLandIsTapped() {
-        harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell()).tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent ayumi = addReadyAttacker(player1);
 

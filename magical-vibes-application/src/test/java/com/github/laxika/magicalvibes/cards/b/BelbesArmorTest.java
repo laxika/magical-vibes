@@ -124,7 +124,7 @@ class BelbesArmorTest extends BaseCardTest {
     void tappedArmorCannotActivateAgain() {
         Permanent armor = addReadyArmor(player1);
         Permanent creature = addCreature(player2);
-        armor.setTapped(true);
+        armor.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);

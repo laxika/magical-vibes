@@ -113,7 +113,7 @@ class AuriokSunchaserTest extends BaseCardTest {
     void metalcraftWithFourTappedArtifacts() {
         Permanent sunchaser = harness.addToBattlefieldAndReturn(player1, new AuriokSunchaser());
         for (int i = 0; i < 4; i++) {
-            harness.addToBattlefieldAndReturn(player1, new Spellbook()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Spellbook()).tap();
         }
 
         assertThat(gqs.hasKeyword(gd, sunchaser, Keyword.FLYING)).isTrue();

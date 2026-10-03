@@ -200,7 +200,7 @@ class BlightedShamanTest extends BaseCardTest {
     @Test
     void tappedShamanCannotActivateEitherAbility() {
         Permanent shaman = addCreatureReady(player1, new BlightedShaman());
-        shaman.setTapped(true);
+        shaman.tap();
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 

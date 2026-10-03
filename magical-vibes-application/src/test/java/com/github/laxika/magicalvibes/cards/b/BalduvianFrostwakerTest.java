@@ -131,7 +131,7 @@ class BalduvianFrostwakerTest extends BaseCardTest {
     void animationDoesNotUntapTarget() {
         addReadyFrostwaker(player1);
         Permanent snowLand = addSnowLand(player1);
-        snowLand.setTapped(true);
+        snowLand.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, snowLand.getId());

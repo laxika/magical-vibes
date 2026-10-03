@@ -110,7 +110,7 @@ class BeastWalkersTest extends BaseCardTest {
     @DisplayName("The ability can be activated while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent walkers = addCreatureReady(player1, new BeastWalkers());
-        walkers.setTapped(true);
+        walkers.tap();
         walkers.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -73,7 +73,7 @@ class BalanWanderingKnightTest extends BaseCardTest {
         Permanent otherCreature = addCreatureReady(player2, new BalanWanderingKnight());
         Permanent saw = harness.addToBattlefieldAndReturn(player1, new BoneSaw());
         saw.setAttachedTo(otherCreature.getId());
-        balan.setTapped(true);
+        balan.tap();
 
         assertThat(gqs.hasKeyword(gd, balan, Keyword.SHROUD)).isTrue();
         harness.addMana(player1, ManaColor.COLORLESS, 1);

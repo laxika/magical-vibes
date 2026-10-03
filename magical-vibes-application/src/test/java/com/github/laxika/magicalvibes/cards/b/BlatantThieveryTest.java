@@ -55,7 +55,7 @@ class BlatantThieveryTest extends BaseCardTest {
     @DisplayName("Can take a land without untapping it")
     void gainsControlOfTappedLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
-        land.setTapped(true);
+        land.tap();
 
         cast(land.getId());
 

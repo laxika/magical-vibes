@@ -132,7 +132,7 @@ class BatonOfCourageTest extends BaseCardTest {
     @Test
     void tappedBatonCanActivateRepeatedlyAndPaysBeforeResolution() {
         Permanent baton = harness.addToBattlefieldAndReturn(player1, new BatonOfCourage());
-        baton.setTapped(true);
+        baton.tap();
         baton.setCounterCount(CounterType.CHARGE, 2);
         Permanent creature = addCreatureReady(player1, new GoblinBrawler());
 

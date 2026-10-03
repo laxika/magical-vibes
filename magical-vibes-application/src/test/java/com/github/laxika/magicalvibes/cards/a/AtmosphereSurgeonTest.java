@@ -113,7 +113,7 @@ class AtmosphereSurgeonTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSickAndPaysOilImmediately() {
         Permanent surgeon = harness.addToBattlefieldAndReturn(player1, new AtmosphereSurgeon());
         surgeon.setSummoningSick(true);
-        surgeon.setTapped(true);
+        surgeon.tap();
         surgeon.setCounterCount(CounterType.OIL, 2);
 
         harness.activateAbility(player1, 0, null, surgeon.getId());

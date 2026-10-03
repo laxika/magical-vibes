@@ -52,13 +52,13 @@ class BarkhideMaulerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Barkhide Mauler");
         harness.assertNotInHand(player1, "Forest");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
 
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 

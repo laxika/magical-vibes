@@ -83,7 +83,7 @@ class AwakeningOfVituGhaziTest extends BaseCardTest {
     @DisplayName("Animating a tapped land does not untap it")
     void tappedLandRemainsTapped() {
         Permanent land = addLand(player1);
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new AwakeningOfVituGhazi()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 

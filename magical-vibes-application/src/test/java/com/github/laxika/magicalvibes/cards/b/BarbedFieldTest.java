@@ -117,7 +117,7 @@ class BarbedFieldTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new BarbedField());
         aura.setAttachedTo(land.getId());
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

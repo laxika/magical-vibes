@@ -66,7 +66,7 @@ class AvatarOfSlaughterTest extends BaseCardTest {
     @DisplayName("Tapped creatures are not forced to attack")
     void tappedCreatureIsExempt() {
         Permanent avatar = addCreatureReady(player1, new AvatarOfSlaughter());
-        avatar.setTapped(true);
+        avatar.tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of()))
                 .doesNotThrowAnyException();
@@ -87,7 +87,7 @@ class AvatarOfSlaughterTest extends BaseCardTest {
     @DisplayName("An opposing creature deals damage in both combat damage steps")
     void opposingCreatureDealsDoubleStrikeDamage() {
         Permanent avatar = addCreatureReady(player1, new AvatarOfSlaughter());
-        avatar.setTapped(true);
+        avatar.tap();
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));

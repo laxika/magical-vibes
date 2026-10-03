@@ -108,7 +108,7 @@ class BazaarKrovodTest extends BaseCardTest {
         addCreatureReady(player1, new BazaarKrovod());
         Permanent attacker = addCreatureReady(player1, new DrudgeBeetle());
         declareAttackers(List.of(0, 1));
-        attacker.setTapped(false);
+        attacker.untap();
 
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.passBothPriorities();

@@ -81,7 +81,7 @@ class AzureMageTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Mage can activate and draws only on resolution")
     void activatesWhileTappedAndSummoningSick() {
         Permanent mage = harness.addToBattlefieldAndReturn(player1, new AzureMage());
-        mage.setTapped(true);
+        mage.tap();
         harness.setHand(player1, List.of());
         RuneclawBear topCard = new RuneclawBear();
         harness.setLibrary(player1, List.of(topCard, new RuneclawBear()));

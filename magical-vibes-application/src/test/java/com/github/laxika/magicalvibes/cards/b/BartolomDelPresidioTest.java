@@ -75,7 +75,7 @@ class BartolomDelPresidioTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent bartolom = harness.addToBattlefieldAndReturn(player1, new BartolomDelPresidio());
         bartolom.setSummoningSick(true);
-        bartolom.setTapped(true);
+        bartolom.tap();
         harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);

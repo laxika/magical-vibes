@@ -94,7 +94,7 @@ class BlinkmothWellTest extends BaseCardTest {
     void canTargetAlreadyTappedArtifact() {
         harness.addToBattlefield(player1, new BlinkmothWell());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());

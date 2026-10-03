@@ -177,7 +177,7 @@ class BlademaneBakuTest extends BaseCardTest {
     @DisplayName("The pump ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent baku = addBaku();
-        baku.setTapped(true);
+        baku.tap();
         baku.setSummoningSick(true);
         baku.setCounterCount(CounterType.KI, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

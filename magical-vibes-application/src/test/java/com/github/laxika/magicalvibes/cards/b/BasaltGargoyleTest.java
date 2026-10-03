@@ -105,7 +105,7 @@ class BasaltGargoyleTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Gargoyle can activate its toughness ability")
     void toughnessAbilityDoesNotRequireTappingOrHaste() {
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new BasaltGargoyle());
-        gargoyle.setTapped(true);
+        gargoyle.tap();
         gargoyle.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
 

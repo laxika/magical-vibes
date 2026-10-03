@@ -68,7 +68,7 @@ class BeaconBehemothTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick, targeting itself at exactly five power")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent beacon = harness.addToBattlefieldAndReturn(player1, new BeaconBehemoth());
-        beacon.setTapped(true);
+        beacon.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, beacon.getId());

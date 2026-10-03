@@ -98,7 +98,7 @@ class BallistaWatcherTest extends BaseCardTest {
     void wielderCanActivateRepeatedlyWhileTappedAndSummoningSick() {
         gd.dayNight = DayNight.NIGHT;
         Permanent wielder = harness.enterBattlefieldAndReturn(player1, new BallistaWatcher());
-        wielder.setTapped(true);
+        wielder.tap();
         harness.setLife(player2, 20);
         addAbilityMana();
         addAbilityMana();

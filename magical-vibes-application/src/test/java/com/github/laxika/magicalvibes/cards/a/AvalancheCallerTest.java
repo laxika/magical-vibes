@@ -93,7 +93,7 @@ class AvalancheCallerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent caller = harness.addToBattlefieldAndReturn(player1, new AvalancheCaller());
         caller.setSummoningSick(true);
-        caller.setTapped(true);
+        caller.tap();
         Permanent snowLand = addSnowLand(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

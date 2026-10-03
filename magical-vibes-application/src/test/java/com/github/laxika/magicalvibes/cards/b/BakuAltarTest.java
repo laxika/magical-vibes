@@ -141,7 +141,7 @@ class BakuAltarTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent altar = addAltar(player1);
         altar.setCounterCount(CounterType.KI, 1);
-        altar.setTapped(true);
+        altar.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

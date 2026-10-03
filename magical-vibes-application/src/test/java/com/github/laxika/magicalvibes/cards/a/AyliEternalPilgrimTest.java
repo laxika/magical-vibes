@@ -201,7 +201,7 @@ class AyliEternalPilgrimTest extends BaseCardTest {
     void canGainLifeWhileAyliIsTappedAndSummoningSick() {
         Permanent ayli = harness.addToBattlefieldAndReturn(player1, new AyliEternalPilgrim());
         ayli.setSummoningSick(true);
-        ayli.setTapped(true);
+        ayli.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player1, 10);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

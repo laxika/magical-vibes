@@ -116,7 +116,7 @@ class BlightreaperThallidTest extends BaseCardTest {
     @Test
     void tappedSummoningSickThallidCanTransformInPostcombatMainPhase() {
         Permanent thallid = addThallid();
-        thallid.setTapped(true);
+        thallid.tap();
         thallid.setSummoningSick(true);
         prepareMainPhase(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

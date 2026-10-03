@@ -120,7 +120,7 @@ class BlindingMageTest extends BaseCardTest {
     @DisplayName("Cannot activate while Blinding Mage is tapped")
     void cannotActivateWhileTapped() {
         Permanent mage = addCreatureReady(player1, new BlindingMage());
-        mage.setTapped(true);
+        mage.tap();
         Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -205,7 +205,7 @@ class BlindingMageTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new BlindingMage());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());

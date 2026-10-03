@@ -77,7 +77,7 @@ class AugmentingAutomatonTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new AugmentingAutomaton());
         automaton.setSummoningSick(true);
-        automaton.setTapped(true);
+        automaton.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, null);

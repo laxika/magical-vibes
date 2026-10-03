@@ -62,7 +62,7 @@ class BattleflySwarmTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent swarm = addCreatureReady(player1, new BattleflySwarm());
         swarm.setSummoningSick(true);
-        swarm.setTapped(true);
+        swarm.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

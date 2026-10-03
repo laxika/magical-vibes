@@ -54,7 +54,7 @@ class BlinkDogTest extends BaseCardTest {
     void teleportCanBeActivatedWhileSummoningSickAndTapped() {
         Permanent dog = harness.addToBattlefieldAndReturn(player1, new BlinkDog());
         dog.setSummoningSick(true);
-        dog.setTapped(true);
+        dog.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -108,7 +108,7 @@ class BlinkDogTest extends BaseCardTest {
     void teleportRemovesAttackingDogFromCombat() {
         Permanent dog = addDogReady(player1);
         dog.setAttacking(true);
-        dog.setTapped(true);
+        dog.tap();
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.WHITE, 4);

@@ -72,7 +72,7 @@ class BearerOfMemoryTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent bearer = harness.addToBattlefieldAndReturn(player1, new BearerOfMemory());
         bearer.setSummoningSick(true);
-        bearer.setTapped(true);
+        bearer.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, battlefieldIndex(bearer), null, bearer.getId());

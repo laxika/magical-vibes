@@ -99,7 +99,7 @@ class AtzocanSeerTest extends BaseCardTest {
     void canSacrificeWhileTappedAndSummoningSick() {
         Permanent seer = harness.addToBattlefieldAndReturn(player1, new AtzocanSeer());
         seer.setSummoningSick(true);
-        seer.setTapped(true);
+        seer.tap();
         Card dinosaur = new SunCollaredRaptor();
         harness.setGraveyard(player1, List.of(dinosaur));
 

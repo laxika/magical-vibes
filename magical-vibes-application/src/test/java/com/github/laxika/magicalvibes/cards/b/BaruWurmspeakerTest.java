@@ -89,7 +89,7 @@ class BaruWurmspeakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 8);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        baru.setTapped(false);
+        baru.untap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

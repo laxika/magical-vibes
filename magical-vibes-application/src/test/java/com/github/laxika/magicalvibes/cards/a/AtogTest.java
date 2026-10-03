@@ -123,7 +123,7 @@ class AtogTest extends BaseCardTest {
     @DisplayName("Tapped summoning-sick Atog can activate repeatedly and its boosts accumulate")
     void repeatedActivationsDoNotRequireTappingOrHaste() {
         Permanent atog = harness.addToBattlefieldAndReturn(player1, new Atog());
-        atog.setTapped(true);
+        atog.tap();
         atog.setSummoningSick(true);
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         harness.addToBattlefield(player1, new Ornithopter());

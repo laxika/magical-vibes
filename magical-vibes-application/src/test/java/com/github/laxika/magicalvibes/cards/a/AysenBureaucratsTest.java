@@ -104,7 +104,7 @@ class AysenBureaucratsTest extends BaseCardTest {
     @DisplayName("A tapped Bureaucrats cannot activate again")
     void tappedSourceCannotActivate() {
         Permanent bureaucrats = addCreatureReady(player1, new AysenBureaucrats());
-        bureaucrats.setTapped(true);
+        bureaucrats.tap();
         Permanent target = addCreatureReady(player2, new Narwhal());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

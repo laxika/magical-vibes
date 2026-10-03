@@ -113,7 +113,7 @@ class BladedAmbassadorTest extends BaseCardTest {
         Permanent source = harness.enterBattlefieldAndReturn(player1, new BladedAmbassador());
         Permanent opponent = harness.enterBattlefieldAndReturn(player2, new BladedAmbassador());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 1, null, null);

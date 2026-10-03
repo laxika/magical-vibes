@@ -37,7 +37,7 @@ class AuriokSalvagersTest extends BaseCardTest {
     @Test
     void resolvesWhileSourceIsTappedAndSummoningSick() {
         var salvagers = harness.addToBattlefieldAndReturn(player1, new AuriokSalvagers());
-        salvagers.setTapped(true);
+        salvagers.tap();
         salvagers.setSummoningSick(true);
         Card artifact = new WayfarersBauble();
         harness.setGraveyard(player1, List.of(artifact));

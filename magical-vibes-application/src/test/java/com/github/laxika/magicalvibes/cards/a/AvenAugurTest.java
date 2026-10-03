@@ -160,7 +160,7 @@ class AvenAugurTest extends BaseCardTest {
         advanceToUpkeep(player1);
         Permanent augur = harness.addToBattlefieldAndReturn(player1, new AvenAugur());
         augur.setSummoningSick(true);
-        augur.setTapped(true);
+        augur.tap();
         Permanent target = addCreatureReady(player2, new BlindPhantasm());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(target.getId()));

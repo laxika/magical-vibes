@@ -118,7 +118,7 @@ class BattleForBretagardTest extends BaseCardTest {
         VoiceOfResurgence tokenCopy = new VoiceOfResurgence();
         tokenCopy.setToken(true);
         Permanent original = harness.addToBattlefieldAndReturn(player1, tokenCopy);
-        original.setTapped(true);
+        original.tap();
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         saga().setCounterCount(CounterType.LORE, 2);
 

@@ -41,7 +41,7 @@ class AuratogTest extends BaseCardTest {
     @DisplayName("A tapped Auratog with summoning sickness can activate its ability")
     void tappedAuratogWithSummoningSicknessCanActivate() {
         Permanent auratog = harness.addToBattlefieldAndReturn(player1, new Auratog());
-        auratog.setTapped(true);
+        auratog.tap();
         auratog.setSummoningSick(true);
         harness.addToBattlefield(player1, new CircleOfProtectionWhite());
 

@@ -136,7 +136,7 @@ class BantBattlemageTest extends BaseCardTest {
     @CsvSource({"0, GREEN", "1, BLUE"})
     void tappedSourceCannotActivate(int ability, ManaColor mana) {
         Permanent source = addCreatureReady(player1, new BantBattlemage());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, mana, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, ability, null, source.getId()))

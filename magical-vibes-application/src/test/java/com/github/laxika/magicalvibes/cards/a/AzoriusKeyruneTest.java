@@ -125,7 +125,7 @@ class AzoriusKeyruneTest extends BaseCardTest {
     @DisplayName("A tapped Keyrune can animate without untapping")
     void tappedKeyruneCanAnimate() {
         Permanent keyrune = addReadyKeyrune(player1);
-        keyrune.setTapped(true);
+        keyrune.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

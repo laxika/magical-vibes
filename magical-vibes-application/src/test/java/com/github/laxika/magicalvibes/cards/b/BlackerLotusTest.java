@@ -55,7 +55,7 @@ class BlackerLotusTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         var lotus = harness.addToBattlefieldAndReturn(player1, new BlackerLotus());
-        lotus.setTapped(true);
+        lotus.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -90,7 +90,7 @@ class AxebaneGuardianTest extends BaseCardTest {
         Permanent guardian = harness.addToBattlefieldAndReturn(player1, new AxebaneGuardian());
         guardian.setSummoningSick(false);
         Permanent vine = harness.addToBattlefieldAndReturn(player1, new GatecreeperVine());
-        vine.setTapped(true);
+        vine.tap();
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.stack).isEmpty();

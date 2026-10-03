@@ -79,7 +79,7 @@ class BlackPantherClawsOfBastTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
         resolveCombat();
-        bears.setTapped(false);
+        bears.untap();
         bears.setAttacking(false);
 
         declareAttackers(List.of(1));

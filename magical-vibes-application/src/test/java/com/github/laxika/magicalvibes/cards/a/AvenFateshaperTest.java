@@ -102,7 +102,7 @@ class AvenFateshaperTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivateRepeatedly() {
         var permanent = harness.addToBattlefieldAndReturn(player1, new AvenFateshaper());
         permanent.setSummoningSick(true);
-        permanent.setTapped(true);
+        permanent.tap();
         List<Card> cards = List.of(new AvenFateshaper(), new AvenFateshaper(),
                 new AvenFateshaper(), new AvenFateshaper());
         harness.setLibrary(player1, cards);

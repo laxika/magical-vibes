@@ -67,7 +67,7 @@ class BergStriderTest extends BaseCardTest {
     @DisplayName("An already tapped creature still skips untap, even after Berg Strider leaves")
     void locksAlreadyTappedCreatureAfterSourceLeaves() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AxgardBraggart());
-        creature.setTapped(true);
+        creature.tap();
         Permanent island = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(island));
 

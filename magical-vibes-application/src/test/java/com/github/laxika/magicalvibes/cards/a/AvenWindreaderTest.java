@@ -213,7 +213,7 @@ class AvenWindreaderTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Windreader can activate its ability")
     void activateWhileTappedAndSummoningSick() {
         var windreader = harness.addToBattlefieldAndReturn(player1, new AvenWindreader());
-        windreader.setTapped(true);
+        windreader.tap();
         windreader.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.setLibrary(player2, List.of(new Forest()));

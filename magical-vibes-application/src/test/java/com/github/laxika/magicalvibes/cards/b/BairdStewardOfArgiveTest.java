@@ -353,7 +353,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Tapped Baird still taxes creatures attacking his controller")
     void tappedBairdStillRequiresPayment() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdStewardOfArgive());
-        baird.setTapped(true);
+        baird.tap();
         addCreatureReady(player2, new BalothGorger());
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
@@ -387,7 +387,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
     @DisplayName("Tapped Baird still taxes attacks against his controller's planeswalkers")
     void tappedBairdStillProtectsPlaneswalkers() {
         Permanent baird = harness.addToBattlefieldAndReturn(player1, new BairdStewardOfArgive());
-        baird.setTapped(true);
+        baird.tap();
         Permanent teferi = harness.enterBattlefieldAndReturn(player1, new TeferiHeroOfDominaria());
         addCreatureReady(player2, new BalothGorger());
         harness.forceActivePlayer(player2);

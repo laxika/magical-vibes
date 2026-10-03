@@ -52,7 +52,7 @@ class BlazingArchonTest extends BaseCardTest {
     @DisplayName("A tapped Blazing Archon still prevents attacks against its controller")
     void tappedArchonStillPreventsAttacks() {
         Permanent archon = harness.addToBattlefieldAndReturn(player2, new BlazingArchon());
-        archon.setTapped(true);
+        archon.tap();
         addCreatureReady(player1, new ZephyrSpirit());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))

@@ -64,7 +64,7 @@ class AvalancheTuskerTest extends BaseCardTest {
     void tappedTargetCannotBlock() {
         addCreatureReady(player1, new AvalancheTusker());
         Permanent defender = addCreatureReady(player2, new AlpineGrizzly());
-        defender.setTapped(true);
+        defender.tap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, defender.getId());
@@ -99,7 +99,7 @@ class AvalancheTuskerTest extends BaseCardTest {
         Permanent tusker = addCreatureReady(player1, new AvalancheTusker());
         Permanent firstTarget = addCreatureReady(player2, new AlpineGrizzly());
         Permanent secondTarget = addCreatureReady(player2, new AlpineGrizzly());
-        firstTarget.setTapped(true);
+        firstTarget.tap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, firstTarget.getId());
@@ -110,8 +110,8 @@ class AvalancheTuskerTest extends BaseCardTest {
             harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         });
 
-        tusker.setTapped(false);
-        firstTarget.setTapped(false);
+        tusker.untap();
+        firstTarget.untap();
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, secondTarget.getId());
         harness.passBothPriorities();

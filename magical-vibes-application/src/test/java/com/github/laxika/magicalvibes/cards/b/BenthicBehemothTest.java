@@ -21,7 +21,7 @@ class BenthicBehemothTest extends BaseCardTest {
     @DisplayName("Benthic Behemoth cannot be blocked when the defending player's Island is tapped")
     void cannotBeBlockedWhenDefendersIslandIsTapped() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        island.setTapped(true);
+        island.tap();
         Permanent blocker = addCreatureReady(player2, new PhyrexianHulk());
         Permanent attacker = addCreatureReady(player1, new BenthicBehemoth());
         attacker.setAttacking(true);

@@ -107,7 +107,7 @@ class BakeIntoAPieTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BakeIntoAPie()));
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.castAndResolveInstant(player1, 0, target);
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

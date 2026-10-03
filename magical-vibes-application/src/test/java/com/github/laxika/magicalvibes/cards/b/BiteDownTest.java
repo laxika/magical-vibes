@@ -153,7 +153,7 @@ class BiteDownTest extends BaseCardTest {
     @Test
     void tappedCreatureDealsDamageWithoutReceivingDamage() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        source.setTapped(true);
+        source.tap();
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new BiteDown()));
         harness.addMana(player1, ManaColor.GREEN, 2);

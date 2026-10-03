@@ -76,7 +76,7 @@ class BarrageOfExpendablesTest extends BaseCardTest {
     void sacrificeIsPaidBeforeDamage() {
         harness.addToBattlefield(player1, new BarrageOfExpendables());
         var bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bear.setTapped(true);
+        bear.tap();
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.RED, 1);

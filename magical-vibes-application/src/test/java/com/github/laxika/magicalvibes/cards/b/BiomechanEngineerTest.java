@@ -125,7 +125,7 @@ class BiomechanEngineerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Island(), new Forest(), new Island()));
         Permanent engineer = harness.addToBattlefieldAndReturn(player1, new BiomechanEngineer());
-        engineer.setTapped(true);
+        engineer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 16);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -120,7 +120,7 @@ class BattleMadRoninTest extends BaseCardTest {
     @DisplayName("A tapped Battle-Mad Ronin is not required to attack")
     void tappedRoninMayStayOutOfCombat() {
         Permanent ronin = addCreatureReady(player1, new BattleMadRonin());
-        ronin.setTapped(true);
+        ronin.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
         assertThat(ronin.isAttacking()).isFalse();

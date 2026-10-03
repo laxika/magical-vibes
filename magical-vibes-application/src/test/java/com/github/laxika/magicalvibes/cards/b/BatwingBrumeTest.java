@@ -32,7 +32,7 @@ class BatwingBrumeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BatwingBrume()));
         harness.addMana(player1, ManaColor.WHITE, 2); // {1}{W/B} both paid white → only {W} spent
         harness.castAndResolveInstant(player1, 0);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Attacker's 2 damage to player2 is prevented; no black spent so no drain.
         harness.assertLife(player2, 20);
@@ -52,7 +52,7 @@ class BatwingBrumeTest extends BaseCardTest {
 
         // Creatures remain attacking in the end of combat step, after damage has been dealt.
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_COMBAT);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new BatwingBrume()));
         harness.addMana(player1, ManaColor.BLACK, 2); // only {B} spent
@@ -75,7 +75,7 @@ class BatwingBrumeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BatwingBrume()));
         harness.addMana(player1, ManaColor.BLACK, 2); // only {B} spent → no prevention
         harness.castAndResolveInstant(player1, 0);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         // Drain: player1 loses 1 for its lone attacker; that attacker's 2 combat damage still lands.
         harness.assertLife(player1, 19);
@@ -94,7 +94,7 @@ class BatwingBrumeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
 
         harness.castAndResolveInstant(player2, 0);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
@@ -130,7 +130,7 @@ class BatwingBrumeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 2);
 
         harness.castAndResolveInstant(player2, 0);
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);

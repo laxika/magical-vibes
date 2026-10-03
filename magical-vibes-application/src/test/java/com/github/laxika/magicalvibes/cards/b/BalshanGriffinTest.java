@@ -94,7 +94,7 @@ class BalshanGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Griffin can activate its ability immediately")
     void tappedGriffinCanActivate() {
-        harness.addToBattlefieldAndReturn(player1, new BalshanGriffin()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new BalshanGriffin()).tap();
         harness.setHand(player1, List.of(new CarefulStudy()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

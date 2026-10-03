@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,8 @@ class HeadGamesEffectHandlerTest {
     private SessionManager sessionManager;
     @Mock
     private CardViewFactory cardViewFactory;
+    @Mock
+    private GameQueryService gameQueryService;
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -45,7 +48,8 @@ class HeadGamesEffectHandlerTest {
     @BeforeEach
     void setUp() {
         support = new LibrarySearchSupport(gameLogService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
+                gameQueryService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

@@ -158,7 +158,7 @@ class AuriokBladewardenTest extends BaseCardTest {
     @DisplayName("A tapped Bladewarden cannot pay the tap cost again")
     void cannotActivateWhileTapped() {
         Permanent bladewarden = addReadyBladewarden(player1);
-        bladewarden.setTapped(true);
+        bladewarden.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

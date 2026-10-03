@@ -69,7 +69,7 @@ class BlazemireVergeTest extends BaseCardTest {
     void tappedSwampStillEnablesRedMana() {
         Permanent verge = addReadyVerge();
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -83,7 +83,7 @@ class BlazemireVergeTest extends BaseCardTest {
         Permanent verge = addReadyVerge();
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.activateAbility(player1, 0, 1, null, null);
-        verge.setTapped(false);
+        verge.untap();
         gd.playerBattlefields.get(player1.getId()).remove(mountain);
         gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
 

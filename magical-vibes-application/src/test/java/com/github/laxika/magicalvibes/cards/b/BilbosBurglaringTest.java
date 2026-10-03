@@ -55,7 +55,7 @@ class BilbosBurglaringTest extends BaseCardTest {
     @DisplayName("Changing control does not untap the artifact")
     void stolenArtifactRemainsTapped() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
-        artifact.setTapped(true);
+        artifact.tap();
 
         castBilbosBurglaring(List.of(artifact.getId()));
 

@@ -184,7 +184,7 @@ class AugurOfSkullsTest extends BaseCardTest {
     void regenerationWorksWhileTappedDuringOpponentsUpkeep() {
         Permanent augur = harness.addToBattlefieldAndReturn(player1, new AugurOfSkulls());
         advanceToUpkeep(player2);
-        augur.setTapped(true);
+        augur.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

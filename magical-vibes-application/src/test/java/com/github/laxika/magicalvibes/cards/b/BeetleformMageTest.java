@@ -83,7 +83,7 @@ class BeetleformMageTest extends BaseCardTest {
     void tappedSummoningSickMageCanActivate() {
         Permanent mage = harness.addToBattlefieldAndReturn(player1, new BeetleformMage());
         mage.setSummoningSick(true);
-        mage.setTapped(true);
+        mage.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

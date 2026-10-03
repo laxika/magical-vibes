@@ -164,7 +164,7 @@ class BenalishMissionaryTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent missionary = addCreatureReady(player2, new BenalishMissionary());
-        missionary.setTapped(true);
+        missionary.tap();
         Permanent attacker = addCreatureReady(player1, new BenalishKnight());
         addCreatureReady(player2, new BenalishKnight());
 
