@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GhituFireEater;
 import com.github.laxika.magicalvibes.cards.i.IronWill;
 import com.github.laxika.magicalvibes.cards.p.Parch;
+import com.github.laxika.magicalvibes.cards.s.Sluggishness;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefenderOfLaw.class, GhituFireEater.class, IronWill.class, Parch.class})
+@CardUsed({DefenderOfLaw.class, GhituFireEater.class, IronWill.class, Parch.class, Sluggishness.class})
 class DefenderOfLawTest extends BaseCardTest {
 
     @Test
@@ -90,5 +91,65 @@ class DefenderOfLawTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Defender of Law");
         harness.assertNotOnBattlefield(player1, "Ghitu Fire-Eater");
+    }
+
+    @Test
+    @DisplayName("Can cast with Flash in response to another spell")
+    void canCastInResponseToSpell() {
+        Permanent target = addCreatureReady(player2, new GhituFireEater());
+        harness.setHand(player2, List.of(new IronWill()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, target.getId());
+
+        harness.castFromHand(player1, new DefenderOfLaw(), "{2}{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isInstanceOf(DefenderOfLaw.class);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Defender of Law");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by a red creature's activated ability")
+    void cannotBeTargetedByRedActivatedAbility() {
+        Permanent defender = addCreatureReady(player2, new DefenderOfLaw());
+        addCreatureReady(player1, new GhituFireEater());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, defender.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by a red Aura even from its controller")
+    void cannotBeTargetedByOwnRedAura() {
+        Permanent defender = addCreatureReady(player1, new DefenderOfLaw());
+        harness.setHand(player1, List.of(new Sluggishness()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, defender.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("White creatures can block and deal combat damage to Defender of Law")
+    void whiteCreatureCanBlockAndDealDamage() {
+        addCreatureReady(player1, new DefenderOfLaw());
+        addCreatureReady(player2, new DefenderOfLaw());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Defender of Law");
+        harness.assertNotOnBattlefield(player2, "Defender of Law");
+        harness.assertInGraveyard(player1, "Defender of Law");
+        harness.assertInGraveyard(player2, "Defender of Law");
     }
 }
