@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,7 +22,9 @@ class ArcaneArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Target player draws, exiles a creature card, and creates a token copy under their control")
     void targetPlayerDrawsAndCreatesCreatureCopy() {
-        Permanent artisan = harness.addToBattlefieldAndReturn(player1, new ArcaneArtisan());
+        Permanent artisan = addCreatureReady(player1, new ArcaneArtisan());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setHand(player2, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
@@ -45,8 +48,9 @@ class ArcaneArtisanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
     }
@@ -54,7 +58,9 @@ class ArcaneArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Exiling a noncreature card creates no token")
     void exilingNoncreatureCreatesNoToken() {
-        harness.addToBattlefield(player1, new ArcaneArtisan());
+        addCreatureReady(player1, new ArcaneArtisan());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setHand(player2, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
 

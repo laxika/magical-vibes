@@ -38,9 +38,10 @@ class CosmicInterventionTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .contains(creatureCard, artifactCard);
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
         assertThat(findPermanents(player1, "Fountain of Youth")).hasSize(1);

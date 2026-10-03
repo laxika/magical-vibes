@@ -26,7 +26,11 @@ class CrownOfSkemfarTest extends BaseCardTest {
         int basePower = gqs.getEffectivePower(gd, enchantedCreature);
         int baseToughness = gqs.getEffectiveToughness(gd, enchantedCreature);
 
-        castCrown(enchantedCreature);
+        harness.setHand(player1, List.of(new CrownOfSkemfar()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, enchantedCreature.getId());
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, enchantedCreature)).isEqualTo(basePower + 2);
         assertThat(gqs.getEffectiveToughness(gd, enchantedCreature)).isEqualTo(baseToughness + 2);

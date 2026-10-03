@@ -65,6 +65,7 @@ class SpectralDelugeTest extends BaseCardTest {
     @DisplayName("Can be foretold and cast for {1}{U}{U} on a later turn")
     void foretellsAndCastsOnLaterTurn() {
         harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player2, new GrizzlyBears());
         SpectralDeluge deluge = new SpectralDeluge();
         harness.setHand(player1, List.of(deluge));

@@ -25,9 +25,9 @@ class NumaJoragaChieftainTest extends BaseCardTest {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         Permanent nonElf = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new LlanowarElves());
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
         advanceToBeginningOfCombat(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        resolveAllTriggers();
 
         PendingInteraction.XValueChoice payment =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
@@ -55,9 +55,9 @@ class NumaJoragaChieftainTest extends BaseCardTest {
     @Test
     void decliningPaymentDoesNothing() {
         Permanent numa = harness.addToBattlefieldAndReturn(player1, new NumaJoragaChieftain());
-        harness.addMana(player1, ManaColor.GREEN, 4);
-
         advanceToBeginningOfCombat(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        resolveAllTriggers();
         harness.handleXValueChosen(player1, 0);
 
         assertThat(numa.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -68,6 +68,6 @@ class NumaJoragaChieftainTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
