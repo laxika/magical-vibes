@@ -75,4 +75,88 @@ class CaptivatingCaveTest extends BaseCardTest {
                 harness.getPermanentId(player1, "Grizzly Bears")))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void filteringManaRequiresPayment() {
+        Permanent cave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(cave.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedCaveCannotProduceManaAgain() {
+        harness.addToBattlefield(player1, new CaptivatingCave());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isOne();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void counterAbilityCanTargetOpponentsCreatureAndPaysCostsBeforeResolution() {
+        Permanent cave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, bears.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(cave);
+        harness.assertInGraveyard(player1, "Captivating Cave");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void counterAbilityCannotTargetANoncreatureLand() {
+        Permanent cave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+        Permanent otherCave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, otherCave.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(cave.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Captivating Cave");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
+
+    @Test
+    void counterAbilityCannotActivateWithAnotherAbilityOnTheStack() {
+        harness.addToBattlefield(player1, new CaptivatingCave());
+        Permanent otherCave = harness.addToBattlefieldAndReturn(player1, new CaptivatingCave());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, 2, null, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(otherCave.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
