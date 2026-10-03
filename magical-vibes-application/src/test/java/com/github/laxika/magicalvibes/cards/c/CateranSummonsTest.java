@@ -70,6 +70,48 @@ class CateranSummonsTest extends BaseCardTest {
                 && entry.plainText().contains("Library is shuffled"));
     }
 
+    @Test
+    @DisplayName("An empty library still shuffles and finishes resolving")
+    void emptyLibraryFinishesResolving() {
+        harness.setLibrary(player1, List.of());
+        cast();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Cateran Summons");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("library but it is empty")
+                && entry.plainText().contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Chooses exactly one Mercenary from the caster's library")
+    void choosesExactlyOneMercenaryFromOwnLibrary() {
+        CateranPersuader first = new CateranPersuader();
+        CateranPersuader second = new CateranPersuader();
+        CateranPersuader opponentsCard = new CateranPersuader();
+        Counterspell nonMercenary = new Counterspell();
+        harness.setLibrary(player1, List.of(first, nonMercenary, second));
+        harness.setLibrary(player2, List.of(opponentsCard));
+        cast();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(first, second);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, nonMercenary);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Cateran Summons");
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("Library is shuffled"));
+    }
+
     private void cast() {
         harness.castFromHand(player1, new CateranSummons(), "{B}");
     }
