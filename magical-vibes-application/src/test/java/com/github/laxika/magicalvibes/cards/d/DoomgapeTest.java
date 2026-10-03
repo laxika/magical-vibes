@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Doomgape.class, GrizzlyBears.class})
 class DoomgapeTest extends BaseCardTest {
 
     @Test
@@ -71,5 +74,72 @@ class DoomgapeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Doomgape");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Doomgape may be chosen for sacrifice even when another creature is available")
+    void mayChooseDoomgapeWithOtherCreatureAvailable() {
+        Permanent doomgape = harness.addToBattlefieldAndReturn(player1, new Doomgape());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, doomgape.getId());
+
+        harness.assertInGraveyard(player1, "Doomgape");
+        harness.assertNotOnBattlefield(player1, "Doomgape");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 30);
+    }
+
+    @Test
+    @DisplayName("Life gain uses the sacrificed creature's toughness including counters")
+    void usesModifiedToughnessOfChosenCreature() {
+        harness.addToBattlefield(player1, new Doomgape());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Doomgape");
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    @DisplayName("Automatic sacrifice uses Doomgape's toughness immediately before it leaves")
+    void automaticSacrificeUsesModifiedToughness() {
+        Permanent doomgape = harness.addToBattlefieldAndReturn(player1, new Doomgape());
+        doomgape.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Doomgape");
+        harness.assertNotOnBattlefield(player1, "Doomgape");
+        harness.assertLife(player1, 27);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be sacrificed to satisfy Doomgape's upkeep")
+    void ignoresOpponentsCreatures() {
+        harness.addToBattlefield(player1, new Doomgape());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Doomgape");
+        harness.assertNotOnBattlefield(player1, "Doomgape");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 30);
+        harness.assertLife(player2, 20);
     }
 }
