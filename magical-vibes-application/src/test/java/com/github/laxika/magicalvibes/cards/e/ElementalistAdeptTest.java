@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ElementalistAdept.class, GrizzlyBears.class, Shock.class})
 class ElementalistAdeptTest extends BaseCardTest {
 
     private Permanent addAdept() {
-        harness.addToBattlefield(player1, new ElementalistAdept());
+        Permanent adept = harness.addToBattlefieldAndReturn(player1, new ElementalistAdept());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return adept;
     }
 
     private void endTurn() {
@@ -103,6 +105,55 @@ class ElementalistAdeptTest extends BaseCardTest {
 
         endTurn();
 
+        assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flash allows casting on an opponent's turn in response to a spell")
+    void flashAllowsResponseOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new ElementalistAdept()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elementalist Adept");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds a separate prowess boost")
+    void repeatedSpellsStackProwessBoosts() {
+        Permanent adept = addAdept();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(3);
+        endTurn();
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(1);
     }
