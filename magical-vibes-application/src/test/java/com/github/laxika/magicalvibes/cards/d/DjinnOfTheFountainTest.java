@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.ImpedeMomentum;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DjinnOfTheFountain.class, Shock.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DjinnOfTheFountain.class, Shock.class, Forest.class, GrizzlyBears.class, ImpedeMomentum.class})
 class DjinnOfTheFountainTest extends BaseCardTest {
 
     private static final String BOOST_MODE = "Djinn of the Fountain gets +1/+1 until end of turn";
@@ -62,8 +63,7 @@ class DjinnOfTheFountainTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Djinn of the Fountain");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Djinn of the Fountain");
@@ -100,6 +100,121 @@ class DjinnOfTheFountainTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Delayed return uses the stack and leaves time to respond")
+    void delayedReturnUsesStack() {
+        addReadyDjinn();
+        castShock();
+        harness.handleListChoice(player1, FLICKER_MODE);
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Djinn of the Fountain");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Djinn of the Fountain");
+    }
+
+    @Test
+    @DisplayName("Casting a sorcery triggers the boost before the spell resolves")
+    void sorceryTriggers() {
+        Permanent djinn = addReadyDjinn();
+        int initialPower = gqs.getEffectivePower(gd, djinn);
+        harness.setHand(player1, List.of(new ImpedeMomentum()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, djinn.getId());
+        harness.handleListChoice(player1, BOOST_MODE);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(initialPower + 1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(djinn.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not trigger Djinn")
+    void opponentsInstantDoesNotTrigger() {
+        addReadyDjinn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Scry can put the top card on the bottom")
+    void scryToBottom() {
+        addReadyDjinn();
+        Card top = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(top, second));
+        castShock();
+        harness.handleListChoice(player1, SCRY_MODE);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, top);
+    }
+
+    @Test
+    @DisplayName("Scry with an empty library does not require a choice")
+    void scryEmptyLibrary() {
+        addReadyDjinn();
+        harness.setLibrary(player1, List.of());
+        castShock();
+        harness.handleListChoice(player1, SCRY_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Flickering during an end step waits for the following turn's end step")
+    void flickerDuringEndStep() {
+        addReadyDjinn();
+        harness.forceStep(TurnStep.END_STEP);
+        castShock();
+        harness.handleListChoice(player1, FLICKER_MODE);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Djinn of the Fountain");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Djinn of the Fountain");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Djinn of the Fountain");
+    }
+
+    @Test
+    @DisplayName("A borrowed Djinn returns untapped under its owner's control")
+    void flickerReturnsToOwner() {
+        Permanent djinn = addReadyDjinn();
+        djinn.getCard().setOwnerId(player2.getId());
+        gd.stolenCreatures.put(djinn.getId(), player2.getId());
+        djinn.tap();
+        castShock();
+        harness.handleListChoice(player1, FLICKER_MODE);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Djinn of the Fountain");
+        Permanent returned = findPermanent(player2, "Djinn of the Fountain");
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getId()).isNotEqualTo(djinn.getId());
     }
 
     private Permanent addReadyDjinn() {
