@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "C19", collectorNumber = "54")
+@CardRegistration(set = "EOC", collectorNumber = "135")
 public class EmpoweredAutogenerator extends Card {
 
     public EmpoweredAutogenerator() {

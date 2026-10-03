@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "PIP", collectorNumber = "180")
 @CardRegistration(set = "PIP", collectorNumber = "708")
 @CardRegistration(set = "C18", collectorNumber = "106")
+@CardRegistration(set = "EOC", collectorNumber = "48")
 public class ThirstForKnowledge extends Card {
 
     public ThirstForKnowledge() {

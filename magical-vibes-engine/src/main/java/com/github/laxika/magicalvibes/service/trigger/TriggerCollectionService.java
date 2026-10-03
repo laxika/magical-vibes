@@ -643,6 +643,14 @@ public class TriggerCollectionService {
             }
         }
 
+        gameData.forEachBattlefield((controllerId, opponentsBattlefield) -> {
+            if (controllerId.equals(committingPlayerId)) return;
+            for (Permanent permanent : List.copyOf(opponentsBattlefield)) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_OPPONENT_COMMITS_CRIME, ctx);
+            }
+        });
+
         List<Card> graveyard = gameData.playerGraveyards.get(committingPlayerId);
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {

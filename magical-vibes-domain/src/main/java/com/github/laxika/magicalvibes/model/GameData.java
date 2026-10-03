@@ -952,6 +952,8 @@ public class GameData {
     public final ScytheSpecterState scytheSpecter = new ScytheSpecterState();
     /** Progress state for Cait's two-player draw/discard mana-value comparison. */
     public final CaitCageBrawlerState caitCageBrawler = new CaitCageBrawlerState();
+    /** Progress state for Eumidian Wastewaker's attack-trigger discard-or-sacrifice choices. */
+    public final EumidianWastewakerState eumidianWastewaker = new EumidianWastewakerState();
     /** Progress state for collecting one discarded card from every player before drawing. */
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
@@ -6572,6 +6574,16 @@ public class GameData {
         copy.caitCageBrawler.currentPlayerId = this.caitCageBrawler.currentPlayerId;
         copy.caitCageBrawler.remaining.addAll(this.caitCageBrawler.remaining);
         copy.caitCageBrawler.discardedManaValues.putAll(this.caitCageBrawler.discardedManaValues);
+        copy.eumidianWastewaker.active = this.eumidianWastewaker.active;
+        copy.eumidianWastewaker.currentPlayerId = this.eumidianWastewaker.currentPlayerId;
+        copy.eumidianWastewaker.remaining.addAll(this.eumidianWastewaker.remaining);
+        copy.eumidianWastewaker.chosenMode = this.eumidianWastewaker.chosenMode;
+        copy.eumidianWastewaker.pendingDiscard = this.eumidianWastewaker.pendingDiscard;
+        copy.eumidianWastewaker.pendingSacrificeChoice = this.eumidianWastewaker.pendingSacrificeChoice;
+        copy.eumidianWastewaker.pendingSacrificeLandIds.addAll(
+                this.eumidianWastewaker.pendingSacrificeLandIds);
+        copy.eumidianWastewaker.landCardsPutIntoGraveyard =
+                this.eumidianWastewaker.landCardsPutIntoGraveyard;
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =

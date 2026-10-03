@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "SLD", collectorNumber = "1625")
+@CardRegistration(set = "EOC", collectorNumber = "120")
 public class KorvoldFaeCursedKing extends Card {
 
     private static final SacrificePermanentThenEffect SACRIFICE_ANOTHER_PERMANENT =

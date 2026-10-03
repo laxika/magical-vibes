@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "218")
+@CardRegistration(set = "EOC", collectorNumber = "114")
 public class EnthusiasticMechanaut extends Card {
 
     public EnthusiasticMechanaut() {

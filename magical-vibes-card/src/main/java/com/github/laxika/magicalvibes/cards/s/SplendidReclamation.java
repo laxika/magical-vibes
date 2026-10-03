@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "VOW", collectorNumber = "221")
 @CardRegistration(set = "SIR", collectorNumber = "216")
 @CardRegistration(set = "DBL", collectorNumber = "488")
+@CardRegistration(set = "EOC", collectorNumber = "108")
 public class SplendidReclamation extends Card {
 
     public SplendidReclamation() {

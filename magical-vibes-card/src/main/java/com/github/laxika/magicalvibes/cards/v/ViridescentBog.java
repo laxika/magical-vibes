@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "421")
 @CardRegistration(set = "DSC", collectorNumber = "324")
 @CardRegistration(set = "BLC", collectorNumber = "352")
+@CardRegistration(set = "EOC", collectorNumber = "190")
 public class ViridescentBog extends Card {
 
     public ViridescentBog() {

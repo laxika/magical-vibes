@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "769")
 @CardRegistration(set = "PIP", collectorNumber = "1015")
 @CardRegistration(set = "C21", collectorNumber = "267")
+@CardRegistration(set = "EOC", collectorNumber = "144")
 public class SteelOverseer extends Card {
 
     public SteelOverseer() {

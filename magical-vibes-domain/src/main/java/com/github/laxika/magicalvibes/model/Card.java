@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -976,6 +977,7 @@ public class Card {
             // filter (e.g. opponent-only) is lost after unwrapping.
             case TriggeringCardConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case ConditionalTriggeringPermanentEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringArtifactControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringPermanentControllerConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
             case TriggeringRoomDoorConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);

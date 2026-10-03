@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "141")
+@CardRegistration(set = "EOC", collectorNumber = "146")
 public class TitanForge extends Card {
 
     public TitanForge() {

@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "OTC", collectorNumber = "271")
 @CardRegistration(set = "C20", collectorNumber = "257")
 @CardRegistration(set = "BLC", collectorNumber = "293")
+@CardRegistration(set = "EOC", collectorNumber = "58")
 public class BattlefieldForge extends Card {
 
     public BattlefieldForge() {

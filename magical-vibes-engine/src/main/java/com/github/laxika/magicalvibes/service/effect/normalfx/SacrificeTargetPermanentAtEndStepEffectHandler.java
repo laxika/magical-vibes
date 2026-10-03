@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -30,27 +33,34 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
+        SacrificeTargetPermanentAtEndStepEffect e = (SacrificeTargetPermanentAtEndStepEffect) effect;
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty()) {
             return;
         }
 
-        SacrificeTargetPermanentAtEndStepEffect e = (SacrificeTargetPermanentAtEndStepEffect) effect;
-        if (e.flipBeforeSacrificing()) {
-            gameData.queueDelayedAction(new DelayedCoinFlipSacrificeTargetPermanentAtEndStep(
-                    target.getId(), entry.getControllerId(), entry.getCard()));
-        } else {
-            gameData.queueDelayedAction(new DelayedPermanentAction(
-                    target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                    false, null, null,
-                    e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null));
-        }
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
 
-        String timingText = e.flipBeforeSacrificing()
-                ? " will be subject to a coin flip at the beginning of the next end step."
-                : " will be sacrificed at the beginning of the next end step.";
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), timingText));
-        log.info("Game {} - {} scheduled for {} at end step", gameData.id, target.getCard().getName(),
-                e.flipBeforeSacrificing() ? "coin flip and possible sacrifice" : "sacrifice");
+            if (e.flipBeforeSacrificing()) {
+                gameData.queueDelayedAction(new DelayedCoinFlipSacrificeTargetPermanentAtEndStep(
+                        target.getId(), entry.getControllerId(), entry.getCard()));
+            } else {
+                gameData.queueDelayedAction(new DelayedPermanentAction(
+                        target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null,
+                        e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null));
+            }
+
+            String timingText = e.flipBeforeSacrificing()
+                    ? " will be subject to a coin flip at the beginning of the next end step."
+                    : " will be sacrificed at the beginning of the next end step.";
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), timingText));
+            log.info("Game {} - {} scheduled for {} at end step", gameData.id, target.getCard().getName(),
+                    e.flipBeforeSacrificing() ? "coin flip and possible sacrifice" : "sacrifice");
+        }
     }
 }

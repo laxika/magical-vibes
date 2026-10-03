@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MH2", collectorNumber = "253")
 @CardRegistration(set = "PIP", collectorNumber = "285")
 @CardRegistration(set = "PIP", collectorNumber = "813")
+@CardRegistration(set = "EOC", collectorNumber = "175")
 public class RustvaleBridge extends Card {
 
     public RustvaleBridge() {

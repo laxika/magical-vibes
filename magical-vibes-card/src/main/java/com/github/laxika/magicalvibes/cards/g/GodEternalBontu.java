@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "92")
+@CardRegistration(set = "EOC", collectorNumber = "83")
 public class GodEternalBontu extends Card {
 
     public GodEternalBontu() {

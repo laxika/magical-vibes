@@ -240,6 +240,7 @@ public enum CardSet {
     SET_FCA("FCA"),
     SET_40K("40K"),
     SET_EOE("EOE"),
+    SET_EOC("EOC"),
     SET_YEOE("YEOE"),
     SET_YECL("YECL"),
     SET_EOS("EOS"),

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "DMU", collectorNumber = "84")
 @CardRegistration(set = "DMU", collectorNumber = "288")
 @CardRegistration(set = "DSC", collectorNumber = "133")
+@CardRegistration(set = "EOC", collectorNumber = "82")
 public class BraidsArisenNightmare extends Card {
 
     private static final PermanentAnyOfPredicate SACRIFICEABLE_PERMANENT = new PermanentAnyOfPredicate(

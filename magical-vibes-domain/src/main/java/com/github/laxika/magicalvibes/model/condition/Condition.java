@@ -172,6 +172,7 @@ public sealed interface Condition permits
         ControllerPlayedOrCastFromOutsideHandThisTurn,
         ControllerPlayedAtLeastLandsThisTurn,
         ControllerSacrificedPermanentThisTurn,
+        ControllerSacrificedNontokenPermanentThisTurn,
         ControllerSacrificedPermanentsAtLeastThisTurn,
         ControllerTurn,
         ControllerUnspentManaAtLeast,

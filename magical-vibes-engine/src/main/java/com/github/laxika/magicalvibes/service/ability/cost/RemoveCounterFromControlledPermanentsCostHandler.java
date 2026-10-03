@@ -84,7 +84,7 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
             throw new IllegalStateException("Not enough " + counterLabel() + " counters on the chosen permanent");
         }
 
-        chosen.setCounterCount(cost.counterType(), available - toRemove);
+        removeCounters(chosen, toRemove);
         lastRemoved = toRemove;
         String counterWord = toRemove == 1
                 ? "a " + counterLabel() + " counter"
@@ -143,10 +143,31 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         if (cost.counterType() != CounterType.ANY) {
             return permanent.getCounterCount(cost.counterType());
         }
-        return permanent.getCounters().entrySet().stream()
-                .filter(entry -> entry.getKey() != CounterType.ANY && entry.getKey() != CounterType.SILVER)
-                .mapToInt(java.util.Map.Entry::getValue)
-                .sum();
+        return permanent.getTotalCounterCount();
+    }
+
+    private void removeCounters(Permanent permanent, int count) {
+        if (cost.counterType() != CounterType.ANY) {
+            permanent.setCounterCount(cost.counterType(), permanent.getCounterCount(cost.counterType()) - count);
+            return;
+        }
+
+        int remaining = count;
+        for (CounterType counterType : CounterType.values()) {
+            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+                continue;
+            }
+            int available = permanent.getCounterCount(counterType);
+            int removed = Math.min(available, remaining);
+            if (removed > 0) {
+                permanent.setCounterCount(counterType, available - removed);
+                remaining -= removed;
+            }
+            if (remaining == 0) {
+                return;
+            }
+        }
+        throw new IllegalStateException("Not enough counters on the chosen permanent");
     }
 
     private Permanent findPermanent(GameData gameData, UUID id) {

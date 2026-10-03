@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "UMA", collectorNumber = "240")
 @CardRegistration(set = "M3C", collectorNumber = "91")
 @CardRegistration(set = "M3C", collectorNumber = "333")
+@CardRegistration(set = "EOC", collectorNumber = "156")
 public class DakmorSalvage extends Card {
 
     public DakmorSalvage() {

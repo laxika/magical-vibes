@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "345")
 @CardRegistration(set = "6ED", collectorNumber = "328")
 @CardRegistration(set = "DSC", collectorNumber = "301")
+@CardRegistration(set = "EOC", collectorNumber = "185")
 public class SulfurousSprings extends Card {
 
     public SulfurousSprings() {

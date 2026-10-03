@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "124")
+@CardRegistration(set = "EOC", collectorNumber = "88")
 public class HammerOfPurphoros extends Card {
 
     public HammerOfPurphoros() {

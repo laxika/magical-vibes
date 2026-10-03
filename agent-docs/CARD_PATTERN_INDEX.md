@@ -51,6 +51,8 @@
 - chosen creature type, copy each matching nontoken creature entering under your control, temporary hasty copy | `ChooseSubtypeOnEnterEffect` + `TriggeringPermanentConditionalEffect(PermanentAllOfPredicate(PermanentHasSourceChosenSubtypePredicate, PermanentNotPredicate(PermanentIsTokenPredicate)), CreateTokenCopyOfEnteringPermanentEffect(true, true))`
 | Aura attachment-count boost plus target-sensitive Equip/Aura cost reductions | `s/StrongBack.java` + `StrongBackTest.java` |
 | X-powered ETB puts X +1/+1 counters on itself and destroys any number of target artifacts/enchantments with combined mana value X or less | `r/RampagingYaoGuai.java` + `EnterWithCountersEffect(XValue)` + `DestroyTargetPermanentsWithinTotalManaValueEffect.withinTotalManaValue(...)` |
+| each player keeps six lands, sacrifices the rest, then all creatures take 6 damage | `p/PlanetaryAnnihilation.java` + `SequenceEffect.of(EachPlayerChoosesLandsThenSacrificeRestEffect(6), MassDamageEffect(6))` |
+| ETB targets any number of your noncreature artifacts, permanently animates them as 3/3 artifact creatures, and sacrifices them at the next end step; artifact creatures you control gain melee, trample, and haste | `d/DepthshakerTitan.java` + `AnimatePermanentsEffect(..., TARGET, PERMANENT)` + `SacrificeTargetPermanentAtEndStepEffect()` + filtered `GrantKeywordEffect` |
 | playtest artifact that replaces normal turns with sequential phases | `r/RunedTerror.java` + `RunedTerrorEffect` + turn progression phase-cycle support |
 | playtest artifact with tap-to-surveil and temporary graveyard animation | `m/Microscope.java` + `AnimateTargetGraveyardCardEffect` |
 | global static replacement that makes every creature assign combat damage using mana value | `n/NarodTheBeigeFlower.java` + `AssignCombatDamageWithManaValueEffect(ALL_CREATURES)` |
@@ -468,6 +470,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | token enters, target another player to copy it, once-per-turn conditional draw | `l/LucyMacLeanPositivelyArmed.java` + `CreateTokenCopyOfEnteringTokenForTargetPlayerEffect` |
 | first token creation each turn may copy another creature | `e/EsixFractalBloom.java` + `EsixFractalBloomEffect` + `CreateTokenCopyOfChosenCreatureEffect` |
 | encore, graveyard ability creates hasty copies attacking each opponent | `i/ImpulsivePilferer.java` + `EncoreEffect` |
+| attack trigger makes you and defending player discard or sacrifice, then draws for lands put into graveyards | `e/EumidianWastewaker.java` + `EumidianWastewakerEffect` |
 | static encore grant to creature cards matching any of several subtypes | `GrantEncoreToCreatureCardsOfSubtypesEffect` + a sorcery-speed graveyard ability |
 | landfall, land enters trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | each opponent may investigate, opponent choice plus controller Clues | CARD_PATTERNS_CREATURES_TRIGGERED.md |
@@ -570,3 +573,5 @@ Shahrazad (ARN 10): `StartSubgameEffect` followed by the existing fractional lif
 - Pass the Torch (YSNC 11): instant damage plus a chosen creature card in hand receiving a one-shot perpetual combat-damage cast trigger — `cards/p/PassTheTorch.java` + `ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect`
 | ETB chooses a creature card in hand without blitz and perpetually grants it blitz at its mana cost | `r/RiveteersProvocateur.java` + `ChooseCardFromHandAndApplyPerpetualBlitzEffect` | Riveteers Provocateur (YSNC 26) |
 | ETB chooses an instant or sorcery card in hand and perpetually grants it casualty 2 | `s/SpelldrainAssassin.java` + `ChooseCardFromHandAndApplyPerpetualSpellCastingAbilityEffect` | Spelldrain Assassin (YSNC 29) |
+| ETB with two +1/+1 counters; proliferate whenever an opponent commits a crime | `p/PatrollingPeacemaker.java` + `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, Fixed(2))` + `ProliferateEffect` on `ON_OPPONENT_COMMITS_CRIME` | Patrolling Peacemaker (EOC 5) |
+| play lands from your graveyard; during your turn, sacrificing another nontoken permanent puts +1/+1 counters equal to this creature's current power on up to one other creature you control | `s/SzarelGenesisShepherd.java` + `PlayLandsFromGraveyardEffect` + `ConditionalTriggeringPermanentEffect(ControllerTurn, nontoken-and-not-source, PutCounterOnTargetPermanentEffect.upToOneTarget(SourcePower))` |

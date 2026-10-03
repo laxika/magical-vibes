@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "114")
 @CardRegistration(set = "HA1", collectorNumber = "20")
+@CardRegistration(set = "EOC", collectorNumber = "134")
 public class DarksteelReactor extends Card {
 
     public DarksteelReactor() {

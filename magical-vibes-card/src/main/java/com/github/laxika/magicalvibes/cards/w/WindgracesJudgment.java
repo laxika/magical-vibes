@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BLC", collectorNumber = "263")
 @CardRegistration(set = "C18", collectorNumber = "49")
+@CardRegistration(set = "EOC", collectorNumber = "129")
 public class WindgracesJudgment extends Card {
 
     public WindgracesJudgment() {

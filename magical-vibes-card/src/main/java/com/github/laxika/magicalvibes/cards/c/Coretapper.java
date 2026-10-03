@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "107")
 @CardRegistration(set = "2XM", collectorNumber = "244")
+@CardRegistration(set = "EOC", collectorNumber = "132")
 public class Coretapper extends Card {
 
     public Coretapper() {

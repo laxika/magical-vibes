@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "SOC", collectorNumber = "376")
 @CardRegistration(set = "MSC", collectorNumber = "249")
 @CardRegistration(set = "MSC", collectorNumber = "478")
+@CardRegistration(set = "EOC", collectorNumber = "22")
+@CardRegistration(set = "EOC", collectorNumber = "42")
 public class GlitteringMassif extends Card {
 
     public GlitteringMassif() {

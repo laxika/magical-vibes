@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "BLC", collectorNumber = "233")
 @CardRegistration(set = "C19", collectorNumber = "176")
 @CardRegistration(set = "C18", collectorNumber = "158")
+@CardRegistration(set = "EOC", collectorNumber = "104")
 public class RampagingBaloths extends Card {
 
     public RampagingBaloths() {

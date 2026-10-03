@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "NEC", collectorNumber = "17")
 @CardRegistration(set = "NEC", collectorNumber = "54")
+@CardRegistration(set = "EOC", collectorNumber = "81")
 public class UniversalSurveillance extends Card {
 
     public UniversalSurveillance() {

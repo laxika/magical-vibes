@@ -12,6 +12,8 @@ import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "371")
 @CardRegistration(set = "ECC", collectorNumber = "61")
+@CardRegistration(set = "EOC", collectorNumber = "21")
+@CardRegistration(set = "EOC", collectorNumber = "41")
 public class FesteringThicket extends Card {
 
     public FesteringThicket() {

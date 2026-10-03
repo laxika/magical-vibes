@@ -1459,6 +1459,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Planetary Annihilation-style choice: the current player chooses lands to keep. */
+    record EachPlayerChoosesLandsThenSacrificeRestChoice(java.util.List<UUID> playerIds, int playerIndex,
+                                                         int requiredCount, java.util.List<UUID> keptIds,
+                                                         String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesLandsThenSacrificeRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            keptIds = java.util.List.copyOf(keptIds);
+        }
+    }
+
     /**
      * Equipoise: the controller chose permanents of {@code phase} that {@code targetPlayerId}
      * controls to phase out (one pass of land / artifact / creature). Completion phases them out

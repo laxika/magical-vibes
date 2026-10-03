@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "49")
+@CardRegistration(set = "EOC", collectorNumber = "73")
 public class ExperimentalAugury extends Card {
 
     public ExperimentalAugury() {

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 @CardRegistration(set = "SOC", collectorNumber = "396")
 @CardRegistration(set = "MSC", collectorNumber = "258")
 @CardRegistration(set = "MSC", collectorNumber = "486")
+@CardRegistration(set = "EOC", collectorNumber = "23")
+@CardRegistration(set = "EOC", collectorNumber = "43")
 public class RadiantSummit extends Card {
 
     public RadiantSummit() {
