@@ -129,4 +129,69 @@ class DreadReturnTest extends BaseCardTest {
                 List.of(first.getId(), second.getId(), land.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Countering flashback exiles Dread Return without refunding its sacrifices")
+    void counteredFlashbackExilesSpell() {
+        Permanent first = addCreatureReady(player1, new AshcoatBear());
+        Permanent second = addCreatureReady(player1, new AshcoatBear());
+        Permanent third = addCreatureReady(player1, new AshcoatBear());
+        Card creature = new AshcoatBear();
+        DreadReturn spell = new DreadReturn();
+        harness.setGraveyard(player1, List.of(spell, creature));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castFromGraveyardWithSacrifices(player1, 0, creature.getId(),
+                List.of(first.getId(), second.getId(), third.getId()));
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(creature, first.getCard(), second.getCard(), third.getCard());
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Flashback with a target that leaves the graveyard still exiles the spell")
+    void flashbackWithMissingTargetExilesSpell() {
+        Permanent first = addCreatureReady(player1, new AshcoatBear());
+        Permanent second = addCreatureReady(player1, new AshcoatBear());
+        Permanent third = addCreatureReady(player1, new AshcoatBear());
+        Card creature = new AshcoatBear();
+        DreadReturn spell = new DreadReturn();
+        harness.setGraveyard(player1, List.of(spell, creature));
+
+        harness.castFromGraveyardWithSacrifices(player1, 0, creature.getId(),
+                List.of(first.getId(), second.getId(), third.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(creature);
+        gd.playerHands.get(player1.getId()).add(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(first.getCard(), second.getCard(), third.getCard());
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot target a creature being sacrificed to pay its cost")
+    void cannotReturnCreatureSacrificedForFlashback() {
+        Permanent first = addCreatureReady(player1, new AshcoatBear());
+        Permanent second = addCreatureReady(player1, new AshcoatBear());
+        Permanent third = addCreatureReady(player1, new AshcoatBear());
+        DreadReturn spell = new DreadReturn();
+        harness.setGraveyard(player1, List.of(spell));
+
+        assertThatThrownBy(() -> harness.castFromGraveyardWithSacrifices(player1, 0,
+                first.getCard().getId(), List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+    }
 }
