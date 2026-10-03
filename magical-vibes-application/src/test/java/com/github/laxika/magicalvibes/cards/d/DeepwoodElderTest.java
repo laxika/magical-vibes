@@ -110,6 +110,57 @@ class DeepwoodElderTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("Exactly X lands must be selected")
+    void rejectsFewerTargetsThanX() {
+        addCreatureReady(player1, new DeepwoodElder());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X cannot be activated without targets")
+    void rejectsNoTargetsForPositiveX() {
+        addCreatureReady(player1, new DeepwoodElder());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same land cannot be selected twice")
+    void rejectsDuplicateTargets() {
+        addCreatureReady(player1, new DeepwoodElder());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(island.getId(), island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A converted Island produces green mana instead of blue mana")
+    void convertedLandProducesGreenMana() {
+        activateOnTwoLands();
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private Permanent activateOnTwoLands() {
         addCreatureReady(player1, new DeepwoodElder());
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
