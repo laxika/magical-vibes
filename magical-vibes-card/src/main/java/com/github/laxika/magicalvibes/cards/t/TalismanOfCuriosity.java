@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "245")
 @CardRegistration(set = "PIP", collectorNumber = "773")
 @CardRegistration(set = "WHO", collectorNumber = "840")
+@CardRegistration(set = "DRC", collectorNumber = "140")
 public class TalismanOfCuriosity extends Card {
 
     public TalismanOfCuriosity() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "19")
 @CardRegistration(set = "MH2", collectorNumber = "257")
+@CardRegistration(set = "DRC", collectorNumber = "175")
 public class TanglepoolBridge extends Card {
 
     public TanglepoolBridge() {

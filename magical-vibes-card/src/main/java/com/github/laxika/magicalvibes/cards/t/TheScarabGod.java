@@ -27,6 +27,7 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "216")
 @CardRegistration(set = "CMM", collectorNumber = "353")
 @CardRegistration(set = "CMM", collectorNumber = "590")
+@CardRegistration(set = "DRC", collectorNumber = "120")
 public class TheScarabGod extends Card {
 
     public TheScarabGod() {

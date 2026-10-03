@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.s.SengirVampire;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CraterousStomp.class, GrizzlyBears.class, HillGiant.class, SengirVampire.class})
+@CardUsed({CraterousStomp.class, GrizzlyBears.class, HillGiant.class, SengirVampire.class,
+        ElvishWarrior.class, Humble.class})
 class CraterousStompTest extends BaseCardTest {
 
     @Test
@@ -89,10 +92,89 @@ class CraterousStompTest extends BaseCardTest {
                 .hasMessageContaining("creature an opponent controls");
     }
 
-    private void castStomp(Permanent target) {
+    @Test
+    void lethalDamageStillMakesOtherCreaturesCowards() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new SengirVampire());
+
+        castStomp(target);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).contains(CardSubtype.VAMPIRE, CardSubtype.COWARD);
+    }
+
+    @Test
+    void affectedCreatureCannotBlockWarrior() {
+        Permanent target = addCreatureReady(player2, new SengirVampire());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+
+        castStomp(target);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Giants or Warriors");
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionAreUnaffected() {
+        Permanent target = addCreatureReady(player2, new SengirVampire());
+        castStomp(target);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, blocker)).doesNotContain(CardSubtype.COWARD);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void losingAbilitiesRemovesGrantedBlockingRestriction() {
+        Permanent target = addCreatureReady(player2, new SengirVampire());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new HillGiant());
+        castStomp(target);
+
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, blocker)).contains(CardSubtype.COWARD);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void illegalTargetAtResolutionPreventsAllEffects() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new SengirVampire());
         harness.setHand(player1, List.of(new CraterousStomp()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
         harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).doesNotContain(CardSubtype.COWARD);
+        harness.assertInGraveyard(player1, "Craterous Stomp");
+    }
+
+    private void castStomp(Permanent target) {
+        harness.setHand(player1, List.of(new CraterousStomp()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

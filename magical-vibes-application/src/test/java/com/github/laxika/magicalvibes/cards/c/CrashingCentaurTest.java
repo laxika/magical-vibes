@@ -133,6 +133,70 @@ class CrashingCentaurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Discarding the seventh graveyard card enables threshold before trample resolves")
+    void discardEnablesThresholdBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new CrashingCentaur());
+        Permanent otherCentaur = harness.addToBattlefieldAndReturn(player1, new CrashingCentaur());
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.SHROUD)).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aether Burst");
+        assertThat(gqs.getEffectivePower(gd, centaur)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, centaur)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCentaur, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent activating the creature's own trample ability")
+    void canActivateWhileAlreadyShrouded() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new CrashingCentaur());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.setHand(player1, List.of(new Werebear()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, centaur, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold shroud also prevents its controller from targeting the creature")
+    void thresholdShroudPreventsControllerTargeting() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new CrashingCentaur());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(centaur.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
     private List<Card> graveyardWithSevenCards() {
         return List.of(
                 new Werebear(), new Werebear(), new Werebear(), new Werebear(),

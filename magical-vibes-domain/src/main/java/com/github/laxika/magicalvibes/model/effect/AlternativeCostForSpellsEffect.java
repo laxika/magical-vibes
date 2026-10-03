@@ -39,6 +39,7 @@ import java.util.Set;
  * Callers must resolve the cost through {@link #manaCostFor(int)} instead of reading {@code manaCost}.
  * A card-carried effect created by {@link #perpetualZeroCostForThisSpell()} applies only to that
  * card while it is cast and is ignored as a battlefield permission after the card enters.
+ * Non-mana alternatives can use {@link #payEnergy(int, CardPredicate)} for a fixed energy payment.
  */
 public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filter,
                                              CounterType manaValueCapCounter, boolean oncePerTurn,
@@ -140,6 +141,12 @@ public record AlternativeCostForSpellsEffect(String manaCost, CardPredicate filt
             CardPredicate filter) {
         return new AlternativeCostForSpellsEffect(null, filter, null, true, false, false, false, true,
                 null, new PayLifeEqualToSpellManaValueCost(), null);
+    }
+
+    /** An alternative cost paid with a fixed number of the controller's energy counters. */
+    public static AlternativeCostForSpellsEffect payEnergy(int amount, CardPredicate filter) {
+        return new AlternativeCostForSpellsEffect(null, filter, null, false, false, false,
+                false, false, null, new PayEnergyCost(amount), null, false, false);
     }
 
     /** An alternative cost that is paid by collecting evidence rather than paying mana. */

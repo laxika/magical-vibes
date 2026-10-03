@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "39")
 @CardRegistration(set = "M3C", collectorNumber = "174")
+@CardRegistration(set = "DRC", collectorNumber = "68")
 public class AethersquallAncient extends Card {
 
     public AethersquallAncient() {
