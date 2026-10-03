@@ -91,4 +91,62 @@ class DisruptiveStudentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new DisruptiveStudent());
+        harness.forceActivePlayer(player2);
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.castFromHand(player2, merfolk, "{1}{U}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, merfolk.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent student = addCreatureReady(player1, new DisruptiveStudent());
+        student.setTapped(true);
+        harness.forceActivePlayer(player2);
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.castFromHand(player2, merfolk, "{1}{U}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, merfolk.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+    }
+
+    @Test
+    void canCounterItsControllersSpell() {
+        addCreatureReady(player1, new DisruptiveStudent());
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.castFromHand(player1, merfolk, "{1}{U}");
+
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+        harness.assertNotOnBattlefield(player1, "Coral Merfolk");
+    }
+
+    @Test
+    void genericPaymentCanUseColoredManaAndConsumesExactlyOneMana() {
+        addCreatureReady(player1, new DisruptiveStudent());
+        harness.forceActivePlayer(player2);
+        CoralMerfolk merfolk = new CoralMerfolk();
+        harness.castFromHand(player2, merfolk, "{1}{U}");
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+    }
 }
