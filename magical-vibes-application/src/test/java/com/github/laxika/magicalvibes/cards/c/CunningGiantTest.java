@@ -167,4 +167,55 @@ class CunningGiantTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
+
+    @Test
+    @DisplayName("Cunning Giant cannot assign damage to its controller's creature or a defending land")
+    void rejectsRecipientsOutsideDefendingCreatures() {
+        harness.setLife(player2, 20);
+        addReadyAttacker(player1, new CunningGiant());
+        Permanent ownCreature = addCreatureReady(player1, new BearCub());
+        addCreatureReady(player2, new BearCub());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(ownCreature.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(land.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 4));
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertOnBattlefield(player1, "Bear Cub");
+        harness.assertOnBattlefield(player2, "Bear Cub");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cunning Giant may decline its ability and damage the attacked planeswalker")
+    void mayStillHitAttackedPlaneswalker() {
+        harness.setLife(player2, 20);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent giant = addReadyAttacker(player1, new CunningGiant());
+        giant.setAttackTarget(planeswalker.getId());
+        addCreatureReady(player2, new BearCub());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(player2.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(planeswalker.getId(), 4));
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertOnBattlefield(player2, "Bear Cub");
+    }
 }
