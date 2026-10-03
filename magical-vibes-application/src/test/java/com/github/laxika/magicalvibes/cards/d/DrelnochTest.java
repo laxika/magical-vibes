@@ -110,4 +110,43 @@ class DrelnochTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Drelnoch does not trigger when it blocks another creature")
+    void doesNotTriggerAsBlocker() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new KarplusanStrider(), new KarplusanStrider()));
+
+        addCreatureReady(player1, new KarplusanStrider());
+        addCreatureReady(player2, new Drelnoch());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Drelnoch's blocked trigger still draws after Drelnoch dies")
+    void drawsAfterSourceDies() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KarplusanStrider(), new KarplusanStrider()));
+
+        var drelnoch = addCreatureReady(player1, new Drelnoch());
+        addCreatureReady(player2, new KarplusanStrider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        drelnoch.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Drelnoch");
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
 }
