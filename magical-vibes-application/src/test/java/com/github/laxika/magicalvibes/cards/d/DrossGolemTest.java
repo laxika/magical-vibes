@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.ChitteringRats;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TangleSpider;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,6 +18,42 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({DrossGolem.class, Swamp.class, TangleSpider.class, DarksteelGargoyle.class,
         ChitteringRats.class})
 class DrossGolemTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Three Swamps leave two generic mana to pay")
+    void partialAffinityRequiresRemainingMana() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        }
+        harness.setHand(player1, List.of(new DrossGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dross Golem");
+    }
+
+    @Test
+    @DisplayName("More than five Swamps allow a free cast without producing mana")
+    void excessAffinityDoesNotProduceMana() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        }
+        harness.setHand(player1, List.of(new DrossGolem()));
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dross Golem");
+    }
 
     @Test
     @DisplayName("Affinity for Swamps reduces the generic mana cost even when Swamps are tapped")

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "260")
 @CardRegistration(set = "BLC", collectorNumber = "353")
+@CardRegistration(set = "FIC", collectorNumber = "441")
 public class WoodedRidgeline extends Card {
 
     public WoodedRidgeline() {

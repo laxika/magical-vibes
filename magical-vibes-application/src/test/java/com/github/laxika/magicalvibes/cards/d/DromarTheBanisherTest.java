@@ -53,4 +53,45 @@ class DromarTheBanisherTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dromar, the Banisher");
         harness.assertOnBattlefield(player2, "Dream Thrush");
     }
+
+    @Test
+    @DisplayName("Choosing black returns black creatures on both battlefields, including multicolored Dromar")
+    void choosingBlackReturnsCreaturesOnBothBattlefields() {
+        Permanent dromar = addCreatureReady(player1, new DromarTheBanisher());
+        dromar.setAttacking(true);
+        harness.addToBattlefield(player1, new Duskwalker());
+        harness.addToBattlefield(player2, new Duskwalker());
+        harness.addToBattlefield(player2, new DreamThrush());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "BLACK");
+
+        harness.assertInHand(player1, "Dromar, the Banisher");
+        harness.assertInHand(player1, "Duskwalker");
+        harness.assertInHand(player2, "Duskwalker");
+        harness.assertOnBattlefield(player2, "Dream Thrush");
+    }
+
+    @Test
+    @DisplayName("A color with no matching creatures can be chosen after paying")
+    void choosingAbsentColorReturnsNothing() {
+        Permanent dromar = addCreatureReady(player1, new DromarTheBanisher());
+        dromar.setAttacking(true);
+        harness.addToBattlefield(player2, new DreamThrush());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertOnBattlefield(player1, "Dromar, the Banisher");
+        harness.assertOnBattlefield(player2, "Dream Thrush");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

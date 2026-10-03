@@ -58,7 +58,7 @@ class ElvishScoutTest extends BaseCardTest {
     void preventsCombatDamageDealtToCreature() {
         Permanent scout = addElvishScout(player1);
         Permanent attacker = addAttacker(player1, player2, 2, 2);
-        addBlocker(player2, 3, 3, 0);
+        addBlocker(player2, 3, 3, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
 
         activateElvishScout(scout, attacker);
         resolveCombat();
@@ -113,6 +113,73 @@ class ElvishScoutTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(scout);
         assertThatThrownBy(() -> harness.activateAbility(player1, index, null, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Prevents the target attacker from damaging its blocker")
+    void preventsCombatDamageDealtToBlocker() {
+        Permanent scout = addElvishScout(player1);
+        Permanent attacker = addAttacker(player1, player2, 3, 3);
+        Permanent blocker = addBlocker(player2, 2, 2, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+
+        activateElvishScout(scout, attacker);
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An already untapped attacker remains attacking and receives prevention")
+    void untappedAttackerReceivesPrevention() {
+        Permanent scout = addElvishScout(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> activateElvishScout(scout, attacker));
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Other attackers still deal combat damage")
+    void doesNotPreventOtherAttackersDamage() {
+        Permanent scout = addElvishScout(player1);
+        Permanent protectedAttacker = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 3, 3);
+        harness.setLife(player2, 20);
+
+        activateElvishScout(scout, protectedAttacker);
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The ability does not untap a target that stops attacking before resolution")
+    void targetMustStillBeAttackingAtResolution() {
+        Permanent scout = addElvishScout(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        attacker.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(scout);
+        harness.activateAbility(player1, index, null, attacker.getId());
+
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(scout.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addElvishScout(Player owner) {

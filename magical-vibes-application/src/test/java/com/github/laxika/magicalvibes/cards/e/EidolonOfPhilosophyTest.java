@@ -53,12 +53,45 @@ class EidolonOfPhilosophyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new EidolonOfPhilosophy());
+        permanent.setSummoningSick(true);
+        permanent.tap();
+        addAbilityMana();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(permanent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(permanent.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithBlueButInsufficientTotalMana() {
+        Permanent permanent = addEidolonToBattlefield();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(permanent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(permanent.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addEidolonToBattlefield() {
-        EidolonOfPhilosophy card = new EidolonOfPhilosophy();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new EidolonOfPhilosophy());
     }
 
     private void addAbilityMana() {

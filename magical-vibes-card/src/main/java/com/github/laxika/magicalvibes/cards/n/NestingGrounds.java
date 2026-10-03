@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "502")
 @CardRegistration(set = "PIP", collectorNumber = "804")
 @CardRegistration(set = "PIP", collectorNumber = "1030")
+@CardRegistration(set = "FIC", collectorNumber = "408")
 public class NestingGrounds extends Card {
 
     public NestingGrounds() {

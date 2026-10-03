@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "82")
 @CardRegistration(set = "FIC", collectorNumber = "171")
+@CardRegistration(set = "FIC", collectorNumber = "474")
 public class EstinienVarlineau extends Card {
 
     public EstinienVarlineau() {

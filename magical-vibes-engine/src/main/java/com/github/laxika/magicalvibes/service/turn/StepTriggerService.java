@@ -71,6 +71,9 @@ import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
@@ -4063,6 +4066,13 @@ public class StepTriggerService {
             if (pending.returnAttacking() && attackTargetId != null) {
                 perm.setAttacking(true);
                 perm.setAttackTarget(attackTargetId);
+            }
+            if (pending.returnCantBeBlockedUntilEndOfCombat()
+                    && card.getId().equals(pending.card().getId())) {
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), card.getName(), null, controllerId,
+                        new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
+                        perm.getId(), null, null, EffectDuration.UNTIL_END_OF_COMBAT, 0));
             }
             boolean isCreature = card.hasType(CardType.CREATURE);
             if (pending.plusOnePlusOneCounters() > 0

@@ -21,6 +21,49 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ElvishPathcutterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped, summoning-sick Pathcutter can grant forestwalk to itself")
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent pathcutter = harness.addToBattlefieldAndReturn(player1, new ElvishPathcutter());
+        pathcutter.setSummoningSick(true);
+        pathcutter.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, pathcutter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.FORESTWALK)).isTrue();
+        assertThat(pathcutter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player1, new ElvishPathcutter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Elf creature");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability requires green mana, not just three generic mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent pathcutter = harness.addToBattlefieldAndReturn(player1, new ElvishPathcutter());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, pathcutter.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, pathcutter, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
     @DisplayName("Ability grants forestwalk to target Elf creature")
     void grantsForestwalkToTargetElf() {
         harness.addToBattlefield(player1, new ElvishPathcutter());

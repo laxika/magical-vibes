@@ -88,10 +88,87 @@ class EarthRumbleWrestlersTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("A land that entered before the Wrestlers still enables the boost")
+    void earlierLandEntryEnablesBoost() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+
+        Permanent wrestlers = harness.enterBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonland creature entering does not enable the boost")
+    void nonlandCreatureEntryDoesNotEnableBoost() {
+        Permanent wrestlers = harness.enterBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+        harness.enterBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's animated land does not enable the boost")
+    void opponentLandCreatureDoesNotEnableBoost() {
+        addReadyVillage(player2);
+        Permanent wrestlers = harness.addToBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Meeting both conditions grants the bonus only once")
+    void bothConditionsDoNotStack() {
+        addReadyVillage(player1);
+        Permanent wrestlers = harness.addToBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The bonus disappears when the land stops being a creature")
+    void landCreatureConditionExpiresWithAnimation() {
+        addReadyVillage(player1);
+        Permanent wrestlers = harness.addToBattlefieldAndReturn(player1, new EarthRumbleWrestlers());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wrestlers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wrestlers)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, wrestlers, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent addReadyVillage(Player player) {
-        Permanent village = new Permanent(new TreetopVillage());
+        Permanent village = harness.addToBattlefieldAndReturn(player, new TreetopVillage());
         village.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(village);
         return village;
     }
 }

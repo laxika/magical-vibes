@@ -21,10 +21,9 @@ class DuskworkerTest extends BaseCardTest {
     @DisplayName("Becoming blocked grants Duskworker one regeneration shield")
     void becomingBlockedGrantsRegenerationShield() {
         Permanent duskworker = addCreatureReady(player1, new Duskworker());
-        duskworker.setAttacking(true);
         addCreatureReady(player2, new PlatedSlagwurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -56,11 +55,10 @@ class DuskworkerTest extends BaseCardTest {
     @DisplayName("Becoming blocked by multiple creatures grants only one regeneration shield")
     void becomingBlockedByMultipleCreaturesTriggersOnce() {
         Permanent duskworker = addCreatureReady(player1, new Duskworker());
-        duskworker.setAttacking(true);
         addCreatureReady(player2, new PlatedSlagwurm());
         addCreatureReady(player2, new PlatedSlagwurm());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -87,5 +85,41 @@ class DuskworkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(duskworker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations work while tapped and boost only their source")
+    void repeatedActivationsBoostOnlyTappedSource() {
+        Permanent duskworker = addCreatureReady(player1, new Duskworker());
+        Permanent other = addCreatureReady(player1, new Duskworker());
+        duskworker.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(duskworker.getPowerModifier()).isEqualTo(2);
+        assertThat(duskworker.getToughnessModifier()).isZero();
+        assertThat(duskworker.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking does not regenerate Duskworker")
+    void blockingDoesNotGrantRegeneration() {
+        addCreatureReady(player1, new PlatedSlagwurm());
+        Permanent duskworker = addCreatureReady(player2, new Duskworker());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(duskworker.getRegenerationShield()).isZero();
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player2, "Duskworker");
+        harness.assertInGraveyard(player2, "Duskworker");
     }
 }

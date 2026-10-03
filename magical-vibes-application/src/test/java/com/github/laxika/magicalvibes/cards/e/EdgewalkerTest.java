@@ -18,10 +18,7 @@ class EdgewalkerTest extends BaseCardTest {
     @Test
     void reducesColoredManaOfClericSpells() {
         harness.addToBattlefield(player1, new Edgewalker());
-        harness.setHand(player1, List.of(new DaruSpiritualist()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DaruSpiritualist(), "{1}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -38,20 +35,14 @@ class EdgewalkerTest extends BaseCardTest {
     @Test
     void doesNotReduceNonClericSpells() {
         harness.addToBattlefield(player1, new Edgewalker());
-        harness.setHand(player1, List.of(new AvenFarseer()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvenFarseer(), "{W}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void reducesBothWhiteAndBlackManaOfClericSpells() {
         harness.addToBattlefield(player1, new Edgewalker());
-        harness.setHand(player1, List.of(new Edgewalker()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Edgewalker(), "{1}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -59,10 +50,34 @@ class EdgewalkerTest extends BaseCardTest {
     @Test
     void doesNotReduceOpponentClericSpells() {
         harness.addToBattlefield(player1, new Edgewalker());
-        harness.setHand(player2, List.of(new DaruSpiritualist()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player2, new DaruSpiritualist(), "{1}"))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceItsOwnCostWhileBeingCast() {
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Edgewalker(), "{1}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleEdgewalkersDoNotReduceGenericMana() {
+        harness.addToBattlefield(player1, new Edgewalker());
+        harness.addToBattlefield(player1, new Edgewalker());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Edgewalker(), ""))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleEdgewalkersStillAllowCastingForTheGenericCost() {
+        harness.addToBattlefield(player1, new Edgewalker());
+        harness.addToBattlefield(player1, new Edgewalker());
+
+        harness.castFromHand(player1, new Edgewalker(), "{1}");
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

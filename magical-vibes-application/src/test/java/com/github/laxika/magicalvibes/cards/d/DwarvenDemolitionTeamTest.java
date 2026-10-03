@@ -28,8 +28,7 @@ class DwarvenDemolitionTeamTest extends BaseCardTest {
         harness.activateAbility(player1, teamIdx, 0, null, wall.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(wall.getId()));
+        harness.assertNotOnBattlefield(player2, "Wall of Stone");
         assertThat(team.isTapped()).isTrue();
     }
 
@@ -59,5 +58,60 @@ class DwarvenDemolitionTeamTest extends BaseCardTest {
         int teamIdx = gd.playerBattlefields.get(player1.getId()).indexOf(team);
         assertThatThrownBy(() -> harness.activateAbility(player1, teamIdx, 0, null, wall.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability can destroy a Wall controlled by its controller")
+    void destroysOwnWall() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new DwarvenDemolitionTeam());
+        Permanent wall = addCreatureReady(player1, new WallOfStone());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(team),
+                0, null, wall.getId());
+        assertThat(team.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Wall of Stone");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wall of Stone");
+        harness.assertInGraveyard(player1, "Wall of Stone");
+    }
+
+    @Test
+    @DisplayName("Ability cannot activate when the source is already tapped")
+    void cannotActivateWhenTapped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new DwarvenDemolitionTeam());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+        team.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(team), 0, null, wall.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Wall of Stone");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new DwarvenDemolitionTeam());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(team),
+                0, null, wall.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(team);
+        gd.playerGraveyards.get(player1.getId()).add(team.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Stone");
+        harness.assertInGraveyard(player2, "Wall of Stone");
     }
 }

@@ -28,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "C19", collectorNumber = "277")
 @CardRegistration(set = "ONC", collectorNumber = "166")
 @CardRegistration(set = "WOC", collectorNumber = "167")
+@CardRegistration(set = "FIC", collectorNumber = "428")
 public class SungrassPrairie extends Card {
 
     public SungrassPrairie() {

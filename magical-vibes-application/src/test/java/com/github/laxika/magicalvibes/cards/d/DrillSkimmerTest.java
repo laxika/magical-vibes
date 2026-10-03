@@ -15,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrillSkimmer.class, DarksteelPendant.class, DroolingOgre.class, EchoingTruth.class})
+@CardUsed({DrillSkimmer.class, DarksteelPendant.class, DroolingOgre.class, EchoingTruth.class,
+        DrossGolem.class})
 class DrillSkimmerTest extends BaseCardTest {
 
     @Test
@@ -81,5 +82,68 @@ class DrillSkimmerTest extends BaseCardTest {
                 harness.getPermanentId(player1, "Drill-Skimmer")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact creature does not grant shroud")
+    void opponentArtifactCreatureDoesNotCount() {
+        addCreatureReady(player1, new DrillSkimmer());
+        addCreatureReady(player2, new DrillSkimmer());
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Drill-Skimmer"));
+
+        harness.assertNotOnBattlefield(player1, "Drill-Skimmer");
+        harness.assertNotOnBattlefield(player2, "Drill-Skimmer");
+        harness.assertInHand(player1, "Drill-Skimmer");
+        harness.assertInHand(player2, "Drill-Skimmer");
+    }
+
+    @Test
+    @DisplayName("Loses shroud immediately when its last supporting artifact creature leaves")
+    void losesShroudWhenSupportingCreatureLeaves() {
+        var skimmer = addCreatureReady(player1, new DrillSkimmer());
+        addCreatureReady(player1, new DrossGolem());
+        harness.setHand(player1, List.of(new EchoingTruth(), new EchoingTruth()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(gqs.hasKeyword(gd, skimmer, Keyword.SHROUD)).isTrue();
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Dross Golem"));
+
+        harness.assertInHand(player1, "Dross Golem");
+        assertThat(gqs.hasKeyword(gd, skimmer, Keyword.SHROUD)).isFalse();
+
+        harness.castAndResolveInstant(player1, 0, skimmer.getId());
+
+        harness.assertNotOnBattlefield(player1, "Drill-Skimmer");
+        harness.assertInHand(player1, "Drill-Skimmer");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent an untargeted return from Echoing Truth")
+    void shroudDoesNotPreventUntargetedReturn() {
+        var skimmer = addCreatureReady(player1, new DrillSkimmer());
+        addCreatureReady(player1, new DrossGolem());
+        addCreatureReady(player2, new DrillSkimmer());
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThat(gqs.hasKeyword(gd, skimmer, Keyword.SHROUD)).isTrue();
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Drill-Skimmer"));
+
+        harness.assertNotOnBattlefield(player1, "Drill-Skimmer");
+        harness.assertNotOnBattlefield(player2, "Drill-Skimmer");
+        harness.assertInHand(player1, "Drill-Skimmer");
+        harness.assertInHand(player2, "Drill-Skimmer");
+        harness.assertOnBattlefield(player1, "Dross Golem");
     }
 }

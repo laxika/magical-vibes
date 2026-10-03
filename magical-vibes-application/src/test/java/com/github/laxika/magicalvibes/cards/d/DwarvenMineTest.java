@@ -18,21 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DwarvenMineTest extends BaseCardTest {
 
     @Test
-    void entersUntappedAndCreatesDwarfWithFewerThanThreeOtherMountains() {
-        addMountain(player1);
-        addMountain(player1);
-
-        playMine();
-
-        assertThat(findMine(player1).isTapped()).isFalse();
-        harness.passBothPriorities();
-
-        assertThat(dwarfTokens(player1)).hasSize(1);
-    }
-
-    @Test
-    void entersTappedAndDoesNotCreateDwarfWithThreeOtherMountains() {
-        addMountain(player1);
+    void entersTappedAndDoesNotCreateDwarfWithFewerThanThreeOtherMountains() {
         addMountain(player1);
         addMountain(player1);
 
@@ -45,12 +31,85 @@ class DwarvenMineTest extends BaseCardTest {
     }
 
     @Test
-    void createsDwarfEvenIfItIsTappedBeforeTheTriggerResolves() {
+    void entersUntappedAndCreatesDwarfWithThreeOtherMountains() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player1);
+
         playMine();
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(findMine(player1).isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(dwarfTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void createsDwarfEvenIfItIsTappedBeforeTheTriggerResolves() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player1);
+        playMine();
+
+        harness.activateAbility(player1, 3, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(dwarfTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void entersTappedWithoutOtherMountains() {
+        playMine();
+
+        assertThat(findMine(player1).isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(dwarfTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void opponentsMountainsDoNotSatisfyTheEntryCondition() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player2);
+        addMountain(player2);
+        addMountain(player2);
+
+        playMine();
+
+        assertThat(findMine(player1).isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(dwarfTokens(player1)).isEmpty();
+        assertThat(dwarfTokens(player2)).isEmpty();
+    }
+
+    @Test
+    void anotherDwarvenMineCountsAsAMountain() {
+        addMountain(player1);
+        addMountain(player1);
+        harness.addToBattlefield(player1, new DwarvenMine());
+
+        playMine();
+
+        assertThat(findPermanents(player1, "Dwarven Mine").get(1).isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(dwarfTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void entersUntappedWithMoreThanThreeOtherMountains() {
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player1);
+        addMountain(player1);
+
+        playMine();
+
+        assertThat(findMine(player1).isTapped()).isFalse();
         harness.passBothPriorities();
 
         assertThat(dwarfTokens(player1)).hasSize(1);
@@ -64,7 +123,7 @@ class DwarvenMineTest extends BaseCardTest {
     }
 
     private void addMountain(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findMine(Player player) {

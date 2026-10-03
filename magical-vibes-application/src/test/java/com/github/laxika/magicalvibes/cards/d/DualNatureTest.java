@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AlexisCloak;
 import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DualNature.class, PygmyRazorback.class})
+@CardUsed({DualNature.class, PygmyRazorback.class, AlexisCloak.class})
 class DualNatureTest extends BaseCardTest {
 
     @Test
@@ -126,6 +130,74 @@ class DualNatureTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Pygmy Razorback")).contains(remainingToken);
         assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The copy trigger uses last known information when the creature leaves first")
+    void createsCopyAfterEnteringCreatureLeaves() {
+        harness.addToBattlefield(player1, new DualNature());
+        prepareMainPhase(player2);
+        harness.castFromHand(player2, new PygmyRazorback(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player2, "Pygmy Razorback");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Pygmy Razorback")).hasSize(1)
+                .allMatch(permanent -> permanent.getCard().isToken());
+        assertThat(findPermanents(player1, "Pygmy Razorback")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud gained before the copy trigger resolves does not prevent the copy")
+    void copyTriggerDoesNotTargetEnteringCreature() {
+        harness.addToBattlefield(player1, new DualNature());
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new PygmyRazorback(), "{1}{G}");
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player1, "Pygmy Razorback");
+
+        harness.setHand(player1, List.of(new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(2)
+                .anyMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Each Dual Nature only exiles the tokens it created when it leaves")
+    void cleanupDoesNotExileTokensCreatedByAnotherDualNature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DualNature());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DualNature());
+        prepareMainPhase(player2);
+        harness.castFromHand(player2, new PygmyRazorback(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player2, "Pygmy Razorback")).hasSize(3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, first));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player2, "Pygmy Razorback")).hasSize(2)
+                .anyMatch(permanent -> permanent.getCard().isToken());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, second));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player2, "Pygmy Razorback")).hasSize(1)
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
     private Permanent castPygmyRazorback(Player player) {

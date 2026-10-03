@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EclipsedKithkin.class, Forest.class, GrizzlyBears.class, KithkinHarbinger.class,
+        Plains.class, Swamp.class})
 class EclipsedKithkinTest extends BaseCardTest {
 
     @Test
@@ -73,10 +76,62 @@ class EclipsedKithkinTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
     }
 
-    private void setupTopCards(List<Card> cards) {
+    @Test
+    @DisplayName("Only the top four are considered and the rest go below untouched cards")
+    void onlyTopFourAreConsidered() {
+        EclipsedKithkin kithkin = new EclipsedKithkin();
+        Swamp first = new Swamp();
+        Swamp second = new Swamp();
+        Swamp third = new Swamp();
+        Plains fifth = new Plains();
+        Forest sixth = new Forest();
+        setupTopCards(List.of(kithkin, first, second, third, fifth, sixth));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(kithkin.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(kithkin.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kithkin);
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        assertThat(deck.subList(0, 2)).containsExactly(fifth, sixth);
+        assertThat(deck.subList(2, deck.size())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library with fewer than four cards still allows a matching card to be chosen")
+    void shortLibraryAllowsSelection() {
+        Plains plains = new Plains();
+        Swamp swamp = new Swamp();
+        setupTopCards(List.of(plains, swamp));
+        castAndResolveEtb();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.allCards()).containsExactly(plains, swamp);
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibraryResolves() {
+        setupTopCards(List.of());
+        castAndResolveEtb();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Eclipsed Kithkin");
+    }
+
+    private void setupTopCards(List<Card> cards) {
+        harness.setLibrary(player1, cards);
     }
 
     private void castAndResolveEtb() {

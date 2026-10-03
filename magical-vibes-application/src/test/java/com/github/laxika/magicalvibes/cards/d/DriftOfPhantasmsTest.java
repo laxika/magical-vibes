@@ -54,4 +54,111 @@ class DriftOfPhantasmsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drift);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
+
+    @Test
+    void transmutePaysManaAndDiscardsBeforeResolving() {
+        DriftOfPhantasms drift = new DriftOfPhantasms();
+        Convolute matchingCard = new Convolute();
+        harness.setHand(player1, List.of(drift));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drift);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteCanFailToFindEvenWhenAMatchingCardExists() {
+        Convolute matchingCard = new Convolute();
+        harness.setHand(player1, List.of(new DriftOfPhantasms()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        harness.assertInGraveyard(player1, "Drift of Phantasms");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteRequiresTwoBlueMana() {
+        DriftOfPhantasms drift = new DriftOfPhantasms();
+        harness.setHand(player1, List.of(drift));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drift);
+        harness.assertNotInGraveyard(player1, "Drift of Phantasms");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteCannotBeActivatedWhileAnotherAbilityIsOnTheStack() {
+        DriftOfPhantasms secondDrift = new DriftOfPhantasms();
+        harness.setHand(player1, List.of(new DriftOfPhantasms(), secondDrift));
+        harness.setLibrary(player1, List.of(new Convolute()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDrift);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void transmuteResolvesWithoutFindingACardWhenNoManaValueMatches() {
+        DizzySpell nonmatchingCard = new DizzySpell();
+        harness.setHand(player1, List.of(new DriftOfPhantasms()));
+        harness.setLibrary(player1, List.of(nonmatchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatchingCard);
+        harness.assertInGraveyard(player1, "Drift of Phantasms");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteCannotBeActivatedDuringOpponentsMainPhase() {
+        DriftOfPhantasms drift = new DriftOfPhantasms();
+        harness.setHand(player1, List.of(drift));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drift);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
 }

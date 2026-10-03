@@ -4,14 +4,17 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EmissaryOfTheSleepless.class, DevilthornFox.class})
 class EmissaryOfTheSleeplessTest extends BaseCardTest {
 
     @Test
@@ -42,22 +45,65 @@ class EmissaryOfTheSleeplessTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not create a Spirit if morbid is lost before the trigger resolves")
-    void triggerDoesNothingIfMorbidIsLostBeforeResolution() {
-        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
-
+    @DisplayName("Creates a Spirit even if Emissary dies before its trigger resolves")
+    void createsSpiritAfterSourceDies() {
+        killFox(player2);
         castEmissary();
-        gd.creatureDeathCountThisTurn.clear();
+        findPermanent(player1, "Emissary of the Sleepless").setMarkedDamage(4);
+        harness.runStateBasedActions();
         harness.passBothPriorities();
 
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        harness.assertInGraveyard(player1, "Emissary of the Sleepless");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature death enables the trigger")
+    void opponentCreatureDeathEnablesTrigger() {
+        killFox(player2);
+        castEmissary();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A controller's creature death enables the trigger")
+    void ownCreatureDeathEnablesTrigger() {
+        killFox(player1);
+        castEmissary();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A death after Emissary enters does not retroactively trigger its ability")
+    void laterDeathDoesNotTriggerAbility() {
+        castEmissary();
+        killFox(player2);
+        assertThat(gd.stack).isEmpty();
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
     }
 
+    @Test
+    @DisplayName("A creature card already in a graveyard does not satisfy morbid")
+    void graveyardCreatureAloneDoesNotEnableTrigger() {
+        harness.setGraveyard(player2, java.util.List.of(new DevilthornFox()));
+        castEmissary();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    private void killFox(Player player) {
+        harness.addToBattlefield(player, new DevilthornFox());
+        findPermanent(player, "Devilthorn Fox").setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player, "Devilthorn Fox");
+    }
+
     private void castEmissary() {
-        harness.setHand(player1, java.util.List.of(new EmissaryOfTheSleepless()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EmissaryOfTheSleepless(), "{4}{W}");
         harness.passBothPriorities();
     }
 }

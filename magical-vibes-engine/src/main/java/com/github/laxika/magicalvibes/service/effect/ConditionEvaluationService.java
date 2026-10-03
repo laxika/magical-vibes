@@ -232,6 +232,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsVillainWithGreater
 import com.github.laxika.magicalvibes.model.condition.CoolnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
+import com.github.laxika.magicalvibes.model.condition.CreatureAttackingAndCreatureBlocking;
 import com.github.laxika.magicalvibes.model.condition.SourceAttacksActivatingPlayer;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardLeftGraveyardThisTurn;
@@ -347,6 +348,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFr
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
@@ -553,6 +555,8 @@ public class ConditionEvaluationService {
                     c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx, eventValue));
             case CreatureAttackingController ignored ->
                     ctx.controllerId() != null && creatureAttackingPlayer(gameData, ctx.controllerId());
+            case CreatureAttackingAndCreatureBlocking ignored ->
+                    creatureAttackingAndCreatureBlocking(gameData);
             case SourceAttacksActivatingPlayer ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null
@@ -1216,6 +1220,8 @@ public class ConditionEvaluationService {
                     opponentAttacksAnotherOpponent(gameData, ctx);
               case PlayerAttacksOneOfYourOpponents ignored ->
                       playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber ignored ->
+                      playerAttacksOneOfYourOpponentsWithMatchingStats(gameData, ctx);
               case PlayerAttacksNotController ignored ->
                       playerAttacksNotController(gameData, ctx);
             case MinimumAttackingCreaturesOfSubtype c ->
@@ -3588,6 +3594,18 @@ public class ConditionEvaluationService {
         return battlefield.stream().filter(Permanent::isAttacking).count();
     }
 
+    private boolean creatureAttackingAndCreatureBlocking(GameData gameData) {
+        boolean creatureAttacking = gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent) && permanent.isAttacking());
+        boolean creatureBlocking = gameData.playerBattlefields.values().stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent) && permanent.isBlocking());
+        return creatureAttacking && creatureBlocking;
+    }
+
     private boolean attacksPlayerAlone(GameData gameData, ConditionContext ctx) {
         Permanent attacker = ctx.triggeringPermanentId() == null
                 ? ctx.sourcePermanent()
@@ -3802,6 +3820,24 @@ public class ConditionEvaluationService {
                 .map(Permanent::getAttackTarget)
                 .filter(gameData.playerIds::contains)
                 .anyMatch(targetId -> !controllerId.equals(targetId));
+    }
+
+    private boolean playerAttacksOneOfYourOpponentsWithMatchingStats(GameData gameData,
+                                                                      ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        Permanent source = ctx.sourcePermanent();
+        if (controllerId == null || attackingPlayerId == null || source == null) {
+            return false;
+        }
+
+        int chosenNumber = source.getChosenNumber();
+        return gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
+                .filter(Permanent::isAttacking)
+                .filter(attacker -> gameData.playerIds.contains(attacker.getAttackTarget()))
+                .filter(attacker -> !controllerId.equals(attacker.getAttackTarget()))
+                .anyMatch(attacker -> gameQueryService.getEffectivePower(gameData, attacker) == chosenNumber
+                        || gameQueryService.getEffectiveToughness(gameData, attacker) == chosenNumber);
     }
 
     private boolean attackedPlayerPoisoned(GameData gameData, ConditionContext ctx) {

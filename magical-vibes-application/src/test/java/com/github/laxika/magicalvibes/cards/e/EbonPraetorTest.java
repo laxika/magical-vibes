@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
+import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EbonPraetor.class, BasalThrull.class, RiverMerfolk.class})
+@CardUsed({EbonPraetor.class, BasalThrull.class, RiverMerfolk.class, UniversalAutomaton.class})
 class EbonPraetorTest extends BaseCardTest {
 
     @Test
@@ -113,6 +114,48 @@ class EbonPraetorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("your upkeep");
+    }
+
+    @Test
+    @DisplayName("A sacrificed creature with changeling counts as a Thrull")
+    void sacrificingChangelingAddsPowerCounter() {
+        Permanent praetor = addCreatureReady(player1, new EbonPraetor());
+        Permanent changeling = addCreatureReady(player1, new UniversalAutomaton());
+
+        beginUpkeep();
+        activateSacrificeAbility(changeling);
+
+        assertThat(praetor.getCounterCount(CounterType.MINUS_TWO_MINUS_TWO)).isZero();
+        assertThat(praetor.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Universal Automaton");
+    }
+
+    @Test
+    @DisplayName("Ebon Praetor can sacrifice itself to pay its ability's cost")
+    void canSacrificeItself() {
+        Permanent praetor = addCreatureReady(player1, new EbonPraetor());
+
+        beginUpkeep();
+        activateSacrificeAbility(praetor);
+
+        harness.assertNotOnBattlefield(player1, "Ebon Praetor");
+        harness.assertInGraveyard(player1, "Ebon Praetor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unused sacrifice ability cannot be activated during the main phase")
+    void cannotActivateDuringMainPhaseBeforeUsingAbility() {
+        addCreatureReady(player1, new EbonPraetor());
+        addCreatureReady(player1, new RiverMerfolk());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your upkeep");
+        harness.assertOnBattlefield(player1, "River Merfolk");
     }
 
     private void activateSacrificeAbility(Permanent sacrificed) {

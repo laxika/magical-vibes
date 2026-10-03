@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ElfhamePalace.class})
 class ElfhamePalaceTest extends BaseCardTest {
@@ -51,5 +52,47 @@ class ElfhamePalaceTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Elfhame Palace enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent palace = harness.enterBattlefieldAndReturn(player1, new ElfhamePalace());
+
+        assertThat(palace.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Elfhame Palace cannot produce either color of mana")
+    void cannotActivateWhileTapped() {
+        Permanent palace = harness.enterBattlefieldAndReturn(player1, new ElfhamePalace());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(palace.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Elfhame Palace produces only the chosen color after untapping and cannot tap twice")
+    void canProduceManaAfterUntapping() {
+        Permanent palace = harness.enterBattlefieldAndReturn(player1, new ElfhamePalace());
+        harness.performUntapStep(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(palace.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

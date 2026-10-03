@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
-import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,8 +51,64 @@ class DroolingOgreTest extends BaseCardTest {
     @DisplayName("A nonartifact spell does not trigger the control change")
     void nonartifactSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new DroolingOgre());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
-        harness.castFromHand(player1, new CrazedGoblin(), "{R}");
+        harness.castFromHand(player2, new CrazedGoblin(), "{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertNotOnBattlefield(player2, "Drooling Ogre");
+    }
+
+    @Test
+    @DisplayName("Control changes before the artifact spell resolves")
+    void controlChangesBeforeArtifactResolves() {
+        harness.addToBattlefield(player1, new DroolingOgre());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new DarksteelIngot(), "{3}");
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Drooling Ogre");
+        harness.assertOnBattlefield(player2, "Drooling Ogre");
+        harness.assertNotOnBattlefield(player2, "Darksteel Ingot");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Darksteel Ingot");
+    }
+
+    @Test
+    @DisplayName("An artifact entering without being cast does not change control")
+    void artifactEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DroolingOgre());
+
+        harness.enterBattlefieldAndReturn(player2, new DarksteelIngot());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Drooling Ogre");
+        harness.assertNotOnBattlefield(player2, "Drooling Ogre");
+    }
+
+    @Test
+    @DisplayName("The original controller can regain the Ogre by casting an artifact")
+    void originalControllerCanRegainControl() {
+        harness.addToBattlefield(player1, new DroolingOgre());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new DarksteelIngot(), "{3}");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Drooling Ogre");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new DarksteelIngot(), "{3}");
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Drooling Ogre");
         harness.assertNotOnBattlefield(player2, "Drooling Ogre");

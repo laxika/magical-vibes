@@ -78,9 +78,7 @@ class EmberwildeAugurTest extends BaseCardTest {
     @DisplayName("Cannot be activated during an opponent's upkeep")
     void cannotActivateDuringOpponentsUpkeep() {
         Permanent augur = addCreatureReady(player1, new EmberwildeAugur());
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        advanceToUpkeep(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -98,5 +96,55 @@ class EmberwildeAugurTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before damage resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent augur = addCreatureReady(player1, new EmberwildeAugur());
+        harness.setLife(player2, 20);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(augur);
+        harness.assertInGraveyard(player1, "Emberwilde Augur");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        advanceToUpkeep(player1);
+        Permanent augur = harness.addToBattlefieldAndReturn(player1, new EmberwildeAugur());
+        augur.setSummoningSick(true);
+        augur.tap();
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        harness.assertInGraveyard(player1, "Emberwilde Augur");
+    }
+
+    @Test
+    @DisplayName("Can target its controller's planeswalker and destroy it with lethal damage")
+    void canTargetFriendlyPlaneswalker() {
+        addCreatureReady(player1, new EmberwildeAugur());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new GarrukWildspeaker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, planeswalker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(planeswalker);
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
+        harness.assertInGraveyard(player1, "Emberwilde Augur");
     }
 }

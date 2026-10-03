@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.b.BlightbellyRat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrossSkullbomb.class, Forest.class, BlightbellyRat.class})
 class DrossSkullbombTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,7 @@ class DrossSkullbombTest extends BaseCardTest {
     @DisplayName("Returns a targeted creature card and draws a card")
     void returnsCreatureAndDraws() {
         Permanent skullbomb = addSkullbomb();
-        Card creature = new GrizzlyBears();
+        Card creature = new BlightbellyRat();
         Card draw = new Forest();
         harness.setGraveyard(player1, List.of(creature));
         harness.setLibrary(player1, List.of(draw));
@@ -57,7 +58,7 @@ class DrossSkullbombTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature card in a graveyard")
     void cannotTargetNoncreature() {
         Permanent skullbomb = addSkullbomb();
-        Card noncreature = new Shock();
+        Card noncreature = new DrossSkullbomb();
         harness.setGraveyard(player1, List.of(noncreature));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -72,7 +73,7 @@ class DrossSkullbombTest extends BaseCardTest {
     @DisplayName("The creature return ability works only at sorcery speed")
     void creatureReturnIsSorcerySpeedOnly() {
         Permanent skullbomb = addSkullbomb();
-        Card creature = new GrizzlyBears();
+        Card creature = new BlightbellyRat();
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -82,6 +83,112 @@ class DrossSkullbombTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, battlefieldIndex(skullbomb), 1, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsCreature() {
+        Permanent skullbomb = addSkullbomb();
+        Card creature = new BlightbellyRat();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(skullbomb), 1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skullbomb);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    void cannotActivateReturnWithoutTarget() {
+        Permanent skullbomb = addSkullbomb();
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(skullbomb), 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skullbomb);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWhenCreatureTargetLeavesGraveyard() {
+        Permanent skullbomb = addSkullbomb();
+        Card creature = new BlightbellyRat();
+        Card draw = new Forest();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(skullbomb), 1, List.of(creature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(skullbomb);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.setGraveyard(player1, List.of(skullbomb.getCard()));
+        harness.setHand(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(skullbomb.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void drawAbilityWorksDuringOpponentsTurn() {
+        Permanent skullbomb = addSkullbomb();
+        Card draw = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, battlefieldIndex(skullbomb), 0, null, null);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(skullbomb.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+    }
+
+    @Test
+    void cannotActivateReturnDuringCombat() {
+        Permanent skullbomb = addSkullbomb();
+        Card creature = new BlightbellyRat();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(skullbomb), 1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skullbomb);
+    }
+
+    @Test
+    void cannotActivateReturnWithNonemptyStack() {
+        Permanent skullbomb = addSkullbomb();
+        Permanent otherSkullbomb = addSkullbomb();
+        Card creature = new BlightbellyRat();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, battlefieldIndex(otherSkullbomb), 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(skullbomb), 1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skullbomb);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
     }
 
     private Permanent addSkullbomb() {

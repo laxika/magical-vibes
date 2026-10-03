@@ -117,4 +117,53 @@ class DwarvenWeaponsmithTest extends BaseCardTest {
         assertThat(weaponsmith.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Sunglasses of Urza");
     }
+
+    @Test
+    @DisplayName("The artifact is sacrificed as a cost before the counter is placed")
+    void sacrificeIsPaidBeforeResolutionAndCanTargetItself() {
+        Permanent weaponsmith = addCreatureReady(player1, new DwarvenWeaponsmith());
+        harness.addToBattlefieldAndReturn(player1, new SunglassesOfUrza());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, 0, null, weaponsmith.getId());
+
+        assertThat(weaponsmith.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Sunglasses of Urza");
+        harness.assertInGraveyard(player1, "Sunglasses of Urza");
+        assertThat(weaponsmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(weaponsmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent weaponsmith = addCreatureReady(player1, new DwarvenWeaponsmith());
+        harness.addToBattlefieldAndReturn(player2, new SunglassesOfUrza());
+
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, weaponsmith.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Sunglasses of Urza");
+        assertThat(weaponsmith.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Weaponsmith cannot activate its tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent weaponsmith = harness.addToBattlefieldAndReturn(player1, new DwarvenWeaponsmith());
+        weaponsmith.setSummoningSick(true);
+        harness.addToBattlefieldAndReturn(player1, new SunglassesOfUrza());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, weaponsmith.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Sunglasses of Urza");
+        assertThat(weaponsmith.isTapped()).isFalse();
+    }
 }

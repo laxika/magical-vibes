@@ -13,8 +13,70 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DugganPrivateDetective.class, GrizzlyBears.class})
+@CardUsed({DugganPrivateDetective.class, GrizzlyBears.class, DinosaursOnASpaceship.class})
 class DugganPrivateDetectiveTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Power and toughness update as the controller's hand changes")
+    void handSizeUpdatesContinuously() {
+        Permanent duggan = addCreatureReady(player1, new DugganPrivateDetective());
+        harness.setHand(player1, List.of(new DugganPrivateDetective()));
+        harness.setHand(player2, List.of(new DugganPrivateDetective(), new DugganPrivateDetective()));
+
+        assertThat(gqs.getEffectivePower(gd, duggan)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, duggan)).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new DugganPrivateDetective(), new DugganPrivateDetective(),
+                new DugganPrivateDetective()));
+
+        assertThat(gqs.getEffectivePower(gd, duggan)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, duggan)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The punch uses twice Duggan's power at resolution")
+    void punchUsesPowerAtResolution() {
+        addCreatureReady(player1, new DugganPrivateDetective());
+        Permanent target = addCreatureReady(player2, new DinosaursOnASpaceship());
+        harness.setHand(player1, List.of(new DugganPrivateDetective()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.setHand(player1, List.of(new DugganPrivateDetective(), new DugganPrivateDetective(),
+                new DugganPrivateDetective()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dinosaurs on a Spaceship");
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("The punch may target another creature its controller controls")
+    void punchCanTargetOwnCreature() {
+        addCreatureReady(player1, new DugganPrivateDetective());
+        Permanent target = addCreatureReady(player1, new DinosaursOnASpaceship());
+        harness.setHand(player1, List.of(new DugganPrivateDetective(), new DugganPrivateDetective()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dinosaurs on a Spaceship");
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Entering with an empty hand still investigates after Duggan dies")
+    void entryTriggerSurvivesZeroToughnessDeath() {
+        harness.castFromHand(player1, new DugganPrivateDetective(), "{2}{G}{U}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Duggan, Private Detective");
+        harness.assertInGraveyard(player1, "Duggan, Private Detective");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
 
     @Test
     @DisplayName("Power and toughness equal the controller's hand size")

@@ -1618,6 +1618,9 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyComeuppancePrevention(
                     gameData, playerId, rawDamage, source, sourcePermanent,
                     sourceControllerId, false);
+            rawDamage = damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                    gameData, playerId, rawDamage, source, sourcePermanent,
+                    sourceControllerId, false);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(

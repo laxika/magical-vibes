@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "BRO", collectorNumber = "260")
 @CardRegistration(set = "M3C", collectorNumber = "335")
 @CardRegistration(set = "OTC", collectorNumber = "283")
+@CardRegistration(set = "FIC", collectorNumber = "385")
 public class DemolitionField extends Card {
 
     public DemolitionField() {

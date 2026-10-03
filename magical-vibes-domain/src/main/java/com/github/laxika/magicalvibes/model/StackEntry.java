@@ -392,6 +392,8 @@ public class StackEntry {
      * Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringPermanentId;
+    /** Player whose monarch status was captured when a monarch-triggered target was created. */
+    @Setter private UUID triggeringPlayerId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
     @Setter private UUID triggeringPermanentControllerId;
     /** Owner of the triggering permanent when its non-targeting reference was captured. */
@@ -871,6 +873,7 @@ public class StackEntry {
         this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
+        this.triggeringPlayerId = source.triggeringPlayerId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
         this.triggeringPermanentPowerAtTrigger = source.triggeringPermanentPowerAtTrigger;

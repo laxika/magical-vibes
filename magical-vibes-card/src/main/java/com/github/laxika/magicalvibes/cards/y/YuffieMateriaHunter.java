@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "65")
 @CardRegistration(set = "FIC", collectorNumber = "158")
+@CardRegistration(set = "FIC", collectorNumber = "470")
 public class YuffieMateriaHunter extends Card {
 
     public YuffieMateriaHunter() {

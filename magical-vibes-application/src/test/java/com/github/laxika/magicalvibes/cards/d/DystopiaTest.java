@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
+import com.github.laxika.magicalvibes.cards.e.ElvishRanger;
+import com.github.laxika.magicalvibes.cards.i.Inheritance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Dystopia.class, SchoolOfTheUnseen.class})
+@CardUsed({Dystopia.class, SchoolOfTheUnseen.class, ElvishRanger.class, Inheritance.class})
 class DystopiaTest extends BaseCardTest {
 
     @Test
@@ -113,6 +115,56 @@ class DystopiaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Dystopia");
     }
 
+    @Test
+    @DisplayName("The active player sacrifices a white noncreature permanent")
+    void sacrificesWhiteEnchantment() {
+        harness.addToBattlefield(player1, new Dystopia());
+        harness.addToBattlefield(player2, new Inheritance());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Inheritance");
+        harness.assertInGraveyard(player2, "Inheritance");
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not charge life or sacrifice the controller's permanents")
+    void opponentUpkeepOnlyAffectsActivePlayer() {
+        Permanent dystopia = harness.addToBattlefieldAndReturn(player1, new Dystopia());
+        harness.addToBattlefield(player1, new ElvishRanger());
+        harness.addToBattlefield(player2, new ElvishRanger());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elvish Ranger");
+        harness.assertNotOnBattlefield(player2, "Elvish Ranger");
+        harness.assertInGraveyard(player2, "Elvish Ranger");
+        harness.assertLife(player1, 20);
+        assertThat(dystopia.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The controller also sacrifices a white permanent during their upkeep")
+    void controllerUpkeepIncludesSacrifice() {
+        harness.addToBattlefield(player1, new Dystopia());
+        harness.addToBattlefield(player1, new Inheritance());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Inheritance");
+        harness.assertInGraveyard(player1, "Inheritance");
+        harness.assertOnBattlefield(player1, "Dystopia");
+        harness.assertLife(player1, 19);
+    }
+
     private Permanent addCreature(Player player, String name, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -120,9 +172,6 @@ class DystopiaTest extends BaseCardTest {
         card.setPower(2);
         card.setToughness(2);
         card.setColor(color);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 }

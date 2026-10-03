@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StalkingDrone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmbodimentOfInsight.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EmbodimentOfInsight.class, Forest.class, StalkingDrone.class})
 class EmbodimentOfInsightTest extends BaseCardTest {
 
     @Test
@@ -62,17 +62,19 @@ class EmbodimentOfInsightTest extends BaseCardTest {
     void landfallTargetIsOwnLand() {
         addEmbodiment();
         Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownDrone = harness.addToBattlefieldAndReturn(player1, new StalkingDrone());
         Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Forest()));
+
+        assertThat(gqs.hasKeyword(gd, ownDrone, Keyword.VIGILANCE)).isFalse();
 
         harness.playLand(player1, 0);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(ownForest.getId()).doesNotContain(ownBear.getId(), opponentForest.getId());
+        assertThat(choice.validIds()).contains(ownForest.getId()).doesNotContain(ownDrone.getId(), opponentForest.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBear.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownDrone.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
@@ -89,12 +91,63 @@ class EmbodimentOfInsightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void enteringLandCanAttackWithoutTapping() {
+        Permanent embodiment = addEmbodiment();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        Permanent forest = findPermanent(player1, "Forest");
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () ->
+                gs.declareAttackers(gd, player1,
+                        List.of(gd.playerBattlefields.get(player1.getId()).indexOf(forest))));
+
+        assertThat(forest.isAttacking()).isTrue();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, embodiment, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void opponentLandEntryDoesNotTriggerLandfall() {
+        addEmbodiment();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void animationSurvivesSourceLeavingButVigilanceDoesNot() {
+        Permanent embodiment = addEmbodiment();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, embodiment));
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, forest, Keyword.VIGILANCE)).isFalse();
     }
 

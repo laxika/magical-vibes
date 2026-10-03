@@ -58,6 +58,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetControllerIsTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
@@ -7952,9 +7954,12 @@ public class TriggerCollectionService {
                             : permanent.getCard().getTargetFilter();
                     boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                    UUID targetControllerId = effect instanceof TargetControllerIsTriggeringPlayerEffect
+                            ? monarchPlayerId : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             permanent.getCard(), ownerId, effects, playerTargetOnly, targetFilter,
-                            0, permanent.getId()));
+                            0, permanent.getId(), new Permanent(permanent), false, null,
+                            targetControllerId, ownerId));
                 } else {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -10250,18 +10255,31 @@ public class TriggerCollectionService {
             boolean anyEffectFired = false;
             boolean oncePerTurnFired = false;
             List<CardEffect> stackEffects = new ArrayList<>();
+            List<UUID> eventCardIds = new ArrayList<>();
 
             for (CardEffect effect : effects) {
                 CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                         effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId, perm);
                 if (resolvedEffect == null) continue;
-                if (resolvedEffect instanceof BatchedCreatureDeathTriggerEffect) continue;
+                boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect;
+                CardEffect triggerBody = oncePerTurn
+                        ? ((OncePerTurnTriggerEffect) resolvedEffect).wrapped() : resolvedEffect;
+                boolean wasBatched = triggerBody instanceof BatchedCreatureDeathTriggerEffect;
+                if (wasBatched) {
+                    // Simultaneous batches are collected by checkBatchedAllyCreatureDeathTriggers.
+                    if (!gameData.simultaneousDyingCreatures.isEmpty()) continue;
+                    BatchedCreatureDeathTriggerEffect batched = (BatchedCreatureDeathTriggerEffect) triggerBody;
+                    if (!matchesDyingPermanentPredicate(gameData, dyingPermanent,
+                            batched.dyingPermanentPredicate())) continue;
+                }
                 if (!passesInterveningIf(gameData, perm, dyingCreatureControllerId, resolvedEffect,
                         dyingPermanent.getId(), dyingPower)) continue;
 
-                boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect;
                 resolvedEffect = unwrapOncePerTurnTrigger(gameData, perm, resolvedEffect);
                 if (resolvedEffect == null) continue;
+                if (wasBatched) {
+                    resolvedEffect = ((BatchedCreatureDeathTriggerEffect) resolvedEffect).wrapped();
+                }
                 resolvedEffect = snapshotDyingPermanentManaValue(
                         gameData, dyingCreatureControllerId, resolvedEffect, dyingPermanent);
                 if (resolvedEffect instanceof DyingCreatureCountersAwareEffect aware) {
@@ -10324,6 +10342,9 @@ public class TriggerCollectionService {
                                 countCountersOnPermanent(dyingPermanent));
                     }
                     stackEffects.add(resolvedEffect);
+                    if (wasBatched && dyingCard != null) {
+                        eventCardIds.add(dyingCard.getId());
+                    }
                     if (oncePerTurn) {
                         oncePerTurnFired = true;
                     }
@@ -10345,6 +10366,9 @@ public class TriggerCollectionService {
                 entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingCard);
                 entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
                 entry.setEventValue(dyingPower);
+                if (!eventCardIds.isEmpty()) {
+                    entry.setEventCardIds(eventCardIds);
+                }
                 int previousCopies = gameData.beginTriggeredAbilityCopies(1
                         + gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                                 gameData, dyingCreatureControllerId, perm));
@@ -14019,6 +14043,25 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Enqueues Judgment of Alexander's trigger for a creature-source damage event. */
+    public void checkCommanderDamagePreventedTriggers(GameData gameData, UUID damagedPlayerId,
+                                                       UUID preventedCreatureId, Card sourceCard) {
+        if (damagedPlayerId == null || sourceCard == null) return;
+
+        CardEffect effect = new CommanderCreaturesDealPowerDamageToPreventedCreatureEffect();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                damagedPlayerId,
+                sourceCard.getName() + "'s triggered ability",
+                List.of(effect),
+                preventedCreatureId,
+                (UUID) null);
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+    }
+
     /** "Whenever a land enters under an opponent's control" (ON_OPPONENT_LAND_ENTERS_BATTLEFIELD). */
     public void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
         gameData.forEachBattlefield((playerId, battlefield) -> {
@@ -16663,16 +16706,42 @@ public class TriggerCollectionService {
                         gameData.simultaneousDyingControllers.get(entry.getKey())))
                 .findFirst().orElse(null);
         if (firstOtherDeath == null) return;
-        Permanent dyingPermanent = firstOtherDeath.getValue();
-        Card dyingCard = dyingPermanent.getCard();
-        int dyingPower = Math.max(0, dyingPermanent.getEffectivePower());
-        TriggerContext context = new TriggerContext.CreatureDeath(dyingCard, watcherControllerId,
-                dyingPower, dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(), dyingPermanent);
+        Permanent firstDyingPermanent = firstOtherDeath.getValue();
+        Card firstDyingCard = firstDyingPermanent.getCard();
         List<CardEffect> stackEffects = new ArrayList<>();
+        List<UUID> eventCardIds = new ArrayList<>();
+        Permanent dyingPermanent = null;
+        Card dyingCard = null;
+        int dyingPower = 0;
+        TriggerContext context = null;
         for (CardEffect effect : effects) {
             CardEffect resolved = unwrapCreatureDeathConditional(
-                    effect, dyingCard, dyingPermanent, gameData, watcherControllerId, watcher);
-            if (!(resolved instanceof BatchedCreatureDeathTriggerEffect batched)) continue;
+                    effect, firstDyingCard, firstDyingPermanent, gameData, watcherControllerId, watcher);
+            if (resolved == null) continue;
+            CardEffect triggerBody = resolved instanceof OncePerTurnTriggerEffect once
+                    ? once.wrapped() : resolved;
+            if (!(triggerBody instanceof BatchedCreatureDeathTriggerEffect batched)) continue;
+            PermanentPredicate dyingPredicate = batched.dyingPermanentPredicate();
+
+            List<Map.Entry<UUID, Permanent>> matchingDeaths = dyingCreatures.stream()
+                    .filter(entry -> !entry.getKey().equals(watcher.getId()))
+                    .filter(entry -> watcherControllerId.equals(
+                            gameData.simultaneousDyingControllers.get(entry.getKey())))
+                    .filter(entry -> matchesDyingPermanentPredicate(gameData, entry.getValue(),
+                            dyingPredicate))
+                    .toList();
+            if (matchingDeaths.isEmpty()) continue;
+
+            Map.Entry<UUID, Permanent> selectedDeath = matchingDeaths.get(0);
+            dyingPermanent = selectedDeath.getValue();
+            dyingCard = dyingPermanent.getCard();
+            dyingPower = Math.max(0, dyingPermanent.getEffectivePower());
+            context = new TriggerContext.CreatureDeath(dyingCard, watcherControllerId,
+                    dyingPower, dyingPermanent.getEffectiveToughness(), dyingPermanent.getId(), dyingPermanent);
+            boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
+            resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, watcher, resolved);
+            if (resolved == null) continue;
+            batched = (BatchedCreatureDeathTriggerEffect) resolved;
             resolved = batched.wrapped();
             if (!passesInterveningIf(gameData, watcher, watcherControllerId, resolved,
                     dyingPermanent.getId(), dyingPower)) continue;
@@ -16680,11 +16749,17 @@ public class TriggerCollectionService {
                     || resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                         watcher.getCard(), watcherControllerId, new ArrayList<>(List.of(resolved)), dyingPower));
+                eventCardIds.addAll(matchingDeaths.stream()
+                        .map(entry -> entry.getValue().getCard().getId()).toList());
+                if (oncePerTurn) OncePerTurnTriggerSupport.markIfNeeded(gameData, watcher, effect);
             } else if (resolved instanceof MayPayManaEffect
                     || resolved instanceof MayPayLifeEffect
                     || resolved instanceof MayEffect) {
                 dispatch(new TriggerMatchContext(gameData, watcher, watcherControllerId, resolved),
                         EffectSlot.ON_ALLY_CREATURE_DIES, resolved, context);
+                eventCardIds.addAll(matchingDeaths.stream()
+                        .map(entry -> entry.getValue().getCard().getId()).toList());
+                if (oncePerTurn) OncePerTurnTriggerSupport.markIfNeeded(gameData, watcher, effect);
             } else {
                 if (resolved instanceof DyingCreatureCardAwareEffect aware) {
                     resolved = aware.boundToDyingCard(dyingCard.getId());
@@ -16693,6 +16768,9 @@ public class TriggerCollectionService {
                     resolved = aware.boundToDyingCreatureCounterCount(countCountersOnPermanent(dyingPermanent));
                 }
                 stackEffects.add(resolved);
+                eventCardIds.addAll(matchingDeaths.stream()
+                        .map(entry -> entry.getValue().getCard().getId()).toList());
+                if (oncePerTurn) OncePerTurnTriggerSupport.markIfNeeded(gameData, watcher, effect);
             }
         }
         if (stackEffects.isEmpty()) return;
@@ -16702,8 +16780,15 @@ public class TriggerCollectionService {
         entry.setSourcePermanentSnapshot(new Permanent(watcher));
         entry.setTriggeringPermanentId(dyingPermanent.getId());
         entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
+        entry.setEventCardIds(eventCardIds);
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+    }
+
+    private boolean matchesDyingPermanentPredicate(GameData gameData, Permanent dyingPermanent,
+                                                   PermanentPredicate predicate) {
+        return predicate == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, dyingPermanent, predicate);
     }
 
     private int countCountersOnPermanent(Permanent permanent) {

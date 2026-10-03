@@ -4592,6 +4592,9 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyComeuppancePrevention(
                         gameData, defenderId, damage, atk.getCard(), atk,
                         sourceControllerId, true);
+                damage = damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                        gameData, defenderId, damage, atk.getCard(), atk,
+                        sourceControllerId, true);
                 damage -= damagePreventionService.applyAllButOneDamagePrevention(gameData, defenderId, damage, true);
                 damage -= damageSupport.applyDamageToControllerCounterReplacement(gameData, defenderId, damage);
                 damage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(

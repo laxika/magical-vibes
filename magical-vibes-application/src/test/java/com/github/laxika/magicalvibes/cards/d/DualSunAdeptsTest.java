@@ -17,10 +17,9 @@ class DualSunAdeptsTest extends BaseCardTest {
     @Test
     @DisplayName("The ability gives your creatures +1/+1 and does not affect opposing creatures")
     void boostsCreaturesYouControl() {
-        Permanent adepts = harness.addToBattlefieldAndReturn(player1, new DualSunAdepts());
+        Permanent adepts = addCreatureReady(player1, new DualSunAdepts());
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        adepts.setSummoningSick(false);
         prepareActivation();
 
         harness.activateAbility(player1, 0, null, null);
@@ -54,6 +53,55 @@ class DualSunAdeptsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick source can activate repeatedly")
+    void repeatedActivationsStackWithoutTapCost() {
+        Permanent adepts = harness.addToBattlefieldAndReturn(player1, new DualSunAdepts());
+        adepts.setTapped(true);
+        prepareActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, adepts)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, adepts)).isEqualTo(4);
+        assertThat(adepts.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The boost includes creatures present at resolution but excludes later arrivals")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        harness.addToBattlefield(player1, new DualSunAdepts());
+        prepareActivation();
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new DualSunAdepts());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new DualSunAdepts());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boosted Adepts deal damage in both combat damage steps")
+    void boostAppliesToBothDoubleStrikeDamageSteps() {
+        addCreatureReady(player1, new DualSunAdepts());
+        prepareActivation();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(java.util.List.of(0));
+        harness.passUntil(TurnStep.END_COMBAT);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
     private void prepareActivation() {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.forceActivePlayer(player1);

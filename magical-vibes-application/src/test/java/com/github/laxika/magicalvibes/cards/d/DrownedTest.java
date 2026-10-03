@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Drowned.class)
 class DrownedTest extends BaseCardTest {
@@ -52,5 +53,48 @@ class DrownedTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(drowned);
         assertThat(drowned.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Its non-tap ability works while tapped")
+    void abilityWorksWhileTapped() {
+        Permanent drowned = addCreatureReady(player1, new Drowned());
+        drowned.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+        assertThat(drowned.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate shields only when they resolve")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent drowned = addCreatureReady(player1, new Drowned());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(drowned.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drowned.getRegenerationShield()).isEqualTo(2);
+        assertThat(drowned.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Its ability cannot be activated without paying mana")
+    void abilityRequiresMana() {
+        Permanent drowned = addCreatureReady(player1, new Drowned());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(drowned.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

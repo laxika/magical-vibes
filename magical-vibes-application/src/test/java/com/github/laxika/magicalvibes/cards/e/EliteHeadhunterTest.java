@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarrukCursedHuntsman;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,8 +13,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EliteHeadhunter.class, GrizzlyBears.class, Spellbook.class})
+@CardUsed({EliteHeadhunter.class, GrizzlyBears.class, Spellbook.class, GarrukCursedHuntsman.class})
 class EliteHeadhunterTest extends BaseCardTest {
 
     @Test
@@ -59,11 +63,62 @@ class EliteHeadhunterTest extends BaseCardTest {
     @DisplayName("Cannot activate without another creature or an artifact")
     void cannotActivateWithoutSacrifice() {
         harness.addToBattlefield(player1, new EliteHeadhunter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         addHybridMana();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another creature or an artifact");
+    }
+
+    @Test
+    @DisplayName("An artifact Elite Headhunter can sacrifice itself")
+    void canSacrificeItselfWhenItIsAnArtifact() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new EliteHeadhunter());
+        source.getGrantedCardTypes().add(CardType.ARTIFACT);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addHybridMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Elite Headhunter");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Mixed hybrid mana pays for two damage to a planeswalker")
+    void damagesPlaneswalkerWithMixedHybridMana() {
+        harness.addToBattlefield(player1, new EliteHeadhunter());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GarrukCursedHuntsman());
+        target.setCounterCount(CounterType.LOYALTY, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Garruk, Cursed Huntsman");
+    }
+
+    @Test
+    @DisplayName("A tapped Elite Headhunter can activate using only red mana")
+    void tappedSourceCanActivateWithRedMana() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new EliteHeadhunter());
+        source.setTapped(true);
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(source.isTapped()).isTrue();
     }
 
     private void addHybridMana() {

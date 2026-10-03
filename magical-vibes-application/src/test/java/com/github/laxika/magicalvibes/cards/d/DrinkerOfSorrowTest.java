@@ -95,6 +95,37 @@ class DrinkerOfSorrowTest extends BaseCardTest {
     }
 
     @Test
+    void sacrificesItselfWhenItIsTheOnlyPermanent() {
+        Permanent drinker = addCreatureReady(player1, new DrinkerOfSorrow());
+        drinker.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Drinker of Sorrow");
+        harness.assertNotOnBattlefield(player1, "Drinker of Sorrow");
+        harness.assertLife(player2, 15);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canChooseToSacrificeItselfInsteadOfAnotherPermanent() {
+        Permanent drinker = addCreatureReady(player1, new DrinkerOfSorrow());
+        drinker.setAttacking(true);
+        addCreatureReady(player1, new DefiantElf());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(drinker.getId()));
+
+        harness.assertInGraveyard(player1, "Drinker of Sorrow");
+        harness.assertNotOnBattlefield(player1, "Drinker of Sorrow");
+        harness.assertOnBattlefield(player1, "Defiant Elf");
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
     void cannotBlock() {
         Permanent drinker = addCreatureReady(player1, new DrinkerOfSorrow());
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DropkickBomber.class, RagingGoblin.class, GrizzlyBears.class})
+@CardUsed({DropkickBomber.class, RagingGoblin.class, GrizzlyBears.class, BoggartShenanigans.class})
 class DropkickBomberTest extends BaseCardTest {
 
     @Test
@@ -48,7 +49,6 @@ class DropkickBomberTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isFalse();
@@ -88,5 +88,64 @@ class DropkickBomberTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.activateAbility(player1, 0, null, ownGoblin.getId());
+    }
+
+    @Test
+    @DisplayName("A noncreature Goblin permanent is a legal target")
+    void canTargetNoncreatureGoblin() {
+        addCreatureReady(player1, new DropkickBomber());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Goblin that deals combat damage while blocking is sacrificed")
+    void sacrificesTargetAfterDealingDamageToCreature() {
+        addCreatureReady(player1, new DropkickBomber());
+        Permanent goblin = addCreatureReady(player1, new DropkickBomber());
+        Permanent attacker = addCreatureReady(player2, new DropkickBomber());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        goblin.setBlocking(true);
+        goblin.addBlockingTarget(0);
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(goblin.getId()));
+        harness.assertInGraveyard(player1, "Dropkick Bomber");
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability expires at the end of the turn")
+    void doesNotSacrificeAfterGrantedAbilityExpires() {
+        addCreatureReady(player1, new DropkickBomber());
+        Permanent goblin = addCreatureReady(player1, new DropkickBomber());
+        Permanent attacker = addCreatureReady(player2, new DropkickBomber());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isFalse();
+
+        attacker.setAttacking(true);
+        goblin.setBlocking(true);
+        goblin.addBlockingTarget(0);
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(goblin.getId()));
+        harness.assertInGraveyard(player2, "Dropkick Bomber");
     }
 }

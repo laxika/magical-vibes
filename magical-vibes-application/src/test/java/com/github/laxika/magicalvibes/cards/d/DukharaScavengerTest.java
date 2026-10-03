@@ -1,71 +1,125 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.PrakhataClubSecurity;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
+import com.github.laxika.magicalvibes.cards.t.TidyConclusion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DukharaScavenger.class, Shock.class, Bonesplitter.class, GrizzlyBears.class})
+@CardUsed({DukharaScavenger.class, TidyConclusion.class, PropheticPrism.class, PrakhataClubSecurity.class})
 class DukharaScavengerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("ETB may put an artifact or creature card from the graveyard on top of the library")
     void etbPutsArtifactOrCreatureOnTopOfLibrary() {
-        harness.setGraveyard(player1, new ArrayList<>(List.of(
-                new Shock(), new Bonesplitter(), new GrizzlyBears())));
-        harness.setLibrary(player1, new ArrayList<>());
+        TidyConclusion instant = new TidyConclusion();
+        PropheticPrism artifact = new PropheticPrism();
+        PrakhataClubSecurity creature = new PrakhataClubSecurity();
+        TidyConclusion libraryCard = new TidyConclusion();
+        harness.setGraveyard(player1, List.of(instant, artifact, creature));
+        harness.setLibrary(player1, List.of(libraryCard));
         castScavenger();
-        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(artifact.getId(), creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.GraveyardChoice choice =
-                (PendingInteraction.GraveyardChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIndices()).containsExactly(1, 2);
-
-        harness.handleGraveyardCardChosen(player1, 1);
-
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Bonesplitter");
-        harness.assertInGraveyard(player1, "Shock");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact, libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant, creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("Declining the ETB leaves the graveyard unchanged")
     void etbCanBeDeclined() {
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.setLibrary(player1, new ArrayList<>());
+        PrakhataClubSecurity creature = new PrakhataClubSecurity();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of());
         castScavenger();
-        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
-    @DisplayName("ETB does not offer non-artifact, non-creature cards")
     void etbDoesNotOfferOtherCards() {
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new Shock())));
-        harness.setLibrary(player1, new ArrayList<>());
+        TidyConclusion instant = new TidyConclusion();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setLibrary(player1, List.of());
         castScavenger();
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
+    }
+
+    @Test
+    void etbCanPutCreatureOnTopOfNonemptyLibrary() {
+        PrakhataClubSecurity creature = new PrakhataClubSecurity();
+        PropheticPrism libraryCard = new PropheticPrism();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(libraryCard));
+        castScavenger();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void etbCannotTargetOpponentsGraveyard() {
+        PropheticPrism artifact = new PropheticPrism();
+        PrakhataClubSecurity creature = new PrakhataClubSecurity();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(artifact, creature));
+        castScavenger();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact, creature);
+    }
+
+    @Test
+    void emptyGraveyardLeavesNoTriggerOnStack() {
+        harness.setGraveyard(player1, List.of());
+        castScavenger();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotAllowChoosingAnotherCard() {
+        PropheticPrism target = new PropheticPrism();
+        PrakhataClubSecurity other = new PrakhataClubSecurity();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setLibrary(player1, List.of());
+        castScavenger();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castScavenger() {
@@ -73,5 +127,6 @@ class DukharaScavengerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
     }
 }

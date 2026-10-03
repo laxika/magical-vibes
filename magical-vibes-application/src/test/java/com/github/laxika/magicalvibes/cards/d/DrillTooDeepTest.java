@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
+import com.github.laxika.magicalvibes.cards.u.UthrosScanship;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DrillTooDeep.class)
+@CardUsed({DrillTooDeep.class, EvendoWakingHaven.class, UthrosScanship.class})
 class DrillTooDeepTest extends BaseCardTest {
 
     @Test
@@ -84,6 +86,95 @@ class DrillTooDeepTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(planet.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
+    }
+
+    @Test
+    @DisplayName("Charge counters can turn a stationed Spacecraft into a creature")
+    void countersReachSpacecraftStationThreshold() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new UthrosScanship());
+        spacecraft.setCounterCount(CounterType.CHARGE, 3);
+
+        cast(0, spacecraft);
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(8);
+        assertThat(gqs.isCreature(gd, spacecraft)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spacecraft);
+    }
+
+    @Test
+    @DisplayName("Counter mode remains legal for an already animated Spacecraft")
+    void countersCanTargetAnimatedSpacecraft() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new UthrosScanship());
+        spacecraft.setCounterCount(CounterType.CHARGE, 8);
+
+        cast(0, spacecraft);
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(13);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spacecraft);
+    }
+
+    @Test
+    @DisplayName("Destroy mode can destroy your own Spacecraft")
+    void destroysOwnSpacecraft() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new UthrosScanship());
+
+        cast(1, spacecraft);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spacecraft);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spacecraft.getCard());
+    }
+
+    @Test
+    @DisplayName("Counter mode does nothing if control of its Planet changes before resolution")
+    void counterModeRechecksControlOnResolution() {
+        Permanent planet = harness.addToBattlefieldAndReturn(player1, new EvendoWakingHaven());
+        planet.setCounterCount(CounterType.CHARGE, 2);
+        prepareCast();
+        harness.castModalInstant(player1, 0, 0, List.of(planet.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(planet);
+        gd.playerBattlefields.get(player2.getId()).add(planet);
+
+        harness.passBothPriorities();
+
+        assertThat(planet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(planet);
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(DrillTooDeep.class::isInstance);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counter mode adds charge counters to a real Planet without destroying it")
+    void countersOnPlanetPreserveOtherPermanents() {
+        Permanent planet = harness.addToBattlefieldAndReturn(player1, new EvendoWakingHaven());
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new UthrosScanship());
+        planet.setCounterCount(CounterType.CHARGE, 7);
+
+        cast(0, planet);
+
+        assertThat(planet.getCounterCount(CounterType.CHARGE)).isEqualTo(12);
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(planet, spacecraft);
+    }
+
+    @Test
+    @DisplayName("Counter mode does nothing if its Spacecraft is destroyed in response")
+    void destroyedTargetDoesNotReceiveCounters() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new UthrosScanship());
+        spacecraft.setCounterCount(CounterType.CHARGE, 2);
+        prepareCast();
+        harness.castModalInstant(player1, 0, 0, List.of(spacecraft.getId()));
+        harness.setHand(player2, List.of(new DrillTooDeep()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castModalInstant(player2, 0, 1, List.of(spacecraft.getId()));
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spacecraft);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spacecraft.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(DrillTooDeep.class::isInstance);
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(DrillTooDeep.class::isInstance);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast(int mode, Permanent target) {

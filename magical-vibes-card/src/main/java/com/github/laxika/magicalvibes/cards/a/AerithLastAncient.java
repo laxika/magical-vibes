@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGrave
 
 @CardRegistration(set = "FIC", collectorNumber = "76")
 @CardRegistration(set = "FIC", collectorNumber = "163")
+@CardRegistration(set = "FIC", collectorNumber = "471")
 public class AerithLastAncient extends Card {
 
     public AerithLastAncient() {

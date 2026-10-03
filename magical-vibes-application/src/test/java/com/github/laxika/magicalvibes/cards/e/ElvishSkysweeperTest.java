@@ -73,6 +73,56 @@ class ElvishSkysweeperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can sacrifice another creature and keep Skysweeper")
+    void canSacrificeAnotherCreature() {
+        addReadySkysweeper();
+        Permanent sacrifice = addCreatureReady(player1, new BorosRecruit());
+        Permanent target = addCreatureReady(player2, new CourierHawk());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        harness.assertInGraveyard(player1, "Boros Recruit");
+        harness.assertOnBattlefield(player2, "Courier Hawk");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elvish Skysweeper");
+        harness.assertInGraveyard(player2, "Courier Hawk");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper());
+        source.setSummoningSick(true);
+        source.setTapped(true);
+        Permanent target = addCreatureReady(player2, new CourierHawk());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Skysweeper");
+        harness.assertInGraveyard(player2, "Courier Hawk");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the targeted flyer to pay the cost")
+    void canSacrificeTargetedFlyer() {
+        addReadySkysweeper();
+        Permanent target = addCreatureReady(player1, new CourierHawk());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.assertInGraveyard(player1, "Courier Hawk");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elvish Skysweeper");
+        org.assertj.core.api.Assertions.assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadySkysweeper() {
         return addCreatureReady(player1, new ElvishSkysweeper());
     }

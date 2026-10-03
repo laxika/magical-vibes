@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "247")
 @CardRegistration(set = "DSC", collectorNumber = "278")
+@CardRegistration(set = "FIC", collectorNumber = "399")
 public class GeothermalBog extends Card {
 
     public GeothermalBog() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DrownedCatacomb.class, Forest.class, Island.class, Swamp.class})
 class DrownedCatacombTest extends BaseCardTest {
-
-    // ===== Enters tapped (no qualifying lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control no lands")
@@ -26,7 +26,7 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isTrue();
@@ -41,13 +41,11 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isTrue();
     }
-
-    // ===== Enters untapped (qualifying lands present) =====
 
     @Test
     @DisplayName("Enters untapped when you control an Island")
@@ -58,7 +56,7 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isFalse();
@@ -73,7 +71,7 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isFalse();
@@ -89,13 +87,11 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isFalse();
     }
-
-    // ===== Only checks your lands, not opponent's =====
 
     @Test
     @DisplayName("Opponent's Island does not satisfy the check")
@@ -106,13 +102,11 @@ class DrownedCatacombTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent catacomb = findCatacomb(player1);
         assertThat(catacomb.isTapped()).isTrue();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for blue mana produces one blue")
@@ -136,12 +130,53 @@ class DrownedCatacombTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A tapped Island still allows Drowned Catacomb to enter untapped")
+    void tappedIslandStillQualifies() {
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.setHand(player1, List.of(new DrownedCatacomb()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(findCatacomb(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Drowned Catacomb does not qualify as an Island or Swamp")
+    void anotherCatacombDoesNotQualify() {
+        harness.addToBattlefield(player1, new DrownedCatacomb());
+        harness.setHand(player1, List.of(new DrownedCatacomb()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getLast().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Drowned Catacomb enters tapped even when put onto the battlefield without being played")
+    void putOntoBattlefieldWithoutQualifyingLand() {
+        Permanent catacomb = harness.enterBattlefieldAndReturn(player1, new DrownedCatacomb());
+
+        assertThat(catacomb.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Drowned Catacomb enters untapped when put onto the battlefield with a Swamp")
+    void putOntoBattlefieldWithSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+
+        Permanent catacomb = harness.enterBattlefieldAndReturn(player1, new DrownedCatacomb());
+
+        assertThat(catacomb.isTapped()).isFalse();
+    }
 
     private Permanent addCatacombReady(Player player) {
-        Permanent perm = new Permanent(new DrownedCatacomb());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new DrownedCatacomb());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

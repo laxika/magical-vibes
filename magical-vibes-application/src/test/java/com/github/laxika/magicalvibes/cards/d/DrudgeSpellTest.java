@@ -76,13 +76,10 @@ class DrudgeSpellTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player2, List.of(new DrySpell()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new DrySpell(), "{1}{B}");
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);
@@ -146,5 +143,61 @@ class DrudgeSpellTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Skeleton")).isZero();
         assertThat(countPermanents(player2, "Skeleton")).isZero();
+    }
+
+    @Test
+    @DisplayName("Creature cards are exiled as a cost before the token ability resolves")
+    void exilesOnlyCreatureCardsBeforeResolution() {
+        harness.addToBattlefield(player1, new DrudgeSpell());
+        DeathSpeakers first = new DeathSpeakers();
+        DeathSpeakers second = new DeathSpeakers();
+        DrySpell noncreature = new DrySpell();
+        harness.setGraveyard(player1, List.of(noncreature, first, second));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.findExiledCard(first.getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getId())).isNotNull();
+        assertThat(countPermanents(player1, "Skeleton")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Creature cards in the opponent's graveyard cannot pay the cost")
+    void cannotUseOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new DrudgeSpell());
+        harness.setGraveyard(player1, List.of(new DeathSpeakers()));
+        harness.setGraveyard(player2, List.of(new DeathSpeakers(), new DeathSpeakers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(countPermanents(player1, "Skeleton")).isZero();
+    }
+
+    @Test
+    @DisplayName("An ability resolving after the leave trigger creates a surviving Skeleton")
+    void pendingAbilitySurvivesSourceLeaving() {
+        harness.addToBattlefield(player1, new DrudgeSpell());
+        harness.setGraveyard(player1, List.of(new DeathSpeakers(), new DeathSpeakers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        removeDrudgeSpellWithApocalypseChime();
+
+        harness.assertNotOnBattlefield(player1, "Drudge Spell");
+        assertThat(countPermanents(player1, "Skeleton")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);
     }
 }

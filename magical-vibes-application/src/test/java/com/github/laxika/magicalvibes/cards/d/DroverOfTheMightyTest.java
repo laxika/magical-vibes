@@ -2,51 +2,29 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DroverOfTheMighty.class, ColossalDreadmaw.class, JungleDelver.class})
 class DroverOfTheMightyTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
-
-    @Test
-    @DisplayName("Has activated ability: {T}: Add one mana of any color")
-    void hasCorrectManaAbility() {
-        DroverOfTheMighty card = new DroverOfTheMighty();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
-    }
-
-    // ===== Conditional boost with Dinosaur =====
 
     @Test
     @DisplayName("Gets +2/+2 (becomes 3/3) when controller controls a Dinosaur")
     void boostWithDinosaur() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        harness.addToBattlefield(player1, createDinosaur());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(3);
     }
@@ -54,9 +32,8 @@ class DroverOfTheMightyTest extends BaseCardTest {
     @Test
     @DisplayName("Base 1/1 without a Dinosaur")
     void noBoostWithoutDinosaur() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(1);
     }
@@ -64,55 +41,44 @@ class DroverOfTheMightyTest extends BaseCardTest {
     @Test
     @DisplayName("No boost with a non-Dinosaur creature on the battlefield")
     void noBoostWithNonDinosaurCreature() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        harness.addToBattlefield(player1, new JungleDelver());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(1);
     }
 
-    // ===== Loses boost when Dinosaur leaves =====
-
     @Test
     @DisplayName("Loses +2/+2 when Dinosaur leaves the battlefield")
     void losesBoostWhenDinosaurLeaves() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        harness.addToBattlefield(player1, createDinosaur());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
 
         // Remove the Dinosaur
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getSubtypes().contains(CardSubtype.DINOSAUR));
+                .removeIf(p -> p.getCard() instanceof ColossalDreadmaw);
 
         // Boost should be gone immediately (computed on the fly)
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(1);
     }
 
-    // ===== Opponent's Dinosaur doesn't count =====
-
     @Test
     @DisplayName("Opponent's Dinosaur does not grant the boost")
     void opponentDinosaurDoesNotCount() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        harness.addToBattlefield(player2, createDinosaur());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        harness.addToBattlefield(player2, new ColossalDreadmaw());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(1);
     }
 
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Tapping for mana prompts color choice")
     void tapForManaPromptsColorChoice() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
-        drover.setSummoningSick(false);
+        Permanent drover = addCreatureReady(player1, new DroverOfTheMighty());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -122,41 +88,28 @@ class DroverOfTheMightyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
     @DisplayName("Choosing a color adds exactly one mana of that color")
-    void choosingColorAddsMana() {
-        for (String color : List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN")) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    void choosingColorAddsMana(ManaColor color) {
+        Permanent drover = addCreatureReady(player1, new DroverOfTheMighty());
 
-            harness.addToBattlefield(player1, new DroverOfTheMighty());
-            GameData localGd = harness.getGameData();
-            Permanent drover = localGd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Drover of the Mighty"))
-                    .findFirst().orElseThrow();
-            drover.setSummoningSick(false);
-            ManaColor manaColor = ManaColor.valueOf(color);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
 
-            harness.activateAbility(player1, 0, null, null);
-            int before = localGd.playerManaPools.get(player1.getId()).get(manaColor);
-
-            harness.handleListChoice(player1, color);
-
-            assertThat(localGd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(localGd.interaction.activeInteraction()).isNull();
-        }
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(drover.isTapped()).isTrue();
     }
-
-    // ===== Static boost survives end-of-turn reset =====
 
     @Test
     @DisplayName("Static boost survives end-of-turn modifier reset")
     void staticBoostSurvivesEndOfTurnReset() {
-        harness.addToBattlefield(player1, new DroverOfTheMighty());
-        harness.addToBattlefield(player1, createDinosaur());
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
 
-        Permanent drover = findPermanent(player1, "Drover of the Mighty");
         assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
 
         drover.resetModifiers();
@@ -165,12 +118,57 @@ class DroverOfTheMightyTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(3);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void multipleDinosaursGrantOnlyOneBoostAndOneRemainingKeepsIt() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        harness.addToBattlefield(player1, new ColossalDreadmaw());
 
-    private Card createDinosaur() {
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.DINOSAUR));
-        return card;
+        assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(3);
     }
 
+    @Test
+    void dinosaurEnteringAfterDroverImmediatelyGrantsBoost() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(1);
+
+        harness.enterBattlefieldAndReturn(player1, new ColossalDreadmaw());
+
+        assertThat(gqs.getEffectivePower(gd, drover)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, drover)).isEqualTo(3);
+    }
+
+    @Test
+    void summoningSickDroverCannotProduceMana() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new DroverOfTheMighty());
+        drover.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(drover.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void tappedDroverCannotProduceManaAgain() {
+        Permanent drover = addCreatureReady(player1, new DroverOfTheMighty());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(drover.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

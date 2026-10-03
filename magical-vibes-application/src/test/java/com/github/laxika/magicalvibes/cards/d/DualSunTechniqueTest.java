@@ -68,10 +68,76 @@ class DualSunTechniqueTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castResolve(Permanent target) {
+    @Test
+    void drawsWhenCounterIsAddedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        prepareSpell();
+        harness.castInstant(player1, 0, creature.getId());
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotDrawWhenCounterIsRemovedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        prepareSpell();
+        harness.castInstant(player1, 0, creature.getId());
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void otherCounterTypesDoNotCauseDraw() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        castResolve(creature);
+
+        assertThat(creature.getGrantedKeywords()).contains(Keyword.DOUBLE_STRIKE);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotResolveWhenTargetLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        prepareSpell();
+        harness.castInstant(player1, 0, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.DOUBLE_STRIKE);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Dual-Sun Technique");
+    }
+
+    private void prepareSpell() {
         harness.setHand(player1, List.of(new DualSunTechnique()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    private void castResolve(Permanent target) {
+        prepareSpell();
         harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

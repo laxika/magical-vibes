@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,12 +61,75 @@ class DromokasGiftTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void castDromokasGift() {
-        harness.setHand(player1, List.of(new DromokasGift()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    @DisplayName("Ignores opposing creatures with lower toughness")
+    void ignoresOpposingCreatures() {
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        castDromokasGift();
+
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Uses toughness including existing counters")
+    void usesModifiedToughness() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+
+        castDromokasGift();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Marked damage does not reduce toughness for bolster")
+    void ignoresMarkedDamageWhenComparingToughness() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        spider.setMarkedDamage(3);
+
+        castDromokasGift();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Determines the least-toughness creature at resolution")
+    void determinesCreatureAtResolution() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
         harness.forceActivePlayer(player1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DromokasGift(), "{4}{G}");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not bolster an opponent's creature when the controller has none")
+    void doesNothingWithOnlyOpposingCreatures() {
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        castDromokasGift();
+
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castDromokasGift() {
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new DromokasGift(), "{4}{G}");
         harness.passBothPriorities();
     }
 }

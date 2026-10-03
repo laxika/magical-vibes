@@ -45,6 +45,7 @@ class ElusiveOtterTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new ElusiveOtter()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castAdventure(
                 player1, 0, 1, Map.of(opponentCreature.getId(), 1)))
@@ -87,8 +88,7 @@ class ElusiveOtterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Opt()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(otter.getEffectivePower()).isEqualTo(2);
         assertThat(otter.getEffectiveToughness()).isEqualTo(2);
@@ -100,10 +100,7 @@ class ElusiveOtterTest extends BaseCardTest {
         Permanent otter = addCreatureReady(player1, new ElusiveOtter());
         otter.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(otter);
@@ -112,5 +109,157 @@ class ElusiveOtterTest extends BaseCardTest {
                 gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("power too low");
+    }
+
+    @Test
+    void adventureWithPositiveXCanHaveNoTargets() {
+        ElusiveOtter card = new ElusiveOtter();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAdventure(player1, 0, 3, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId()).card()).isSameAs(card);
+        assertThat(gd.exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void castingTheAdventureTriggersProwess() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAdventure(player1, 0, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(otter.getEffectivePower()).isEqualTo(2);
+        assertThat(otter.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void castingACreatureDoesNotTriggerProwess() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(otter.getEffectivePower()).isEqualTo(1);
+        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsAdventureDoesNotTriggerProwess() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ElusiveOtter()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAdventure(player2, 0, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(otter.getEffectivePower()).isEqualTo(1);
+        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void illegalTargetDoesNotRedistributeCountersToRemainingTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        ElusiveOtter card = new ElusiveOtter();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAdventure(player1, 0, 3, Map.of(first.getId(), 2, second.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).add(first);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.findExiledCard(card.getId()).card()).isSameAs(card);
+    }
+
+    @Test
+    void adventureWithAllTargetsIllegalGoesToGraveyardWithoutAdventurePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        ElusiveOtter card = new ElusiveOtter();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, 1, Map.of(target.getId(), 1));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Elusive Otter");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void equalPowerCreatureCanBlockButProwessChangesBlockingLegality() {
+        Permanent blocker = addCreatureReady(player2, new ElusiveOtter());
+        Permanent otter = addCreatureReady(player1, new ElusiveOtter());
+        otter.setAttacking(true);
+
+        assertThat(bls.canBlockAttacker(gd, blocker, otter,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, otter,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    void prowessBoostExpiresAtEndOfTurn() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, 0, Map.of());
+        resolveAllTriggers();
+        assertThat(otter.getEffectivePower()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(otter.getEffectivePower()).isEqualTo(1);
+        assertThat(otter.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void eachAdventureTargetMustReceiveAtLeastOneCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, 1,
+                Map.of(first.getId(), 1, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("positive");
+    }
+
+    @Test
+    void adventureDistributionMustEqualChosenX() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ElusiveOtter());
+        harness.setHand(player1, List.of(new ElusiveOtter()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, 2, Map.of(target.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sum to 2");
     }
 }

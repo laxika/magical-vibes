@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
 import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,12 +16,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EchoingCourage.class, DarksteelGargoyle.class, MyrMoonvessel.class})
+@CardUsed({EchoingCourage.class, DarksteelGargoyle.class, MyrMoonvessel.class, WitnessProtection.class})
 class EchoingCourageTest extends BaseCardTest {
 
     @Test
@@ -121,6 +123,75 @@ class EchoingCourageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+
+    @Test
+    @DisplayName("Creatures entering before resolution are included")
+    void includesCreaturesEnteringBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new EchoingCourage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void excludesCreaturesEnteringAfterResolution() {
+        Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
+        castEchoingCourage(target.getId());
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An unrelated face-down creature does not prevent named creatures from being boosted")
+    void resolvesWithUnrelatedFaceDownCreature() {
+        Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent sameName = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent faceDown = addCreatureReady(player2, new MyrMoonvessel());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castEchoingCourage(target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, sameName)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, sameName)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, faceDown)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceDown)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A face-down target is boosted without affecting other nameless creatures")
+    void boostsOnlyTargetWhenTargetHasNoName() {
+        Permanent target = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent otherFaceDown = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent faceUp = addCreatureReady(player2, new DarksteelGargoyle());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        otherFaceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castEchoingCourage(target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherFaceDown)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherFaceDown)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, faceUp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, faceUp)).isEqualTo(3);
     }
 
     private void castEchoingCourage(UUID targetId) {

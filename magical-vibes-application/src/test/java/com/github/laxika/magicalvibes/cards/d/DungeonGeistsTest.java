@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BeguilerOfWills;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DungeonGeists.class, GrizzlyBears.class, BeguilerOfWills.class})
 class DungeonGeistsTest extends BaseCardTest {
 
+    @CardUsed({DungeonGeists.class, GrizzlyBears.class})
     @Nested
     @DisplayName("ETB trigger")
     class EnterTheBattlefield {
@@ -61,6 +64,7 @@ class DungeonGeistsTest extends BaseCardTest {
         }
     }
 
+    @CardUsed({DungeonGeists.class, GrizzlyBears.class})
     @Nested
     @DisplayName("Untap lock lifecycle")
     class UntapLock {
@@ -68,11 +72,10 @@ class DungeonGeistsTest extends BaseCardTest {
         @Test
         @DisplayName("Locked creature does not untap while Dungeon Geists is on the battlefield")
         void lockedCreatureStaysTapped() {
-            Permanent geists = addGeists(player1);
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-
-            bears.tap();
-            bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
+            castGeists(player2, "Grizzly Bears");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
 
             advanceToNextTurn(player1); // advance to player2's untap step
 
@@ -82,13 +85,12 @@ class DungeonGeistsTest extends BaseCardTest {
         @Test
         @DisplayName("Locked creature untaps once Dungeon Geists leaves the battlefield")
         void lockedCreatureUntapsWhenGeistsRemoved() {
-            Permanent geists = addGeists(player1);
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            castGeists(player2, "Grizzly Bears");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
 
-            bears.tap();
-            bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
-
-            gd.playerBattlefields.get(player1.getId()).remove(geists);
+            gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Dungeon Geists"));
 
             advanceToNextTurn(player1); // advance to player2's untap step
 
@@ -98,11 +100,10 @@ class DungeonGeistsTest extends BaseCardTest {
         @Test
         @DisplayName("Lock persists across multiple turns while Dungeon Geists remains")
         void lockPersistsAcrossTurns() {
-            Permanent geists = addGeists(player1);
             Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-
-            bears.tap();
-            bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(geists.getId());
+            castGeists(player2, "Grizzly Bears");
+            harness.passBothPriorities();
+            harness.passBothPriorities();
 
             advanceToNextTurn(player1); // player2's untap step
             assertThat(bears.isTapped()).isTrue();
@@ -114,6 +115,7 @@ class DungeonGeistsTest extends BaseCardTest {
         }
     }
 
+    @CardUsed({DungeonGeists.class, GrizzlyBears.class})
     @Nested
     @DisplayName("Targeting restrictions")
     class TargetingRestrictions {
@@ -132,8 +134,6 @@ class DungeonGeistsTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
-
     private void castGeists(Player targetOwner, String targetName) {
         UUID targetId = harness.getPermanentId(targetOwner, targetName);
         harness.setHand(player1, List.of(new DungeonGeists()));
@@ -142,20 +142,79 @@ class DungeonGeistsTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0, targetId);
     }
 
-    private Permanent addGeists(Player player) {
-        Permanent geists = new Permanent(new DungeonGeists());
-        gd.playerBattlefields.get(player.getId()).add(geists);
-        return geists;
+    private void advanceToNextTurn(Player currentActivePlayer) {
+        harness.performUntapStep(currentActivePlayer == player1 ? player2 : player1);
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+    private Permanent prepareControlChange() {
+        Permanent target = addCreatureReady(player2, new DungeonGeists());
+        addCreatureReady(player2, new BeguilerOfWills());
+        addCreatureReady(player2, new BeguilerOfWills());
+        castGeists(player2, "Dungeon Geists");
+        harness.passBothPriorities();
+        return target;
+    }
+
+    private void stealGeists() {
+        UUID sourceId = harness.getPermanentId(player1, "Dungeon Geists");
+        harness.activateAbility(player2, 1, null, sourceId);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(sourceId));
+    }
+
+    @Test
+    void losingControlEndsUntapPrevention() {
+        Permanent target = prepareControlChange();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+        stealGeists();
+
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void losingControlBeforeTriggerResolvesStillTapsButDoesNotLock() {
+        Permanent target = prepareControlChange();
+        stealGeists();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void regainingControlDoesNotRestoreExpiredLock() {
+        Permanent target = prepareControlChange();
+        harness.passBothPriorities();
+        Permanent source = findPermanent(player1, "Dungeon Geists");
+        addCreatureReady(player1, new BeguilerOfWills());
+        addCreatureReady(player1, new BeguilerOfWills());
+        addCreatureReady(player1, new BeguilerOfWills());
+        stealGeists();
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void alreadyTappedTargetRemainsLocked() {
+        Permanent target = addCreatureReady(player2, new DungeonGeists());
+        target.tap();
+        castGeists(player2, "Dungeon Geists");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isTrue();
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -8,10 +9,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrownerOfSecrets.class})
+@CardUsed({DrownerOfSecrets.class, KnightOfMeadowgrain.class, MerrowCommerce.class})
 class DrownerOfSecretsTest extends BaseCardTest {
 
     @Test
@@ -103,7 +106,6 @@ class DrownerOfSecretsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({KnightOfMeadowgrain.class})
     @DisplayName("Cannot use an untapped non-Merfolk creature to pay the cost")
     void cannotTapNonMerfolk() {
         Permanent drowner = addCreatureReady(player1, new DrownerOfSecrets());
@@ -115,5 +117,74 @@ class DrownerOfSecretsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No untapped matching creature to tap");
         assertThat(knight.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can tap a noncreature Merfolk enchantment to pay the cost")
+    void canTapMerrowCommerce() {
+        Permanent drowner = addCreatureReady(player1, new DrownerOfSecrets());
+        drowner.tap();
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        DrownerOfSecrets topCard = new DrownerOfSecrets();
+        harness.setLibrary(player2, List.of(topCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(commerce.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("A summoning sick Drowner can tap itself and mills only the top card on resolution")
+    void summoningSickSourceCanTapItself() {
+        Permanent drowner = harness.addToBattlefieldAndReturn(player1, new DrownerOfSecrets());
+        drowner.setSummoningSick(true);
+        DrownerOfSecrets topCard = new DrownerOfSecrets();
+        DrownerOfSecrets nextCard = new DrownerOfSecrets();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(drowner.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(topCard);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard).doesNotContain(nextCard);
+    }
+
+    @Test
+    @DisplayName("Can tap another summoning sick Merfolk to pay the cost")
+    void canTapAnotherSummoningSickMerfolk() {
+        Permanent drowner = addCreatureReady(player1, new DrownerOfSecrets());
+        drowner.tap();
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DrownerOfSecrets());
+        merfolk.setSummoningSick(true);
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Milling an empty library still pays the tap cost and does not make the player lose")
+    void canMillEmptyLibrary() {
+        Permanent drowner = addCreatureReady(player1, new DrownerOfSecrets());
+        harness.setLibrary(player2, List.of());
+        int graveyardBefore = gd.playerGraveyards.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(drowner.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardBefore);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }
 }

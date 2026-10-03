@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DuergarAssailant.class, GrizzlyBears.class, LlanowarElves.class})
 class DuergarAssailantTest extends BaseCardTest {
 
     @Test
@@ -69,9 +71,59 @@ class DuergarAssailantTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking");
     }
 
+    @Test
+    @DisplayName("An attacker removed from combat is illegal when the ability resolves")
+    void doesNotDamageCreatureThatStopsAttacking() {
+        harness.addToBattlefield(player1, new DuergarAssailant());
+        Permanent attacker = addAttacker(player2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Duergar Assailant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Assailant can activate its sacrifice ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new DuergarAssailant());
+        source.setSummoningSick(true);
+        source.tap();
+        Permanent attacker = addAttacker(player2);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Duergar Assailant");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @CardUsed({DuergarAssailant.class})
+    @DisplayName("Can target an attacking creature controlled by its own controller")
+    void canDamageFriendlyAttacker() {
+        harness.addToBattlefield(player1, new DuergarAssailant());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new DuergarAssailant());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Duergar Assailant");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Duergar Assailant"))
+                .hasSize(2);
+    }
+
     private Permanent addAttacker(Player owner) {
-        harness.addToBattlefield(owner, new LlanowarElves());
-        Permanent attacker = findPermanent(owner, "Llanowar Elves");
+        Permanent attacker = harness.addToBattlefieldAndReturn(owner, new LlanowarElves());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
@@ -79,8 +131,7 @@ class DuergarAssailantTest extends BaseCardTest {
     }
 
     private Permanent addBlocker(Player owner) {
-        harness.addToBattlefield(owner, new LlanowarElves());
-        Permanent blocker = findPermanent(owner, "Llanowar Elves");
+        Permanent blocker = harness.addToBattlefieldAndReturn(owner, new LlanowarElves());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(UUID.randomUUID());
