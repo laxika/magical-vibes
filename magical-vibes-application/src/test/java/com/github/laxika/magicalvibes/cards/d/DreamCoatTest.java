@@ -16,8 +16,55 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DreamCoat.class, GrizzlyBears.class})
+@CardUsed({DreamCoat.class, GrizzlyBears.class, Disenchant.class})
 class DreamCoatTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The ability still changes colors if Dream Coat is destroyed in response")
+    void abilityResolvesAfterAuraIsDestroyed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DreamCoat(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Dream Coat");
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Dream Coat");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "DONE");
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.RED);
+    }
+
+    @Test
+    @DisplayName("All five chosen colors remain after Dream Coat leaves the battlefield")
+    void allFiveColorsPersistAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DreamCoat(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Dream Coat");
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactlyInAnyOrder(CardColor.values());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Dream Coat");
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactlyInAnyOrder(CardColor.values());
+    }
 
     @Test
     @DisplayName("Enchanted creature becomes the chosen colors indefinitely")
