@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DrippingDead;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -105,4 +106,64 @@ class CrestedCraghornTest extends BaseCardTest {
         assertThat(blocker.getMustBlockIds()).containsExactly(craghorn.getId());
     }
 
+    @Test
+    @DisplayName("Haste allows Crested Craghorn to attack the turn it enters")
+    void hasteAllowsAttackWhileSummoningSick() {
+        Permanent craghorn = harness.addToBattlefieldAndReturn(player1, new CrestedCraghorn());
+        craghorn.setSummoningSick(true);
+        addCreatureReady(player2, new FugitiveWizard());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0)))
+                .doesNotThrowAnyException();
+        assertThat(craghorn.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Provoke can force an already untapped creature to block")
+    void provokeAlreadyUntappedCreature() {
+        addCreatureReady(player1, new CrestedCraghorn());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Provoke's blocking requirement expires before an additional combat")
+    void provokeDoesNotCarryOverToAdditionalCombat() {
+        Permanent craghorn = addCreatureReady(player1, new CrestedCraghorn());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+        blocker.tap();
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        craghorn.untap();
+        blocker.untap();
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, false));
+
+        prepareDeclareBlockers();
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
 }
