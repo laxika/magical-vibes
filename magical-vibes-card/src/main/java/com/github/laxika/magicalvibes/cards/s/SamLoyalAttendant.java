@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "7")
 @CardRegistration(set = "LTC", collectorNumber = "90")
+@CardRegistration(set = "LTC", collectorNumber = "476")
 public class SamLoyalAttendant extends Card {
 
     private static final String PARTNER_NAME = "Frodo, Adventurous Hobbit";

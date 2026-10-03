@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CirdanTheShipwrightEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "50")
 @CardRegistration(set = "LTC", collectorNumber = "133")
+@CardRegistration(set = "LTC", collectorNumber = "453")
 public class CirdanTheShipwright extends Card {
 
     public CirdanTheShipwright() {

@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "11")
 @CardRegistration(set = "LTC", collectorNumber = "95")
+@CardRegistration(set = "LTC", collectorNumber = "413")
 public class FieldTestedFryingPan extends Card {
 
     public FieldTestedFryingPan() {

@@ -68,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -764,6 +765,31 @@ public class MiscTriggerCollectorService {
     }
 
     // ── ON_ENCHANTED_PERMANENT_TAPPED ──────────────────────────────────
+
+    @CollectsTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
+            slot = EffectSlot.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
+    private boolean handleOpponentNontokenPermanentSacrificeSteal(
+            TriggerMatchContext match, StealDyingOpponentPermanentUnlessPaysLifeEffect effect,
+            TriggerContext ctx) {
+        TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
+                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
+        StealDyingOpponentPermanentUnlessPaysLifeEffect baked =
+                new StealDyingOpponentPermanentUnlessPaysLifeEffect(
+                        effect.lifeCost(), sacrificed.sacrificedCard().getId(),
+                        sacrificed.sacrificingPlayerId());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(baked)),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
 
     @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapPoison(TriggerMatchContext match,

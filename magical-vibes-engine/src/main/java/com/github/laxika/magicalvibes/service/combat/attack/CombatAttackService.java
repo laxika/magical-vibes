@@ -92,6 +92,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.VoidCondition;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackingCreaturesAwareEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackingPermanentSnapshot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1584,6 +1586,15 @@ public class CombatAttackService {
             boolean onceOnly = false;
             for (CardEffect effect : allyAttackEffects) {
                 CardEffect normalizedEffect = effect;
+                if (effect instanceof AttackingCreaturesAwareEffect aware) {
+                    List<AttackingPermanentSnapshot> attackers = snapshotMatchingAttackerPowers(
+                            gameData, battlefield, attackerIndices, perm, playerId,
+                            aware.attackingCreaturePredicate());
+                    if (attackers.isEmpty()) {
+                        continue;
+                    }
+                    normalizedEffect = aware.withAttackingCreatures(attackers);
+                }
                 if (effect instanceof ConditionalEffect ce
                         && ce.condition() instanceof AttackingCreaturesTotalPowerAtLeast) {
                     if (!conditionEvaluationService.isMet(gameData, ce.condition(),
@@ -3640,6 +3651,22 @@ public class CombatAttackService {
             }
         }
         return count;
+    }
+
+    private List<AttackingPermanentSnapshot> snapshotMatchingAttackerPowers(
+            GameData gameData, List<Permanent> battlefield, List<Integer> attackerIndices,
+            Permanent source, UUID controllerId, PermanentPredicate predicate) {
+        FilterContext sourceContext = FilterContext.of(gameData)
+                .withSourceCardId(source.getOriginalCard().getId())
+                .withSourceControllerId(controllerId)
+                .withSourcePermanentId(source.getId());
+        return attackerIndices.stream()
+                .map(battlefield::get)
+                .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
+                        attacker, predicate, sourceContext))
+                .map(attacker -> new AttackingPermanentSnapshot(
+                        attacker.getId(), gameQueryService.getEffectivePower(gameData, attacker)))
+                .toList();
     }
 
     public void payGenericMana(ManaPool pool, int amount) {

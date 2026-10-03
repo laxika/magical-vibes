@@ -165,6 +165,8 @@ public sealed interface TriggerContext {
         }
     }
     record Bending(UUID bendingPlayerId, BendingType type) implements TriggerContext {}
+    /** Context for a creature being exerted by its controller. */
+    record Exert(UUID exertingPlayerId, UUID exertedCreatureId) implements TriggerContext {}
     record SelfBecomesCrewed(UUID controllerId) implements TriggerContext {}
     /** Context for triggers watching a creature crew a Vehicle. */
     record CreatureCrewsVehicle(Permanent crewingCreature, Permanent vehicle) implements TriggerContext {}

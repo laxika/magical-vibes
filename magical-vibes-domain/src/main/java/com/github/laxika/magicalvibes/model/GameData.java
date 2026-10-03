@@ -1482,6 +1482,8 @@ public class GameData {
     public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
     /** Players who can't gain life this turn (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
     public final Set<UUID> playersWhoCantGainLifeThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who can't lose life this turn (e.g. Courageous Resolve). Cleared at turn cleanup. */
+    public final Set<UUID> playersWhoCantLoseLifeThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks source-linked animations (Awakener Druid-style).
      *  Maps animated target permanent UUID → source permanent UUID.
@@ -7785,6 +7787,7 @@ public class GameData {
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
         copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
         copy.playersWhoCantGainLifeThisTurn.addAll(this.playersWhoCantGainLifeThisTurn);
+        copy.playersWhoCantLoseLifeThisTurn.addAll(this.playersWhoCantLoseLifeThisTurn);
 
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);

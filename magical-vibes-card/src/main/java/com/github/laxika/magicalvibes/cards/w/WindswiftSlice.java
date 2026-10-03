@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "45")
 @CardRegistration(set = "LTC", collectorNumber = "128")
+@CardRegistration(set = "LTC", collectorNumber = "447")
 public class WindswiftSlice extends Card {
 
     public WindswiftSlice() {

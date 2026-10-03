@@ -358,6 +358,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {}
 
+    /** Olórin's Searing Light: each opponent chooses a greatest-power creature to exile. */
+    record EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
+            StackEntry resolvingEntry,
+            UUID opponentId,
+            List<UUID> remainingOpponentIds,
+            com.github.laxika.magicalvibes.model.condition.Condition damageCondition,
+            Map<UUID, Integer> exiledPowers
+    ) implements PermanentChoiceContext {
+        public EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            exiledPowers = Map.copyOf(exiledPowers);
+        }
+    }
+
     /** Ultimate Magic: Meteor: the controller chooses an artifact or land for each opponent. */
     record EachOpponentChoosesPermanentToDestroy(
             UUID controllerId,
@@ -580,6 +594,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {
         public EachOpponentChoosesCreatureToExileWithSource {
             remainingOpponentIds = List.copyOf(remainingOpponentIds);
+        }
+    }
+
+    /** Fell Beast's Shriek: each opponent chooses a creature to tap and goad. */
+    record EachOpponentChoosesCreatureToTapAndGoad(
+            Card sourceCard,
+            UUID controllerId,
+            UUID choosingPlayerId,
+            List<UUID> remainingOpponentIds,
+            List<UUID> chosenPermanentIds
+    ) implements PermanentChoiceContext {
+        public EachOpponentChoosesCreatureToTapAndGoad {
+            remainingOpponentIds = List.copyOf(remainingOpponentIds);
+            chosenPermanentIds = List.copyOf(chosenPermanentIds);
         }
     }
 

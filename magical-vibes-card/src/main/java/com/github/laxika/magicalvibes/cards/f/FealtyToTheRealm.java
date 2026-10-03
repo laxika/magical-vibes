@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LTC", collectorNumber = "21")
 @CardRegistration(set = "LTC", collectorNumber = "104")
+@CardRegistration(set = "LTC", collectorNumber = "423")
 public class FealtyToTheRealm extends Card {
 
     public FealtyToTheRealm() {

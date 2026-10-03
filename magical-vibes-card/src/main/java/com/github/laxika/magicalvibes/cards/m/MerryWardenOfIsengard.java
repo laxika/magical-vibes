@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "61")
 @CardRegistration(set = "LTC", collectorNumber = "143")
+@CardRegistration(set = "LTC", collectorNumber = "468")
 public class MerryWardenOfIsengard extends Card {
 
     private static final String PARTNER_NAME = "Pippin, Warden of Isengard";

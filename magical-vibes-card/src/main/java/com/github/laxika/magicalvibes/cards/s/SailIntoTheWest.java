@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SailIntoTheWestEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "68")
 @CardRegistration(set = "LTC", collectorNumber = "149")
+@CardRegistration(set = "LTC", collectorNumber = "475")
 public class SailIntoTheWest extends Card {
 
     public SailIntoTheWest() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithA
 @CardRegistration(set = "HOC", collectorNumber = "64")
 @CardRegistration(set = "LTC", collectorNumber = "35")
 @CardRegistration(set = "LTC", collectorNumber = "118")
+@CardRegistration(set = "LTC", collectorNumber = "437")
 public class ArwenWeaverOfHope extends Card {
 
     public ArwenWeaverOfHope() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfTargetPlayerU
 @CardRegistration(set = "HOC", collectorNumber = "73")
 @CardRegistration(set = "LTC", collectorNumber = "57")
 @CardRegistration(set = "LTC", collectorNumber = "140")
+@CardRegistration(set = "LTC", collectorNumber = "464")
 public class GrMaSarumansFootman extends Card {
 
     public GrMaSarumansFootman() {

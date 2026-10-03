@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "63")
 @CardRegistration(set = "LTC", collectorNumber = "145")
+@CardRegistration(set = "LTC", collectorNumber = "470")
 public class MoriaScavenger extends Card {
 
     public MoriaScavenger() {

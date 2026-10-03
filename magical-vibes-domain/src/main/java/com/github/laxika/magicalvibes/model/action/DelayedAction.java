@@ -141,6 +141,7 @@ public sealed interface DelayedAction permits
         TargetPlayerHandExileReturnAtNextTurnEndStep,
         ExpireControlAtEndOfNextTurn,
         DelayedDamageDoubling,
+        DelayedControllerDamageMultiplication,
         DelayedSourceDamageMultiplication,
         DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LTC", collectorNumber = "62")
 @CardRegistration(set = "LTC", collectorNumber = "144")
+@CardRegistration(set = "LTC", collectorNumber = "469")
 public class MirkwoodTrapper extends Card {
 
     public MirkwoodTrapper() {

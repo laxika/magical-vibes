@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LTC", collectorNumber = "72")
 @CardRegistration(set = "LTC", collectorNumber = "152")
+@CardRegistration(set = "LTC", collectorNumber = "482")
 public class TooGreedilyTooDeep extends Card {
 
     public TooGreedilyTooDeep() {
