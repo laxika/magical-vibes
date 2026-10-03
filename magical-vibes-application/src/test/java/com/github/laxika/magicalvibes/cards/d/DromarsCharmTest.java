@@ -109,6 +109,81 @@ class DromarsCharmTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Life mode gains life only for the controller when cast by the second player")
+    void secondPlayerGainsLife() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 7);
+        harness.castFromHand(player2, new DromarsCharm(), "{W}{U}{B}");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Counter mode can counter an artifact spell without gaining life")
+    void countersArtifactSpell() {
+        StarCompass spell = new StarCompass();
+        harness.castFromHand(player1, spell, "{2}");
+        harness.setLife(player2, 10);
+        harness.setHand(player2, List.of(new DromarsCharm()));
+        addMana(player2);
+
+        harness.castInstant(player2, 0, 1, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Star Compass");
+        harness.assertInGraveyard(player1, "Star Compass");
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creature mode can target its controller's own creature without gaining life")
+    void weakensOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new DromarsCharm()));
+        addMana(player1);
+
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        harness.assertLife(player1, 10);
+        harness.assertOnBattlefield(player1, "Stone Kavu");
+    }
+
+    @Test
+    @DisplayName("Creature mode does not gain life or affect another creature when its target leaves")
+    void removedCreatureTargetDoesNotResolveOtherModes() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KavuRecluse());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new StoneKavu());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new DromarsCharm()));
+        addMana(player1);
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.setHand(player2, List.of(new DromarsCharm()));
+        addMana(player2);
+        harness.castInstant(player2, 0, 2, target.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Kavu Recluse");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(survivor.getEffectivePower()).isEqualTo(3);
+        assertThat(survivor.getEffectiveToughness()).isEqualTo(3);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        harness.assertInGraveyard(player1, "Dromar's Charm");
+        harness.assertInGraveyard(player2, "Dromar's Charm");
+    }
+
     private void addMana(Player player) {
         harness.addMana(player, ManaColor.WHITE, 1);
         harness.addMana(player, ManaColor.BLUE, 1);
