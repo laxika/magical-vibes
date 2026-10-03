@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.Abduction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,11 +10,162 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonMask.class, GrizzlyBears.class})
+@CardUsed({DragonMask.class, GrizzlyBears.class, Abduction.class, Disenchant.class})
 class DragonMaskTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner's hand")
+    void returnsStolenCreatureToOwnersHand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Abduction()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The ability does nothing if an opponent gains control of the target before resolution")
+    void targetBecomingOpponentControlledMakesAbilityIllegal() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Abduction()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        Permanent aura = findPermanent(player1, "Abduction");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The delayed return uses the stack and allows responses")
+    void delayedReturnAllowsResponses() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Activation during the end step returns the creature at the following turn's end step")
+    void activationDuringEndStepWaitsForFollowingEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than three mana")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mask.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Dragon Mask again")
+    void cannotActivateTappedMask() {
+        harness.addToBattlefield(player1, new DragonMask());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("Gives target creature you control +2/+2 until end of turn")
