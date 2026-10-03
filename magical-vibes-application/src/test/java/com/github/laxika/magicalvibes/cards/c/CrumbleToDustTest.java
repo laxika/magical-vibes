@@ -34,8 +34,7 @@ class CrumbleToDustTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrumbleToDust()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId(), graveyardCopy.getId()));
@@ -62,5 +61,103 @@ class CrumbleToDustTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonbasic land");
+    }
+
+    @Test
+    @DisplayName("Can exile all matching cards, including library copies, without affecting other permanents")
+    void exilesAllMatchingCardsFromAllThreeZones() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Wasteland handCopy = new Wasteland();
+        Wasteland graveyardCopy = new Wasteland();
+        Wasteland libraryCopy = new Wasteland();
+        Wasteland castersCopy = new Wasteland();
+        Plains otherLibraryCard = new Plains();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of(graveyardCopy));
+        harness.setLibrary(player2, List.of(libraryCopy, otherLibraryCard));
+        harness.setGraveyard(player1, List.of(castersCopy));
+        harness.setHand(player1, List.of(new CrumbleToDust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1,
+                List.of(handCopy.getId(), graveyardCopy.getId(), libraryCopy.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(target.getCard(), handCopy, graveyardCopy, libraryCopy);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(otherLibraryCard);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherLand).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(castersCopy);
+    }
+
+    @Test
+    @DisplayName("Can choose zero matching cards from all three zones")
+    void canChooseZeroCopies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Wasteland handCopy = new Wasteland();
+        Wasteland graveyardCopy = new Wasteland();
+        Wasteland libraryCopy = new Wasteland();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of(graveyardCopy));
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new CrumbleToDust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCopy);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exiles the land and finishes when there are no matching cards")
+    void resolvesWithoutMatchingCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Plains otherCard = new Plains();
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(otherCard));
+        harness.setHand(player1, List.of(new CrumbleToDust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(otherCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Crumble to Dust");
+    }
+
+    @Test
+    @DisplayName("Does not search or exile copies when the target leaves before resolution")
+    void doesNotSearchWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Wasteland());
+        Wasteland handCopy = new Wasteland();
+        Wasteland libraryCopy = new Wasteland();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new CrumbleToDust()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.activateAbility(player2, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCopy);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Crumble to Dust");
     }
 }
