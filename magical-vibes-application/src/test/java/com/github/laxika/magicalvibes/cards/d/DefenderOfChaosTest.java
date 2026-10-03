@@ -82,8 +82,7 @@ class DefenderOfChaosTest extends BaseCardTest {
     void protectionFromWhitePreventsCombatDamage() {
         Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
         addCreatureReady(player2, new ExpendableTroops());
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat(player2);
@@ -91,5 +90,34 @@ class DefenderOfChaosTest extends BaseCardTest {
         assertThat(defender.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player1, "Defender of Chaos");
         harness.assertInGraveyard(player2, "Expendable Troops");
+    }
+
+    @Test
+    @DisplayName("Protection from white also prevents its controller's white Aura from targeting it")
+    void protectionFromWhitePreventsOwnAuraTargeting() {
+        Permanent defender = addCreatureReady(player1, new DefenderOfChaos());
+        harness.setHand(player1, List.of(new Cessation()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, defender.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @DisplayName("Protection from white allows red blockers and does not prevent their combat damage")
+    void protectionFromWhiteAllowsRedBlockingAndDamage() {
+        addCreatureReady(player1, new DefenderOfChaos());
+        addCreatureReady(player2, new DefenderOfChaos());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertNotOnBattlefield(player1, "Defender of Chaos");
+        harness.assertNotOnBattlefield(player2, "Defender of Chaos");
+        harness.assertInGraveyard(player1, "Defender of Chaos");
+        harness.assertInGraveyard(player2, "Defender of Chaos");
+        harness.assertLife(player2, 20);
     }
 }
