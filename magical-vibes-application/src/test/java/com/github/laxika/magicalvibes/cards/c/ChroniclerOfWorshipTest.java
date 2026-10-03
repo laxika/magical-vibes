@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HondenOfNightsReach;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChroniclerOfWorship.class, HondenOfNightsReach.class, GrizzlyBears.class})
+@CardUsed({ChroniclerOfWorship.class, HondenOfNightsReach.class, GrizzlyBears.class, PsychogenicProbe.class})
 class ChroniclerOfWorshipTest extends BaseCardTest {
 
     @Test
@@ -71,12 +72,53 @@ class ChroniclerOfWorshipTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
+    @Test
+    void stillShufflesWhenTheLibraryIsEmpty() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        castChronicler();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void findsAShrineInALibraryWithFewerThanSevenCards() {
+        HondenOfNightsReach shrine = new HondenOfNightsReach();
+        GrizzlyBears bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear, shrine));
+
+        castChronicler();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shrine);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bear);
+    }
+
+    @Test
+    void putsExactlyOneOfMultipleEligibleShrinesIntoHand() {
+        HondenOfNightsReach first = new HondenOfNightsReach();
+        HondenOfNightsReach second = new HondenOfNightsReach();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castChronicler();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        Card chosen = gd.playerHands.get(player1.getId()).getFirst();
+        assertThat(chosen).isIn(first, second);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(chosen == first ? second : first);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(chosen);
+    }
+
     private void castChronicler() {
-        harness.setHand(player1, List.of(new ChroniclerOfWorship()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new ChroniclerOfWorship(), "{1}{G}");
+        resolveAllTriggers();
     }
 }
