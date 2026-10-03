@@ -59,9 +59,32 @@ class BruteForceTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack and remain effective during the end step")
+    void multipleBoostsStackUntilCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MalachOfTheDawn());
+        harness.setHand(player1, List.of(new BruteForce(), new BruteForce()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
