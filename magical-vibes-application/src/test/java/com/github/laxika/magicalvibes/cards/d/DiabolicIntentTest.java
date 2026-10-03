@@ -76,4 +76,80 @@ class DiabolicIntentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
     }
+
+    @Test
+    @DisplayName("Diabolic Intent cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent sacrifice = addCreatureReady(player2, new AncientSpider());
+        harness.setHand(player1, List.of(new DiabolicIntent()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("control");
+
+        harness.assertOnBattlefield(player2, "Ancient Spider");
+        harness.assertInHand(player1, "Diabolic Intent");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Diabolic Intent can sacrifice a tapped creature and sacrifices only the chosen creature")
+    void canSacrificeTappedCreature() {
+        Permanent sacrifice = addCreatureReady(player1, new AncientSpider());
+        sacrifice.setTapped(true);
+        Permanent survivor = addCreatureReady(player1, new AncientSpider());
+        harness.setHand(player1, List.of(new DiabolicIntent()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor).doesNotContain(sacrifice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Ancient Spider");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Diabolic Intent resolves with an empty library after paying its sacrifice cost")
+    void resolvesWithEmptyLibrary() {
+        Permanent sacrifice = addCreatureReady(player1, new AncientSpider());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new DiabolicIntent()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Ancient Spider");
+        harness.assertInGraveyard(player1, "Diabolic Intent");
+    }
+
+    @Test
+    @DisplayName("Diabolic Intent must find a card when its library is nonempty")
+    void cannotFailToFindInNonemptyLibrary() {
+        Permanent sacrifice = addCreatureReady(player1, new AncientSpider());
+        ManaCylix searchedCard = new ManaCylix();
+        harness.setLibrary(player1, List.of(searchedCard));
+        harness.setHand(player1, List.of(new DiabolicIntent()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot fail to find");
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(searchedCard);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Mana Cylix");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Diabolic Intent");
+    }
 }
