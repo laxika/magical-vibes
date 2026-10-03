@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.y.YoungWolf;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DesertedBeach.class, Mountain.class, YoungWolf.class})
 class DesertedBeachTest extends BaseCardTest {
 
     @Test
@@ -22,7 +25,7 @@ class DesertedBeachTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findBeach(player1).isTapped()).isTrue();
     }
@@ -36,7 +39,7 @@ class DesertedBeachTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findBeach(player1).isTapped()).isTrue();
     }
@@ -51,7 +54,7 @@ class DesertedBeachTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findBeach(player1).isTapped()).isFalse();
     }
@@ -60,14 +63,14 @@ class DesertedBeachTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+            harness.addToBattlefield(player1, new YoungWolf());
         }
 
         harness.setHand(player1, List.of(new DesertedBeach()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findBeach(player1).isTapped()).isTrue();
     }
@@ -83,7 +86,7 @@ class DesertedBeachTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(findBeach(player1).isTapped()).isTrue();
     }
@@ -110,15 +113,44 @@ class DesertedBeachTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Two other nonbasic lands satisfy the entry condition")
+    void nonbasicLandsCount() {
+        harness.addToBattlefield(player1, new DesertedBeach());
+        harness.addToBattlefield(player1, new DesertedBeach());
+        harness.setHand(player1, List.of(new DesertedBeach()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getLast().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void canProduceManaOnTurnItEnters() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        harness.setHand(player1, List.of(new DesertedBeach()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+        harness.activateAbility(player1, 2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findBeach(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addBeachReady(Player player) {
-        Permanent perm = new Permanent(new DesertedBeach());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefieldAndReturn(player, new DesertedBeach()).setSummoningSick(false);
     }
 
     private void addBasicLand(Player player) {
-        gd.playerBattlefields.get(player.getId())
-                .add(new Permanent(new com.github.laxika.magicalvibes.cards.m.Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findBeach(Player player) {
