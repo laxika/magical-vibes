@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DuskDawn.class, FugitiveWizard.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DuskDawn.class, Dawn.class, FugitiveWizard.class, GrizzlyBears.class, HillGiant.class})
 class DuskDawnTest extends BaseCardTest {
 
     @Test
