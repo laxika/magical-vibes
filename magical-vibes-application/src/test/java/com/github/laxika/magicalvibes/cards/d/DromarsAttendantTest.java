@@ -53,4 +53,23 @@ class DromarsAttendantTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Dromar's Attendant");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("A tapped Dromar's Attendant accepts colored mana and adds mana only to its controller")
+    void tappedAttendantCanActivateWithColoredMana() {
+        harness.addToBattlefieldAndReturn(player1, new DromarsAttendant()).setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Dromar's Attendant");
+        harness.assertInGraveyard(player1, "Dromar's Attendant");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
 }
