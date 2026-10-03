@@ -22,6 +22,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DevastatingDreamsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Random discard is paid before lands are sacrificed or damage is dealt")
+    void discardIsPaidWhileSpellIsOnStack() {
+        Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
+        harness.addToBattlefield(player1, new TaintedField());
+        harness.setHand(player1, List.of(new TaintedField(), new DevastatingDreams(), new CabalCoffers()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Tainted Field", "Cabal Coffers");
+        harness.assertOnBattlefield(player1, "Tainted Field");
+        assertThat(aristocrat.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tainted Field");
+        assertThat(aristocrat.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Devastating Dreams");
+    }
+
+    @Test
+    @DisplayName("Players sacrifice available lands and creatures still take full lethal X damage")
+    void fewerLandsThanXDoesNotReduceDamage() {
+        harness.addToBattlefield(player1, new TaintedField());
+        harness.addToBattlefield(player1, new CephalidAristocrat());
+        harness.addToBattlefield(player2, new CephalidAristocrat());
+        harness.setHand(player1, List.of(new DevastatingDreams(),
+                new TaintedField(), new CabalCoffers(), new TaintedField()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        harness.assertNotOnBattlefield(player1, "Tainted Field");
+        harness.assertNotOnBattlefield(player1, "Cephalid Aristocrat");
+        harness.assertNotOnBattlefield(player2, "Cephalid Aristocrat");
+        harness.assertInGraveyard(player1, "Cephalid Aristocrat");
+        harness.assertInGraveyard(player2, "Cephalid Aristocrat");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Randomly discards X, sacrifices X lands, and deals X damage to each creature")
     void resolvesAllEffects() {
         Permanent aristocrat = harness.addToBattlefieldAndReturn(player1, new CephalidAristocrat());
@@ -31,8 +76,7 @@ class DevastatingDreamsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevastatingDreams(), new TaintedField(), new CabalCoffers()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(aristocrat.getMarkedDamage()).isEqualTo(1);
         assertThat(opponentAristocrat.getMarkedDamage()).isEqualTo(1);
@@ -54,8 +98,7 @@ class DevastatingDreamsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevastatingDreams(), new TaintedField()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -87,8 +130,7 @@ class DevastatingDreamsTest extends BaseCardTest {
                 new DevastatingDreams(), new TaintedField(), new CabalCoffers()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -149,8 +191,7 @@ class DevastatingDreamsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevastatingDreams(), new TaintedField()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Tainted Field");
         harness.assertOnBattlefield(player2, "Cabal Coffers");
