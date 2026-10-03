@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CullingMark.class, GrizzlyBears.class, Forest.class})
 class CullingMarkTest extends BaseCardTest {
 
     @Test
@@ -80,18 +82,60 @@ class CullingMarkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("A tapped marked creature is not required to block")
+    void tappedCreatureNeedNotBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castCullingMark(target);
+        target.setTapped(true);
+
+        beginCombat(attacker);
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(target.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not excuse a marked creature from blocking")
+    void summoningSickCreatureMustBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setSummoningSick(true);
+        castCullingMark(target);
+
+        beginCombat(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(target.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Culling Mark does not require other creatures to block")
+    void onlyTargetMustBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        castCullingMark(target);
+
+        beginCombat(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(target.isBlocking()).isTrue();
+        assertThat(other.isBlocking()).isFalse();
+    }
+
     private void castCullingMark(Permanent target) {
         harness.setHand(player1, List.of(new CullingMark()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void beginCombat(Permanent attacker) {
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
     }
 }
