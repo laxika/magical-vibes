@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DeathsPresence.class, GrizzlyBears.class, HillGiant.class, Shock.class,
+        Naturalize.class, Opalescence.class})
 class DeathsPresenceTest extends BaseCardTest {
 
     @Test
@@ -31,8 +36,7 @@ class DeathsPresenceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities(); // Shock resolves → the 2/2 dies → trigger awaits a target
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
@@ -59,8 +63,7 @@ class DeathsPresenceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(harness.getPermanentId(player1, "Hill Giant"));
@@ -77,12 +80,65 @@ class DeathsPresenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         Permanent giant = findPermanent(player1, "Hill Giant");
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void animatedPresenceTriggersForItsOwnDeath() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new DeathsPresence());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Death's Presence"));
+
+        harness.assertInGraveyard(player1, "Death's Presence");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(6);
+    }
+
+    @Test
+    void countersOnDyingCreatureContributeToLastKnownPower() {
+        harness.addToBattlefield(player1, new DeathsPresence());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        findPermanent(player1, "Grizzly Bears").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hill Giant").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void deathWithoutSurvivingCreatureHasNoLegalTarget() {
+        harness.addToBattlefield(player1, new DeathsPresence());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupPlayer2Active() {
