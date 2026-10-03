@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BrokersAscendancy;
+import com.github.laxika.magicalvibes.cards.s.SnoopingNewsie;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZurgoAndOjutai;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Depopulate.class, FountainOfYouth.class, GrizzlyBears.class, ZurgoAndOjutai.class})
+@CardUsed({Depopulate.class, FountainOfYouth.class, GrizzlyBears.class, ZurgoAndOjutai.class, SnoopingNewsie.class, BrokersAscendancy.class})
 class DepopulateTest extends BaseCardTest {
 
     @Test
@@ -57,10 +59,54 @@ class DepopulateTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Fountain of Youth");
     }
 
+    @Test
+    @DisplayName("Multiple multicolored creatures still give their controller only one card")
+    void multipleQualifyingCreaturesDrawOnlyOneCard() {
+        harness.addToBattlefield(player1, new SnoopingNewsie());
+        harness.addToBattlefield(player1, new SnoopingNewsie());
+        harness.setHand(player1, List.of(new Depopulate()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new SnoopingNewsie(), new SnoopingNewsie()));
+        castAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Snooping Newsie");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof SnoopingNewsie).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Multicolored noncreature permanents do not qualify their controller for a draw")
+    void multicoloredNoncreaturesDoNotQualify() {
+        harness.addToBattlefield(player1, new BrokersAscendancy());
+        harness.addToBattlefield(player2, new SnoopingNewsie());
+        harness.setHand(player1, List.of(new Depopulate()));
+        harness.setHand(player2, List.of());
+        castAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Brokers Ascendancy");
+        harness.assertNotOnBattlefield(player2, "Snooping Newsie");
+    }
+
+    @Test
+    @DisplayName("No player draws when there are no creatures")
+    void emptyBattlefieldsDoNotDraw() {
+        harness.setHand(player1, List.of(new Depopulate()));
+        harness.setHand(player2, List.of());
+        castAndResolve();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Depopulate");
+    }
+
     private void castAndResolve() {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
