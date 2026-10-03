@@ -82,11 +82,91 @@ class DreamshackleGeistTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("The tap mode may target Dreamshackle Geist itself")
+    void canTapItself() {
+        Permanent geist = addCreatureReady(player1, new DreamshackleGeist());
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, TAP_MODE);
+        harness.handlePermanentChosen(player1, geist.getId());
+        harness.passBothPriorities();
+
+        assertThat(geist.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        addCreatureReady(player1, new DreamshackleGeist());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The lock lasts through only the target controller's next untap")
+    void lockExpiresAfterTargetsNextUntap() {
+        addCreatureReady(player1, new DreamshackleGeist());
+        Permanent target = addCreatureReady(player2, new DreamshackleGeist());
+        target.setTapped(true);
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, LOCK_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A lock on an untapped creature expires at its next untap step")
+    void lockExpiresEvenWhenTargetIsUntapped() {
+        addCreatureReady(player1, new DreamshackleGeist());
+        Permanent target = addCreatureReady(player2, new DreamshackleGeist());
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, LOCK_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        target.setTapped(true);
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated locks before an untap step do not prevent two untaps")
+    void repeatedLocksExpireTogether() {
+        addCreatureReady(player1, new DreamshackleGeist());
+        Permanent target = addCreatureReady(player2, new DreamshackleGeist());
+        target.setTapped(true);
+
+        for (int combat = 0; combat < 2; combat++) {
+            advanceToCombat(player1);
+            harness.handleListChoice(player1, LOCK_MODE);
+            harness.handlePermanentChosen(player1, target.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }
