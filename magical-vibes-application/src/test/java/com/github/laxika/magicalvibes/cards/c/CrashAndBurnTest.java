@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirResponseUnit;
-import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CrashAndBurn.class, AirResponseUnit.class, ChandraNalaar.class, Forest.class, GrizzlyBears.class})
 class CrashAndBurnTest extends BaseCardTest {
 
     @Test
@@ -37,9 +38,8 @@ class CrashAndBurnTest extends BaseCardTest {
 
     @Test
     void dealsSixDamageToTargetPlaneswalker() {
-        Permanent target = new Permanent(new ChandraNalaar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         target.setCounterCount(CounterType.LOYALTY, 8);
-        gd.playerBattlefields.get(player2.getId()).add(target);
 
         cast(1, target);
 
@@ -57,6 +57,59 @@ class CrashAndBurnTest extends BaseCardTest {
         assertThatThrownBy(() -> cast(1, forest))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature or planeswalker");
+    }
+
+    @Test
+    void vehicleModeRejectsANonVehicleCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(0, target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a Vehicle");
+    }
+
+    @Test
+    void damageModeRejectsAnUncrewedVehicle() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirResponseUnit());
+
+        assertThatThrownBy(() -> cast(1, target))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature or planeswalker");
+    }
+
+    @Test
+    void canDestroyYourOwnVehicleWithoutAffectingOtherVehicles() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirResponseUnit());
+        harness.addToBattlefield(player2, new AirResponseUnit());
+
+        cast(0, target);
+
+        harness.assertInGraveyard(player1, "Air Response Unit");
+        harness.assertNotOnBattlefield(player1, "Air Response Unit");
+        harness.assertOnBattlefield(player2, "Air Response Unit");
+        harness.assertNotInGraveyard(player2, "Air Response Unit");
+    }
+
+    @Test
+    void marksExactlySixDamageOnASurvivingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        cast(1, target);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    void putsAPlaneswalkerWithSixLoyaltyIntoTheGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
+
+        cast(1, target);
+
+        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
     }
 
     private void cast(int mode, Permanent target) {
