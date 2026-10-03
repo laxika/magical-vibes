@@ -37,7 +37,6 @@ class DarkTriumphTest extends BaseCardTest {
 
         castForMana();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
@@ -52,6 +51,8 @@ class DarkTriumphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarkTriumph()));
 
         harness.castWithAlternateCost(player1, 0, List.of(paymentCreature.getId()));
+        harness.assertInGraveyard(player1, "Flint Golem");
+        assertThat(survivingCreature.getEffectivePower()).isEqualTo(2);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Flint Golem");
@@ -79,6 +80,43 @@ class DarkTriumphTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the spell resolves receive the boost")
+    void boostAppliesToCreaturesAtResolution() {
+        harness.castFromHand(player1, new DarkTriumph(), "{4}{B}");
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new FlintGolem());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new FlintGolem());
+
+        assertThat(beforeResolution.getEffectivePower()).isEqualTo(4);
+        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The alternate cost cannot sacrifice a noncreature")
+    void cannotSacrificeSwamp() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new DarkTriumph()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("The alternate cost cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FlintGolem());
+        harness.setHand(player1, List.of(new DarkTriumph()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Flint Golem");
     }
 
     private void castForMana() {
