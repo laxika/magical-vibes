@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Damn.class, FountainOfYouth.class, GrizzlyBears.class, WallOfWood.class, Forest.class})
+@CardUsed({Damn.class, GrizzlyBears.class, Forest.class})
 class DamnTest extends BaseCardTest {
 
     @Test
@@ -26,8 +24,7 @@ class DamnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Damn()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -62,5 +59,52 @@ class DamnTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("Normal casting destroys only the chosen creature, including one's own creature")
+    void normalCastingDestroysOnlyChosenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Damn()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other);
+    }
+
+    @Test
+    @DisplayName("Overload can be cast with no creatures on the battlefield")
+    void overloadCanBeCastWithoutCreatures() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Damn()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Damn");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("Overload destroys creatures that entered after the spell was cast")
+    void overloadChecksCreaturesAtResolution() {
+        harness.setHand(player1, List.of(new Damn()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithOverload(player1, 0);
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        lateCreature.setRegenerationShield(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
