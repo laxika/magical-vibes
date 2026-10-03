@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TamiyosCompleation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClawingTorment.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({ClawingTorment.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
+        TamiyosCompleation.class})
 class ClawingTormentTest extends BaseCardTest {
 
     @Test
@@ -96,6 +98,53 @@ class ClawingTormentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact's controller also loses life at upkeep")
+    void enchantedArtifactControllerLosesLifeAtUpkeep() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        attachClawingTorment(artifact);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The enchanted permanent is the source of its granted upkeep ability")
+    void grantedUpkeepAbilityBelongsToEnchantedPermanent() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        attachClawingTorment(artifact);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player2.getId());
+            assertThat(entry.getSourcePermanentId()).isEqualTo(artifact.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Later ability removal removes the upkeep ability granted by Clawing Torment")
+    void laterAbilityRemovalPreventsLifeLossTrigger() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        attachClawingTorment(artifact);
+        harness.setHand(player1, List.of(new TamiyosCompleation()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 
     private void attachClawingTorment(Permanent enchantedPermanent) {

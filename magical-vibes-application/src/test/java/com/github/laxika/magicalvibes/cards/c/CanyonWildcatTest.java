@@ -18,6 +18,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CanyonWildcatTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped Mountain still makes Canyon Wildcat unblockable")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new CanyonWildcat());
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+        declareAttackersAndPrepareBlockers(List.of(attackerIdx));
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Canyon Wildcat cannot be blocked when defending player controls a Mountain")
     void cannotBeBlockedWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());

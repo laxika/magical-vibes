@@ -18,10 +18,9 @@ import java.util.Set;
 public class AccessDenied extends Card {
 
     public AccessDenied() {
-        // Create the Thopters before countering so the target spell's mana value is still available.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 new TargetSpellManaValue(), "Thopter", 1, 1, null,
                 List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

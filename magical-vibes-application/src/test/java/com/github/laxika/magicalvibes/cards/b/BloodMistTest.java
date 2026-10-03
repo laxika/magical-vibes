@@ -7,18 +7,19 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodMist.class, GrizzlyBears.class})
 class BloodMistTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 
     @Test
@@ -95,5 +96,56 @@ class BloodMistTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only controlled creatures are offered, and only the chosen creature gains double strike")
+    void onlyChosenControlledCreatureGainsDoubleStrike() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BloodMist());
+
+        advanceToCombat(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(second.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even if Blood Mist leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent mist = harness.addToBattlefieldAndReturn(player1, new BloodMist());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mist);
+        harness.passBothPriorities();
+
+        assertThat(bear.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A removed target does not redirect double strike to another creature")
+    void removedTargetDoesNotGrantDoubleStrikeToAnotherCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BloodMist());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

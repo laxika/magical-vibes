@@ -114,4 +114,64 @@ class CallTheSpiritDragonsTest extends BaseCardTest {
         assertThat(secondRed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
+
+    @Test
+    @DisplayName("Does not grant indestructible to a non-Dragon you control")
+    void doesNotProtectNonDragons() {
+        harness.addToBattlefield(player1, new CallTheSpiritDragons());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only triggers during its controller's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new CallTheSpiritDragons());
+        Permanent ownDragon = harness.addToBattlefieldAndReturn(player1, new VolcanicDragon());
+        Permanent opposingDragon = harness.addToBattlefieldAndReturn(player2, new VolcanicDragon());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(ownDragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingDragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Cannot put counters on an opponent's Dragon even when no own Dragon matches")
+    void ignoresOpponentsDragonsDuringOwnUpkeep() {
+        harness.addToBattlefield(player1, new CallTheSpiritDragons());
+        Permanent opposingDragon = harness.addToBattlefieldAndReturn(player2, new VolcanicDragon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(opposingDragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Choosing the same multicolored Dragon for several colors does not count it repeatedly")
+    void countsChosenMulticoloredDragonOnlyOnce() {
+        harness.addToBattlefield(player1, new CallTheSpiritDragons());
+        harness.addToBattlefield(player1, new AlabasterDragon());
+        harness.addToBattlefield(player1, new MistDragon());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new BroodmateDragon());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BroodmateDragon());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        for (int color = 0; color < 3; color++) {
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+            harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        }
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
 }

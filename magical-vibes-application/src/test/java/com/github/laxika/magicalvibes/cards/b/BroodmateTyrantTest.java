@@ -14,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BroodmateTyrant.class)
+@CardUsed({BroodmateTyrant.class})
 class BroodmateTyrantTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class BroodmateTyrantTest extends BaseCardTest {
         addManaForCast();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = dragonTokens(player1);
         assertThat(tokens).hasSize(1);
@@ -39,8 +39,8 @@ class BroodmateTyrantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Encore creates a hasty attacking token copy for each opponent")
-    void encoreCreatesHastyAttackingTokenCopy() {
+    @DisplayName("Encore creates an untapped hasty copy before attackers are declared")
+    void encoreCreatesUntappedHastyTokenCopy() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new BroodmateTyrant()));
@@ -49,14 +49,10 @@ class BroodmateTyrantTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Broodmate Tyrant"))
-                .findFirst()
-                .orElseThrow();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        Permanent token = findPermanent(player1, "Broodmate Tyrant");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Broodmate Tyrant"));
@@ -69,13 +65,76 @@ class BroodmateTyrantTest extends BaseCardTest {
         addManaForEncore();
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(findPermanents(player1, "Broodmate Tyrant")).hasSize(1);
 
         advanceToEndStep(player1);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Broodmate Tyrant")).isEmpty();
+        assertThat(dragonTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Encore copies trigger the Dragon ability without granting haste to the Dragon")
+    void encoreCopyCreatesOrdinaryDragon() {
+        harness.setGraveyard(player1, List.of(new BroodmateTyrant()));
+        addManaForEncore();
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Broodmate Tyrant")).hasSize(1);
+        assertThat(dragonTokens(player1)).hasSize(1);
+        Permanent dragon = dragonTokens(player1).getFirst();
+        assertThat(dragon.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(dragon.isTapped()).isFalse();
+        assertThat(dragon.isAttacking()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An able encore copy must be declared as an attacker")
+    void encoreCopyMustAttackIfAble() {
+        harness.setGraveyard(player1, List.of(new BroodmateTyrant()));
+        addManaForEncore();
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        Permanent copy = findPermanent(player1, "Broodmate Tyrant");
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(copy);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        assertThat(harness.getCombatAttackService()
+                .getMustAttackIndices(gd, player1.getId(), List.of(index))).contains(index);
+    }
+
+    @Test
+    @DisplayName("Encore sacrifice uses a delayed trigger that can be responded to")
+    void encoreSacrificeWaitsForTriggerResolution() {
+        harness.setGraveyard(player1, List.of(new BroodmateTyrant()));
+        addManaForEncore();
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Broodmate Tyrant")).hasSize(1);
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Broodmate Tyrant")).isEmpty();
+        assertThat(dragonTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Encore cannot be activated during combat")
+    void encoreRequiresSorceryTiming() {
+        harness.setGraveyard(player1, List.of(new BroodmateTyrant()));
+        addManaForEncore();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Broodmate Tyrant");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private void addManaForCast() {
@@ -102,7 +161,6 @@ class BroodmateTyrantTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }

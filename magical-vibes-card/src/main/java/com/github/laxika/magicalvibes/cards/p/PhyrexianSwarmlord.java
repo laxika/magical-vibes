@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "119")
+@CardRegistration(set = "ONC", collectorNumber = "111")
 public class PhyrexianSwarmlord extends Card {
 
     public PhyrexianSwarmlord() {

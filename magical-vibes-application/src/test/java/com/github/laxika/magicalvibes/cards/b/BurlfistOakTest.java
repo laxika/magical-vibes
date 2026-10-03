@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BurlfistOak.class})
 class BurlfistOakTest extends BaseCardTest {
 
     @Test
@@ -72,12 +73,55 @@ class BurlfistOakTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Drawing multiple cards queues separate boosts that wait for resolution")
+    void multipleDrawsQueueSeparateBoosts() {
+        Permanent oak = addOak(player1);
+        addCardToDeck(player1);
+        addCardToDeck(player1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(3);
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(5);
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gqs.getEffectivePower(gd, oak)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, oak)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Each Oak boosts only itself when its controller draws")
+    void multipleOaksBoostTheirOwnSources() {
+        Permanent firstOak = addOak(player1);
+        Permanent secondOak = addOak(player1);
+        Permanent opponentsOak = addOak(player2);
+        addCardToDeck(player1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        assertThat(gd.stack).hasSize(2);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gqs.getEffectivePower(gd, firstOak)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstOak)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, secondOak)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondOak)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opponentsOak)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentsOak)).isEqualTo(3);
+    }
+
     private Permanent addOak(Player player) {
         return harness.addToBattlefieldAndReturn(player, new BurlfistOak());
     }
 
     private void addCardToDeck(Player player) {
-        gd.playerDecks.get(player.getId()).add(new GrizzlyBears());
+        gd.playerDecks.get(player.getId()).add(new BurlfistOak());
     }
 
     private void drawAndResolveTrigger(Player player) {

@@ -2,14 +2,18 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.OmenHawker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.RealmbreakersGrasp;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,7 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArchangelElspeth.class, GrizzlyBears.class, HillGiant.class, Plains.class, Shock.class})
+@CardUsed({ArchangelElspeth.class, GrizzlyBears.class, HillGiant.class, Plains.class, Shock.class,
+        OmenHawker.class, RealmbreakersGrasp.class, SoulWarden.class})
 class ArchangelElspethTest extends BaseCardTest {
 
     @Test
@@ -94,11 +99,115 @@ class ArchangelElspethTest extends BaseCardTest {
                 .doesNotContain(bears);
     }
 
+    @Test
+    @DisplayName("-2 can enhance an opposing creature without removing its existing types")
+    void minusTwoEnhancesOpposingCreature() {
+        Permanent elspeth = addReadyElspeth(4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new OmenHawker());
+
+        harness.activateAbility(player1, indexOf(elspeth), 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature))
+                .contains(CardSubtype.OCTOPUS, CardSubtype.ADVISOR, CardSubtype.ANGEL);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("-2 still resolves after paying the last loyalty counters")
+    void minusTwoResolvesAfterElspethLeaves() {
+        Permanent elspeth = addReadyElspeth(2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new OmenHawker());
+
+        harness.activateAbility(player1, indexOf(elspeth), 1, null, creature.getId());
+        harness.assertNotOnBattlefield(player1, "Archangel Elspeth");
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).contains(CardSubtype.ANGEL);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("-6 returns all qualifying creatures simultaneously regardless of graveyard order")
+    void minusSixReturnsCreaturesSimultaneously() {
+        Permanent elspeth = addReadyElspeth(6);
+        Card creature = new GrizzlyBears();
+        Card warden = new SoulWarden();
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player1, List.of(creature, warden));
+
+        harness.activateAbility(player1, indexOf(elspeth), 2, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Soul Warden");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("-6 lets a returning Aura's controller choose a legal attachment")
+    void minusSixChoosesAuraAttachment() {
+        Permanent elspeth = addReadyElspeth(6);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OmenHawker());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new OmenHawker());
+        Card aura = new RealmbreakersGrasp();
+        harness.setGraveyard(player1, List.of(aura));
+
+        harness.activateAbility(player1, indexOf(elspeth), 2, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), chosen.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(aura.getId());
+                    assertThat(permanent.getAttachedTo()).isEqualTo(chosen.getId());
+                });
+    }
+
+    @Test
+    @DisplayName("-6 leaves an Aura in the graveyard if there is no legal attachment")
+    void minusSixLeavesAuraWithoutLegalAttachment() {
+        Permanent elspeth = addReadyElspeth(6);
+        Card aura = new RealmbreakersGrasp();
+        harness.setGraveyard(player1, List.of(aura));
+
+        harness.activateAbility(player1, indexOf(elspeth), 2, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Realmbreaker's Grasp");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    @DisplayName("-6 ignores the opponent's graveyard")
+    void minusSixIgnoresOpposingGraveyard() {
+        Permanent elspeth = addReadyElspeth(6);
+        Card own = new OmenHawker();
+        Card opposing = new OmenHawker();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(opposing));
+
+        harness.activateAbility(player1, indexOf(elspeth), 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(own.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(opposing.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposing);
+    }
+
     private Permanent addReadyElspeth(int loyalty) {
-        Permanent elspeth = new Permanent(new ArchangelElspeth());
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player1, new ArchangelElspeth());
         elspeth.setCounterCount(CounterType.LOYALTY, loyalty);
         elspeth.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(elspeth);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return elspeth;

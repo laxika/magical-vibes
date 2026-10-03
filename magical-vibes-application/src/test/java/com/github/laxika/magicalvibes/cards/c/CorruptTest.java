@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BarrentonMedic;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BarrentonMedic.class, Corrupt.class, Mountain.class, SafeholdSentry.class, Swamp.class})
+@CardUsed({BarrentonMedic.class, Corrupt.class, JaceBeleren.class, Mountain.class, SafeholdSentry.class, Swamp.class})
 class CorruptTest extends BaseCardTest {
 
     @Test
@@ -214,8 +217,6 @@ class CorruptTest extends BaseCardTest {
     @Test
     @DisplayName("Corrupt gains life only for damage actually dealt")
     void gainsLifeOnlyForDamageActuallyDealt() {
-        harness.setLife(player1, 20);
-        harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Swamp());
         Permanent medic = addCreatureReady(player2, new BarrentonMedic());
         harness.setHand(player1, List.of(new Corrupt()));
@@ -225,8 +226,7 @@ class CorruptTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(medic), null,
                 player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -245,10 +245,79 @@ class CorruptTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(medic), null,
                 player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 19);
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Corrupt targeting its controller restores life before checking for a loss")
+    void selfDamageCanBeRecoveredBeforeStateBasedActions() {
+        harness.setLife(player1, 1);
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Corrupt");
+    }
+
+    @Test
+    @DisplayName("Corrupt may target its controller's creature and grants its controller life")
+    void damagesOwnCreatureAndGainsLife() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent sentry = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, sentry.getId());
+
+        harness.assertInGraveyard(player1, "Safehold Sentry");
+        harness.assertNotOnBattlefield(player1, "Safehold Sentry");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Corrupt gains life for all damage dealt to a planeswalker, beyond its loyalty")
+    void planeswalkerDamageIsNotCappedAtLoyalty() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Swamp());
+        }
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, jace.getId());
+
+        harness.assertNotOnBattlefield(player2, "Jace Beleren");
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Corrupt counts newly acquired Swamps when it resolves")
+    void countsSwampsAddedAfterCasting() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
     }
 }

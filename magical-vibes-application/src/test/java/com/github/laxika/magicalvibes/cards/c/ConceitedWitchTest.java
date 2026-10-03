@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RedtoothVanguard;
 import com.github.laxika.magicalvibes.cards.p.PriceOfBeauty;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,12 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConceitedWitch.class, PriceOfBeauty.class, GrizzlyBears.class})
+@CardUsed({ConceitedWitch.class, PriceOfBeauty.class, RedtoothVanguard.class})
 class ConceitedWitchTest extends BaseCardTest {
 
     @Test
     void adventureCreatesWickedRoleAttachedToTargetCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
         ConceitedWitch card = new ConceitedWitch();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -33,15 +33,54 @@ class ConceitedWitchTest extends BaseCardTest {
         assertThat(role.getCard().isAura()).isTrue();
         assertThat(role.getCard().getSubtypes()).contains(CardSubtype.ROLE);
         assertThat(role.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 
     @Test
+    void wickedRoleMakesOnlyItsOpponentsLoseLifeWhenPutIntoGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
+        harness.setHand(player1, List.of(new ConceitedWitch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAdventure(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent role = findPermanent(player1, "Wicked");
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, role));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Wicked");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    void adventureWithDepartedTargetCreatesNoRoleAndGoesToGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
+        ConceitedWitch card = new ConceitedWitch();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAdventure(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Wicked");
+        harness.assertInGraveyard(player1, "Conceited Witch");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
     void adventureCanOnlyTargetCreatureYouControl() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RedtoothVanguard());
         harness.setHand(player1, List.of(new ConceitedWitch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -51,7 +90,7 @@ class ConceitedWitchTest extends BaseCardTest {
 
     @Test
     void creatureFaceCanBeCastFromExileAfterAdventure() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RedtoothVanguard());
         ConceitedWitch card = new ConceitedWitch();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLACK, 1);

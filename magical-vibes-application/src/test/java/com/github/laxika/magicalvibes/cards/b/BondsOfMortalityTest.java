@@ -21,12 +21,8 @@ class BondsOfMortalityTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card when it enters the battlefield")
     void drawsCardOnEntry() {
-        harness.setHand(player1, List.of(new BondsOfMortality()));
         harness.setLibrary(player1, List.of(new BondsOfMortality()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new BondsOfMortality(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -51,10 +47,47 @@ class BondsOfMortalityTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UNTAP);
 
         assertThat(gqs.hasKeyword(gd, opponentHexproof, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentIndestructible, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Chooses affected creatures on resolution rather than activation")
+    void affectsCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new BondsOfMortality());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution retain their abilities until another activation")
+    void laterCreaturesRequireAnotherActivation() {
+        harness.addToBattlefield(player1, new BondsOfMortality());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

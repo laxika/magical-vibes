@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -74,7 +74,7 @@ class BreathOfLifeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -95,5 +95,23 @@ class BreathOfLifeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(otherCreature.getId()))
                 .noneMatch(c -> c.getId().equals(selectedCreature.getId()));
+    }
+
+    @Test
+    @DisplayName("Returned creature enters untapped with summoning sickness")
+    void returnedCreatureEntersUntappedWithSummoningSickness() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new BreathOfLife()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCard().getId()).isEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+        harness.assertInGraveyard(player1, "Breath of Life");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }

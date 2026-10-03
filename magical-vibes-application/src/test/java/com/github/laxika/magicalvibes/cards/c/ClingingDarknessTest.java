@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
 import com.github.laxika.magicalvibes.cards.v.VoyagerStaff;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClingingDarkness.class, VoyagerStaff.class, Watchwolf.class})
+@CardUsed({ClingingDarkness.class, ElvesOfDeepShadow.class, VoyagerStaff.class, Watchwolf.class})
 class ClingingDarknessTest extends BaseCardTest {
 
     @Test
@@ -29,9 +30,7 @@ class ClingingDarknessTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Clinging Darkness")
-                        && creature.getId().equals(p.getAttachedTo()));
+        assertThat(findPermanent(player1, "Clinging Darkness").getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test
@@ -114,6 +113,44 @@ class ClingingDarknessTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Clinging Darkness");
         harness.assertNotOnBattlefield(player1, "Clinging Darkness");
+    }
+
+    @Test
+    @DisplayName("Clinging Darkness kills a one-toughness creature and then goes to the graveyard")
+    void killsOneToughnessCreature() {
+        Permanent creature = addCreatureReady(player2, new ElvesOfDeepShadow());
+        harness.setHand(player1, List.of(new ClingingDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Elves of Deep Shadow");
+        harness.assertNotOnBattlefield(player2, "Elves of Deep Shadow");
+        harness.assertInGraveyard(player1, "Clinging Darkness");
+        harness.assertNotOnBattlefield(player1, "Clinging Darkness");
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack their penalties and affect only the enchanted creature")
+    void multipleCopiesStackOnOnlyEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
+        Permanent otherCreature = addCreatureReady(player2, new Watchwolf());
+        harness.setHand(player1, List.of(new ClingingDarkness(), new ClingingDarkness()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(3);
+        assertThat(countPermanents(player1, "Clinging Darkness")).isEqualTo(2);
     }
 
     @Test

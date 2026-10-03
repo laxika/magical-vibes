@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
@@ -26,7 +27,7 @@ public class AdaptiveSporesinger extends Card {
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)
         );
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/+2 and gains vigilance until end of turn",
                         boostAndVigilance,
@@ -36,6 +37,6 @@ public class AdaptiveSporesinger extends Card {
                         "Proliferate",
                         new ProliferateEffect()
                 )
-        )));
+        ))));
     }
 }

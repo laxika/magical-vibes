@@ -104,4 +104,50 @@ class BanishingKnackTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+    @Test
+    @DisplayName("The granted ability can return its own source to hand")
+    void grantedAbilityCanBounceItself() {
+        Permanent creature = grantAbilityToReadyCreature();
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.assertInHand(player1, "Duskdale Wurm");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature can gain the ability and its controller can activate it")
+    void opponentsCreatureCanGainAndActivateAbility() {
+        Permanent creature = addCreatureReady(player2, new DuskdaleWurm());
+        Permanent bounceTarget = harness.addToBattlefieldAndReturn(player1, new LeeringEmblem());
+        harness.setHand(player1, List.of(new BanishingKnack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, bounceTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bounceTarget);
+        harness.assertInHand(player1, "Leering Emblem");
+    }
+
+    @Test
+    @DisplayName("Granting the tap ability does not bypass summoning sickness")
+    void summoningSickCreatureCannotActivateGrantedAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DuskdaleWurm());
+        Permanent bounceTarget = harness.addToBattlefieldAndReturn(player2, new LeeringEmblem());
+        harness.setHand(player1, List.of(new BanishingKnack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bounceTarget.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bounceTarget);
+    }
 }

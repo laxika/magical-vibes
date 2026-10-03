@@ -72,11 +72,107 @@ class ChulaneTellerOfTalesTest extends BaseCardTest {
 
     @Test
     void activatedAbilityCannotTargetOpponentCreature() {
-        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        Permanent chulane = harness.addToBattlefieldAndReturn(player1, new ChulaneTellerOfTales());
+        chulane.setSummoningSick(false);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawnLandCanEnterBeforeCreatureSpellResolves() {
+        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void creatureEnteringWithoutBeingCastDoesNotDraw() {
+        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void activatedAbilityCanReturnChulaneItself() {
+        Permanent chulane = harness.addToBattlefieldAndReturn(player1, new ChulaneTellerOfTales());
+        chulane.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, chulane.getId());
+        assertThat(chulane.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Chulane, Teller of Tales");
+        harness.assertNotOnBattlefield(player1, "Chulane, Teller of Tales");
+    }
+
+    @Test
+    void summoningSickChulaneCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void drawingNonlandStillWorksWhenNoLandIsAvailable() {
+        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void opponentsCreatureSpellDoesNotTriggerChulane() {
+        harness.addToBattlefield(player1, new ChulaneTellerOfTales());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

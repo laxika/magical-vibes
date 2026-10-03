@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.j.JukaiTrainee;
+import com.github.laxika.magicalvibes.cards.c.ClawingTorment;
 import com.github.laxika.magicalvibes.cards.v.VisionOfTheUnspeakable;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,14 +17,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BeholdTheUnspeakable.class, VisionOfTheUnspeakable.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BeholdTheUnspeakable.class, VisionOfTheUnspeakable.class, JukaiTrainee.class, ClawingTorment.class})
 class BeholdTheUnspeakableTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chapter I gives creatures you do not control -2/-0 until your next turn")
     void chapterIWeakensCreaturesYouDoNotControl() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new JukaiTrainee());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new JukaiTrainee());
         addSagaWithLore(0);
 
         advanceToNextChapter();
@@ -41,7 +41,7 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
     void chapterIIFourCardBranch() {
         addSagaWithLore(1);
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new ClawingTorment(), new ClawingTorment(), new ClawingTorment(), new ClawingTorment(), new ClawingTorment()));
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -54,8 +54,8 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
     @DisplayName("Chapter II scries two and draws two with more than one card in hand")
     void chapterIIScryAndDrawBranch() {
         addSagaWithLore(1);
-        harness.setHand(player1, List.of(new Shock(), new Shock()));
-        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment()));
+        harness.setLibrary(player1, List.of(new ClawingTorment(), new ClawingTorment(), new ClawingTorment(), new ClawingTorment(), new ClawingTorment()));
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -71,6 +71,7 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III exiles the Saga and returns it transformed")
     void chapterIIITransformsIntoVision() {
+        harness.setHand(player1, List.of(new ClawingTorment()));
         addSagaWithLore(2);
 
         advanceToNextChapter();
@@ -84,16 +85,114 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
     @Test
     @DisplayName("Vision of the Unspeakable gets +1/+1 for each card in its controller's hand")
     void visionGetsBiggerWithCardsInHand() {
-        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment(), new ClawingTorment()));
         BeholdTheUnspeakable front = new BeholdTheUnspeakable();
-        Permanent vision = new Permanent(front);
+        Permanent vision = harness.addToBattlefieldAndReturn(player1, front);
         vision.setCard(front.getBackFaceCard());
         vision.setTransformed(true);
-        vision.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(vision);
 
         assertThat(gqs.getEffectivePower(gd, vision)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, vision)).isEqualTo(3);
+    }
+
+    @Test
+    void chapterIIDrawsAfterApplyingScryOrder() {
+        addSagaWithLore(1);
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment()));
+        JukaiTrainee bottomed = new JukaiTrainee();
+        ClawingTorment kept = new ClawingTorment();
+        JukaiTrainee next = new JukaiTrainee();
+        harness.setLibrary(player1, List.of(bottomed, kept, next));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(kept, next).doesNotContain(bottomed);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomed);
+    }
+
+    @Test
+    void chapterIIDrawsFourWithExactlyOneCardAtResolution() {
+        addSagaWithLore(1);
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment()));
+        harness.setLibrary(player1, List.of(new ClawingTorment(), new ClawingTorment(), new ClawingTorment(), new ClawingTorment()));
+
+        advanceToNextChapter();
+        harness.setHand(player1, List.of(new ClawingTorment()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void chapterIAffectsOnlyCreaturesPresentAtResolutionAndExpiresNextTurn() {
+        Permanent affected = harness.addToBattlefieldAndReturn(player2, new JukaiTrainee());
+        harness.setLibrary(player2, List.of(new ClawingTorment(), new ClawingTorment()));
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(saga);
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new JukaiTrainee());
+
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, affected)).isZero();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(2);
+    }
+
+    @Test
+    void chapterIIIReturnsUnderChapterControllersControlRatherThanOwnersControl() {
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment()));
+        harness.setHand(player2, List.of(new ClawingTorment()));
+        BeholdTheUnspeakable card = new BeholdTheUnspeakable();
+        card.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Vision of the Unspeakable");
+        harness.assertNotOnBattlefield(player2, "Vision of the Unspeakable");
+    }
+
+    @Test
+    void returnedVisionCannotAttackUntilItsControllersNextTurn() {
+        harness.setHand(player1, List.of(new ClawingTorment()));
+        addSagaWithLore(2);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        Permanent vision = findPermanent(player1, "Vision of the Unspeakable");
+        assertThat(vision).isNotNull();
+        assertThat(harness.getAttackLegalityService().canAttack(gd, vision, player1.getId())).isFalse();
+        harness.performUntapStep(player1);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, vision, player1.getId())).isTrue();
+    }
+
+    @Test
+    void transformedVisionTracksHandChangesAndDiesWithAnEmptyHand() {
+        harness.setHand(player1, List.of(new ClawingTorment(), new ClawingTorment(), new ClawingTorment()));
+        addSagaWithLore(2);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        Permanent vision = findPermanent(player1, "Vision of the Unspeakable");
+        assertThat(vision).isNotNull();
+        assertThat(gqs.getEffectivePower(gd, vision)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vision)).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new ClawingTorment()));
+        assertThat(gqs.getEffectivePower(gd, vision)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, vision)).isEqualTo(1);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Vision of the Unspeakable");
+        harness.assertInGraveyard(player1, "Behold the Unspeakable");
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
@@ -106,7 +205,6 @@ class BeholdTheUnspeakableTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }

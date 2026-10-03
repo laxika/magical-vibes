@@ -12,6 +12,55 @@ import java.util.List;
 class AvenShrineTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The Shrine controller also gains life when casting a matching spell")
+    void shrineControllerGainsLife() {
+        harness.addToBattlefield(player1, new AvenShrine());
+        harness.setGraveyard(player2, List.of(new AvenArcher()));
+
+        harness.castFromHand(player1, new AvenArcher(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Aven Archer");
+    }
+
+    @Test
+    @DisplayName("Each Shrine independently grants life to the spell's caster")
+    void multipleShrinesEachTrigger() {
+        harness.addToBattlefield(player1, new AvenShrine());
+        harness.addToBattlefield(player2, new AvenShrine());
+        harness.setGraveyard(player1, List.of(new AvenArcher()));
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new AvenArcher(), "{3}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 21);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Aven Archer");
+    }
+
+    @Test
+    @DisplayName("A Shrine does not trigger for its own casting")
+    void shrineDoesNotTriggerForItsOwnCasting() {
+        harness.setGraveyard(player1, List.of(new AvenShrine()));
+
+        harness.castFromHand(player1, new AvenShrine(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Aven Shrine");
+    }
+
+    @Test
     @DisplayName("The spell's caster gains life for same-name cards in all graveyards")
     void casterGainsLifeForSameNameCardsInAllGraveyards() {
         harness.addToBattlefield(player1, new AvenShrine());

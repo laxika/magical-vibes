@@ -12,9 +12,64 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BurnTrail.class, BoggartArsonists.class})
 class BurnTrailTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Conspire can tap summoning-sick creatures and keep the original target")
+    void conspireWithSummoningSickCreaturesKeepsTarget() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BurnTrail()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BoggartArsonists());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BoggartArsonists());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+
+        harness.castWithConspire(player1, 0, player2.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertLife(player2, 14);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire cannot tap the same creature twice")
+    void conspireRequiresDistinctCreatures() {
+        harness.setHand(player1, List.of(new BurnTrail()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        Permanent creature = addCreatureReady(player1, new BoggartArsonists());
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, player2.getId(),
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire cannot use an already tapped creature")
+    void conspireRequiresUntappedCreatures() {
+        harness.setHand(player1, List.of(new BurnTrail()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        Permanent first = addCreatureReady(player1, new BoggartArsonists());
+        Permanent second = addCreatureReady(player1, new BoggartArsonists());
+        second.tap();
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, player2.getId(),
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Deals 3 damage to a target player")

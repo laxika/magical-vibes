@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "47")
+@CardRegistration(set = "BRC", collectorNumber = "112")
 public class AudaciousReshapers extends Card {
 
     public AudaciousReshapers() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AngelOfGlorysRise;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -7,12 +8,17 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BladedBracers.class, EliteVanguard.class, GrizzlyBears.class, SerraAngel.class,
+        AngelOfGlorysRise.class})
 class BladedBracersTest extends BaseCardTest {
 
     @Test
@@ -94,10 +100,76 @@ class BladedBracersTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
     }
 
+    @Test
+    void angelWithoutNaturalVigilanceGainsItOnlyWhileEquipped() {
+        Permanent bracers = addBracersReady(player1);
+        Permanent angel = addCreatureReady(player1, new AngelOfGlorysRise());
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isFalse();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, angel.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(7);
+
+        bracers.setAttachedTo(null);
+
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(6);
+    }
+
+    @Test
+    void attachedEquipmentStillBenefitsOpponentsAngel() {
+        Permanent angel = addCreatureReady(player2, new AngelOfGlorysRise());
+        addBracersReady(player1).setAttachedTo(angel.getId());
+
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(7);
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent bracers = addBracersReady(player1);
+        Permanent angel = addCreatureReady(player2, new AngelOfGlorysRise());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, angel.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bracers.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipRequiresTwoMana() {
+        Permanent bracers = addBracersReady(player1);
+        Permanent angel = addCreatureReady(player1, new AngelOfGlorysRise());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, angel.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bracers.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent bracers = addBracersReady(player1);
+        Permanent angel = addCreatureReady(player1, new AngelOfGlorysRise());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, angel.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(bracers.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBracersReady(Player player) {
-        Permanent perm = new Permanent(new BladedBracers());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new BladedBracers());
     }
 }

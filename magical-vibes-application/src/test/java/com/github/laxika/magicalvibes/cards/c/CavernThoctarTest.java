@@ -2,22 +2,23 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CavernThoctar.class})
 class CavernThoctarTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability puts it on the stack")
     void activatingAbilityPutsOnStack() {
-        addReadyThoctar(player1);
+        addCreatureReady(player1, new CavernThoctar());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -31,7 +32,7 @@ class CavernThoctarTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability gives +1/+0 until end of turn")
     void resolvingAbilityBoostsSelf() {
-        Permanent thoctar = addReadyThoctar(player1);
+        Permanent thoctar = addCreatureReady(player1, new CavernThoctar());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -45,7 +46,7 @@ class CavernThoctarTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate multiple times for a cumulative boost")
     void canActivateMultipleTimes() {
-        Permanent thoctar = addReadyThoctar(player1);
+        Permanent thoctar = addCreatureReady(player1, new CavernThoctar());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -61,7 +62,7 @@ class CavernThoctarTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
-        addReadyThoctar(player1);
+        addCreatureReady(player1, new CavernThoctar());
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -72,7 +73,7 @@ class CavernThoctarTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at end of turn")
     void boostResetsAtEndOfTurn() {
-        Permanent thoctar = addReadyThoctar(player1);
+        Permanent thoctar = addCreatureReady(player1, new CavernThoctar());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -88,10 +89,49 @@ class CavernThoctarTest extends BaseCardTest {
         assertThat(thoctar.getToughnessModifier()).isEqualTo(0);
     }
 
-    private Permanent addReadyThoctar(Player player) {
-        Permanent perm = new Permanent(new CavernThoctar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent thoctar = harness.addToBattlefieldAndReturn(player1, new CavernThoctar());
+        thoctar.tap();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thoctar.getPowerModifier()).isEqualTo(1);
+        assertThat(thoctar.getToughnessModifier()).isZero();
+        assertThat(thoctar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the red mana requirement with colorless mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new CavernThoctar());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Boost applies only to its source and only after resolution")
+    void boostsOnlyItsSourceOnResolution() {
+        Permanent source = addCreatureReady(player1, new CavernThoctar());
+        Permanent other = addCreatureReady(player1, new CavernThoctar());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
     }
 }

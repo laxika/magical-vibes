@@ -10,4 +10,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * which is set by the static bonus system when the ability is granted.</p>
  */
 public record SacrificeSourceEquipmentCost() implements CostEffect {
+
+    @Override
+    public boolean sacrificesSourcePermanent() {
+        return true;
+    }
 }

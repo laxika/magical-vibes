@@ -1,84 +1,84 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.c.CrawWurm;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NervousGardener;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TopiaryPanther;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreakOut.class, CrawWurm.class, GrizzlyBears.class, Shock.class})
+@CardUsed({BreakOut.class, TopiaryPanther.class, NervousGardener.class, Shock.class})
 class BreakOutTest extends BaseCardTest {
 
     @Test
     void putsASelectedLowManaValueCreatureOntoTheBattlefieldWithHaste() {
-        Card bears = new GrizzlyBears();
-        List<Card> library = libraryWith(bears);
+        Card creature = new NervousGardener();
+        List<Card> library = libraryWith(creature);
         castBreakOut(library);
 
-        chooseCard(bears);
+        chooseCard(creature);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
 
-        Permanent permanent = findPermanentByCardId(bears.getId());
+        Permanent permanent = findPermanentByCardId(creature.getId());
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(bears.getId()));
+                .noneMatch(card -> card.getId().equals(creature.getId()));
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(idsExcept(library, bears.getId()));
+                .containsExactlyInAnyOrder(idsExcept(library, creature.getId()));
     }
 
     @Test
-    void decliningTheBattlefieldChoiceLeavesTheCreatureInHand() {
-        Card bears = new GrizzlyBears();
-        List<Card> library = libraryWith(bears);
+    void decliningTheBattlefieldChoicePutsTheCreatureIntoHand() {
+        Card creature = new NervousGardener();
+        List<Card> library = libraryWith(creature);
         castBreakOut(library);
 
-        chooseCard(bears);
+        chooseCard(creature);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(bears.getId()));
+                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(bears.getId()));
+                .anyMatch(card -> card.getId().equals(creature.getId()));
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(idsExcept(library, bears.getId()));
+                .containsExactlyInAnyOrder(idsExcept(library, creature.getId()));
     }
 
     @Test
     void putsASelectedHighManaValueCreatureIntoHand() {
-        Card wurm = new CrawWurm();
-        List<Card> library = libraryWith(wurm);
+        Card creature = new TopiaryPanther();
+        List<Card> library = libraryWith(creature);
         castBreakOut(library);
 
-        chooseCard(wurm);
+        chooseCard(creature);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(wurm.getId()));
+                .anyMatch(card -> card.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(wurm.getId()));
+                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(idsExcept(library, wurm.getId()));
+                .containsExactlyInAnyOrder(idsExcept(library, creature.getId()));
     }
 
     @Test
     void decliningTheCreatureRevealReturnsAllLookedAtCardsToTheLibrary() {
-        List<Card> library = libraryWith(new GrizzlyBears());
+        List<Card> library = libraryWith(new NervousGardener());
         castBreakOut(library);
 
         harness.handleCardChosen(player1, -1);
@@ -89,17 +89,93 @@ class BreakOutTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(library.stream().map(Card::getId).toArray(UUID[]::new));
     }
 
+    @Test
+    void keepsTheRevealedCreatureOutOfHandUntilTheBattlefieldChoiceIsDeclined() {
+        Card creature = new NervousGardener();
+        castBreakOut(libraryWith(creature));
+
+        chooseCard(creature);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void onlyLooksAtSixCardsAndBottomsTheRestAfterTheUntouchedLibrary() {
+        Card creature = new NervousGardener();
+        Card seventh = new TopiaryPanther();
+        Card eighth = new Shock();
+        List<Card> lookedAt = libraryWith(creature);
+        List<Card> library = new ArrayList<>(lookedAt);
+        library.add(seventh);
+        library.add(eighth);
+        castBreakOut(library);
+
+        PendingInteraction.LibrarySearch search = gd.interaction
+                .activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(creature);
+        chooseCard(creature);
+        harness.handleMayAbilityChosen(player1, true);
+
+        List<Card> remaining = gd.playerDecks.get(player1.getId());
+        assertThat(remaining.subList(0, 2)).containsExactly(seventh, eighth);
+        assertThat(remaining.subList(2, remaining.size())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(idsExcept(lookedAt, creature.getId()));
+    }
+
+    @Test
+    void resolvesWithFewerThanSixCards() {
+        Card creature = new NervousGardener();
+        castBreakOut(List.of(creature));
+
+        chooseCard(creature);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanentByCardId(creature.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void resolvesWithoutAChoiceWhenNoCreatureIsFound() {
+        List<Card> library = List.of(new Shock(), new Shock(), new Shock());
+        castBreakOut(library);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(library.stream().map(Card::getId).toArray(UUID[]::new));
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibrary() {
+        castBreakOut(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void grantedHasteExpiresAfterTheTurn() {
+        Card creature = new NervousGardener();
+        castBreakOut(libraryWith(creature));
+        chooseCard(creature);
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent permanent = findPermanentByCardId(creature.getId());
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+    }
+
     private void castBreakOut(List<Card> library) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new BreakOut()));
         harness.setLibrary(player1, library);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new BreakOut(), "{R}{G}");
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     private List<Card> libraryWith(Card creature) {

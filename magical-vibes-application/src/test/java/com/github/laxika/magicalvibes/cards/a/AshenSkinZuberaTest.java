@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.ChangelingOutcast;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AshenSkinZubera.class, IsamaruHoundOfKonda.class, RendFlesh.class, RendSpirit.class})
+@CardUsed({AshenSkinZubera.class, ChangelingOutcast.class, IsamaruHoundOfKonda.class, RendFlesh.class, RendSpirit.class})
 class AshenSkinZuberaTest extends BaseCardTest {
 
     // "When this creature dies, target opponent discards a card for each Zubera that died this turn."
@@ -108,5 +109,93 @@ class AshenSkinZuberaTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each pending trigger counts Zuberas that died after it triggered")
+    void countsDeathsAtResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        harness.setHand(player2, List.of(
+                new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda(),
+                new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda(),
+                new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit(), new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent with an empty hand remains a legal target")
+    void emptyHandDoesNotPreventTriggerResolution() {
+        Permanent zubera = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        harness.setHand(player2, List.of());
+        startMainPhase(new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, zubera.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Discarding fewer cards than the Zubera death count completes the ability")
+    void discardsOnlyAvailableCards() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        harness.setHand(player2, List.of(new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit(), new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changelings that died this turn count as Zuberas")
+    void countsChangelingDeaths() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new ChangelingOutcast());
+        Permanent zubera = harness.addToBattlefieldAndReturn(player1, new AshenSkinZubera());
+        harness.setHand(player2, List.of(
+                new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        startMainPhase(new RendSpirit(), new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, changeling.getId());
+        harness.castAndResolveInstant(player1, 0, zubera.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 }

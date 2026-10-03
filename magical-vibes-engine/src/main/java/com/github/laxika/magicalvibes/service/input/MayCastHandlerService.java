@@ -1477,6 +1477,17 @@ public class MayCastHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
             log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        List<CardEffect> madnessEffects = cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY)
+                ? cardToCast.getEffects(EffectSlot.SPELL) : List.of();
+        if ((EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+                && buildValidSpellTargets(gameData, cardToCast, madnessEffects, player.getId(), 0, true).isEmpty()) {
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

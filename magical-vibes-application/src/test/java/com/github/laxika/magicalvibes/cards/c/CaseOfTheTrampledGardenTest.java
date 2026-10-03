@@ -43,10 +43,10 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
     @DisplayName("Solves at the beginning of the end step when controlled creatures have total power 8")
     void solvesWithEightTotalPower() {
         Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         resolveEndStepTriggers();
 
@@ -57,9 +57,9 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
     @DisplayName("Does not solve when controlled creatures have less than 8 total power")
     void doesNotSolveWithLessThanEightTotalPower() {
         Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         resolveEndStepTriggers();
 
@@ -70,7 +70,7 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
     @DisplayName("Does not trigger the solved ability before the Case is solved")
     void doesNotTriggerBeforeSolved() {
         harness.addToBattlefield(player1, new CaseOfTheTrampledGarden());
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(1));
 
@@ -81,10 +81,10 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
     @DisplayName("When solved, puts a counter on an attacking creature and gives it trample")
     void solvedAttackTriggerBoostsAttacker() {
         Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        Permanent first = addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         resolveEndStepTriggers();
         assertThat(casePermanent.isSolved()).isTrue();
@@ -106,11 +106,11 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
     @DisplayName("The attack trigger cannot target a nonattacking creature")
     void attackTriggerCannotTargetNonattacker() {
         Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
-        Permanent nonAttacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         resolveEndStepTriggers();
         assertThat(casePermanent.isSolved()).isTrue();
         declareAttackers(List.of(2));
@@ -121,19 +121,139 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
-                                       com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void distributesOneCounterToEachOfTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotRedistributeCountersWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotCountOpponentsCreaturesTowardSolving() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        resolveEndStepTriggers();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+    }
+
+    @Test
+    void doesNotSolveOnOpponentsEndStep() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new GrizzlyBears());
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(casePermanent.isSolved()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void rechecksTotalPowerWhenSolveTriggerResolves() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1, new GrizzlyBears());
+        }
+        Permanent fourth = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(fourth);
+        gd.playerGraveyards.get(player1.getId()).add(fourth.getCard());
+        harness.passBothPriorities();
+
+        assertThat(casePermanent.isSolved()).isFalse();
+    }
+
+    @Test
+    void solvedAttackAbilityResolvesAfterCaseLeaves() {
+        Permanent casePermanent = harness.addToBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        for (int i = 0; i < 3; i++) {
+            addCreatureReady(player1, new GrizzlyBears());
+        }
+        resolveEndStepTriggers();
+        assertThat(casePermanent.isSolved()).isTrue();
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(casePermanent);
+        gd.playerGraveyards.get(player1.getId()).add(casePermanent.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    void countersContributeToSolvingAndTrampleExpiresButCounterRemains() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent casePermanent = harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        resolveEndStepTriggers();
+        assertThat(casePermanent.isSolved()).isTrue();
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(casePermanent.isSolved()).isTrue();
     }
 
     private void resolveEndStepTriggers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }

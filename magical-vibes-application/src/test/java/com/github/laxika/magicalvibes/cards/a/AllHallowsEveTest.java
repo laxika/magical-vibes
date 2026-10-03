@@ -83,6 +83,78 @@ class AllHallowsEveTest extends BaseCardTest {
                 .doesNotContain(player1Creature);
     }
 
+    @Test
+    @DisplayName("A resolved spell returns every creature only on its second upkeep")
+    void returnsCreaturesOnSecondUpkeepAfterCasting() {
+        AllHallowsEve card = new AllHallowsEve();
+        Card firstCreature = new HeadlessHorseman();
+        Card secondCreature = new HeadlessHorseman();
+        Card opposingCreature = new HeadlessHorseman();
+        harness.setGraveyard(player1, List.of(firstCreature, secondCreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardScreamCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstCreature, secondCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature);
+        harness.assertNotOnBattlefield(player1, "Headless Horseman");
+        harness.assertNotOnBattlefield(player2, "Headless Horseman");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(opposingCreature.getId());
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger does nothing if no scream counters remain when it resolves")
+    void doesNothingIfCountersDisappearBeforeResolution() {
+        AllHallowsEve card = exileWithScreamCounters(1);
+        Card creature = new HeadlessHorseman();
+        harness.setGraveyard(player1, List.of(creature));
+
+        advanceToUpkeep(player1);
+        gd.exiledCardScreamCounters.remove(card.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        harness.assertNotOnBattlefield(player1, "Headless Horseman");
+    }
+
+    @Test
+    @DisplayName("The last scream counter still sends the spell to the graveyard when no creatures exist")
+    void returnsSpellToGraveyardWithEmptyGraveyards() {
+        AllHallowsEve card = exileWithScreamCounters(1);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exiledCardScreamCounters).doesNotContainKey(card.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private AllHallowsEve exileWithScreamCounters(int counters) {
         AllHallowsEve card = new AllHallowsEve();
         gd.addToExile(player1.getId(), card);

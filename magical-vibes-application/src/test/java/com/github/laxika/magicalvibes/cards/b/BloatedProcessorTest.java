@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -53,6 +55,109 @@ class BloatedProcessorTest extends BaseCardTest {
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
+    @Test
+    void cannotSacrificeItself() {
+        harness.addToBattlefield(player1, new BloatedProcessor());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Bloated Processor");
+        harness.assertNotInGraveyard(player1, "Bloated Processor");
+    }
+
+    @Test
+    void cannotSacrificeOpponentsPhyrexian() {
+        harness.addToBattlefield(player1, new BloatedProcessor());
+        harness.addToBattlefield(player2, new BloatedProcessor());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Bloated Processor");
+    }
+
+    @Test
+    void sacrificingProcessorIncubatesItsPowerBeforeTheOtherProcessorGrows() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new BloatedProcessor());
+        harness.addToBattlefield(player1, new BloatedProcessor());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(countPermanents(player1, "Bloated Processor")).isEqualTo(1);
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Bloated Processor");
+
+        resolveAllTriggers();
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Incubator").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void incubatorFrontFaceHasIncubatorSubtype() {
+        Permanent incubator = createIncubatorBySacrificingProcessor();
+
+        assertThat(harness.getGameQueryService().isArtifact(gd, incubator)).isTrue();
+        assertThat(harness.getGameQueryService().isCreature(gd, incubator)).isFalse();
+        assertThat(incubator.getCard().getSubtypes()).extracting(Enum::name).contains("INCUBATOR");
+    }
+
+    @Test
+    void transformingIncubatorPreservesCountersAndCreatesArtifactCreature() {
+        Permanent incubator = createIncubatorBySacrificingProcessor();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().isArtifact(gd, incubator)).isTrue();
+        assertThat(harness.getGameQueryService().isCreature(gd, incubator)).isTrue();
+        assertThat(harness.getGameQueryService().getEffectivePower(gd, incubator)).isEqualTo(3);
+        assertThat(harness.getGameQueryService().getEffectiveToughness(gd, incubator)).isEqualTo(3);
+    }
+
+    @Test
+    void transformedIncubatorHasStandardTokenName() {
+        Permanent incubator = createIncubatorBySacrificingProcessor();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.getCard().getName()).isEqualTo("Phyrexian Token");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {3, 4})
+    void nonpositivePowerStillCreatesIncubatorWithNoCounters(int minusCounters) {
+        Permanent processor = harness.addToBattlefieldAndReturn(player1, new BloatedProcessor());
+        processor.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minusCounters);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bloated Processor");
+        Permanent incubator = findPermanent(player1, "Incubator");
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(harness.getGameQueryService().isCreature(gd, incubator)).isFalse();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    private Permanent createIncubatorBySacrificingProcessor() {
+        harness.addToBattlefield(player1, new BloatedProcessor());
+        harness.addToBattlefield(player1, new BloatedProcessor());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        return findPermanent(player1, "Incubator");
+    }
+
     private void addCounterBySacrificingPhyrexian(Permanent processor) {
         harness.addToBattlefield(player1, new PhyrexianBroodlings());
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(processor), null, null);
@@ -65,7 +170,6 @@ class BloatedProcessorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, java.util.List.of(new FlameJavelin()));
         harness.addMana(player2, ManaColor.RED, 6);
-        harness.castInstant(player2, 0, processor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, processor.getId());
     }
 }

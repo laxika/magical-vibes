@@ -14,6 +14,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AvenCourier.class, GrizzlyBears.class})
 class AvenCourierTest extends BaseCardTest {
+    @Test
+    void doesNothingWhenOnlyOpponentHasCounters() {
+        Permanent courier = addCreatureReady(player1, new AvenCourier());
+        Permanent opponent = addCreatureReady(player2, new AvenCourier());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, courier.getId());
+        resolveAllTriggers();
+
+        assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void copiesExactlyOneChosenCounterWhenReferenceHasMultipleKinds() {
+        Permanent courier = addCreatureReady(player1, new AvenCourier());
+        Permanent reference = addCreatureReady(player1, new AvenCourier());
+        reference.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        reference.setCounterCount(CounterType.CHARGE, 2);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, courier.getId());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "+1/+1 counters");
+
+        assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(courier.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(reference.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(reference.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void canChooseTargetItselfAsReferenceWithoutAddingAnotherCounter() {
+        Permanent courier = addCreatureReady(player1, new AvenCourier());
+        courier.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, courier.getId());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "+1/+1 counters");
+
+        assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     @Test
     void attackTriggerOnlyTargetsControlledPermanents() {

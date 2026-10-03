@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.PristineTalisman;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +25,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ApostlesBlessing.class, GoldMyr.class, GrizzlyBears.class, IronMyr.class,
+        Pacifism.class, PristineTalisman.class})
 class ApostlesBlessingTest extends BaseCardTest {
 
     
@@ -35,8 +39,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         // Spell resolves, now awaiting color choice
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
@@ -55,8 +58,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "ARTIFACT");
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -71,8 +73,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Gold Myr");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "BLACK");
 
         Permanent myr = findPermanent(player1, "Gold Myr");
@@ -82,9 +83,8 @@ class ApostlesBlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target opponent's creature")
     void cannotTargetOpponentCreature() {
-        Permanent opponentCreature = new Permanent(new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         opponentCreature.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
         // Add valid target (creature you control) so spell is playable
         harness.addToBattlefield(player1, new IronMyr());
         harness.setHand(player1, List.of(new ApostlesBlessing()));
@@ -98,8 +98,7 @@ class ApostlesBlessingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player1.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Pacifism());
         // Add valid target (creature you control) so spell is playable
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ApostlesBlessing()));
@@ -171,8 +170,7 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "RED");
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
@@ -192,12 +190,11 @@ class ApostlesBlessingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.handleListChoice(player1, "WHITE");
 
         // Player paid 2 life for the Phyrexian mana
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -218,5 +215,74 @@ class ApostlesBlessingTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // No color choice should be requested since spell fizzled
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isFalse();
+    }
+
+    @Test
+    void canProtectNoncreatureArtifactUntilEndOfTurn() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new PristineTalisman());
+        harness.setHand(player1, List.of(new ApostlesBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, talisman.getId());
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        assertThat(talisman.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        harness.passUntil(TurnStep.UPKEEP);
+        assertThat(talisman.getProtectionFromCardTypes()).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void fizzlesIfControlOfTargetChangesBeforeResolution() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new PristineTalisman());
+        harness.setHand(player1, List.of(new ApostlesBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, talisman.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(talisman);
+        gd.playerBattlefields.get(player2.getId()).add(talisman);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(talisman.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        assertThat(talisman.getProtectionFromCardTypes()).isEmpty();
+        harness.assertInGraveyard(player1, "Apostle's Blessing");
+    }
+
+    @Test
+    void protectionFromWhiteRemovesAttachedWhiteAura() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new ApostlesBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.handleListChoice(player1, "WHITE");
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertInGraveyard(player2, "Pacifism");
+    }
+
+    @Test
+    void protectionFromArtifactsPreventsArtifactCreatureBlocking() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.addToBattlefield(player2, new IronMyr());
+        harness.setHand(player1, List.of(new ApostlesBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 }

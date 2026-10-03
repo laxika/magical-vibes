@@ -21,12 +21,40 @@ class CoiledTinviperTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new CoiledTinviper());
         Permanent blocker = addCreatureReady(player2, new MoggConscripts());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Two first strikers deal lethal combat damage to each other simultaneously")
+    void firstStrikersDealDamageSimultaneously() {
+        Permanent attacker = addCreatureReady(player1, new CoiledTinviper());
+        Permanent blocker = addCreatureReady(player2, new CoiledTinviper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Coiled Tinviper");
+        harness.assertInGraveyard(player2, "Coiled Tinviper");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals combat damage only once")
+    void unblockedFirstStrikerDoesNotDealRegularCombatDamage() {
+        addCreatureReady(player1, new CoiledTinviper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
     }
 }

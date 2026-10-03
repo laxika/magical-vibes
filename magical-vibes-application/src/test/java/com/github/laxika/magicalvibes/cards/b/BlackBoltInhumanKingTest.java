@@ -26,8 +26,7 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(blackBolt.getEffectivePower()).isEqualTo(5);
         assertThat(blackBolt.getEffectiveToughness()).isEqualTo(5);
@@ -40,8 +39,7 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(blackBolt.getEffectivePower()).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -89,6 +87,82 @@ class BlackBoltInhumanKingTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Black Bolt, Inhuman King");
+    }
+
+    @Test
+    @DisplayName("Creature spells do not boost Black Bolt")
+    void doesNotBoostForCreatureSpell() {
+        Permanent blackBolt = addCreatureReady(player1, new BlackBoltInhumanKing());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(blackBolt.getEffectivePower()).isEqualTo(3);
+        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent noncreature spells do not boost Black Bolt")
+    void doesNotBoostForOpponentSpell() {
+        Permanent blackBolt = addCreatureReady(player1, new BlackBoltInhumanKing());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(blackBolt.getEffectivePower()).isEqualTo(3);
+        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(3);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds another +2/+2")
+    void boostsStackForMultipleSpells() {
+        Permanent blackBolt = addCreatureReady(player1, new BlackBoltInhumanKing());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(blackBolt.getEffectivePower()).isEqualTo(7);
+        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(7);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Controller spells targeting Black Bolt do not trigger Lethal Voice")
+    void ownSpellDoesNotTriggerLethalVoice() {
+        Permanent blackBolt = addCreatureReady(player1, new BlackBoltInhumanKing());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, blackBolt.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Black Bolt, Inhuman King");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(blackBolt.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Lethal Voice with no legal target does not stop the opposing spell")
+    void opposingSpellResolvesWithoutLethalVoiceTarget() {
+        addCreatureReady(player1, new BlackBoltInhumanKing());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        forceOpponentMainPhase();
+
+        harness.castAndResolveInstant(player2, 0, findPermanent(player1, "Black Bolt, Inhuman King").getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Black Bolt, Inhuman King");
+        harness.assertNotOnBattlefield(player1, "Black Bolt, Inhuman King");
     }
 
     private void forceOpponentMainPhase() {

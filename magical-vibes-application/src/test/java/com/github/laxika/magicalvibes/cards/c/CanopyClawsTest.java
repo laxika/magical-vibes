@@ -25,18 +25,16 @@ class CanopyClawsTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature loses flying until end of turn")
     void removesFlyingUntilEndOfTurn() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new CanopyClaws()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        UUID targetId = hawk.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent hawk = findPermanent(player2, "Suntail Hawk");
         assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(hawk.hasKeyword(Keyword.FLYING)).isTrue();
@@ -71,14 +69,14 @@ class CanopyClawsTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback removes flying and exiles Canopy Claws")
     void flashbackRemovesFlyingAndExilesSpell() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setGraveyard(player1, List.of(new CanopyClaws()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        UUID targetId = hawk.getId();
         harness.castAndResolveFlashback(player1, 0, targetId);
 
-        assertThat(findPermanent(player2, "Suntail Hawk").hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
         harness.assertNotInGraveyard(player1, "Canopy Claws");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Canopy Claws"));
@@ -99,19 +97,17 @@ class CanopyClawsTest extends BaseCardTest {
     @Test
     @DisplayName("Target creature loses flying until end of turn")
     void removesFlyingUntilEndOfTurnJudReview() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new CanopyClaws()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
+        UUID targetId = hawk.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
-        Permanent hawk = findPermanent(player2, "Suntail Hawk");
         assertThat(hawk.hasKeyword(Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Canopy Claws");
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(hawk.hasKeyword(Keyword.FLYING)).isTrue();
@@ -142,5 +138,43 @@ class CanopyClawsTest extends BaseCardTest {
 
         assertThat(groundCreature.hasKeyword(Keyword.FLYING)).isFalse();
         harness.assertInGraveyard(player1, "Canopy Claws");
+    }
+
+    @Test
+    @DisplayName("Normal casting puts the spell in the graveyard when its target leaves")
+    void normalSpellGoesToGraveyardWhenTargetLeaves() {
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player2, new BenevolentBodyguard());
+        harness.setHand(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, bodyguard.getId());
+        harness.activateAbility(player2, 0, null, bodyguard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benevolent Bodyguard");
+        harness.assertInGraveyard(player1, "Canopy Claws");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Canopy Claws"));
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target leaves")
+    void flashbackExilesSpellWhenTargetLeaves() {
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player2, new BenevolentBodyguard());
+        harness.setGraveyard(player1, List.of(new CanopyClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFlashback(player1, 0, bodyguard.getId());
+        harness.activateAbility(player2, 0, null, bodyguard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benevolent Bodyguard");
+        harness.assertNotInGraveyard(player1, "Canopy Claws");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Canopy Claws"));
     }
 }

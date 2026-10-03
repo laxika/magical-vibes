@@ -77,4 +77,67 @@ class CephalidPathmageTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(pathmage);
     }
+
+    @Test
+    void sacrificeIsPaidBeforeAbilityResolves() {
+        Permanent pathmage = addCreatureReady(player1, new CephalidPathmage());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(pathmage.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Cephalid Pathmage");
+        harness.assertInGraveyard(player1, "Cephalid Pathmage");
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetItselfEvenThoughSacrificeMakesTargetIllegal() {
+        Permanent pathmage = addCreatureReady(player1, new CephalidPathmage());
+
+        harness.activateAbility(player1, 0, null, pathmage.getId());
+
+        harness.assertInGraveyard(player1, "Cephalid Pathmage");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Cephalid Pathmage");
+    }
+
+    @Test
+    void summoningSickPathmageCannotActivateTapAbility() {
+        Permanent pathmage = harness.addToBattlefieldAndReturn(player1, new CephalidPathmage());
+        pathmage.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pathmage.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Cephalid Pathmage");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void tappedPathmageCannotActivateTapAbility() {
+        Permanent pathmage = addCreatureReady(player1, new CephalidPathmage());
+        pathmage.tap();
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Cephalid Pathmage");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
 }

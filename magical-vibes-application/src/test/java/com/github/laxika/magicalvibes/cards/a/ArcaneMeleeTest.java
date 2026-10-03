@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BonfireOfTheDamned;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MassAppeal;
+import com.github.laxika.magicalvibes.cards.n.NaturalEnd;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcaneMelee.class, Divination.class, AngelsMercy.class, GrizzlyBears.class,
+        ArmyOfTheDamned.class, MassAppeal.class, BonfireOfTheDamned.class, NaturalEnd.class})
 class ArcaneMeleeTest extends BaseCardTest {
 
     @Test
@@ -105,6 +111,94 @@ class ArcaneMeleeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess generic reduction leaves the full colored requirement payable")
+    void excessReductionDoesNotReduceColoredCost() {
+        harness.addToBattlefield(player1, new ArcaneMelee());
+        harness.addToBattlefield(player2, new ArcaneMelee());
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 27);
+        harness.assertInGraveyard(player1, "Angel's Mercy");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess reduction does not create mana when a sorcery is cast")
+    void excessReductionDoesNotCreateMana() {
+        harness.addToBattlefield(player1, new ArcaneMelee());
+        harness.addToBattlefield(player2, new ArcaneMelee());
+        harness.setHand(player1, List.of(new MassAppeal()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Mass Appeal");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Generic reduction applies after choosing X without reducing the effect's X")
+    void reductionAppliesToTotalXCost() {
+        harness.addToBattlefield(player1, new ArcaneMelee());
+        harness.setHand(player1, List.of(new BonfireOfTheDamned()));
+        // X = 3 gives {6}{R}, reduced to {4}{R}.
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Bonfire of the Damned");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The reduction ends when Arcane Melee leaves the battlefield")
+    void reductionEndsWhenSourceIsDestroyed() {
+        harness.addToBattlefield(player1, new ArcaneMelee());
+        harness.setHand(player1, List.of(new NaturalEnd(), new MassAppeal()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Arcane Melee"));
+
+        harness.assertInGraveyard(player1, "Arcane Melee");
+        harness.assertNotOnBattlefield(player1, "Arcane Melee");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Arcane Melee in hand does not reduce spell costs")
+    void sourceInHandDoesNotReduceCosts() {
+        harness.setHand(player1, List.of(new MassAppeal(), new ArcaneMelee()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Arcane Melee does not reduce enchantment spells")
+    void enchantmentSpellsAreNotReduced() {
+        harness.addToBattlefield(player1, new ArcaneMelee());
+        harness.setHand(player1, List.of(new ArcaneMelee()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

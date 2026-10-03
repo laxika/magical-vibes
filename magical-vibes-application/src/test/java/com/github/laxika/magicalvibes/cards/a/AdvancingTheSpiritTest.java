@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AdvancingTheSpirit.class, QuicksilverBrashBlur.class, AerialDoombot.class,
         UltronDrone.class})
@@ -66,5 +67,70 @@ class AdvancingTheSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(thirdCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotMakePowerUpFreeDuringAnOpponentsTurn() {
+        harness.addToBattlefield(player1, new AdvancingTheSpirit());
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void countsPowerUpActivatedBeforeTheEnchantmentEntered() {
+        Permanent firstCreature = addCreatureReady(player1, new AerialDoombot());
+        Permanent secondCreature = addCreatureReady(player1, new UltronDrone());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new QuicksilverBrashBlur()));
+        harness.enterBattlefieldAndReturn(player1, new AdvancingTheSpirit());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void multipleCopiesDoNotMakeTheSecondPowerUpFree() {
+        harness.addToBattlefield(player1, new AdvancingTheSpirit());
+        harness.addToBattlefield(player1, new AdvancingTheSpirit());
+        Permanent firstCreature = addCreatureReady(player1, new AerialDoombot());
+        Permanent secondCreature = addCreatureReady(player1, new UltronDrone());
+
+        harness.activateAbility(player1, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 3, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

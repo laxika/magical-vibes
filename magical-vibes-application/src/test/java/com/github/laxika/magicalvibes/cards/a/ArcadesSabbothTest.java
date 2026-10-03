@@ -49,6 +49,62 @@ class ArcadesSabbothTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped Arcades still boosts other untapped creatures")
+    void tappedSourceStillBoostsOtherCreatures() {
+        Permanent arcades = addCreatureReady(player1, new ArcadesSabboth());
+        Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+
+        arcades.tap();
+
+        assertThat(gqs.getEffectiveToughness(gd, arcades)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(6);
+
+        arcades.untap();
+        assertThat(gqs.getEffectiveToughness(gd, arcades)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Untapped blocking creatures retain the bonus")
+    void boostsUntappedBlockers() {
+        addCreatureReady(player1, new ArcadesSabboth());
+        Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+
+        boars.setBlocking(true);
+
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Arcades does not demand payment during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        addCreatureReady(player1, new ArcadesSabboth());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Arcades Sabboth");
+    }
+
+    @Test
+    @DisplayName("Repeated activations work while tapped and boost only Arcades")
+    void repeatedActivationsWhileTapped() {
+        Permanent arcades = addCreatureReady(player1, new ArcadesSabboth());
+        Permanent boars = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        arcades.tap();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, arcades)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Paying {G}{W}{U} during upkeep keeps Arcades Sabboth on the battlefield")
     void payingUpkeepCostKeepsArcadesSabboth() {
         addCreatureReady(player1, new ArcadesSabboth());

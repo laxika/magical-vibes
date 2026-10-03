@@ -3117,7 +3117,11 @@ public class SpellCastTriggerCollectorService {
             // ability (Bloodlord of Vaasgoth's bloodthirst grant).
             entry.setTriggeringCardId(spellCard.getId());
             if (carriesTriggeringSpellManaValue) {
+                entry.setTriggeringCardSnapshot(spellCard);
                 entry.setEventValue(triggeringSpellManaValue);
+            }
+            if (resolved.stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringCreatureToHandEffect.class::isInstance)) {
+                entry.setTriggeringCardSnapshot(spellCard);
             }
             if (interveningSpellManaValueCondition) {
                 entry.setEventValue(interveningSpellManaValue);

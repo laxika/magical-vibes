@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CloneShell.class, GrizzlyBears.class, LlanowarElves.class, Plains.class,
+        Shock.class, Spellbook.class, Panharmonicon.class})
 class CloneShellTest extends BaseCardTest {
 
     // ===== ETB imprint =====
@@ -62,7 +66,7 @@ class CloneShellTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Choose the first card (Grizzly Bears)
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -95,7 +99,7 @@ class CloneShellTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0)); // exile Grizzly Bears
+        harness.handleCardChosen(player1, 0); // exile Grizzly Bears
 
         // Reorder remaining: Shock(0), Plains(1), Llanowar Elves(2)
         List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
@@ -133,8 +137,7 @@ class CloneShellTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, cloneShellId);
-        harness.passBothPriorities(); // resolve Shock — Clone Shell dies
+        harness.castAndResolveInstant(player2, 0, cloneShellId); // resolve Shock — Clone Shell dies
         harness.passBothPriorities(); // resolve death trigger
 
         // Grizzly Bears should be on the battlefield
@@ -171,8 +174,7 @@ class CloneShellTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, cloneShellId);
-        harness.passBothPriorities(); // resolve Shock — Clone Shell dies
+        harness.castAndResolveInstant(player2, 0, cloneShellId); // resolve Shock — Clone Shell dies
         harness.passBothPriorities(); // resolve death trigger
 
         // No new permanent on battlefield (Clone Shell removed, nothing added)
@@ -200,8 +202,7 @@ class CloneShellTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, cloneShellId);
-        harness.passBothPriorities(); // resolve Shock — Clone Shell dies
+        harness.castAndResolveInstant(player2, 0, cloneShellId); // resolve Shock — Clone Shell dies
         harness.passBothPriorities(); // resolve death trigger
 
         // No new permanent on battlefield
@@ -230,10 +231,109 @@ class CloneShellTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("A one-card library is imprinted face down and its creature enters on death")
+    void oneCardLibraryImprintsAndReturnsCreature() {
+        GrizzlyBears bears = new GrizzlyBears();
+        castShellWithLibrary(List.of(bears));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        killShell();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("A noncreature imprinted face down is revealed and remains in exile on death")
+    void deathRevealsNonCreature() {
+        Plains plains = new Plains();
+        castShellWithLibrary(List.of(plains));
+        assertThat(gd.findExiledCard(plains.getId()).faceDown()).isTrue();
+
+        killShell();
+
+        assertThat(gd.findExiledCard(plains.getId())).isNotNull();
+        assertThat(gd.findExiledCard(plains.getId()).faceDown()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("A two-card library exiles the selected card and bottoms the other without reordering")
+    void twoCardLibraryExilesOneAndBottomsTheOther() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Plains plains = new Plains();
+        castShellWithLibrary(List.of(bears, plains));
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The death trigger cannot return an imprinted card that has left exile")
+    void deathDoesNotReturnCardNoLongerInExile() {
+        GrizzlyBears bears = new GrizzlyBears();
+        castShellWithLibrary(List.of(bears));
+        gd.removeFromExile(bears.getId());
+        gd.playerHands.get(player1.getId()).add(bears);
+
+        killShell();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("A doubled imprint trigger returns both exiled creatures when Clone Shell dies")
+    void doubledImprintReturnsBothCreatures() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        GrizzlyBears bears = new GrizzlyBears();
+        LlanowarElves elves = new LlanowarElves();
+        castShellWithLibrary(List.of(bears, new Plains(), new Plains(), new Plains(), elves));
+        harness.handleCardChosen(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+        assertThat(gd.findExiledCard(bears.getId()).faceDown()).isTrue();
+        assertThat(gd.findExiledCard(elves.getId()).faceDown()).isTrue();
+
+        killShell();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.findExiledCard(bears.getId())).isNull();
+        assertThat(gd.findExiledCard(elves.getId())).isNull();
+    }
+
+    private void castShellWithLibrary(List<Card> cards) {
+        harness.setLibrary(player1, cards);
+        harness.setHand(player1, List.of(new CloneShell()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void killShell() {
+        UUID shellId = harness.getPermanentId(player1, "Clone Shell");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, shellId);
+        harness.passBothPriorities();
+    }
+
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private int indexOf(List<Card> cards, String name) {

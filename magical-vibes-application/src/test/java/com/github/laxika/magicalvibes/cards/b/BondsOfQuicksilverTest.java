@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoldenUrn;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.Soliton;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,38 +18,35 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BondsOfQuicksilver.class, Memnite.class, GoldenUrn.class, Soliton.class})
 class BondsOfQuicksilverTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Bonds of Quicksilver puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Bonds of Quicksilver");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(BondsOfQuicksilver.class);
     }
 
     @Test
     @DisplayName("Resolving Bonds of Quicksilver attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -57,19 +56,15 @@ class BondsOfQuicksilverTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== Prevents untapping =====
-
     @Test
     @DisplayName("Tapped creature with Bonds of Quicksilver does not untap during controller's untap step")
     void enchantedCreatureDoesNotUntap() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfQuicksilver());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfQuicksilver());
         bondsPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
         advanceToNextTurn(player1);
 
@@ -79,19 +74,16 @@ class BondsOfQuicksilverTest extends BaseCardTest {
     @Test
     @DisplayName("Other permanents owned by the same player still untap normally")
     void otherPermanentsStillUntap() {
-        Permanent enchantedBears = new Permanent(new GrizzlyBears());
+        Permanent enchantedBears = harness.addToBattlefieldAndReturn(player2, new Memnite());
         enchantedBears.setSummoningSick(false);
         enchantedBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(enchantedBears);
 
-        Permanent freeBears = new Permanent(new GrizzlyBears());
+        Permanent freeBears = harness.addToBattlefieldAndReturn(player2, new Memnite());
         freeBears.setSummoningSick(false);
         freeBears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(freeBears);
 
-        Permanent bondsPerm = new Permanent(new BondsOfQuicksilver());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfQuicksilver());
         bondsPerm.setAttachedTo(enchantedBears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
         advanceToNextTurn(player1);
 
@@ -99,19 +91,15 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         assertThat(freeBears.isTapped()).isFalse();
     }
 
-    // ===== Removal restores untapping =====
-
     @Test
     @DisplayName("Creature can untap again after Bonds of Quicksilver is removed")
     void creatureUntapsAfterBondsRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
-        Permanent bondsPerm = new Permanent(new BondsOfQuicksilver());
+        Permanent bondsPerm = harness.addToBattlefieldAndReturn(player1, new BondsOfQuicksilver());
         bondsPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(bondsPerm);
 
         gd.playerBattlefields.get(player1.getId()).remove(bondsPerm);
 
@@ -120,19 +108,16 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         assertThat(bearsPerm.isTapped()).isFalse();
     }
 
-    // ===== Fizzles if target removed =====
-
     @Test
     @DisplayName("Bonds of Quicksilver fizzles to graveyard if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         gd.playerBattlefields.get(player2.getId()).clear();
 
@@ -142,13 +127,11 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Bonds of Quicksilver");
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Can target a creature with Bonds of Quicksilver")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
@@ -160,32 +143,29 @@ class BondsOfQuicksilverTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Bonds of Quicksilver")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player2, new Memnite());
+        harness.addToBattlefield(player1, new GoldenUrn());
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Golden Urn");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Full integration =====
-
     @Test
     @DisplayName("Full integration: cast Bonds on tapped creature, advance turn, creature stays tapped")
     void fullIntegrationCastAndPreventUntap() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new Memnite());
         bearsPerm.setSummoningSick(false);
         bearsPerm.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new BondsOfQuicksilver()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -198,7 +178,43 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         assertThat(bearsPerm.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Flash permits casting during the opponent's upkeep without tapping the creature")
+    void flashOnOpponentsTurnDoesNotTapCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Memnite());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new BondsOfQuicksilver()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent bonds = findPermanent(player1, "Bonds of Quicksilver");
+        assertThat(bonds.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An enchanted creature can untap through its activated ability")
+    void activatedAbilityCanUntapEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Soliton());
+        creature.tap();
+        harness.setHand(player1, List.of(new BondsOfQuicksilver()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Bonds of Quicksilver");
+        creature.tap();
+        harness.performUntapStep(player1);
+        assertThat(creature.isTapped()).isTrue();
+    }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
@@ -206,8 +222,6 @@ class BondsOfQuicksilverTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 }

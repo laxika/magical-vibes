@@ -62,6 +62,70 @@ class BeastModeTest extends BaseCardTest {
     }
 
     @Test
+    void targetCanPayItsOwnTeamworkCostWhileSummoningSick() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setSummoningSick(true);
+
+        cast(target, List.of(target.getId()));
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void multipleTeamworkCreaturesStillGiveOnlyOneCounter() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        cast(target, List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    void cannotUseAnOpponentsCreatureForTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> cast(target, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotUseAnAlreadyTappedCreatureForTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent teammate = addCreatureReady(player1, new GrizzlyBears());
+        teammate.tap();
+
+        assertThatThrownBy(() -> cast(target, List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotUseALandForTeamwork() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> cast(target, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     void cannotTargetALand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new BeastMode()));
@@ -74,8 +138,12 @@ class BeastModeTest extends BaseCardTest {
     private void cast(Permanent target, List<java.util.UUID> teamworkPermanents) {
         harness.setHand(player1, List.of(new BeastMode()));
         addMana();
-        harness.castInstantWithSacrifices(player1, 0, target.getId(), teamworkPermanents);
-        harness.passBothPriorities();
+        if (teamworkPermanents.isEmpty()) {
+            harness.castAndResolveInstant(player1, 0, target.getId());
+        } else {
+            harness.castInstantWithSacrifices(player1, 0, target.getId(), teamworkPermanents);
+            harness.passBothPriorities();
+        }
     }
 
     private void addMana() {

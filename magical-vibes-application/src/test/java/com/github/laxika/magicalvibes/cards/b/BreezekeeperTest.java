@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.w.Warthog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -53,6 +54,48 @@ class BreezekeeperTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper);
     }
 
+    @Test
+    @DisplayName("A flying creature can block Breezekeeper")
+    void flyingCreatureCanBlock() {
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
+        Permanent blocker = addCreatureReady(player2, new Breezekeeper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(keeper);
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Phasing happens before untapping and preserves counters")
+    void phasingPreservesTappedStateAndCounters() {
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
+        keeper.setTapped(true);
+        keeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(keeper);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(keeper);
+        assertThat(keeper.isTapped()).isTrue();
+        assertThat(keeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(keeper);
+        assertThat(keeper.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(keeper);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(keeper);
+        assertThat(keeper.isTapped()).isFalse();
+        assertThat(keeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(TurnStep.UNTAP);

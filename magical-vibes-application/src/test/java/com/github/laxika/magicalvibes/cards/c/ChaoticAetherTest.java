@@ -1,14 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BlankPlanarDieRollsCauseChaosEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RollPlanarDieEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarDieResult;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -21,8 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -66,28 +57,41 @@ class ChaoticAetherTest extends BaseCardTest {
     }
 
     @Test
-    void blankRollCausesChaosUntilThePhenomenonLeaves() {
-        ChaoticAether aether = new ChaoticAether();
-        aether.addEffect(EffectSlot.CHAOS_TRIGGERED, new DrawCardEffect(1));
-        PlanarObject source = new PlanarObject(aether, gd.nextTimestamp());
-        gd.planechase.faceUp.add(source);
+    void blankRollCausesChaosOnThePlaneAfterTheEncounter() {
+        gd.planechase.deck.addFirst(new ChaoticAether());
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
-        StackEntry encounter = new StackEntry(StackEntryType.TRIGGERED_ABILITY, aether, player1.getId(),
-                "Chaotic Aether's ability", List.of(
-                        new BlankPlanarDieRollsCauseChaosEffect(), new RollPlanarDieEffect()));
-        encounter.setSourcePlanarObject(source.copy());
-        gd.enqueueTrigger(encounter);
         when(die.roll()).thenReturn(PlanarDieResult.BLANK);
-
         int before = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> planar.rollSpecialAction(gd, player1.getId()));
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
-                .isSameAs(aether);
-
-        harness.passBothPriorities();
-
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 1);
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
                 .isInstanceOf(Panopticon.class);
+    }
+
+    @Test
+    void effectEndsWhenAPlayerPlaneswalksAwayFromTheNextPlane() {
+        gd.planechase.deck.addFirst(new ChaoticAether());
+        gd.planechase.deck.addLast(new Panopticon());
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        var departing = gd.planechase.faceUp.getFirst().getId();
+        when(die.roll()).thenReturn(PlanarDieResult.PLANESWALKER);
+        harness.inMutationScope(() -> planar.rollSpecialAction(gd, player1.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.planechase.faceUp.getFirst().getId()).isNotEqualTo(departing);
+
+        when(die.roll()).thenReturn(PlanarDieResult.BLANK);
+        int before = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
     }
 }

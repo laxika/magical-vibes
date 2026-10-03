@@ -33,4 +33,58 @@ class AdelbertSteinerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, steiner)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, steiner)).isEqualTo(1);
     }
+
+    @Test
+    void boostUpdatesWhenEquipmentLeavesTheBattlefield() {
+        Permanent steiner = harness.addToBattlefieldAndReturn(player1, new AdelbertSteiner());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        assertThat(gqs.getEffectivePower(gd, steiner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, steiner)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        harness.setGraveyard(player1, java.util.List.of(equipment.getCard()));
+
+        assertThat(gqs.getEffectivePower(gd, steiner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, steiner)).isEqualTo(1);
+    }
+
+    @Test
+    void boostUsesCurrentEquipmentControllerRatherThanOwnerOrAttachment() {
+        Permanent steiner = harness.addToBattlefieldAndReturn(player1, new AdelbertSteiner());
+        Permanent opposingSteiner = harness.addToBattlefieldAndReturn(player2, new AdelbertSteiner());
+        LeoninScimitar card = new LeoninScimitar();
+        card.setOwnerId(player1.getId());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, card);
+        equipment.setAttachedTo(opposingSteiner.getId());
+
+        assertThat(gqs.getEffectivePower(gd, steiner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, steiner)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingSteiner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSteiner)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        gd.playerBattlefields.get(player2.getId()).add(equipment);
+
+        assertThat(gqs.getEffectivePower(gd, steiner)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, steiner)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingSteiner)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingSteiner)).isEqualTo(3);
+    }
+
+    @Test
+    void lifelinkGainsLifeEqualToEquipmentBoostedCombatDamage() {
+        Permanent steiner = addCreatureReady(player1, new AdelbertSteiner());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        steiner.setAttacking(true);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
 }

@@ -106,6 +106,75 @@ class ChronatogTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Activation limit applies before the ability resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent chronatog = addCreatureReady(player1, new Chronatog());
+
+        harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(chronatog), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can activate again on the opponent's turn and skip two future turns")
+    void activationResetsOnOpponentsTurnAndSkipsAccumulate() {
+        Permanent chronatog = addCreatureReady(player1, new Chronatog());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
+        harness.passBothPriorities();
+        advanceTurn(player2);
+
+        harness.activateAbility(player1, battlefieldIndex(chronatog), null, null);
+        harness.passBothPriorities();
+
+        assertThat(chronatog.getEffectivePower()).isEqualTo(4);
+        assertThat(chronatog.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player2.getId(), 0)).isZero();
+
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        advanceTurn(player1);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Two Chronatogs have independent activation limits and boost only themselves")
+    void eachChronatogCanActivateOnce() {
+        Permanent first = addCreatureReady(player1, new Chronatog());
+        Permanent second = addCreatureReady(player1, new Chronatog());
+
+        harness.activateAbility(player1, battlefieldIndex(first), null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+
+        harness.activateAbility(player1, battlefieldIndex(second), null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }

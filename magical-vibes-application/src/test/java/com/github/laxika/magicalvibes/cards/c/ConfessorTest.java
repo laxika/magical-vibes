@@ -52,6 +52,39 @@ class ConfessorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can decline life gain after the controller discards")
+    void decliningControllerDiscardTriggerDoesNotGainLife() {
+        setUpConfessorAndLooter();
+        setUpLooterDiscard(player1);
+
+        resolveLooterDiscard(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Each Confessor offers an independent choice for the same discard")
+    void multipleConfessorsHaveIndependentChoices() {
+        setUpConfessorAndLooter();
+        harness.addToBattlefield(player1, new Confessor());
+        harness.setLife(player2, 20);
+        setUpLooterDiscard(player2);
+
+        resolveLooterDiscard(player2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Offers life gain once for each card discarded")
     void offersLifeGainForEachCardDiscarded() {
         harness.addToBattlefield(player1, new Confessor());
@@ -61,8 +94,7 @@ class ConfessorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CephalidLooter(), new CephalidLooter()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());

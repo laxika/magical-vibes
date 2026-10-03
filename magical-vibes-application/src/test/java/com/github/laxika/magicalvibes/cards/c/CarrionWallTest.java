@@ -72,6 +72,48 @@ class CarrionWallTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new CarrionWall());
+        wall.setSummoningSick(true);
+        wall.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getRegenerationShield()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolved regeneration ability prevents lethal damage and removes the wall from combat")
+    void activatedRegenerationSavesWallInCombat() {
+        Permanent wall = addCreatureReady(player1, new CarrionWall());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isFalse();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        wall.setBlocking(true);
+        wall.addBlockingTargetId(attacker.getId());
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Carrion Wall");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(wall.getRegenerationShield()).isZero();
+        assertThat(wall.getMarkedDamage()).isZero();
+        assertThat(wall.isBlocking()).isFalse();
+        assertThat(wall.getBlockingTargets()).isEmpty();
+    }
+
+    @Test
     @DisplayName("Defender prevents Carrion Wall from attacking")
     void defenderPreventsAttacking() {
         Permanent wall = addCreatureReady(player1, new CarrionWall());

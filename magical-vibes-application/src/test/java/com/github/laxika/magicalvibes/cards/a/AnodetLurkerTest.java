@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(AnodetLurker.class)
+@CardUsed({AnodetLurker.class})
 class AnodetLurkerTest extends BaseCardTest {
 
     @Test
@@ -41,5 +41,52 @@ class AnodetLurkerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Anodet Lurker");
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("An opponent's dying Anodet Lurker gains life only for that opponent on resolution")
+    void opponentGainsLifeOnlyWhenTheirTriggerResolves() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 7);
+        Permanent lurker = harness.addToBattlefieldAndReturn(player2, new AnodetLurker());
+        lurker.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Anodet Lurker");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 7);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Simultaneously dying Anodet Lurkers each gain life for their own controller")
+    void simultaneousDeathsGainLifeForEachController() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 7);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AnodetLurker());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AnodetLurker());
+        first.setMarkedDamage(3);
+        second.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Anodet Lurker");
+        harness.assertInGraveyard(player2, "Anodet Lurker");
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 7);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).isEmpty();
     }
 }

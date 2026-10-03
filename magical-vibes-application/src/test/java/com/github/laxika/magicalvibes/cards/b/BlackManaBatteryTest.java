@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,15 +11,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BlackManaBattery.class)
+@CardUsed({BlackManaBattery.class})
 class BlackManaBatteryTest extends BaseCardTest {
-
-    // ===== Ability 0: {2}, {T}: Put a charge counter =====
 
     @Test
     @DisplayName("Paying {2} and tapping puts a charge counter on the battery")
     void firstAbilityAddsChargeCounter() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -33,7 +30,7 @@ class BlackManaBatteryTest extends BaseCardTest {
 
     @Test
     void firstAbilityRequiresTwoMana() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -46,7 +43,7 @@ class BlackManaBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot add a charge counter while the battery is already tapped")
     void firstAbilityRejectedWhenTapped() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         battery.tap();
 
@@ -54,12 +51,10 @@ class BlackManaBatteryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Ability 1: {T}, Remove any number of charge counters: Add {B} + one per removed =====
-
     @Test
     @DisplayName("Removing all charge counters adds the base {B} plus one per counter removed")
     void removingAllCountersAddsBasePlusPerCounter() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         battery.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -73,7 +68,7 @@ class BlackManaBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Removing fewer counters than present keeps the rest and still adds the base {B}")
     void removingSomeCountersKeepsTheRest() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         battery.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -86,7 +81,7 @@ class BlackManaBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Removing zero counters still adds the base {B} and keeps every counter")
     void removingZeroCountersStillAddsBase() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         battery.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -100,7 +95,7 @@ class BlackManaBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Activating with no charge counters adds the base {B} with no counter choice")
     void activatingWithNoCountersAddsBaseOnly() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -112,7 +107,7 @@ class BlackManaBatteryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot produce mana while the battery is already tapped")
     void secondAbilityRejectedWhenTapped() {
-        Permanent battery = addReadyBattery(player1);
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
         battery.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -121,12 +116,53 @@ class BlackManaBatteryTest extends BaseCardTest {
         assertThat(blackMana()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    void chargingUsesTheStackAndPreservesExistingCounters() {
+        Permanent battery = harness.addToBattlefieldAndReturn(player1, new BlackManaBattery());
+        battery.setSummoningSick(true);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-    private Permanent addReadyBattery(Player player) {
-        Permanent battery = harness.addToBattlefieldAndReturn(player, new BlackManaBattery());
-        battery.setSummoningSick(false);
-        return battery;
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(battery.isTapped()).isTrue();
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newlyEnteredNoncreatureBatteryProducesManaImmediately() {
+        Permanent battery = harness.addToBattlefieldAndReturn(player1, new BlackManaBattery());
+        battery.setSummoningSick(true);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(blackMana()).isEqualTo(3);
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void manaAbilityRemovesOnlyChargeCounters() {
+        Permanent battery = addCreatureReady(player1, new BlackManaBattery());
+        battery.setCounterCount(CounterType.CHARGE, 2);
+        battery.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(blackMana()).isEqualTo(3);
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private int blackMana() {

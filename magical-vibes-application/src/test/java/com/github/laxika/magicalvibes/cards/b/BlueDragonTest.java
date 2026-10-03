@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,20 +9,18 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlueDragon.class, GrizzlyBears.class})
+@CardUsed({BlueDragon.class, HillGiantHerdgorger.class})
 class BlueDragonTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB gives three distinct opposing creatures -3/-0, -2/-0, and -1/-0")
     void etbAppliesDifferentReductionsToThreeCreatures() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
 
         castBlueDragon();
         chooseTarget(first);
@@ -42,8 +39,8 @@ class BlueDragonTest extends BaseCardTest {
     @Test
     @DisplayName("The second and third reductions are optional")
     void optionalTargetsMayBeDeclined() {
-        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
 
         castBlueDragon();
         chooseTarget(first);
@@ -58,10 +55,13 @@ class BlueDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Reductions last through cleanup and expire at the controller's next turn")
     void reductionsLastUntilControllersNextTurn() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        harness.addToBattlefield(player2, new HillGiantHerdgorger());
 
         castBlueDragon();
         chooseTarget(target);
+        declineTarget();
+        declineTarget();
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.CLEANUP);
@@ -74,10 +74,11 @@ class BlueDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The ETB can target only creatures controlled by an opponent")
-    void etbCannotTargetOwnCreature() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+    @DisplayName("The required -3/-0 target must be controlled by an opponent")
+    void requiredTargetCannotBeOwnCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        harness.addToBattlefield(player2, new HillGiantHerdgorger());
 
         castBlueDragon();
 
@@ -89,15 +90,84 @@ class BlueDragonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         chooseTarget(opposingCreature);
+        declineTarget();
+        declineTarget();
         harness.passBothPriorities();
         assertThat((gqs.getEffectivePower(gd, opposingCreature) - opposingCreature.getCard().getPower())).isEqualTo(-3);
     }
 
+    @Test
+    @DisplayName("The optional -2/-0 target may be a creature you control")
+    void secondTargetMayBeOwnCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+        harness.addToBattlefield(player2, new HillGiantHerdgorger());
+
+        castBlueDragon();
+        chooseTarget(first);
+        chooseTarget(ownCreature);
+        declineTarget();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature) - ownCreature.getCard().getPower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, first) - first.getCard().getPower()).isEqualTo(-3);
+    }
+
+    @Test
+    @DisplayName("The optional -1/-0 target may be Blue Dragon itself")
+    void thirdTargetMayBeBlueDragonItself() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        harness.addToBattlefield(player2, new HillGiantHerdgorger());
+
+        castBlueDragon();
+        Permanent dragon = findPermanent(player1, "Blue Dragon");
+        chooseTarget(first);
+        chooseTarget(second);
+        chooseTarget(dragon);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon) - dragon.getCard().getPower()).isEqualTo(-1);
+        assertThat(gqs.getEffectivePower(gd, second) - second.getCard().getPower()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Each selected creature must be distinct")
+    void optionalTargetsCannotRepeatEarlierTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
+
+        castBlueDragon();
+        chooseTarget(first);
+        assertThatThrownBy(() -> chooseTarget(first)).isInstanceOf(IllegalStateException.class);
+        chooseTarget(second);
+        assertThatThrownBy(() -> chooseTarget(first)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> chooseTarget(second)).isInstanceOf(IllegalStateException.class);
+        chooseTarget(third);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first) - first.getCard().getPower()).isEqualTo(-3);
+        assertThat(gqs.getEffectivePower(gd, second) - second.getCard().getPower()).isEqualTo(-2);
+        assertThat(gqs.getEffectivePower(gd, third) - third.getCard().getPower()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Without an opposing creature there is no legal required target")
+    void noOpponentCreatureLeavesOwnCreatureUnaffected() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiantHerdgorger());
+
+        castBlueDragon();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, ownCreature) - ownCreature.getCard().getPower()).isZero();
+        harness.assertOnBattlefield(player1, "Blue Dragon");
+    }
+
     private void castBlueDragon() {
-        harness.setHand(player1, List.of(new BlueDragon()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlueDragon(), "{5}{U}{U}");
         harness.passBothPriorities();
     }
 

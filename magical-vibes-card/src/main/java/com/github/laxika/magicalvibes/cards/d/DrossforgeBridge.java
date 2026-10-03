@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "HA6", collectorNumber = "12")
 @CardRegistration(set = "MH2", collectorNumber = "246")
+@CardRegistration(set = "BRC", collectorNumber = "183")
 public class DrossforgeBridge extends Card {
 
     public DrossforgeBridge() {

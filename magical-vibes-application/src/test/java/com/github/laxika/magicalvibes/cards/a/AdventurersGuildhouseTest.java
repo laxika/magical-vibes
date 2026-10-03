@@ -37,6 +37,17 @@ class AdventurersGuildhouseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A green legendary creature can be declared as a band by itself")
+    void greenLegendaryCanFormASingleCreatureBand() {
+        addGuildhouse(player1);
+        Permanent greenLegendary = addCreatureReady(player1, new AdunOakenshield());
+
+        declareBand(player1, List.of(1));
+
+        assertThat(greenLegendary.getBandId()).isNotNull();
+    }
+
+    @Test
     @DisplayName("A band with a nonlegendary creature is rejected")
     void bandWithNonlegendaryCreatureIsRejected() {
         addGuildhouse(player1);
@@ -107,6 +118,58 @@ class AdventurersGuildhouseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(greenLegend);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherLegend);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("A legendary blocking pair lets its controller assign the attacker's damage")
+    void legendaryBlockingPairControlsAttackerDamage() {
+        addGuildhouse(player2);
+        Permanent attacker = addCreatureReady(player1, new Johan());
+        Permanent greenLegend = addCreatureReady(player2, new AdunOakenshield());
+        Permanent otherLegend = addCreatureReady(player2, new TetsuoUmezawa());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0), new BlockerAssignment(2, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(5);
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(otherLegend.getId(), 5));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(greenLegend).doesNotContain(otherLegend);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("An additional nonlegendary blocker does not disable a legendary pair's damage assignment")
+    void additionalNonlegendaryBlockerDoesNotDisableDamageAssignment() {
+        addGuildhouse(player2);
+        Permanent attacker = addCreatureReady(player1, new Johan());
+        Permanent greenLegend = addCreatureReady(player2, new AdunOakenshield());
+        Permanent otherLegend = addCreatureReady(player2, new TetsuoUmezawa());
+        Permanent nonlegend = addCreatureReady(player2, new ElvenRiders());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0), new BlockerAssignment(2, 0),
+                new BlockerAssignment(3, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(5);
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(nonlegend.getId(), 5));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(greenLegend, otherLegend).doesNotContain(nonlegend);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
     }
 
     private void addGuildhouse(Player player) {

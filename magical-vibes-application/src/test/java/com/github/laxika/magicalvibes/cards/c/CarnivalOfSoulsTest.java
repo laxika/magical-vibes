@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.m.MetathranSoldier;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.y.YavimayaHollow;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,8 +13,43 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CarnivalOfSouls.class, MetathranSoldier.class, YavimayaHollow.class})
+@CardUsed({CarnivalOfSouls.class, MetathranSoldier.class, YavimayaHollow.class, Opalescence.class})
 class CarnivalOfSoulsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Life loss and mana addition resolve together as one triggered ability")
+    void lifeLossAndManaResolveTogether() {
+        harness.addToBattlefield(player1, new CarnivalOfSouls());
+        harness.setHand(player1, List.of(new MetathranSoldier()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Carnival triggers for its own entry when Opalescence makes it a creature")
+    void triggersForItsOwnAnimatedEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.setHand(player1, List.of(new CarnivalOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Carnival of Souls");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("A creature entering under your control causes life loss and adds black mana")

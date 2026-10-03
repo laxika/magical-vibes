@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ClaimOfErebos.class, CyclopsOfOneEyedPass.class})
 class ClaimOfErebosTest extends BaseCardTest {
 
     @Test
@@ -65,11 +65,11 @@ class ClaimOfErebosTest extends BaseCardTest {
     void abilityCannotTargetPermanent() {
         Permanent creature = addReadyCreature();
         addAttachedClaim(creature);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new CyclopsOfOneEyedPass());
         harness.addMana(player1, ManaColor.BLACK, 2);
         readyMainPhase();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
     }
@@ -80,21 +80,98 @@ class ClaimOfErebosTest extends BaseCardTest {
         Permanent creature = addReadyCreature();
         Permanent aura = addAttachedClaim(creature);
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, creature)).hasSize(1);
-
         gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        readyMainPhase();
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, creature)).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void summoningSickCreatureCannotActivateGrantedTapAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CyclopsOfOneEyedPass());
+        creature.setSummoningSick(true);
+        addAttachedClaim(creature);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedCreatureCannotActivateGrantedAbility() {
+        Permanent creature = addReadyCreature();
+        addAttachedClaim(creature);
+        creature.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityRequiresBlackMana() {
+        Permanent creature = addReadyCreature();
+        addAttachedClaim(creature);
+        harness.addMana(player1, ManaColor.RED, 2);
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentControlsAbilityGrantedByYourAura() {
+        Permanent creature = addCreatureReady(player2, new CyclopsOfOneEyedPass());
+        Permanent aura = addAttachedClaim(creature);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        readyMainPhase();
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(aura.isTapped()).isFalse();
+    }
+
+    @Test
+    void activatedAbilityResolvesAfterAuraLeaves() {
+        Permanent creature = addReadyCreature();
+        Permanent aura = addAttachedClaim(creature);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        readyMainPhase();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     private Permanent addReadyCreature() {
-        return addCreatureReady(player1, new GrizzlyBears());
+        return addCreatureReady(player1, new CyclopsOfOneEyedPass());
     }
 
     private Permanent addAttachedClaim(Permanent creature) {
-        Permanent aura = new Permanent(new ClaimOfErebos());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ClaimOfErebos());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 

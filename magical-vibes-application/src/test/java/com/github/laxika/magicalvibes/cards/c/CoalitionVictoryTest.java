@@ -93,6 +93,40 @@ class CoalitionVictoryTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("Wins when the missing creature color is gained before resolution")
+    void requirementsAreCheckedAtResolution() {
+        addAllBasicLandTypes(player1);
+        harness.addToBattlefield(player1, new GalinasKnight());
+        harness.addToBattlefield(player1, new BlazingSpecter());
+        harness.castFromHand(player1, new CoalitionVictory(), "{3}{W}{U}{B}{R}{G}");
+
+        harness.addToBattlefield(player1, new NomadicElf());
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Does not win if the required land leaves before resolution")
+    void losingRequiredLandBeforeResolutionPreventsWin() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        addAllRequiredCreatures(player1);
+        harness.castFromHand(player1, new CoalitionVictory(), "{3}{W}{U}{B}{R}{G}");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, forest));
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.assertInGraveyard(player1, "Coalition Victory");
+    }
+
     private void castCoalitionVictory() {
         harness.castFromHand(player1, new CoalitionVictory(), "{3}{W}{U}{B}{R}{G}");
         harness.passBothPriorities();

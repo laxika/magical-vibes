@@ -49,7 +49,6 @@ class ChimericIdolTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, idol)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, idol)).isFalse();
@@ -68,5 +67,55 @@ class ChimericIdolTest extends BaseCardTest {
 
         assertThat(idol.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, idol)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lands tap on resolution, including lands that entered after activation")
+    void tapsLandsOnlyOnResolution() {
+        Permanent idol = harness.addToBattlefieldAndReturn(player1, new ChimericIdol());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, idol)).isFalse();
+
+        Permanent newLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(newLand.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Already tapped lands do not prevent animation")
+    void animatesWithAllLandsAlreadyTapped() {
+        Permanent idol = harness.addToBattlefieldAndReturn(player1, new ChimericIdol());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        land.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability still taps lands when Chimeric Idol leaves before resolution")
+    void tapsLandsAfterSourceLeavesBattlefield() {
+        Permanent idol = harness.addToBattlefieldAndReturn(player1, new ChimericIdol());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(idol);
+        gd.playerGraveyards.get(player1.getId()).add(idol.getCard());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Chimeric Idol");
     }
 }

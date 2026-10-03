@@ -22,6 +22,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
     private final TargetRedirectionSupport targetRedirectionSupport;
 
     @Override
@@ -78,7 +79,10 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());
 
-        if (!triggeringSpellEffect.retargetToSource() && copyEntry.getTargetId() != null) {
+        if (!triggeringSpellEffect.retargetToSource() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), spell.getControllerId(),
+                    copyEntry.getTargetableId(), 0);
+        } else if (!triggeringSpellEffect.retargetToSource() && copyEntry.getTargetId() != null) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(),
                     spell.getControllerId(),

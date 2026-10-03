@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AxelrodGunnarson.class, BarbaryApes.class})
+@CardUsed({AxelrodGunnarson.class, BarbaryApes.class, ChandraNalaar.class})
 class AxelrodGunnarsonTest extends BaseCardTest {
 
     @Test
@@ -100,6 +100,68 @@ class AxelrodGunnarsonTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
         harness.assertInGraveyard(player2, "Barbary Apes");
+    }
+
+    @Test
+    @DisplayName("Axelrod can target its controller, gaining life before dealing damage")
+    void canTargetItsController() {
+        addAttackingAxelrod();
+        Permanent blocker = addBlocker(2, 2);
+
+        passCombatDamage(blocker);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Barbary Apes");
+    }
+
+    @CardUsed(ChandraNalaar.class)
+    @Test
+    @DisplayName("No life is gained if the targeted planeswalker leaves before resolution")
+    void doesNotGainLifeWhenOnlyTargetBecomesIllegal() {
+        addAttackingAxelrod();
+        Permanent blocker = addBlocker(2, 2);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+
+        passCombatDamage(blocker);
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No trigger occurs if Axelrod leaves before the damaged creature dies")
+    void doesNotTriggerAfterAxelrodHasLeft() {
+        Permanent axelrod = addAttackingAxelrod();
+        Permanent blocker = addBlocker(2, 6);
+
+        passCombatDamage(blocker);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        TestCards.mutableCard(axelrod).setToughness(0);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Axelrod Gunnarson");
+
+        TestCards.mutableCard(blocker).setToughness(5);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Barbary Apes");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addAttackingAxelrod() {

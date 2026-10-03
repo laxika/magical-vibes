@@ -101,6 +101,62 @@ class CinderSeerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canRevealOnlySomeRedCardsAndKeepsThemInHand() {
+        addCreatureReady(player1, new CinderSeer());
+        FlameJet revealed = new FlameJet();
+        HulkingOgre unrevealed = new HulkingOgre();
+        harness.setHand(player1, List.of(revealed, unrevealed));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed, unrevealed);
+    }
+
+    @Test
+    void choosesCardsFromHandAtResolutionRatherThanActivation() {
+        addCreatureReady(player1, new CinderSeer());
+        FlameJet original = new FlameJet();
+        HulkingOgre replacement = new HulkingOgre();
+        harness.setHand(player1, List.of(original));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.setHand(player1, List.of(replacement));
+        harness.passBothPriorities();
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
+                        gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(replacement.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(replacement.getId()));
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void cannotRevealNonRedCardsOrCountTheSameCardTwice() {
+        addCreatureReady(player1, new CinderSeer());
+        FlameJet red = new FlameJet();
+        BrineSeer blue = new BrineSeer();
+        harness.setHand(player1, List.of(red, blue));
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(blue.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(red.getId(), red.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(red.getId()));
+        harness.assertLife(player2, 19);
+    }
+
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

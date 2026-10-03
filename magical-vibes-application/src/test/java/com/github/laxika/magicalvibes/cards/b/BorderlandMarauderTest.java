@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BorderlandMarauder.class})
 class BorderlandMarauderTest extends BaseCardTest {
 
     @Test
@@ -49,5 +51,26 @@ class BorderlandMarauderTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(marauder.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack boost uses the stack and affects only the attacking copy")
+    void attackBoostResolvesOnlyForItsSource() {
+        Permanent attacker = addCreatureReady(player1, new BorderlandMarauder());
+        Permanent stayingBack = addCreatureReady(player1, new BorderlandMarauder());
+        Permanent opponent = addCreatureReady(player2, new BorderlandMarauder());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(attacker.getPowerModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(stayingBack.getPowerModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
     }
 }

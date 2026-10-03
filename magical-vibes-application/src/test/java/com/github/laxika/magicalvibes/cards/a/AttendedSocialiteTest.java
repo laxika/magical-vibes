@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,10 +45,7 @@ class AttendedSocialiteTest extends BaseCardTest {
     @Test
     @DisplayName("Attended Socialite's own entry does not trigger it")
     void ownEntryDoesNotTrigger() {
-        harness.setHand(player1, List.of(new AttendedSocialite()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AttendedSocialite(), "{1}{G}");
         harness.passBothPriorities();
 
         Permanent socialite = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -79,8 +73,46 @@ class AttendedSocialiteTest extends BaseCardTest {
     }
 
     private void castGrizzlyBears(Player player) {
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new GrizzlyBears(), "{1}{G}");
+    }
+
+    @Test
+    @DisplayName("Each additional creature creates a separate, cumulative boost")
+    void multipleEntriesGiveCumulativeBoosts() {
+        Permanent socialite = harness.addToBattlefieldAndReturn(player1, new AttendedSocialite());
+
+        castGrizzlyBears(player1);
+        resolveAllTriggers();
+        castGrizzlyBears(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(socialite.getEffectivePower()).isEqualTo(3);
+        assertThat(socialite.getEffectiveToughness()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(socialite.getEffectivePower()).isEqualTo(4);
+        assertThat(socialite.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A second Socialite boosts the existing one, not itself")
+    void secondSocialiteBoostsOnlyExistingSocialite() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AttendedSocialite());
+
+        harness.castFromHand(player1, new AttendedSocialite(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(first.getEffectivePower()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(1);
     }
 }

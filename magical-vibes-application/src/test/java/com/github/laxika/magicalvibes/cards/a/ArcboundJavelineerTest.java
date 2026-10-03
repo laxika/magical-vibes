@@ -24,10 +24,7 @@ class ArcboundJavelineerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ArcboundJavelineer()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ArcboundJavelineer(), "{W}");
         harness.passBothPriorities();
 
         Permanent javelineer = findPermanent(player1, "Arcbound Javelineer");
@@ -86,6 +83,95 @@ class ArcboundJavelineerTest extends BaseCardTest {
         assertThat(bronzeSable.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void canDamageBlockingCreatureAndPaysCountersBeforeResolution() {
+        Permanent javelineer = addCreatureReady(player1, new ArcboundJavelineer());
+        javelineer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent blocker = addCreatureReady(player2, new ArcboundJavelineer());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        blocker.setBlocking(true);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(javelineer.isTapped()).isTrue();
+        assertThat(javelineer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void canChooseZeroWithoutAnyCounters() {
+        Permanent javelineer = addCreatureReady(player1, new ArcboundJavelineer());
+        Permanent attacker = addCreatureReady(player2, new ArcboundJavelineer());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.handleXValueChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(javelineer.isTapped()).isTrue();
+        assertThat(javelineer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void modularCanTargetOpponentsArtifactCreatureAndUsesAllCountersAtDeath() {
+        Permanent javelineer = addCreatureReady(player1, new ArcboundJavelineer());
+        javelineer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        javelineer.tap();
+        Permanent recipient = addCreatureReady(player2, new ArcboundJavelineer());
+        Permanent nonartifact = addCreatureReady(player1, new GrizzlyBears());
+
+        destroyJavelineer(javelineer);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(recipient.getId()).doesNotContain(nonartifact.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void modularMayBeDeclined() {
+        Permanent javelineer = addCreatureReady(player1, new ArcboundJavelineer());
+        javelineer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        javelineer.tap();
+        Permanent recipient = addCreatureReady(player1, new ArcboundJavelineer());
+
+        destroyJavelineer(javelineer);
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void abilityDoesNotDamageCreatureThatStopsAttackingBeforeResolution() {
+        Permanent javelineer = addCreatureReady(player1, new ArcboundJavelineer());
+        javelineer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player2, new ArcboundJavelineer());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.handleXValueChosen(player1, 1);
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(javelineer.isTapped()).isTrue();
+        assertThat(javelineer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void destroyJavelineer(Permanent javelineer) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -93,7 +179,7 @@ class ArcboundJavelineerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, javelineer.getId(), null);
+        harness.castSorcery(player2, 0, javelineer.getId());
         harness.passBothPriorities();
     }
 }

@@ -58,8 +58,6 @@ class BorealCentaurTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -94,5 +92,68 @@ class BorealCentaurTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The activation limit applies before the first activation resolves")
+    void cannotActivateAgainInResponse() {
+        Permanent centaur = addCreatureReady(player1, new BorealCentaur());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(centaur.getEffectivePower()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(centaur.getEffectivePower()).isEqualTo(3);
+        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each Boreal Centaur has its own activation limit and boosts only itself")
+    void separateCopiesHaveSeparateLimits() {
+        Permanent first = addCreatureReady(player1, new BorealCentaur());
+        Permanent second = addCreatureReady(player1, new BorealCentaur());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Boreal Centaur can activate while summoning sick on an opponent's turn")
+    void canActivateWhileSummoningSickOnOpponentsTurn() {
+        Permanent centaur = harness.addToBattlefieldAndReturn(player1, new BorealCentaur());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.RED, 1);
+
+        assertThat(centaur.isSummoningSick()).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(centaur.getEffectivePower()).isEqualTo(3);
+        assertThat(centaur.getEffectiveToughness()).isEqualTo(3);
+        assertThat(centaur.isTapped()).isFalse();
     }
 }

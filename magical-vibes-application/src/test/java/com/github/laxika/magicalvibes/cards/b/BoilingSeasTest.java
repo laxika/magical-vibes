@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,10 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BoilingSeas.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class})
+@CardUsed({BoilingSeas.class, GrizzlyBears.class, Island.class, Mountain.class, Plains.class, VolcanicIsland.class})
 class BoilingSeasTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -31,8 +31,6 @@ class BoilingSeasTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard()).isInstanceOf(BoilingSeas.class);
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Destroys all Islands controlled by both players")
@@ -49,7 +47,6 @@ class BoilingSeasTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({VolcanicIsland.class})
     @DisplayName("Destroys nonbasic lands with the Island subtype")
     void destroysNonbasicIslands() {
         harness.addToBattlefield(player1, new VolcanicIsland());
@@ -83,5 +80,39 @@ class BoilingSeasTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Boiling Seas");
+    }
+
+    @Test
+    @DisplayName("An indestructible Island survives while other Islands are destroyed")
+    void indestructibleIslandSurvives() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addToBattlefield(player2, new Island());
+
+        harness.castFromHand(player1, new BoilingSeas(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("An Island can regenerate from Boiling Seas")
+    void islandCanRegenerate() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setRegenerationShield(1);
+        harness.addToBattlefield(player2, new Island());
+
+        harness.castFromHand(player1, new BoilingSeas(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInGraveyard(player1, "Island");
+        assertThat(island.getRegenerationShield()).isZero();
+        assertThat(island.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player2, "Island");
     }
 }

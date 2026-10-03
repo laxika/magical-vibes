@@ -37,6 +37,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                                source permanent, with this trigger permanent as the source
  * @param lifePaymentOnly         when {@code true}, the trigger fires only when life was paid to
  *                                activate the ability and offers to pay that same amount again
+ * @param requiresSacrificedPermanent when {@code true}, the trigger fires only when one or more
+ *                                    permanents were sacrificed as part of the activation cost
+ * @param optionalCopy             when {@code true}, the controller may decline the free copy
  */
 public record CopyControllerActivatedAbilityTriggerEffect(
         String manaCost,
@@ -47,31 +50,33 @@ public record CopyControllerActivatedAbilityTriggerEffect(
         boolean activationCostContainsX,
         boolean exhaustAbilityOnly,
         PermanentPredicate sourcePermanentFilter,
-        boolean lifePaymentOnly
+        boolean lifePaymentOnly,
+        boolean requiresSacrificedPermanent,
+        boolean optionalCopy
 ) implements CardEffect {
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost) {
-        this(manaCost, null, false, false, null, false, false, null, false);
+        this(manaCost, null, false, false, null, false, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter) {
-        this(manaCost, sourceFilter, false, false, null, false, false, null, false);
+        this(manaCost, sourceFilter, false, false, null, false, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false, false, null, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, false, null, false, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false, false, null, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, null, false, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
                                                        boolean equippedCreatureOnly, boolean loyaltyAbilityOnly,
                                                        StackEntryPredicate targetPredicate) {
-        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false, false, null, false);
+        this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate, false, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
@@ -79,7 +84,7 @@ public record CopyControllerActivatedAbilityTriggerEffect(
                                                        StackEntryPredicate targetPredicate,
                                                        boolean activationCostContainsX) {
         this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
-                activationCostContainsX, false, null, false);
+                activationCostContainsX, false, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
@@ -88,7 +93,7 @@ public record CopyControllerActivatedAbilityTriggerEffect(
                                                        boolean activationCostContainsX,
                                                        boolean exhaustAbilityOnly) {
         this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
-                activationCostContainsX, exhaustAbilityOnly, null, false);
+                activationCostContainsX, exhaustAbilityOnly, null, false, false, false);
     }
 
     public CopyControllerActivatedAbilityTriggerEffect(String manaCost, StackEntryPredicate sourceFilter,
@@ -98,13 +103,20 @@ public record CopyControllerActivatedAbilityTriggerEffect(
                                                        boolean exhaustAbilityOnly,
                                                        PermanentPredicate sourcePermanentFilter) {
         this(manaCost, sourceFilter, equippedCreatureOnly, loyaltyAbilityOnly, targetPredicate,
-                activationCostContainsX, exhaustAbilityOnly, sourcePermanentFilter, false);
+                activationCostContainsX, exhaustAbilityOnly, sourcePermanentFilter, false, false, false);
     }
 
     /** Trigger descriptor for Verrak, Warped Sengir's life-paid ability copy. */
     public static CopyControllerActivatedAbilityTriggerEffect whenLifeIsPaid() {
         return new CopyControllerActivatedAbilityTriggerEffect(
-                null, null, false, false, null, false, false, null, true);
+                null, null, false, false, null, false, false, null, true, false, false);
+    }
+
+    /** Trigger descriptor for Ashnod the Uncaring's optional free copy after a sacrifice. */
+    public static CopyControllerActivatedAbilityTriggerEffect whenPermanentWasSacrificed(
+            StackEntryPredicate sourceFilter) {
+        return new CopyControllerActivatedAbilityTriggerEffect(
+                null, sourceFilter, false, false, null, false, false, null, false, true, true);
     }
 
     public boolean requiresXInActivationCost() {

@@ -125,6 +125,38 @@ class AnuridSwarmsnapperTest extends BaseCardTest {
         ))).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("One activation does not let Anurid Swarmsnapper block three creatures")
+    void oneActivationCannotBlockThreeCreatures() {
+        Permanent swarmsnapper = addSwarmsnapper();
+        activate(swarmsnapper);
+        addAttackers(3);
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(swarmsnapper);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1),
+                new BlockerAssignment(blockerIdx, 2)
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating one Anurid Swarmsnapper does not grant extra blocks to another")
+    void additionalBlockAppliesOnlyToActivatingCreature() {
+        Permanent source = addSwarmsnapper();
+        Permanent other = addSwarmsnapper();
+        activate(source);
+        addAttackers(2);
+        prepareDeclareBlockers();
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(other);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(blockerIdx, 0),
+                new BlockerAssignment(blockerIdx, 1)
+        ))).isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addSwarmsnapper() {
         return addCreatureReady(player2, new AnuridSwarmsnapper());
     }

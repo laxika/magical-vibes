@@ -1274,6 +1274,17 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Disciple of Caelus Nin: the current player chose permanents to keep from phasing out. */
+    record EachPlayerChoosesPermanentsThenPhaseOutRestChoice(
+            java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,
+            int maxCount, UUID sourcePermanentId, String sourceName)
+            implements MultiPermanentChoiceContext {
+        public EachPlayerChoosesPermanentsThenPhaseOutRestChoice {
+            playerIds = java.util.List.copyOf(playerIds);
+            chosenIds = java.util.List.copyOf(chosenIds);
+        }
+    }
+
     /** Each player chooses a nonland permanent they control to receive a counter. */
     record EachPlayerChoosesNonlandPermanentAndPutCounterChoice(
             java.util.List<UUID> playerIds, int playerIndex, java.util.List<UUID> chosenIds,

@@ -113,6 +113,66 @@ class CharismaTest extends BaseCardTest {
         assertThat(enchantedCreature.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Does not gain control if Charisma leaves before its trigger resolves")
+    void auraLeavesBeforeTriggerResolves() {
+        Permanent enchantedCreature = addCreatureReady(player1, new CrossbowInfantry());
+        Permanent charisma = attachCharisma(enchantedCreature);
+        Permanent damagedCreature = addCreatureReady(player2, new AlabasterWall());
+        damagedCreature.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, damagedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, charisma.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(damagedCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(damagedCreature);
+    }
+
+    @Test
+    @DisplayName("The Aura controller gains control even when an opponent controls the enchanted creature")
+    void auraControllerGainsControl() {
+        Permanent enchantedCreature = addCreatureReady(player2, new CrossbowInfantry());
+        attachCharisma(enchantedCreature);
+        Permanent damagedCreature = addCreatureReady(player2, new AlabasterWall());
+        damagedCreature.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player2, 0, null, damagedCreature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(damagedCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantedCreature)
+                .doesNotContain(damagedCreature);
+    }
+
+    @Test
+    @DisplayName("A creature killed by the damage is not returned by Charisma")
+    void lethalDamageDoesNotReturnCreature() {
+        Permanent enchantedCreature = addCreatureReady(player1, new CrossbowInfantry());
+        attachCharisma(enchantedCreature);
+        Permanent damagedCreature = addCreatureReady(player2, new KrisMage());
+        damagedCreature.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        harness.activateAbility(player1, 0, null, damagedCreature.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(damagedCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(damagedCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(damagedCreature.getCard());
+    }
+
     private Permanent setUpCombat() {
         Permanent enchantedCreature = addCreatureReady(player1, new HornedTroll());
         enchantedCreature.setAttacking(true);

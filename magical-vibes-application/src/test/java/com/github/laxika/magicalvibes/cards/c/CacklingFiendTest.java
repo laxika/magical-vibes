@@ -57,6 +57,29 @@ class CacklingFiendTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Entering without being cast triggers discard and only the opponent discards their chosen card")
+    void enteringWithoutCastingMakesOnlyOpponentDiscardChosenCard() {
+        CoralMerfolk controllerCard = new CoralMerfolk();
+        CoralMerfolk keptCard = new CoralMerfolk();
+        CoralMerfolk discardedCard = new CoralMerfolk();
+        harness.setHand(player1, List.of(controllerCard));
+        harness.setHand(player2, List.of(keptCard, discardedCard));
+
+        harness.enterBattlefieldAndReturn(player1, new CacklingFiend());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castCacklingFiend() {
         harness.castFromHand(player1, new CacklingFiend(), "{2}{B}{B}");
     }

@@ -16,9 +16,57 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BringerOfTheGreenDawn.class, DrossCrocodile.class})
 class BringerOfTheGreenDawnTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Can be cast for its normal mana cost")
+    void castsForNormalCost() {
+        harness.setHand(player1, List.of(new BringerOfTheGreenDawn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bringer of the Green Dawn");
+    }
+
+    @Test
+    @DisplayName("Alternate payment requires every color even with spare mana")
+    void alternateCostRequiresEveryColor() {
+        harness.setHand(player1, List.of(new BringerOfTheGreenDawn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.assertNotOnBattlefield(player1, "Bringer of the Green Dawn");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The other controller creates exactly one token on their own battlefield")
+    void otherControllerCreatesToken() {
+        harness.addToBattlefield(player2, new BringerOfTheGreenDawn());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Beast")).hasSize(1);
+        assertThat(findPermanents(player1, "Beast")).isEmpty();
+        Permanent token = findPermanent(player2, "Beast");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
+    }
 
     @Test
     @DisplayName("Can be cast for the five-color alternate cost")

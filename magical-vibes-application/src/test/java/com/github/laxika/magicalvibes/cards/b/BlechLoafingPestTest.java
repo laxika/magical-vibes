@@ -7,20 +7,51 @@ import com.github.laxika.magicalvibes.cards.i.InsectileAberration;
 import com.github.laxika.magicalvibes.cards.r.RottingFensnake;
 import com.github.laxika.magicalvibes.cards.s.ScreechingBat;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlechLoafingPest.class, AngelOfMercy.class, GiantSpider.class, GrizzlyBears.class,
+        InsectileAberration.class, RottingFensnake.class, ScreechingBat.class})
 class BlechLoafingPestTest extends BaseCardTest {
 
-    
+    @Test
+    @DisplayName("Controller's life gain excludes opponent's matching permanents")
+    void controllerLifeGainExcludesOpponentPermanents() {
+        Permanent blech = harness.addToBattlefieldAndReturn(player1, new BlechLoafingPest());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(blech.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Matching permanents are determined when the life-gain trigger resolves")
+    void includesMatchingPermanentAddedBeforeResolution() {
+        Permanent blech = harness.addToBattlefieldAndReturn(player1, new BlechLoafingPest());
+
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(blech.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.passBothPriorities();
+
+        assertThat(blech.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Puts +1/+1 counters on each matching creature you control when you gain life")
@@ -32,10 +63,7 @@ class BlechLoafingPestTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InsectileAberration());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new AngelOfMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
         harness.passBothPriorities(); // resolve Angel of Mercy (ETB gain 3 life)
         harness.passBothPriorities(); // resolve GainLifeEffect
         harness.passBothPriorities(); // resolve Blech's triggered ability
@@ -64,10 +92,7 @@ class BlechLoafingPestTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new AngelOfMercy()));
-        harness.addMana(player2, ManaColor.WHITE, 5);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AngelOfMercy(), "{4}{W}");
         harness.passBothPriorities(); // resolve Angel of Mercy
         harness.passBothPriorities(); // resolve GainLifeEffect
 
@@ -87,10 +112,7 @@ class BlechLoafingPestTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new AngelOfMercy()));
-        harness.addMana(player2, ManaColor.WHITE, 5);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AngelOfMercy(), "{4}{W}");
         harness.passBothPriorities(); // resolve Angel of Mercy
         harness.passBothPriorities(); // resolve GainLifeEffect
 

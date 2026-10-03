@@ -20,6 +20,62 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BloodthirsterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Combat damage creates one ability containing both instructions")
+    void combatDamageCreatesOneAbility() {
+        Permanent bloodthirster = addCreatureReady(player1, new Bloodthirster());
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            declareAttackers(List.of(0));
+            resolveCombat();
+        });
+
+        harness.assertLife(player2, 14);
+        assertThat(bloodthirster.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Damage to a planeswalker does not untap Bloodthirster or add a combat")
+    void planeswalkerDamageDoesNotTriggerAbility() {
+        Permanent bloodthirster = addCreatureReady(player1, new Bloodthirster());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+            resolveCombat();
+        });
+
+        harness.assertLife(player2, 20);
+        assertThat(bloodthirster.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("An additional combat is still created if Bloodthirster leaves before resolution")
+    void sourceLeavingDoesNotPreventAdditionalCombat() {
+        Permanent bloodthirster = addCreatureReady(player1, new Bloodthirster());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            declareAttackers(List.of(0));
+            resolveCombat();
+        });
+        gd.playerBattlefields.get(player1.getId()).remove(bloodthirster);
+        gd.playerGraveyards.get(player1.getId()).add(bloodthirster.getCard());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bloodthirster);
+    }
+
+    @Test
     @DisplayName("Combat damage untaps Bloodthirster and creates an additional combat")
     void combatDamageUntapsBloodthirsterAndCreatesAdditionalCombat() {
         Permanent bloodthirster = addCreatureReady(player1, new Bloodthirster());

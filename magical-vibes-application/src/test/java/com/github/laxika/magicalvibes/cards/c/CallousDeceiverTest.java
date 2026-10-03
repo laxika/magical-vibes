@@ -95,7 +95,6 @@ class CallousDeceiverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(1);
@@ -114,5 +113,81 @@ class CallousDeceiverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The reveal activation limit applies before the first activation resolves")
+    void revealLimitAppliesWhileOnStack() {
+        addCreatureReady(player1, new CallousDeceiver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Revealing an empty library grants nothing and still uses the activation")
+    void emptyRevealStillUsesActivation() {
+        Permanent deceiver = addCreatureReady(player1, new CallousDeceiver());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, deceiver, Keyword.FLYING)).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("Looking can be repeated after the reveal ability has been used")
+    void lookAbilityRemainsUnlimitedAfterReveal() {
+        harness.addToBattlefield(player1, new CallousDeceiver());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                    .params().cards()).containsExactly(topCard);
+            harness.handleCardChosen(player1, -1);
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Each Deceiver has its own reveal activation limit")
+    void revealLimitIsPerPermanent() {
+        Permanent first = addCreatureReady(player1, new CallousDeceiver());
+        Permanent second = addCreatureReady(player1, new CallousDeceiver());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
     }
 }

@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,21 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BondedConstruct.class, TimberpackWolf.class})
 class BondedConstructTest extends BaseCardTest {
 
     @Test
     @DisplayName("Bonded Construct can't attack alone")
     void cantAttackAlone() {
-        Permanent construct = new Permanent(new BondedConstruct());
-        construct.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(construct);
+        addCreatureReady(player1, new BondedConstruct());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -36,44 +30,48 @@ class BondedConstructTest extends BaseCardTest {
     void canAttackWithAnother() {
         harness.setLife(player2, 20);
 
-        Permanent construct = new Permanent(new BondedConstruct());
-        construct.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(construct);
+        addCreatureReady(player1, new BondedConstruct());
+        addCreatureReady(player1, new TimberpackWolf());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        declareAttackers(List.of(0, 1));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
-
-        // Bonded Construct (2/1) + Grizzly Bears (2/2) = 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
     @DisplayName("Bonded Construct may block alone — the restriction covers attacking only")
     void canBlockAlone() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new TimberpackWolf());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        Permanent construct = addCreatureReady(player2, new BondedConstruct());
 
-        Permanent construct = new Permanent(new BondedConstruct());
-        construct.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(construct);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(construct.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Another creature staying back does not let Bonded Construct attack alone")
+    void cantAttackWhenOtherCreatureDoesNotAttack() {
+        addCreatureReady(player1, new BondedConstruct());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't attack alone");
+    }
+
+    @Test
+    @DisplayName("Two Bonded Constructs can attack together")
+    void twoConstructsCanAttackTogether() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BondedConstruct());
+        addCreatureReady(player1, new BondedConstruct());
+
+        declareAttackers(List.of(0, 1));
+
+        harness.assertLife(player2, 16);
     }
 }

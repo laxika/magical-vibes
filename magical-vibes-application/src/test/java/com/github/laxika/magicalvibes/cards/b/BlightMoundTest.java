@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -45,8 +46,7 @@ class BlightMoundTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -62,8 +62,7 @@ class BlightMoundTest extends BaseCardTest {
         Permanent creature = addCreature(player1);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
 
         Permanent pest = gd.playerBattlefields.get(player1.getId()).stream()
@@ -75,11 +74,83 @@ class BlightMoundTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, pest.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, pest.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("An opposing nontoken creature dying does not create a Pest")
+    void opposingCreatureDeathDoesNotCreatePest() {
+        harness.addToBattlefield(player1, new BlightMound());
+        Permanent creature = addCreature(player2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("A generated Pest dying grants life without creating another Pest")
+    void tokenDeathDoesNotCreateAnotherPest() {
+        harness.addToBattlefield(player1, new BlightMound());
+        Permanent pest = createPestThroughCreatureDeath();
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, pest.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Generated Pests receive the bonus only while attacking, and other creatures do not")
+    void generatedPestBonusTracksAttackingState() {
+        harness.addToBattlefield(player1, new BlightMound());
+        Permanent pest = createPestThroughCreatureDeath();
+        Permanent bear = addCreature(player1);
+        bear.setAttacking(true);
+
+        assertThat(pest.getCard().getColors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pest, Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.MENACE)).isFalse();
+
+        pest.setAttacking(true);
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pest, Keyword.MENACE)).isTrue();
+
+        pest.setAttacking(false);
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pest, Keyword.MENACE)).isFalse();
+    }
+
+    private Permanent createPestThroughCreatureDeath() {
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getSubtypes().contains(CardSubtype.PEST))
+                .findFirst()
+                .orElseThrow();
     }
 
     private Permanent addPest(com.github.laxika.magicalvibes.model.Player player) {

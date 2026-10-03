@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.ShuGeneral;
 import com.github.laxika.magicalvibes.cards.t.TheGitrogMonster;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BurningOfXinye.class, Forest.class, Mountain.class, ShuGeneral.class,
-        TheGitrogMonster.class, ZodiacDragon.class})
+        TheGitrogMonster.class, ZodiacDragon.class, DarksteelCitadel.class})
 class BurningOfXinyeTest extends BaseCardTest {
 
     private void castBurning() {
@@ -180,5 +181,66 @@ class BurningOfXinyeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Neither player can choose indestructible lands to destroy")
+    void indestructibleLandsAreExcludedFromBothPlayersChoices() {
+        Permanent controllerCitadel = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        Permanent opponentCitadel = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+            harness.addToBattlefield(player2, new Forest());
+        }
+
+        castBurning();
+
+        PendingInteraction.MultiPermanentChoice controllerChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(controllerChoice).isNotNull();
+        assertThat(controllerChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(controllerChoice.validIds()).hasSize(5).doesNotContain(controllerCitadel.getId());
+        harness.handleMultiplePermanentsChosen(player1, controllerChoice.validIds().subList(0, 4));
+
+        PendingInteraction.MultiPermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.playerId()).isEqualTo(player2.getId());
+        assertThat(opponentChoice.validIds()).hasSize(5).doesNotContain(opponentCitadel.getId());
+        harness.handleMultiplePermanentsChosen(player2, opponentChoice.validIds().subList(0, 4));
+
+        harness.assertOnBattlefield(player1, "Darksteel Citadel");
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(c -> c.hasType(CardType.LAND)).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Creature damage waits until both players finish destroying their lands")
+    void creatureDamageFollowsBothLandChoices() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+            harness.addToBattlefield(player2, new Forest());
+        }
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new ZodiacDragon());
+        harness.addToBattlefield(player1, new ShuGeneral());
+
+        castBurning();
+
+        assertThat(dragon.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Shu General");
+        PendingInteraction.MultiPermanentChoice first =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, first.validIds().subList(0, 4));
+
+        assertThat(dragon.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Shu General");
+        PendingInteraction.MultiPermanentChoice second =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player2, second.validIds().subList(0, 4));
+
+        assertThat(dragon.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Zodiac Dragon");
+        harness.assertInGraveyard(player1, "Shu General");
     }
 }

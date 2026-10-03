@@ -1,16 +1,26 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect: this creature can block creatures with shadow as though it had shadow.
+ * Static permission to block shadow creatures using either form of the "as though" wording.
  *
- * <p>Only lifts the shadow blocking restriction in the "attacker has shadow, blocker doesn't"
- * direction — the carrier does not gain shadow, so it still blocks creatures without shadow
- * normally and is still blockable as a non-shadow creature (Wall of Diffusion).</p>
+ * <p>The default treats the blocker as having shadow (Wall of Diffusion). The alternate form
+ * treats the attacker as having no shadow (Aether Web), so a blocker that actually has shadow
+ * still cannot block that attacker.</p>
  */
-public record CanBlockCreaturesWithShadowEffect() implements BlockabilityPermissionEffect {
+public record CanBlockCreaturesWithShadowEffect(boolean treatAttackerAsWithoutShadow)
+        implements BlockabilityPermissionEffect {
+
+    public CanBlockCreaturesWithShadowEffect() {
+        this(false);
+    }
 
     @Override
     public boolean blocksShadowAsThoughShadow() {
-        return true;
+        return !treatAttackerAsWithoutShadow;
+    }
+
+    @Override
+    public boolean blocksShadowAsThoughNoShadow() {
+        return treatAttackerAsWithoutShadow;
     }
 }

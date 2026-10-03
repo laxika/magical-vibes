@@ -88,4 +88,82 @@ class AnimarSoulOfElementsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }
+
+    @Test
+    void reductionDoesNotPayColoredMana() {
+        Permanent animar = harness.addToBattlefieldAndReturn(player1, new AnimarSoulOfElements());
+        animar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void newCounterCannotDiscountTheSpellThatTriggersIt() {
+        Permanent animar = harness.addToBattlefieldAndReturn(player1, new AnimarSoulOfElements());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(animar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotTriggerAnimar() {
+        Permanent animar = harness.addToBattlefieldAndReturn(player1, new AnimarSoulOfElements());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(animar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsAnimarDoesNotReduceOrTriggerForYourCreature() {
+        Permanent animar = harness.addToBattlefieldAndReturn(player2, new AnimarSoulOfElements());
+        animar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(animar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void castingNoncreatureSpellDoesNotAddCounter() {
+        Permanent animar = harness.addToBattlefieldAndReturn(player1, new AnimarSoulOfElements());
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(animar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void animarDoesNotTriggerForItsOwnCasting() {
+        harness.setHand(player1, List.of(new AnimarSoulOfElements()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(animar -> assertThat(animar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
 }

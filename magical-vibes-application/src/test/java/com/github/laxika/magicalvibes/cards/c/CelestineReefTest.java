@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,7 +86,7 @@ class CelestineReefTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.addToBattlefield(player2, new LaboratoryManiac());
-        gd.playerDecks.put(player2.getId(), new ArrayList<>());
+        harness.setLibrary(player2, List.of());
         harness.forceActivePlayer(player2);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
@@ -102,5 +101,61 @@ class CelestineReefTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void planeAloneDoesNotPreventLoss() {
+        harness.setLife(player1, 0);
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void chaosDoesNotPreventOpponentFromLosing() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        harness.setLife(player2, 0);
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void chaosPreventsPoisonLossUntilOpponentPlaneswalks() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        gd.playerPoisonCounters.put(player1.getId(), 10);
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.forceActivePlayer(player2);
+        gd.planechase.deck.add(new CelestineReef());
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void chaosProtectionStaysWithTriggerControllerAfterPlanarControlChanges() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+        harness.setLife(player1, 0);
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.setLife(player2, 0);
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 }

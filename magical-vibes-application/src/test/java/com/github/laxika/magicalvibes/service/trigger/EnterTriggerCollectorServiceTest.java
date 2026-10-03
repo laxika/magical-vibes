@@ -310,8 +310,7 @@ class EnterTriggerCollectorServiceTest {
         gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
         Card entering = enteringCreature(2, 2);
-        Permanent enteringPermanent = new Permanent(entering);
-        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
 
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
@@ -342,7 +341,8 @@ class EnterTriggerCollectorServiceTest {
         gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
         Card entering = enteringCreature(2, 2);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
 
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 

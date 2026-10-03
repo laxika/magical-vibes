@@ -67,4 +67,34 @@ class BouncingBeeblesTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    void cantBeBlockedWhenDefendersArtifactIsTapped() {
+        harness.addToBattlefield(player2, new GrimMonolith());
+        findPermanent(player2, "Grim Monolith").setTapped(true);
+        addCreatureReady(player2, new YavimayaWurm());
+        Permanent beebles = addCreatureReady(player1, new BouncingBeebles());
+        beebles.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void canBeBlockedWhenDefendersLastArtifactLeavesBeforeBlockers() {
+        harness.addToBattlefield(player2, new GrimMonolith());
+        Permanent artifact = findPermanent(player2, "Grim Monolith");
+        Permanent blocker = addCreatureReady(player2, new YavimayaWurm());
+        Permanent beebles = addCreatureReady(player1, new BouncingBeebles());
+        beebles.setAttacking(true);
+
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }

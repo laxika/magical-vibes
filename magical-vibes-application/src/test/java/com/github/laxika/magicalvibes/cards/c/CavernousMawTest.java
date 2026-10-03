@@ -72,11 +72,66 @@ class CavernousMawTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, maw)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, maw)).isFalse();
         assertThat(gqs.isLand(gd, maw)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Three graveyard Caves qualify even when the source is tapped")
+    void graveyardCavesAloneQualifyWithTappedSource() {
+        Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new CavernousMaw(), new CavernousMaw()));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, maw)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
+        assertThat(maw.isTapped()).isTrue();
+        assertThat(gqs.isLand(gd, maw)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, maw, CardSubtype.CAVE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, maw, CardSubtype.ELEMENTAL)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opponents' Caves and graveyard Cave cards do not qualify")
+    void opponentsCavesDoNotCount() {
+        Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new CavernousMaw()));
+        harness.addToBattlefield(player2, new CavernousMaw());
+        harness.setGraveyard(player2, List.of(new CavernousMaw(), new CavernousMaw(), new CavernousMaw()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("three or greater");
+
+        assertThat(gqs.isCreature(gd, maw)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing qualifying Cave cards after activation does not prevent animation")
+    void qualificationIsOnlyCheckedOnActivation() {
+        Permanent maw = harness.addToBattlefieldAndReturn(player1, new CavernousMaw());
+        harness.setGraveyard(player1, List.of(new CavernousMaw(), new CavernousMaw(), new CavernousMaw()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, maw)).isFalse();
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, maw)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, maw)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, maw)).isEqualTo(3);
     }
 }

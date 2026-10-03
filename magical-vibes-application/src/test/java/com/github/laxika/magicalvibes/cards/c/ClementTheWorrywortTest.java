@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SunshowerDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClementTheWorrywort.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({ClementTheWorrywort.class, GrizzlyBears.class, AirElemental.class, SunshowerDruid.class})
 class ClementTheWorrywortTest extends BaseCardTest {
 
     @Test
@@ -25,12 +26,7 @@ class ClementTheWorrywortTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent airElemental = addCreatureReady(player1, new AirElemental());
         Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ClementTheWorrywort()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ClementTheWorrywort(), "{1}{G}{U}");
         resolveAllTriggers();
 
         PendingInteraction.PermanentChoice choice =
@@ -52,11 +48,7 @@ class ClementTheWorrywortTest extends BaseCardTest {
     void anotherCreatureEntryTriggersBounce() {
         addCreatureReady(player1, new ClementTheWorrywort());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new AirElemental()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
         resolveAllTriggers();
 
         PendingInteraction.PermanentChoice choice =
@@ -75,12 +67,7 @@ class ClementTheWorrywortTest extends BaseCardTest {
     @Test
     @DisplayName("Clement can enter without a bounce target")
     void canEnterWithoutTarget() {
-        harness.setHand(player1, List.of(new ClementTheWorrywort()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ClementTheWorrywort(), "{1}{G}{U}");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Clement, the Worrywort");
@@ -91,12 +78,7 @@ class ClementTheWorrywortTest extends BaseCardTest {
     @DisplayName("A source leaving before resolution does not invalidate the chosen target")
     void sourceLeavingBeforeResolutionKeepsTargetLegal() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new ClementTheWorrywort()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ClementTheWorrywort(), "{1}{G}{U}");
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, bears.getId());
 
@@ -122,6 +104,82 @@ class ClementTheWorrywortTest extends BaseCardTest {
 
         assertThat(pool.get(ManaColor.BLUE)).isZero();
         assertThat(pool.getCreatureSpellOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A larger entering creature can return Clement itself")
+    void largerEnteringCreatureCanReturnClement() {
+        Permanent clement = addCreatureReady(player1, new ClementTheWorrywort());
+        harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(clement.getId());
+        harness.handlePermanentChosen(player1, clement.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Clement, the Worrywort");
+        harness.assertInHand(player1, "Clement, the Worrywort");
+        harness.assertOnBattlefield(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("An entering creature cannot return itself or an equal mana value creature")
+    void smallerEnteringCreatureCannotReturnEqualManaValueCreatures() {
+        addCreatureReady(player1, new ClementTheWorrywort());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Controller can choose no target even when a legal creature exists")
+    void canDeclineLegalBounceTarget() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new ClementTheWorrywort(), "{1}{G}{U}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Clement, the Worrywort");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Frog mana can pay for a creature spell")
+    void restrictedManaPaysForCreatureSpell() {
+        addCreatureReady(player1, new ClementTheWorrywort());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getCreatureSpellOnlyMana(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Other controlled Frogs receive restricted mana abilities")
+    void otherControlledFrogsReceiveManaAbilities() {
+        addCreatureReady(player1, new ClementTheWorrywort());
+        Permanent druid = addCreatureReady(player1, new SunshowerDruid());
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getCreatureSpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test

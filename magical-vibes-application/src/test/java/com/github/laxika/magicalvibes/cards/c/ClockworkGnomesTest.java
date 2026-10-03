@@ -137,6 +137,66 @@ class ClockworkGnomesTest extends BaseCardTest {
         assertThat(thopter.getRegenerationShield()).isZero();
     }
 
+    @Test
+    @DisplayName("A summoning-sick Clockwork Gnomes cannot pay its tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent gnomes = setupGnomes();
+        gnomes.setSummoningSick(true);
+        Permanent thopter = addArtifactCreature(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, thopter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gnomes.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Clockwork Gnomes cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent gnomes = setupGnomes();
+        gnomes.tap();
+        Permanent thopter = addArtifactCreature(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, thopter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Colored mana pays the generic activation cost and the shield does not tap the target")
+    void coloredManaPaysGenericCost() {
+        addCreatureReady(player1, new ClockworkGnomes());
+        Permanent thopter = addArtifactCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, thopter.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(thopter.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+        assertThat(thopter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after Clockwork Gnomes leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent gnomes = setupGnomes();
+        Permanent thopter = addArtifactCreature(player1);
+
+        harness.activateAbility(player1, 0, null, thopter.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, gnomes));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Clockwork Gnomes");
+        assertThat(thopter.getRegenerationShield()).isEqualTo(1);
+    }
+
     private Permanent setupGnomes() {
         Permanent gnomes = addCreatureReady(player1, new ClockworkGnomes());
         harness.addMana(player1, ManaColor.COLORLESS, 3);

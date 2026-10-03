@@ -243,6 +243,14 @@ public record ReturnTargetCardsFromGraveyardToHandEffect(
                 false, Set.of(), false, false, List.of(), false, false, null, false, true);
     }
 
+    /** Creates an up-to dynamic number of graveyard targets for a reflexive trigger. */
+    public static ReturnTargetCardsFromGraveyardToHandEffect forTriggeredAbility(
+            CardPredicate filter, DynamicAmount dynamicMaxTargets) {
+        return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 0, dynamicMaxTargets,
+                false, false, 0, false, Set.of(), false, false, List.of(), false, false, null,
+                false, true);
+    }
+
     /** Creates a mandatory single-card graveyard target for a reflexive triggered ability. */
     public static ReturnTargetCardsFromGraveyardToHandEffect exactlyOneForTriggeredAbility(CardPredicate filter) {
         return new ReturnTargetCardsFromGraveyardToHandEffect(filter, 1, null, false, true, 1,

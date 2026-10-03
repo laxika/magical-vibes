@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChurningEddy.class, AvenTrooper.class, TaintedIsle.class})
+@CardUsed({ChurningEddy.class, AvenTrooper.class, TaintedIsle.class, TreetopVillage.class})
 class ChurningEddyTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class ChurningEddyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId(), land.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId(), land.getId()));
 
         harness.assertNotOnBattlefield(player2, "Aven Trooper");
         harness.assertNotOnBattlefield(player2, "Tainted Isle");
@@ -66,7 +65,6 @@ class ChurningEddyTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TreetopVillage.class)
     @DisplayName("Allows a land creature to be chosen as both targets")
     void allowsLandCreatureAsBothTargets() {
         Permanent village = harness.addToBattlefieldAndReturn(player2, new TreetopVillage());
@@ -77,10 +75,59 @@ class ChurningEddyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChurningEddy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, List.of(village.getId(), village.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(village.getId(), village.getId()));
 
         harness.assertNotOnBattlefield(player2, "Treetop Village");
         harness.assertInHand(player2, "Treetop Village");
+    }
+
+    @Test
+    @DisplayName("Still returns the creature if the land target becomes illegal")
+    void returnsCreatureIfLandTargetBecomesIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TaintedIsle());
+        harness.setHand(player1, List.of(new ChurningEddy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature.getId(), land.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Aven Trooper");
+        harness.assertInHand(player2, "Aven Trooper");
+        harness.assertNotInHand(player2, "Tainted Isle");
+        harness.assertInGraveyard(player1, "Churning Eddy");
+    }
+
+    @Test
+    @DisplayName("Requires both a creature target and a land target")
+    void rejectsMissingLandTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        harness.setHand(player1, List.of(new ChurningEddy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns targets controlled by different players to their respective hands")
+    void returnsTargetsControlledByDifferentPlayers() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TaintedIsle());
+        harness.setHand(player1, List.of(new ChurningEddy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId(), land.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Aven Trooper");
+        harness.assertNotOnBattlefield(player2, "Tainted Isle");
+        harness.assertInHand(player1, "Aven Trooper");
+        harness.assertInHand(player2, "Tainted Isle");
+        harness.assertNotInHand(player2, "Aven Trooper");
+        harness.assertNotInHand(player1, "Tainted Isle");
     }
 }

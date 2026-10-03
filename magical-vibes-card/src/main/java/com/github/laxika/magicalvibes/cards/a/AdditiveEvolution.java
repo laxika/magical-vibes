@@ -28,7 +28,11 @@ public class AdditiveEvolution extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
-                List.of(CardSubtype.FRACTAL), 3));
+                List.of(CardSubtype.FRACTAL), 0));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new com.github.laxika.magicalvibes.model.effect.PutCountersOnCreatedPermanentsEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE,
+                        new com.github.laxika.magicalvibes.model.amount.Fixed(3)));
 
         // At the beginning of combat on your turn, put a +1/+1 counter on target creature
         // you control. It gains vigilance until end of turn.

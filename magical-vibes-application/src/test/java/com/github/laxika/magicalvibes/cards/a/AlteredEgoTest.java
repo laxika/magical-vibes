@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AlteredEgo.class, GrizzlyBears.class, Cancel.class})
 class AlteredEgoTest extends BaseCardTest {
 
     @Test
@@ -82,11 +84,8 @@ class AlteredEgoTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getOriginalCard().getName().equals("Altered Ego"));
-        assertThat(gameData.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Altered Ego"));
+        harness.assertNotOnBattlefield(player1, "Altered Ego");
+        harness.assertInGraveyard(player1, "Altered Ego");
     }
 
     @Test
@@ -114,6 +113,49 @@ class AlteredEgoTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.assertNotInGraveyard(player1, "Altered Ego");
         harness.assertInGraveyard(player2, "Cancel");
+    }
+
+    @Test
+    @DisplayName("Without any creatures to copy, X does not keep Altered Ego alive")
+    void noCreaturesToCopy() {
+        harness.setHand(player1, List.of(new AlteredEgo()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Altered Ego");
+        harness.assertInGraveyard(player1, "Altered Ego");
+    }
+
+    @Test
+    @DisplayName("Can copy its controller's creature without copying its counters or tapped state")
+    void copiesOwnCreatureWithoutCountersOrTappedState() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        bears.tap();
+        harness.setHand(player1, List.of(new AlteredEgo()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        gs.playCard(gd, player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        Permanent copy = findAlteredEgoCopy(player1);
+        assertThat(copy).isNotNull();
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(copy.getEffectivePower()).isEqualTo(4);
+        assertThat(copy.getEffectiveToughness()).isEqualTo(4);
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(bears.isTapped()).isTrue();
     }
 
     private Permanent findAlteredEgoCopy(com.github.laxika.magicalvibes.model.Player player) {

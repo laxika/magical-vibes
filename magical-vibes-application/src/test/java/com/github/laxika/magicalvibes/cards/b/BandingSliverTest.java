@@ -40,11 +40,32 @@ class BandingSliverTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not grant banding to an opponent's Sliver")
-    void doesNotGrantToOpponentSliver() {
+    @DisplayName("Grants banding to an opponent's Sliver")
+    void grantsBandingToOpponentSliver() {
         addCreatureReady(player1, new BandingSliver());
         Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
 
-        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.BANDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.BANDING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not grant banding to an opposing non-Sliver")
+    void doesNotGrantToOpposingNonSliver() {
+        addCreatureReady(player1, new BandingSliver());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Slivers lose granted banding when the source leaves the battlefield")
+    void losesBandingWhenSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new BandingSliver());
+        Permanent otherSliver = addCreatureReady(player1, new BonescytheSliver());
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.BANDING)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, source));
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.BANDING)).isFalse();
     }
 }

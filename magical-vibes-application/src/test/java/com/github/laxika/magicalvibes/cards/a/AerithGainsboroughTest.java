@@ -53,6 +53,69 @@ class AerithGainsboroughTest extends BaseCardTest {
         assertThat(opponentLegendary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Lifelink gains two life but adds only one counter per life-gain event")
+    void lifelinkAddsOneCounterForMultipleLife() {
+        Permanent aerith = addCreatureReady(player1, new AerithGainsborough());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        aerith.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(aerith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not put a counter on Aerith")
+    void opponentLifeGainDoesNotAddCounter() {
+        Permanent aerith = addCreatureReady(player1, new AerithGainsborough());
+        harness.addToBattlefield(player2, new AjanisWelcome());
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
+        assertThat(aerith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dying with no counters adds no counters to legendary creatures")
+    void deathWithZeroCountersAddsNone() {
+        Permanent aerith = addCreatureReady(player1, new AerithGainsborough());
+        aerith.tap();
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new ArvadTheCursed());
+        legendary.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyWithAssassinate(aerith);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aerith.getCard());
+        assertThat(legendary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Death counts only +1/+1 counters and affects creatures present at resolution")
+    void deathUsesPlusOneCountersAndResolutionBattlefield() {
+        Permanent aerith = addCreatureReady(player1, new AerithGainsborough());
+        aerith.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        aerith.setCounterCount(CounterType.CHARGE, 3);
+        aerith.tap();
+
+        destroyWithAssassinate(aerith);
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new ArvadTheCursed());
+        legendary.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(legendary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
     private void destroyWithAssassinate(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -60,7 +123,6 @@ class AerithGainsboroughTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, target.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, target.getId());
     }
 }

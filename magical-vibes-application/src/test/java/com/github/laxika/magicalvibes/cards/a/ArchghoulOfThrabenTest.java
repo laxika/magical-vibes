@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.d.DiregrafGhoul;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.UnnaturalSelection;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArchghoulOfThraben.class, DiregrafGhoul.class, GrizzlyBears.class,
+        Shock.class, LightningBolt.class, UnnaturalSelection.class})
 class ArchghoulOfThrabenTest extends BaseCardTest {
 
     @Test
@@ -141,7 +147,7 @@ class ArchghoulOfThrabenTest extends BaseCardTest {
     void emptyLibraryDoesNothing() {
         harness.addToBattlefield(player1, new ArchghoulOfThraben());
         harness.addToBattlefield(player1, new DiregrafGhoul());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         killPlayer1Creature("Diregraf Ghoul");
         harness.passBothPriorities();
@@ -149,13 +155,133 @@ class ArchghoulOfThrabenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Declining both choices leaves a Zombie on top")
+    void matchingDeclineBothLeavesOnTop() {
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        harness.addToBattlefield(player1, new DiregrafGhoul());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+
+        killPlayer1Creature("Diregraf Ghoul");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topZombie);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topZombie);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topZombie);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Zombie dying does not trigger")
+    void opponentsZombieDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Diregraf Ghoul"));
+
+        harness.assertInGraveyard(player2, "Diregraf Ghoul");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topZombie);
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths trigger once for self and once for another Zombie")
+    void simultaneousDeathsTriggerForEachZombie() {
+        Permanent archghoul = harness.addToBattlefieldAndReturn(player1, new ArchghoulOfThraben());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new DiregrafGhoul());
+        Card first = new ArchghoulOfThraben();
+        Card second = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(first, second));
+
+        archghoul.addMarkedDamage(null, 2);
+        zombie.addMarkedDamage(null, 2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature made into a Zombie triggers on death")
+    void creatureMadeIntoZombieTriggers() {
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+        changeCreatureType(bear, CardSubtype.ZOMBIE);
+
+        killPlayer1Creature("Grizzly Bears");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(topZombie);
+    }
+
+    @Test
+    @DisplayName("A Zombie changed into a non-Zombie does not trigger on death")
+    void zombieChangedIntoNonZombieDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new DiregrafGhoul());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+        changeCreatureType(zombie, CardSubtype.BEAR);
+
+        killPlayer1Creature("Diregraf Ghoul");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topZombie);
+    }
+
+    @Test
+    @DisplayName("Own death still triggers after losing the Zombie subtype")
+    void ownDeathTriggersWithoutZombieSubtype() {
+        Permanent archghoul = harness.addToBattlefieldAndReturn(player1, new ArchghoulOfThraben());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+        changeCreatureType(archghoul, CardSubtype.BEAR);
+
+        killPlayer1Creature("Archghoul of Thraben");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(topZombie);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void changeCreatureType(Permanent target, CardSubtype subtype) {
+        Permanent selection = harness.addToBattlefieldAndReturn(player1, new UnnaturalSelection());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(selection);
+        harness.activateAbility(player1, index, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, subtype.name());
+    }
+
     private void killPlayer1Creature(String name) {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID id = harness.getPermanentId(player1, name);
-        harness.castInstant(player2, 0, id);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, id);
     }
 
     private void killPlayer1CreatureWithBolt(String name) {
@@ -163,7 +289,6 @@ class ArchghoulOfThrabenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID id = harness.getPermanentId(player1, name);
-        harness.castInstant(player2, 0, id);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, id);
     }
 }

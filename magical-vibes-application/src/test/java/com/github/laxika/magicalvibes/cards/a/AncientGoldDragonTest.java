@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20EffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,10 +63,59 @@ class AncientGoldDragonTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Faerie Dragon")).isEqualTo(20);
     }
 
-    private void attackWithRoll(int result) {
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
+    @Test
+    @DisplayName("Created tokens are untapped 1/1 blue Faerie Dragon creatures with flying")
+    void createsTokensWithOracleCharacteristics() {
+        attackWithRoll(3);
+
+        assertThat(findPermanents(player1, "Faerie Dragon")).hasSize(3).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
+            assertThat(token.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.FAERIE, CardSubtype.DRAGON);
+            assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+            assertThat(token.isTapped()).isFalse();
+        });
+        assertThat(countPermanents(player2, "Faerie Dragon")).isZero();
+    }
+
+    @Test
+    @DisplayName("The attacking Dragon's controller creates the tokens when player two attacks")
+    void opponentControlledDragonCreatesTokensForOpponent() {
+        attackWithRoll(player2, 9);
+
+        assertThat(countPermanents(player2, "Faerie Dragon")).isEqualTo(9);
+        assertThat(countPermanents(player1, "Faerie Dragon")).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocker does not roll a die or create tokens")
+    void blockedDragonDoesNotCreateTokens() {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(12));
         addCreatureReady(player1, new AncientGoldDragon());
-        declareAttackers(List.of(0));
+        addCreatureReady(player2, new AncientGoldDragon());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Faerie Dragon")).isZero();
+        assertThat(countPermanents(player2, "Faerie Dragon")).isZero();
+        assertThat(gameLogContains("rolls a d20")).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    private void attackWithRoll(int result) {
+        attackWithRoll(player1, result);
+    }
+
+    private void attackWithRoll(Player controller, int result) {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
+        addCreatureReady(controller, new AncientGoldDragon());
+        declareAttackers(controller, List.of(0));
         resolveAllTriggers();
     }
 

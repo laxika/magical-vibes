@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AscendantEvincar.class, DrudgeSkeletons.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({AscendantEvincar.class, DrudgeSkeletons.class, GrizzlyBears.class, Ornithopter.class, ShiftingSky.class})
 class AscendantEvincarTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -222,5 +223,55 @@ class AscendantEvincarTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, skeletons)).isEqualTo(2); // 1 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, skeletons)).isEqualTo(2);
     }
-}
 
+    @Test
+    @DisplayName("Ascendant Evincar gives itself -1/-1 when it becomes nonblack")
+    void nonblackEvincarDebuffsItself() {
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new DrudgeSkeletons());
+
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertInGraveyard(player2, "Drudge Skeletons");
+    }
+
+    @Test
+    @DisplayName("Creatures changing to black switch from the penalty to the bonus")
+    void creaturesBecomingBlackReceiveBonus() {
+        Permanent evincar = addCreatureReady(player1, new AscendantEvincar());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.getEffectivePower(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, evincar)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Resolving a second Evincar kills creatures reduced to zero toughness")
+    void resolvingSecondEvincarKillsNonblackCreatures() {
+        addCreatureReady(player1, new AscendantEvincar());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new AscendantEvincar(), "{4}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ascendant Evincar");
+        harness.assertOnBattlefield(player2, "Ascendant Evincar");
+    }
+}

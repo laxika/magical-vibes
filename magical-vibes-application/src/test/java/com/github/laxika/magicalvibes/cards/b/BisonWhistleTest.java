@@ -84,9 +84,54 @@ class BisonWhistleTest extends BaseCardTest {
     }
 
     private void activateWithTopCard(Card topCard) {
+        activateWithLibrary(List.of(topCard));
+    }
+
+    @Test
+    @DisplayName("Declining both Bison choices leaves the creature on top without a graveyard choice")
+    void declinesBothBisonChoices() {
+        AppaLoyalSkyBison appa = new AppaLoyalSkyBison();
+        activateWithTopCard(appa);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(appa);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(appa);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(appa);
+        harness.assertNotOnBattlefield(player1, "Appa, Loyal Sky Bison");
+    }
+
+    @Test
+    @DisplayName("Declining the graveyard choice leaves a noncreature on top")
+    void declinesNoncreatureGraveyardChoice() {
+        Forest forest = new Forest();
+        activateWithTopCard(forest);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(forest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without offering a choice")
+    void emptyLibraryDoesNothing() {
+        activateWithLibrary(List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    private void activateWithLibrary(List<Card> cards) {
         Permanent whistle = harness.addToBattlefieldAndReturn(player1, new BisonWhistle());
         whistle.setSummoningSick(false);
-        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player1, cards);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -98,11 +143,7 @@ class BisonWhistleTest extends BaseCardTest {
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice) {
             harness.handleListChoice(player1, "Target creature you control gains flying until end of turn");
             harness.handlePermanentChosen(player1,
-                    gd.playerBattlefields.get(player1.getId()).stream()
-                            .filter(permanent -> permanent.getCard().getName().equals("Appa, Loyal Sky Bison"))
-                            .findFirst()
-                            .orElseThrow()
-                            .getId());
+                    harness.getPermanentId(player1, "Appa, Loyal Sky Bison"));
             harness.passBothPriorities();
         }
     }

@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EmberWeaver;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ApocalypseHydra.class, EmberWeaver.class})
 class ApocalypseHydraTest extends BaseCardTest {
-
-    // ===== Enters with X +1/+1 counters =====
 
     @Test
     @DisplayName("Casting with X=3 enters with 3 +1/+1 counters (below the doubling threshold)")
@@ -62,25 +63,24 @@ class ApocalypseHydraTest extends BaseCardTest {
         assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
     }
 
-    // ===== {1}{R}, Remove a +1/+1 counter: deal 1 damage to any target =====
-
     @Test
     @DisplayName("Ability deals 1 damage to a creature and removes a +1/+1 counter as cost")
     void abilityDealsDamageToCreatureAndRemovesCounter() {
         Permanent hydra = addReadyHydra(player1, 4);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new EmberWeaver());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Ember Weaver");
         harness.activateAbility(player1, 0, null, targetId);
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        Permanent weaver = findPermanent(player2, "Ember Weaver");
+        assertThat(weaver.getMarkedDamage()).isEqualTo(1);
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
@@ -127,13 +127,108 @@ class ApocalypseHydraTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Casting with X=0 leaves no counters and the Hydra dies")
+    void zeroXDies() {
+        harness.setHand(player1, List.of(new ApocalypseHydra()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Apocalypse Hydra");
+        harness.assertInGraveyard(player1, "Apocalypse Hydra");
+    }
+
+    @Test
+    @DisplayName("Casting with X=6 enters with twelve counters")
+    void doublesAboveThreshold() {
+        harness.setHand(player1, List.of(new ApocalypseHydra()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCard(gd, player1, 0, 6, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(12);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast gives zero counters")
+    void enteringWithoutCastingDies() {
+        Permanent hydra = harness.enterBattlefieldAndReturn(player1, new ApocalypseHydra());
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Apocalypse Hydra");
+        harness.assertInGraveyard(player1, "Apocalypse Hydra");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Hydra can activate more than once")
+    void tappedSummoningSickHydraCanActivateRepeatedly() {
+        Permanent hydra = addReadyHydra(player1, 3);
+        hydra.setSummoningSick(true);
+        hydra.tap();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hydra.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the last counter kills the Hydra but its ability still deals damage")
+    void lastCounterAbilityResolvesAfterSourceDies() {
+        addReadyHydra(player1, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Apocalypse Hydra");
+        harness.assertInGraveyard(player1, "Apocalypse Hydra");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @CardUsed({HardenedScales.class})
+    @DisplayName("Hardened Scales adds only one counter to the full entry total")
+    void scalesAppliesOnceToDoubledEntryCounters() {
+        harness.addToBattlefield(player1, new HardenedScales());
+        harness.setHand(player1, List.of(new ApocalypseHydra()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        gs.playCard(gd, player1, 0, 5, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(11);
+    }
 
     private Permanent addReadyHydra(Player player, int counters) {
-        Permanent perm = new Permanent(new ApocalypseHydra());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ApocalypseHydra());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

@@ -76,4 +76,53 @@ class CavalryMasterTest extends BaseCardTest {
         assertThat(blocker.getEffectivePower()).isEqualTo(4);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("Does not add a flanking instance to an opponent's flanking creature")
+    void doesNotEnhanceOpponentsFlankingCreature() {
+        addCreatureReady(player1, new CavalryMaster());
+        Permanent cavalry = addCreatureReady(player2, new BenalishCavalry());
+
+        assertThat(gqs.flankingInstances(gd, cavalry)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Cavalry Masters grant separate instances and enhance each other")
+    void multipleMastersGrantSeparateInstances() {
+        Permanent first = addCreatureReady(player1, new CavalryMaster());
+        Permanent second = addCreatureReady(player1, new CavalryMaster());
+        Permanent cavalry = addCreatureReady(player1, new BenalishCavalry());
+
+        assertThat(gqs.flankingInstances(gd, first)).isEqualTo(2);
+        assertThat(gqs.flankingInstances(gd, second)).isEqualTo(2);
+        assertThat(gqs.flankingInstances(gd, cavalry)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The extra flanking instance disappears when Cavalry Master leaves")
+    void extraInstanceDisappearsWhenMasterLeaves() {
+        Permanent master = addCreatureReady(player1, new CavalryMaster());
+        Permanent cavalry = addCreatureReady(player1, new BenalishCavalry());
+        assertThat(gqs.flankingInstances(gd, cavalry)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(master);
+
+        assertThat(gqs.flankingInstances(gd, cavalry)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A blocker with flanking is unaffected by every flanking instance")
+    void flankingBlockerIsUnaffected() {
+        addCreatureReady(player1, new CavalryMaster());
+        Permanent attacker = addCreatureReady(player1, new BenalishCavalry());
+        Permanent blocker = addCreatureReady(player2, new BenalishCavalry());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
 }

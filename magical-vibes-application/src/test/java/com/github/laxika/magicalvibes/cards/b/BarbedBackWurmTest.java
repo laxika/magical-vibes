@@ -87,8 +87,7 @@ class BarbedBackWurmTest extends BaseCardTest {
         addCreatureReady(player1, new BarbedBackWurm());
         Permanent blocker = addCreatureReady(player2, new WildElephant());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         resolveAllTriggers();
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -109,10 +108,63 @@ class BarbedBackWurmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Repeated activations stack without tapping the attacking Wurm")
+    void repeatedActivationsStack() {
+        Permanent wurm = addCreatureReady(player1, new BarbedBackWurm());
+        Permanent blocker = addCreatureReady(player2, new WildElephant());
+
+        blockWurmWith(0);
+        assertThat(wurm.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(1);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Wild Elephant");
+    }
+
+    @Test
+    @DisplayName("Repeated activations put a blocker with zero toughness into the graveyard")
+    void repeatedActivationsKillBlocker() {
+        addCreatureReady(player1, new BarbedBackWurm());
+        Permanent blocker = addCreatureReady(player2, new WildElephant());
+
+        blockWurmWith(0);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Wild Elephant");
+        harness.assertInGraveyard(player2, "Wild Elephant");
+        harness.assertOnBattlefield(player1, "Barbed-Back Wurm");
+    }
+
+    @Test
+    @DisplayName("A creature that stops blocking before resolution is no longer a legal target")
+    void targetMustStillBeBlockingAtResolution() {
+        addCreatureReady(player1, new BarbedBackWurm());
+        Permanent blocker = addCreatureReady(player2, new WildElephant());
+
+        blockWurmWith(0);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        blocker.getBlockingTargetIds().clear();
+        harness.passBothPriorities();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(3);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     /** Attacks with the Wurm and blocks it with player2's creature at {@code blockerIndex}. */
     private void blockWurmWith(int blockerIndex) {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, 0)));
         resolveAllTriggers();
     }

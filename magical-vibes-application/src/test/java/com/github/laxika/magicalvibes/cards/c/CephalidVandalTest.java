@@ -76,6 +76,56 @@ class CephalidVandalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Vandals count only their own shred counters")
+    void multipleVandalsTrackCountersIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CephalidVandal());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CephalidVandal());
+        second.setCounterCount(CounterType.SHRED, 2);
+        harness.setLibrary(player1, List.of(
+                new CephalidAristocrat(), new CephalidAristocrat(), new CephalidAristocrat(),
+                new CephalidAristocrat(), new CephalidAristocrat()));
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.SHRED)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.SHRED)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent adding a shred counter")
+    void addsCounterWithEmptyLibrary() {
+        Permanent vandal = harness.addToBattlefieldAndReturn(player1, new CephalidVandal());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(vandal.getCounterCount(CounterType.SHRED)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Vandal controlled by the second player mills only that player's library")
+    void secondControllerMillsOwnLibrary() {
+        Permanent vandal = harness.addToBattlefieldAndReturn(player2, new CephalidVandal());
+        harness.setLibrary(player1, List.of(new CephalidAristocrat()));
+        harness.setLibrary(player2, List.of(new CephalidAristocrat(), new CephalidAristocrat()));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(vandal.getCounterCount(CounterType.SHRED)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("The ability mills only the cards available when the library is short")
     void millsOnlyAvailableCardsFromShortLibrary() {
         Permanent vandal = harness.addToBattlefieldAndReturn(player1, new CephalidVandal());

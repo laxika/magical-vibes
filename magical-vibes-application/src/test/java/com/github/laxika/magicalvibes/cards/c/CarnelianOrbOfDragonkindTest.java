@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CarnelianOrbOfDragonkind.class)
+@CardUsed({CarnelianOrbOfDragonkind.class, ShivanDragon.class, ManaReflection.class})
 class CarnelianOrbOfDragonkindTest extends BaseCardTest {
 
     @Test
@@ -58,6 +61,47 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Test Goblin").hasKeyword(Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Orb mana grants a real Dragon haste only until end of turn")
+    void hasteExpiresAtEndOfTurn() {
+        addReadyOrb();
+        harness.activateAbility(player1, 0, null, null);
+        harness.castFromHand(player1, new ShivanDragon(), "{4}{R}");
+        resolveAllTriggers();
+
+        Permanent dragon = findPermanent(player1, "Shivan Dragon");
+        assertThat(dragon.hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(dragon.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Orb mana spent on an artifact does not grant haste to a later Dragon")
+    void spendingManaOnArtifactDoesNotAffectLaterDragon() {
+        addReadyOrb();
+        harness.activateAbility(player1, 0, null, null);
+        harness.castFromHand(player1, new CarnelianOrbOfDragonkind(), "{2}");
+        resolveAllTriggers();
+
+        harness.castFromHand(player1, new ShivanDragon(), "{4}{R}{R}");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Shivan Dragon").hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mana Reflection doubles the red mana produced by the Orb")
+    void manaReflectionDoublesOrbMana() {
+        addReadyOrb();
+        harness.addToBattlefield(player1, new ManaReflection());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(manaPool().get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyOrb() {
         Permanent orb = harness.addToBattlefieldAndReturn(player1, new CarnelianOrbOfDragonkind());
         orb.setSummoningSick(false);
@@ -80,3 +124,4 @@ class CarnelianOrbOfDragonkindTest extends BaseCardTest {
         return card;
     }
 }
+

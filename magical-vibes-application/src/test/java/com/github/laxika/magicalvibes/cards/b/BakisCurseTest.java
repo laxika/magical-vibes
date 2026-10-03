@@ -17,9 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BakisCurseTest extends BaseCardTest {
 
     private void attachAura(Player owner, Card aura, Permanent creature) {
-        Permanent auraPerm = new Permanent(aura);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(owner, aura);
         auraPerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(owner.getId()).add(auraPerm);
     }
 
     private void castCurse() {
@@ -77,5 +76,35 @@ class BakisCurseTest extends BaseCardTest {
         castCurse();
 
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts Auras at resolution after an Aura is sacrificed in response")
+    void sacrificedAuraDoesNotContributeDamage() {
+        Permanent creature = addCreatureReady(player1, new RysorianBadger());
+        attachAura(player1, new Carapace(), creature);
+
+        harness.castFromHand(player1, new BakisCurse(), "{2}{U}{U}");
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Rysorian Badger");
+        harness.assertInGraveyard(player1, "Carapace");
+        harness.assertInGraveyard(player1, "Baki's Curse");
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without damaging players")
+    void resolvesWithoutCreatures() {
+        harness.setLife(player1, 17);
+        harness.setLife(player2, 13);
+
+        castCurse();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 13);
+        harness.assertInGraveyard(player1, "Baki's Curse");
     }
 }

@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnblinkingObserver;
 import com.github.laxika.magicalvibes.model.DayNight;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,32 +10,28 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ComponentCollector.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ComponentCollector.class, Forest.class, UnblinkingObserver.class})
 class ComponentCollectorTest extends BaseCardTest {
 
     @Test
     void becomesDayAsItEntersWhenThereIsNoDesignation() {
-        harness.setHand(player1, List.of(new ComponentCollector()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ComponentCollector(), "{2}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
     void dayNightChangeMayTapTargetNonlandPermanent() {
         gd.dayNight = DayNight.DAY;
         harness.addToBattlefield(player1, new ComponentCollector());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UnblinkingObserver());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        makeItNight();
+        advanceToNextTurn();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -54,8 +49,8 @@ class ComponentCollectorTest extends BaseCardTest {
     void decliningMayLeavesTargetUntapped() {
         gd.dayNight = DayNight.DAY;
         harness.addToBattlefield(player1, new ComponentCollector());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        makeItNight();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UnblinkingObserver());
+        advanceToNextTurn();
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -68,8 +63,8 @@ class ComponentCollectorTest extends BaseCardTest {
     void dayNightChangeMayUntapTargetNonlandPermanent() {
         gd.dayNight = DayNight.DAY;
         harness.addToBattlefield(player1, new ComponentCollector());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        makeItNight();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UnblinkingObserver());
+        advanceToNextTurn();
         target.tap();
 
         harness.handlePermanentChosen(player1, target.getId());
@@ -79,8 +74,63 @@ class ComponentCollectorTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
     }
 
-    private void makeItNight() {
-        gd.spellsCastLastTurn.put(player2.getId(), 0);
+    @Test
+    void enteringDuringDayDoesNotTriggerOrChangeDesignation() {
+        gd.dayNight = DayNight.DAY;
+
+        harness.castFromHand(player1, new ComponentCollector(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void enteringDuringNightDoesNotMakeItDayOrTrigger() {
+        gd.dayNight = DayNight.NIGHT;
+
+        harness.castFromHand(player1, new ComponentCollector(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void dayRemainsDayWhenPreviousActivePlayerCastOneSpell() {
+        gd.dayNight = DayNight.DAY;
+        harness.castFromHand(player1, new ComponentCollector(), "{2}{U}");
+        harness.passBothPriorities();
+
+        advanceToNextTurn();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void nightBecomesDayAfterPreviousActivePlayerCastTwoSpells() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.addToBattlefield(player1, new ComponentCollector());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new UnblinkingObserver());
+        harness.castFromHand(player1, new UnblinkingObserver(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new UnblinkingObserver(), "{1}{U}");
+        harness.passBothPriorities();
+
+        advanceToNextTurn();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    private void advanceToNextTurn() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

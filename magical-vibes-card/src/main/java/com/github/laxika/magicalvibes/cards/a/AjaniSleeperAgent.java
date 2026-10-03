@@ -62,7 +62,12 @@ public class AjaniSleeperAgent extends Card {
                 List.of(new CreateEmblemEffect(
                         List.of(new SpellCastTriggerEffect(
                                 creatureOrPlaneswalker,
-                                List.of(new GivePoisonCountersEffect(2, PoisonRecipient.EACH_OPPONENT))
+                                List.of(new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)),
+                                null,
+                                new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
+                                        new com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate(
+                                                com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT),
+                                        "Target must be an opponent")
                         )),
                         EMBLEM_TEXT
                 )),

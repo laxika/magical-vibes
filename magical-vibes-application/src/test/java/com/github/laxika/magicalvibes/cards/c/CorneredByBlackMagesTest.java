@@ -23,8 +23,7 @@ class CorneredByBlackMagesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CorneredByBlackMages()));
         addCorneredByBlackMagesMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handlePermanentChosen(player2, chosen.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -35,16 +34,14 @@ class CorneredByBlackMagesTest extends BaseCardTest {
 
     @Test
     void WizardDealsDamageToEachOpponentWhenControllerCastsNoncreatureSpell() {
-        harness.setHand(player1, List.of(new CorneredByBlackMages(), new Shock()));
+        harness.setHand(player1, List.of(new CorneredByBlackMages()));
         addCorneredByBlackMagesMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 19);
     }
@@ -54,14 +51,67 @@ class CorneredByBlackMagesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CorneredByBlackMages()));
         addCorneredByBlackMagesMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void createsWizardEvenWhenOpponentHasNoCreatures() {
+        harness.setHand(player1, List.of(new CorneredByBlackMages()));
+        addCorneredByBlackMagesMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(findPermanents(player1, "Wizard")).hasSize(1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentNoncreatureSpellDoesNotTriggerWizard() {
+        harness.setHand(player1, List.of(new CorneredByBlackMages()));
+        addCorneredByBlackMagesMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void eachWizardTriggersForEachSubsequentNoncreatureSpell() {
+        harness.setHand(player1, List.of(new CorneredByBlackMages(), new CorneredByBlackMages(),
+                new CorneredByBlackMages()));
+        addCorneredByBlackMagesMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        addCorneredByBlackMagesMana();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Wizard")).hasSize(2);
+        addCorneredByBlackMagesMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Wizard")).hasSize(3);
     }
 
     private void addCorneredByBlackMagesMana() {

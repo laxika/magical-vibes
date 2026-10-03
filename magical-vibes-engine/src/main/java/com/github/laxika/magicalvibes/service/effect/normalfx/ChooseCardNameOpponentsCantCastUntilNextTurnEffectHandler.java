@@ -33,7 +33,7 @@ public class ChooseCardNameOpponentsCantCastUntilNextTurnEffectHandler implement
                 ? libraryRevealSupport.collectAllCardNamesInGame(gameData)
                 : libraryRevealSupport.collectCardNamesInGameExcluding(gameData, chooseName.excludedTypes());
         var choiceContext = new ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice(
-                entry.getControllerId(), !chooseName.excludedTypes().isEmpty());
+                entry.getControllerId(), !chooseName.excludedTypes().isEmpty(), chooseName.excludedTypes());
         String prompt = chooseName.excludedTypes().isEmpty()
                 ? "Choose a card name."
                 : "Choose a non" + chooseName.excludedTypes().stream()

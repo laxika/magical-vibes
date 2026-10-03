@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "GRN", collectorNumber = "109")
 @CardRegistration(set = "RVR", collectorNumber = "116")
 @CardRegistration(set = "TDC", collectorNumber = "220")
+@CardRegistration(set = "ONC", collectorNumber = "101")
 public class LegionWarboss extends Card {
 
     public LegionWarboss() {

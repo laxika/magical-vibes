@@ -19,7 +19,7 @@ class BlisterspitGremlinTest extends BaseCardTest {
     @Test
     @DisplayName("Paying mana and tapping Blisterspit Gremlin deals 1 damage to each opponent")
     void activatedAbilityDamagesOpponent() {
-        Permanent gremlin = addReadyGremlin();
+        Permanent gremlin = addCreatureReady(player1, new BlisterspitGremlin());
         int startingLife = gd.getLife(player2.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -33,7 +33,7 @@ class BlisterspitGremlinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a noncreature spell untaps Blisterspit Gremlin")
     void noncreatureSpellUntapsGremlin() {
-        Permanent gremlin = addReadyGremlin();
+        Permanent gremlin = addCreatureReady(player1, new BlisterspitGremlin());
         gremlin.tap();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -48,7 +48,7 @@ class BlisterspitGremlinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a creature spell does not untap Blisterspit Gremlin")
     void creatureSpellDoesNotUntapGremlin() {
-        Permanent gremlin = addReadyGremlin();
+        Permanent gremlin = addCreatureReady(player1, new BlisterspitGremlin());
         gremlin.tap();
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -58,10 +58,61 @@ class BlisterspitGremlinTest extends BaseCardTest {
         assertThat(gremlin.isTapped()).isTrue();
     }
 
-    private Permanent addReadyGremlin() {
-        Permanent gremlin = new Permanent(new BlisterspitGremlin());
-        gremlin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gremlin);
-        return gremlin;
+    @Test
+    @DisplayName("Untap trigger resolves before the noncreature spell")
+    void untapResolvesBeforeSpell() {
+        Permanent gremlin = addCreatureReady(player1, new BlisterspitGremlin());
+        gremlin.tap();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int startingLife = gd.getLife(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gremlin.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gremlin.isTapped()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 2);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not untap the Gremlin")
+    void opponentsSpellDoesNotUntapGremlin() {
+        Permanent gremlin = addCreatureReady(player2, new BlisterspitGremlin());
+        gremlin.tap();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gremlin.isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The Gremlin can activate again after its cast trigger untaps it")
+    void canActivateAgainAfterUntapping() {
+        Permanent gremlin = addCreatureReady(player1, new BlisterspitGremlin());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gremlin.isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gremlin.isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 4);
     }
 }

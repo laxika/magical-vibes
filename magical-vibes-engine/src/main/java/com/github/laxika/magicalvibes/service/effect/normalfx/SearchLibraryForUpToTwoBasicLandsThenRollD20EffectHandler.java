@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForUpToTwoBasicLandsThenRollD20Effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class SearchLibraryForUpToTwoBasicLandsThenRollD20EffectHandler
 
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +51,9 @@ public class SearchLibraryForUpToTwoBasicLandsThenRollD20EffectHandler
         List<Card> deck = gameData.playerDecks.get(controllerId);
         List<Card> matchingCards = deck == null ? List.of() : deck.stream()
                 .filter(card -> card.hasType(CardType.LAND))
-                .filter(card -> card.getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.BASIC))
+                .filter(card -> gameQueryService.cardHasSupertype(
+                        card, com.github.laxika.magicalvibes.model.CardSupertype.BASIC,
+                        gameData, controllerId))
                 .toList();
         if (matchingCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(

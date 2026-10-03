@@ -25,11 +25,9 @@ class ConsultTheStarChartsTest extends BaseCardTest {
         Card bottomed = new Shock();
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new ConsultTheStarCharts()));
         harness.setLibrary(player1, List.of(chosen, bottomed));
-        addBaseMana();
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ConsultTheStarCharts(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)
@@ -65,9 +63,74 @@ class ConsultTheStarChartsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(third, fourth);
     }
 
-    private void addBaseMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+    @Test
+    void noLandsLeavesLibraryUnchanged() {
+        Card top = new Forest();
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(top));
+
+        harness.castFromHand(player1, new ConsultTheStarCharts(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void usesLandCountAtResolutionAndBottomsOnlyLookedAtCards() {
+        Card first = new Forest();
+        Card second = new ConsultTheStarCharts();
+        Card untouched = new Forest();
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(first, second, untouched));
+        harness.castFromHand(player1, new ConsultTheStarCharts(), "{1}{U}");
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.handleMultipleCardsChosen(player1, List.of(untouched.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, first);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedSpellWithOnlyOneAvailableCardPutsItIntoHand() {
+        Card onlyCard = new Forest();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new ConsultTheStarCharts()));
+        addKickedMana();
+
+        harness.castKickedInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryResolvesWithoutDrawing() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new ConsultTheStarCharts(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addKickedMana() {

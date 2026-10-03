@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AlhammarretHighArbiter.class, Forest.class, GrizzlyBears.class, HillGiant.class,
+        Shock.class, Zombify.class})
 class AlhammarretHighArbiterTest extends BaseCardTest {
 
     @Test
@@ -129,8 +133,51 @@ class AlhammarretHighArbiterTest extends BaseCardTest {
     }
 
     private void addReadyArbiter(Player player, String chosenName) {
-        Permanent perm = new Permanent(new AlhammarretHighArbiter());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AlhammarretHighArbiter());
         perm.setChosenName(chosenName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+    }
+
+    @Test
+    @DisplayName("Reanimation reveals the opponent's hand and chooses a name before entry")
+    void reanimationRequiresNameChoiceBeforeEntry() {
+        AlhammarretHighArbiter arbiter = new AlhammarretHighArbiter();
+        harness.setGraveyard(player1, List.of(arbiter));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, arbiter.getId());
+
+        harness.assertNotOnBattlefield(player1, "Alhammarret, High Arbiter");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals their hand"));
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).containsExactly("Grizzly Bears");
+        harness.handleListChoice(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Alhammarret, High Arbiter").getChosenName())
+                .isEqualTo("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The casting restriction ends when Alhammarret dies")
+    void restrictionEndsWhenArbiterDies() {
+        addReadyArbiter(player1, "Grizzly Bears");
+        Permanent arbiter = findPermanent(player1, "Alhammarret, High Arbiter");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castAndResolveInstant(player2, 0, arbiter.getId());
+        }
+
+        harness.assertNotOnBattlefield(player1, "Alhammarret, High Arbiter");
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
     }
 }

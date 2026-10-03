@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.e.EvolutionSage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,22 +13,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BodyCount.class, Forest.class})
+@CardUsed({BodyCount.class, Forest.class, EvolutionSage.class})
 class BodyCountTest extends BaseCardTest {
 
     @Test
     @DisplayName("Draws one card for each creature that died under your control this turn")
     void drawsForControllerCreatureDeaths() {
         gd.creatureDeathCountThisTurn.put(player1.getId(), 2);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(new BodyCount()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1 + 2);
     }
@@ -36,15 +35,13 @@ class BodyCountTest extends BaseCardTest {
     @DisplayName("Does not draw for creatures that died under an opponent's control")
     void onlyCountsControllerCreatureDeaths() {
         gd.creatureDeathCountThisTurn.put(player2.getId(), 3);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new BodyCount()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
@@ -54,8 +51,7 @@ class BodyCountTest extends BaseCardTest {
     void spectacleUsesAlternateCost() {
         gd.lifeLostThisTurn.put(player2.getId(), 1);
         gd.creatureDeathCountThisTurn.put(player1.getId(), 1);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new BodyCount()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -74,5 +70,48 @@ class BodyCountTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counts creatures that die after casting but before resolution")
+    void countsDeathsAtResolution() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new EvolutionSage());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new BodyCount()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Evolution Sage");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Losing life yourself does not enable spectacle")
+    void controllerLifeLossDoesNotEnableSpectacle() {
+        gd.lifeLostThisTurn.put(player1.getId(), 3);
+        harness.setHand(player1, List.of(new BodyCount()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can pay the normal cost even when spectacle is available")
+    void normalCostRemainsOptionalWithSpectacle() {
+        gd.lifeLostThisTurn.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new BodyCount()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Body Count");
     }
 }

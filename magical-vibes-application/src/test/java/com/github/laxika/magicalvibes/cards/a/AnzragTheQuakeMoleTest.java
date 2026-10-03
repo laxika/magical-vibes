@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GravestoneStrider;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,21 +15,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AnzragTheQuakeMole.class, GrizzlyBears.class})
+@CardUsed({AnzragTheQuakeMole.class, GravestoneStrider.class})
 class AnzragTheQuakeMoleTest extends BaseCardTest {
 
     @Test
     @DisplayName("Becoming blocked untaps each creature you control and grants an additional combat")
     void becomingBlockedUntapsCreaturesAndGrantsAdditionalCombat() {
-        Permanent anzrag = addReady(player1, new AnzragTheQuakeMole());
-        Permanent attacker = addReady(player1, new GrizzlyBears());
-        Permanent tappedCreature = addReady(player1, new GrizzlyBears());
+        Permanent anzrag = addCreatureReady(player1, new AnzragTheQuakeMole());
+        Permanent attacker = addCreatureReady(player1, new GravestoneStrider());
+        Permanent tappedCreature = addCreatureReady(player1, new GravestoneStrider());
         tappedCreature.tap();
-        anzrag.setAttacking(true);
-        attacker.setAttacking(true);
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GravestoneStrider());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -44,8 +41,8 @@ class AnzragTheQuakeMoleTest extends BaseCardTest {
     @DisplayName("Activated ability makes Anzrag must be blocked this turn")
     void activatedAbilityMakesSourceMustBeBlocked() {
         harness.addToBattlefield(player1, new AnzragTheQuakeMole());
-        addReady(player2, new GrizzlyBears());
-        addReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GravestoneStrider());
+        addCreatureReady(player2, new GravestoneStrider());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -83,10 +80,81 @@ class AnzragTheQuakeMoleTest extends BaseCardTest {
         assertThat(anzrag.isMustBeBlockedThisTurn()).isFalse();
     }
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Assigning the only blocker elsewhere cannot evade Anzrag's requirement")
+    void cannotEvadeRequirementByBlockingAnotherAttacker() {
+        addCreatureReady(player1, new AnzragTheQuakeMole());
+        addCreatureReady(player1, new GravestoneStrider());
+        addCreatureReady(player2, new GravestoneStrider());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked");
+    }
+
+    @Test
+    @DisplayName("Multiple blockers cause only one becomes-blocked trigger")
+    void multipleBlockersTriggerOnlyOnce() {
+        Permanent anzrag = addCreatureReady(player1, new AnzragTheQuakeMole());
+        addCreatureReady(player2, new GravestoneStrider());
+        addCreatureReady(player2, new GravestoneStrider());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(anzrag.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only one creature must block Anzrag; another may remain unassigned")
+    void oneBlockerSatisfiesRequirement() {
+        addCreatureReady(player1, new AnzragTheQuakeMole());
+        addCreatureReady(player2, new GravestoneStrider());
+        addCreatureReady(player2, new GravestoneStrider());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped opposing creatures need not block and are not untapped")
+    void tappedOpposingCreatureCannotBlock() {
+        addCreatureReady(player1, new AnzragTheQuakeMole());
+        Permanent defender = addCreatureReady(player2, new GravestoneStrider());
+        defender.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent anzrag = findPermanent(player1, "Anzrag, the Quake-Mole");
+        anzrag.setAttacking(true);
+        anzrag.tap();
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(anzrag.isTapped()).isTrue();
+        assertThat(defender.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
     }
 }
+

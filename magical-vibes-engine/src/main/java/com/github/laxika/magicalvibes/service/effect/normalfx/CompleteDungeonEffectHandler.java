@@ -22,14 +22,6 @@ public class CompleteDungeonEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CompleteDungeonEffect completion = (CompleteDungeonEffect) effect;
-        DungeonProgress progress = gameData.playerDungeonProgress.get(entry.getControllerId());
-        if (progress == null || progress.dungeon() != completion.dungeon() || !progress.isBottomRoom()) {
-            return;
-        }
-
-        gameData.playerDungeonProgress.remove(entry.getControllerId());
-        gameData.recordCompletedDungeon(entry.getControllerId(), completion.dungeon());
-        triggerCollectionService.checkDungeonCompletionTriggers(gameData, entry.getControllerId());
+        triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);
     }
 }

@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.r.RouseTheMob;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AkroanLineBreaker.class, GiantGrowth.class, Shock.class, RouseTheMob.class})
 class AkroanLineBreakerTest extends BaseCardTest {
 
     @Test
@@ -24,8 +27,7 @@ class AkroanLineBreakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, lineBreaker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, lineBreaker.getId());
 
         assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isTrue();
@@ -39,8 +41,7 @@ class AkroanLineBreakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, lineBreaker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
@@ -58,8 +59,7 @@ class AkroanLineBreakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isFalse();
@@ -74,9 +74,61 @@ class AkroanLineBreakerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         UUID lineBreakerId = lineBreaker.getId();
-        harness.castInstant(player2, 0, lineBreakerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lineBreakerId);
 
         assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isFalse();
+    }
+
+    @Test
+    void successiveTargetedSpellsEachAddAHeroicBonus() {
+        Permanent lineBreaker = addCreatureReady(player1, new AkroanLineBreaker());
+        harness.setHand(player1, List.of(new RouseTheMob(), new RouseTheMob()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, lineBreaker.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, lineBreaker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, lineBreaker)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isTrue();
+
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(10);
+    }
+
+    @Test
+    void multiTargetSpellTriggersEachTargetedLineBreakerOnce() {
+        Permanent first = addCreatureReady(player1, new AkroanLineBreaker());
+        Permanent second = addCreatureReady(player1, new AkroanLineBreaker());
+        harness.setHand(player1, List.of(new RouseTheMob()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        for (Permanent lineBreaker : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, lineBreaker)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isTrue();
+        }
+    }
+
+    @Test
+    void targetingAnotherCreatureDoesNotTriggerHeroic() {
+        Permanent lineBreaker = addCreatureReady(player1, new AkroanLineBreaker());
+        Permanent other = addCreatureReady(player2, new AkroanLineBreaker());
+        harness.setHand(player1, List.of(new RouseTheMob()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, other.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, lineBreaker)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lineBreaker, Keyword.INTIMIDATE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INTIMIDATE)).isFalse();
     }
 }

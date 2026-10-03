@@ -81,6 +81,121 @@ class CoolButRudeTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void decliningDiscardKeepsHandAndLibraryUnchanged() {
+        castCoolButRude();
+        Card held = new GrizzlyBears();
+        Card top = new GrizzlyBears();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(top));
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyHandDoesNotDrawWhenDiscardIsAccepted() {
+        castCoolButRude();
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    void attackingWithMultipleCreaturesRummagesOnlyOnce() {
+        castCoolButRude();
+        Card held = new GrizzlyBears();
+        Card top = new GrizzlyBears();
+        Card next = new GrizzlyBears();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(top, next));
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(held);
+    }
+
+    @Test
+    void levelCountersDoNotGrantTheLevelTwoAbility() {
+        Permanent rude = castCoolButRude();
+        rude.setCounterCount(CounterType.LEVEL, 1);
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void removingLevelCountersDoesNotRemoveTheLevelTwoAbility() {
+        Permanent rude = castCoolButRude();
+        levelUp(rude, 0);
+        rude.setCounterCount(CounterType.LEVEL, 0);
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void levelThreeStillDiscardsWhenLibraryIsEmpty() {
+        Permanent rude = castCoolButRude();
+        levelUp(rude, 0);
+        Card held = new GrizzlyBears();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of());
+
+        levelUp(rude, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(held);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
     private Permanent castCoolButRude() {
         harness.setHand(player1, List.of(new CoolButRude()));
         harness.addMana(player1, ManaColor.RED, 1);

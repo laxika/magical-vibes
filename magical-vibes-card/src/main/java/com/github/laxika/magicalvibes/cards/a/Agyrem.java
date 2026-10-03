@@ -19,12 +19,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class Agyrem extends Card {
 
     public Agyrem() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardColorPredicate(CardColor.WHITE),
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
+                new com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate(java.util.Set.of(CardColor.WHITE)),
                 new RegisterDelayedReturnDyingCreatureUnderControlEffect(
                         false, null, 0, null, null, false, true, false)));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardNotPredicate(new CardColorPredicate(CardColor.WHITE)),
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
+                new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(new com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate(java.util.Set.of(CardColor.WHITE))),
                 new RegisterDelayedReturnCardFromGraveyardToHandEffect(null)));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new GrantStaticEffectToPlayerUntilPlaneswalkEffect(
                 new CreaturesCantAttackControllerUnlessPredicateEffect(

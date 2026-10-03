@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LurkingLizards;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChameleonMasterOfDisguise.class, GrizzlyBears.class})
+@CardUsed({ChameleonMasterOfDisguise.class, GrizzlyBears.class, LurkingLizards.class})
 class ChameleonMasterOfDisguiseTest extends BaseCardTest {
 
     @Test
@@ -81,12 +83,83 @@ class ChameleonMasterOfDisguiseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castFromHand() {
-        harness.setHand(player1, List.of(new ChameleonMasterOfDisguise()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    @CardUsed({ChameleonMasterOfDisguise.class, LurkingLizards.class})
+    @DisplayName("The copy gains the chosen creature's triggered ability")
+    void copiesTriggeredAbilities() {
+        Permanent lizards = harness.addToBattlefieldAndReturn(player1, new LurkingLizards());
+        castFromHand();
+        chooseCopy(lizards.getId());
+        Permanent copy = findChameleon();
+
+        assertThat(copy.getPlusOnePlusOneCounters()).isZero();
+        harness.castFromHand(player1, new ChameleonMasterOfDisguise(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(copy.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(lizards.getPlusOnePlusOneCounters()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Copying is optional even when a creature is available")
+    void mayDeclineCopying() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
         prepareMainPhase();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChameleonMasterOfDisguise(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findChameleon().getCard()).isInstanceOf(ChameleonMasterOfDisguise.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Enters without copying when only the opponent controls a creature")
+    void entersWithoutAnEligibleCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareMainPhase();
+        harness.castFromHand(player1, new ChameleonMasterOfDisguise(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(findChameleon().getCard()).isInstanceOf(ChameleonMasterOfDisguise.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Copying does not copy counters on the chosen creature")
+    void doesNotCopyCounters() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        castFromHand();
+        chooseCopy(bears.getId());
+
+        assertThat(findChameleon().getPlusOnePlusOneCounters()).isZero();
+        assertThat(findChameleon().getCard().getPower()).isEqualTo(2);
+        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Mayhem does not allow casting outside a main phase")
+    void mayhemRespectsCreatureTiming() {
+        ChameleonMasterOfDisguise chameleon = new ChameleonMasterOfDisguise();
+        harness.setGraveyard(player1, List.of(chameleon));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(chameleon.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.UPKEEP);
+        addMayhemMana();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(chameleon);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castFromHand() {
+        prepareMainPhase();
+        harness.castFromHand(player1, new ChameleonMasterOfDisguise(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

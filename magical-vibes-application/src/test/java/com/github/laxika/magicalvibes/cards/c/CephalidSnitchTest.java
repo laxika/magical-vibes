@@ -23,18 +23,18 @@ class CephalidSnitchTest extends BaseCardTest {
     void removesBlackProtection() {
         harness.addToBattlefield(player1, new CephalidSnitch());
         Permanent blightcutter = harness.addToBattlefieldAndReturn(player2, new NantukoBlightcutter());
-        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StrengthOfLunacy());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StrengthOfIsolation());
         aura.setAttachedTo(blightcutter.getId());
 
         assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isTrue();
-        assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.WHITE)).isTrue();
 
         harness.activateAbility(player1, 0, null, blightcutter.getId());
+        harness.assertInGraveyard(player1, "Cephalid Snitch");
+        assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isTrue();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Cephalid Snitch");
         assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isFalse();
-        assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.WHITE)).isTrue();
     }
 
     @Test
@@ -47,9 +47,9 @@ class CephalidSnitchTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isFalse();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, blightcutter, CardColor.BLACK)).isTrue();
     }
@@ -79,5 +79,36 @@ class CephalidSnitchTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Removing black protection leaves protection from white intact")
+    void preservesProtectionFromOtherColors() {
+        harness.addToBattlefield(player1, new CephalidSnitch());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CephalidSnitch());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StrengthOfLunacy());
+        aura.setAttachedTo(target.getId());
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLACK)).isFalse();
+        harness.assertOnBattlefield(player2, "Strength of Lunacy");
+    }
+
+    @Test
+    @DisplayName("A creature without protection from black is a legal target")
+    void canTargetOwnCreatureWithoutProtection() {
+        harness.addToBattlefield(player1, new CephalidSnitch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CephalidSnitch());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cephalid Snitch");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target).hasSize(1);
+        assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLACK)).isFalse();
     }
 }

@@ -134,9 +134,9 @@ $instructions
 Review run $($Task.runId): $($Task.runName).
 The shared implementation is $($Task.className), at $($Task.sourcePath). Review the full shared implementation and related card faces even if the context helper calls this printing a reprint. A registration-only check is insufficient.
 Do not stage, commit, push, or switch branches. The worker publishes your permitted card-test changes. Production implementations, effects, predicates, docs, and test harness code are read-only.
-Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and permitted test edits, then return your structured review result. The worker runs scripts/run-card-test.ps1 for each changed test class with an exact fully-qualified class filter and a 7200-second (two-hour) timeout before publishing. Only edit test classes belonging to the card under review (including its related faces); never run other cards' tests, package filters, wildcards, module-wide tests, or the full suite. Compilation may legitimately compile more than 30,000 card/test classes even for one filtered test class. Pending compilation is not a test failure or executionError; do not return ERROR just because tests have not run yet. The worker handles validation and reports actual build/tool failures separately.
+Do not launch Gradle or run tests yourself in this worker session. Finish the oracle/implementation review and create or update the needed card tests, then return your structured review result. Only edit test classes belonging to the card under review (including its related faces). The worker publishes permitted test changes directly without local compilation or test execution; the CI server validates them and alerts us to failures. Tests that have not been run are not an executionError; do not return ERROR because validation is deferred to CI.
 Your final response MUST follow the provided JSON schema. outcome is PASS when there are no real findings, otherwise FINDINGS. findings is an array of individual bug descriptions: explain what is wrong and why it matters, like the current text reports. Include no test code, test names, test output, patches, or coverage commentary in findings or the text report. Return the actual oracle card name as cardName. Do not report tool failures as card bugs: if the review cannot be completed, return ERROR with an empty findings array and an executionError description. For completed reviews, executionError must be null.
-Compiled test changes are published even when assertions fail or a test uses an invalid interaction sequence. Test failures do not require a confirmed card finding; PASS describes the card review verdict, not the test run.
+Permitted test changes are published for both PASS and FINDINGS reviews. PASS describes the card review verdict; it does not claim that compilation or tests succeeded. CI failures are handled separately from the review verdict.
 "@
 }
 
@@ -202,42 +202,6 @@ function Read-ReviewOutput {
     return $review
 }
 
-function Invoke-ReviewFocusedTests {
-    param([string] $Root, [string[]] $Paths, [string] $LogDirectory)
-    $failed = $false
-    foreach ($path in $Paths) {
-        $file = Join-Path $Root $path
-        if (-not (Test-Path -LiteralPath $file)) { throw "Review deleted a test file: $path" }
-        $source = [System.IO.File]::ReadAllText($file)
-        $package = [regex]::Match($source, '\bpackage\s+([\w.]+)\s*;')
-        if (-not $package.Success) { throw "Cannot resolve test package: $path" }
-        $className = $package.Groups[1].Value + '.' + [System.IO.Path]::GetFileNameWithoutExtension($file)
-        $testLog = Join-Path $LogDirectory ([System.IO.Path]::GetFileNameWithoutExtension($file) + '.log')
-        Write-Host "Validating $className only; compilation and tests may take up to two hours. Log: $testLog"
-        $startTime = Get-Date
-        $savedPreference = $ErrorActionPreference
-        Push-Location -LiteralPath $Root
-        try {
-            $ErrorActionPreference = 'Continue'
-            & powershell.exe -NoProfile -File (Join-Path $Root 'scripts/run-card-test.ps1') $className -TimeoutSeconds 7200 *> $testLog
-            $testExit = $LASTEXITCODE
-        }
-        finally { $ErrorActionPreference = $savedPreference; Pop-Location }
-        if ($testExit -eq 124) { throw "Focused compilation/test execution exceeded the two-hour (7200-second) timeout: $className. Log: $testLog. Changes were preserved." }
-        if ($testExit -ne 0) {
-            $xmlPath = Join-Path $Root "magical-vibes-application/build/test-results/test/TEST-$className.xml"
-            if (-not (Test-Path -LiteralPath $xmlPath) -or (Get-Item -LiteralPath $xmlPath).LastWriteTime -lt $startTime) {
-                throw "Focused tests did not run successfully (build or tooling failure): $className. Log: $testLog. Changes were preserved."
-            }
-            $suite = ([xml](Get-Content -LiteralPath $xmlPath -Raw -Encoding UTF8)).testsuite
-            if ([int] $suite.failures + [int] $suite.errors -eq 0) { throw "Focused test execution failed without a behavioral test failure: $className" }
-            $failed = $true
-            Write-Host "Compilation succeeded, but focused tests failed in $className. Test failures do not block publication. Log: $testLog"
-        }
-    }
-    return $failed
-}
-
 function Publish-ReviewTests {
     param([string] $Root, $Task, [string[]] $Paths, [string] $ReviewedCommit, [string] $Directory)
     if ((Get-ReviewGitText $Root @('branch', '--show-current')) -ne 'main' -or (Get-ReviewGitText $Root @('rev-parse', 'HEAD')) -ne $ReviewedCommit) {
@@ -251,18 +215,28 @@ function Publish-ReviewTests {
     $message = "Review $($Task.setCode) $($Task.collectorNumber) tests`n`nReview run $($Task.runId), model $($Task.model), reasoning $($Task.reasoningEffort).`n`nCo-authored-by: OpenAI Codex <codex@openai.com>`n"
     [System.IO.File]::WriteAllText($messagePath, $message, [System.Text.UTF8Encoding]::new($false))
     Get-ReviewGitText $Root (@('commit', '--only', '--file', $messagePath, '--') + $Paths) | Out-Host
-    for ($attempt = 0; $attempt -lt 5; $attempt++) {
-        $push = Invoke-ReviewGit $Root @('push', 'origin', 'main')
-        if ($push.ExitCode -eq 0) { return Get-ReviewGitText $Root @('rev-parse', 'HEAD') }
-        if ($attempt -eq 4) { throw "Could not push after five attempts. Commit was preserved. $($push.Output)" }
+    $maximumAttempts = 30
+    for ($attempt = 0; $attempt -lt $maximumAttempts; $attempt++) {
         Get-ReviewGitText $Root @('fetch', 'origin', 'main') | Out-Null
         $isBehind = Invoke-ReviewGit $Root @('merge-base', '--is-ancestor', 'origin/main', 'HEAD')
-        if ($isBehind.ExitCode -eq 0) { throw "Push failed without a main race. Commit was preserved. $($push.Output)" }
-        $rebase = Invoke-ReviewGit $Root @('rebase', 'origin/main')
-        if ($rebase.ExitCode -ne 0) {
-            Invoke-ReviewGit $Root @('rebase', '--abort') | Out-Null
-            throw "Rebase conflict; the review commit was preserved for recovery. $($rebase.Output)"
+        if ($isBehind.ExitCode -notin @(0, 1)) { throw "Could not compare main histories. Commit was preserved. $($isBehind.Output)" }
+        if ($isBehind.ExitCode -eq 1) {
+            $rebase = Invoke-ReviewGit $Root @('rebase', 'origin/main')
+            if ($rebase.ExitCode -ne 0) {
+                Invoke-ReviewGit $Root @('rebase', '--abort') | Out-Null
+                throw "Rebase conflict; the review commit was preserved for recovery. $($rebase.Output)"
+            }
         }
+        $push = Invoke-ReviewGit $Root @('push', 'origin', 'main')
+        if ($push.ExitCode -eq 0) { return Get-ReviewGitText $Root @('rev-parse', 'HEAD') }
+        if ($attempt -eq ($maximumAttempts - 1)) { throw "Could not push after $maximumAttempts attempts. Commit was preserved. $($push.Output)" }
+        Get-ReviewGitText $Root @('fetch', 'origin', 'main') | Out-Null
+        $isBehind = Invoke-ReviewGit $Root @('merge-base', '--is-ancestor', 'origin/main', 'HEAD')
+        if ($isBehind.ExitCode -notin @(0, 1)) { throw "Could not compare main histories after a failed push. Commit was preserved. $($isBehind.Output)" }
+        if ($isBehind.ExitCode -eq 0) { throw "Push failed without a main race. Commit was preserved. $($push.Output)" }
+        $delayMilliseconds = 500 * [Math]::Min($attempt + 1, 10) + (Get-Random -Minimum 0 -Maximum 1001)
+        Write-Warning "Remote main advanced during publication. Retrying push ($($attempt + 2)/$maximumAttempts) in $delayMilliseconds ms."
+        Start-Sleep -Milliseconds $delayMilliseconds
     }
 }
 
@@ -288,9 +262,6 @@ function Invoke-ReviewTask {
         $result.cardName = $review.cardName
         $result.findings = @($review.findings)
         try {
-            # Compilation/tooling failures throw; completed failing tests are accepted
-            # independently of the card review verdict and can be fixed later.
-            Invoke-ReviewFocusedTests $Root $changes $Directory | Out-Null
             $published = Publish-ReviewTests $Root $Task $changes $reviewedCommit $Directory
             if ($published) { $result.publicationStatus = 'PUSHED'; $result.publishedCommit = $published }
         }

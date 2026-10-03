@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.e.ExquisiteBlood;
 import com.github.laxika.magicalvibes.cards.g.GrayscaledGharial;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LoreBroker;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClutchOfTheUndercity.class, GrayscaledGharial.class, Island.class, LoreBroker.class})
+@CardUsed({ClutchOfTheUndercity.class, GrayscaledGharial.class, Island.class, LoreBroker.class, ExquisiteBlood.class})
 class ClutchOfTheUndercityTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class ClutchOfTheUndercityTest extends BaseCardTest {
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         UUID targetId = harness.getPermanentId(player2, "Grayscaled Gharial");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grayscaled Gharial");
         harness.assertInHand(player2, "Grayscaled Gharial");
@@ -46,8 +46,7 @@ class ClutchOfTheUndercityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Island");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInHand(player2, "Island");
@@ -146,5 +145,85 @@ class ClutchOfTheUndercityTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.assertInGraveyard(player1, "Clutch of the Undercity");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void returnsBorrowedPermanentToOwnerButControllerLosesLife() {
+        GrayscaledGharial borrowedCard = new GrayscaledGharial();
+        borrowedCard.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, borrowedCard);
+        harness.setHand(player1, List.of(new ClutchOfTheUndercity()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grayscaled Gharial"));
+
+        harness.assertInHand(player1, "Grayscaled Gharial");
+        harness.assertNotInHand(player2, "Grayscaled Gharial");
+        harness.assertNotOnBattlefield(player2, "Grayscaled Gharial");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void illegalTargetAtResolutionPreventsLifeLoss() {
+        harness.addToBattlefield(player2, new GrayscaledGharial());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ClutchOfTheUndercity(), new ClutchOfTheUndercity()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Grayscaled Gharial");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grayscaled Gharial");
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void lifeLossTriggersExquisiteBlood() {
+        harness.addToBattlefield(player1, new ExquisiteBlood());
+        harness.addToBattlefield(player2, new GrayscaledGharial());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ClutchOfTheUndercity()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grayscaled Gharial"));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grayscaled Gharial");
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void transmuteCanDeclineToFindAnAvailableMatchingCard() {
+        ClutchOfTheUndercity matchingCard = new ClutchOfTheUndercity();
+        harness.setHand(player1, List.of(new ClutchOfTheUndercity()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Clutch of the Undercity");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
     }
 }

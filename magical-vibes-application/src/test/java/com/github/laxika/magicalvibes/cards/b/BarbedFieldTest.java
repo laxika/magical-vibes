@@ -95,4 +95,45 @@ class BarbedFieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("An activated damage ability resolves after Barbed Field leaves")
+    void activatedAbilityResolvesAfterAuraLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BarbedField());
+        aura.setAttachedTo(land.getId());
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the damage ability's tap cost")
+    void tappedLandCannotActivate() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BarbedField());
+        aura.setAttachedTo(land.getId());
+        land.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The granted damage ability cannot target an ordinary land")
+    void damageAbilityRejectsLandTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BarbedField());
+        aura.setAttachedTo(land.getId());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new WintermoonMesa());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, targetLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(targetLand.getMarkedDamage()).isZero();
+    }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BurstOfEnergy.class, GrizzlyBears.class})
+@CardUsed({BurstOfEnergy.class, GrizzlyBears.class, ForbiddingWatchtower.class})
 class BurstOfEnergyTest extends BaseCardTest {
 
     @Test
@@ -24,14 +24,12 @@ class BurstOfEnergyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurstOfEnergy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.isTapped()).isFalse();
     }
 
     @Test
-    @CardUsed(ForbiddingWatchtower.class)
     @DisplayName("Untaps only the targeted noncreature permanent")
     void untapsOnlyTargetedNoncreaturePermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ForbiddingWatchtower());
@@ -41,10 +39,45 @@ class BurstOfEnergyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BurstOfEnergy()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
         assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an already untapped permanent you control")
+    void canTargetUntappedPermanentYouControl() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
+        target.untap();
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Burst of Energy");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not untap another permanent when its target leaves the battlefield")
+    void doesNotUntapAnotherPermanentWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ForbiddingWatchtower());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new ForbiddingWatchtower());
+        target.tap();
+        other.tap();
+        harness.setHand(player1, List.of(new BurstOfEnergy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(other.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Burst of Energy");
+        assertThat(gd.stack).isEmpty();
     }
 }

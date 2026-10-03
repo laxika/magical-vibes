@@ -28,8 +28,7 @@ class ChokingTethersTest extends BaseCardTest {
                 harness.addToBattlefieldAndReturn(player2, new GlorySeeker()));
         prepareSpell();
 
-        harness.castInstant(player1, 0, creatures.stream().map(Permanent::getId).toList());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creatures.stream().map(Permanent::getId).toList());
 
         assertThat(creatures).allMatch(Permanent::isTapped);
     }
@@ -39,8 +38,7 @@ class ChokingTethersTest extends BaseCardTest {
     void resolvesWithNoTargetCreatures() {
         prepareSpell();
 
-        harness.castInstant(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of());
 
         harness.assertInGraveyard(player1, "Choking Tethers");
     }
@@ -108,6 +106,49 @@ class ChokingTethersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Choking Tethers");
         harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Can tap creatures controlled by either player without tapping unchosen creatures")
+    void tapsOnlyChosenCreaturesAcrossControllers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        prepareSpell();
+
+        harness.castAndResolveInstant(player1, 0, List.of(own.getId(), opposing.getId()));
+
+        assertThat(own.isTapped()).isTrue();
+        assertThat(opposing.isTapped()).isTrue();
+        assertThat(unchosen.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Choking Tethers");
+    }
+
+    @Test
+    @DisplayName("Cycling can tap a creature controlled by the cycling player")
+    void cyclingCanTapOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        prepareCycling();
+
+        cycleAndChoose(creature, true);
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("Cycling with only a noncreature permanent still draws without a tap choice")
+    void cyclingCannotTargetLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        prepareCycling();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Glory Seeker");
+        harness.assertInGraveyard(player1, "Choking Tethers");
     }
 
     private void prepareSpell() {

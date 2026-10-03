@@ -85,6 +85,33 @@ class AvatarOfDiscordTest extends BaseCardTest {
         harness.assertInHand(player1, "Seal of Doom");
     }
 
+    @Test
+    @DisplayName("An empty hand sacrifices Avatar of Discord without a discard prompt")
+    void emptyHandSacrificesAvatar() {
+        castAvatar(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Avatar of Discord");
+        harness.assertInGraveyard(player1, "Avatar of Discord");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the discard sacrifices only the Avatar that entered")
+    void decliningDiscardDoesNotSacrificeAnotherAvatar() {
+        AvatarOfDiscord existingAvatar = new AvatarOfDiscord();
+        harness.addToBattlefield(player1, existingAvatar);
+        castAvatar(List.of(new SealOfDoom(), new SealOfDoom()));
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanents(player1, "Avatar of Discord"))
+                .singleElement().extracting(permanent -> permanent.getCard()).isSameAs(existingAvatar);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).doesNotContain(existingAvatar);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
     private void castAvatar(List<Card> hand) {
         harness.setHand(player1, List.of(new AvatarOfDiscord()));
         harness.addMana(player1, ManaColor.RED, 3);

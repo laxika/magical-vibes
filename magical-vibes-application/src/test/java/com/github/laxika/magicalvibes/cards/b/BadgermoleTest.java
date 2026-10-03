@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Badgermole.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Badgermole.class, Forest.class, GrizzlyBears.class, TurnToFrog.class})
 class BadgermoleTest extends BaseCardTest {
 
     @Test
@@ -51,10 +52,7 @@ class BadgermoleTest extends BaseCardTest {
     void cannotTargetOpponentsLand() {
         Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
-        harness.setHand(player1, List.of(new Badgermole()));
-        addMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Badgermole(), "{4}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -66,16 +64,66 @@ class BadgermoleTest extends BaseCardTest {
     }
 
     private void castBadgermole(java.util.UUID targetId) {
-        harness.setHand(player1, List.of(new Badgermole()));
-        addMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Badgermole(), "{4}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
     }
 
-    private void addMana() {
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    void earthbendedLandReturnsTappedAfterDeath() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castBadgermole(land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        harness.passBothPriorities();
+        assertReturnedLand(land);
+    }
+
+    @Test
+    void earthbendedLandReturnsTappedAfterExile() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castBadgermole(land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, land));
+        harness.passBothPriorities();
+        assertReturnedLand(land);
+        assertThat(gd.findExiledCard(land.getCard().getId())).isNull();
+    }
+
+    @Test
+    void earthbendReturnSurvivesLandLosingAbilities() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castBadgermole(land.getId());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        harness.passBothPriorities();
+        assertReturnedLand(land);
+    }
+
+    @Test
+    void trampleTracksCountersAndIncludesSourceButNotOpponents() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Badgermole());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        source.setCounterCount(CounterType.CHARGE, 1);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+    }
+
+    private void assertReturnedLand(Permanent original) {
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(original.getCard().getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotInGraveyard(player1, "Forest");
     }
 }

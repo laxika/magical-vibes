@@ -37,11 +37,49 @@ class ArashiTheSkyAsunderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateHandAbility(player1, 0, null, 1);
+        harness.assertNotInHand(player1, "Arashi, the Sky Asunder");
+        harness.assertInGraveyard(player1, "Arashi, the Sky Asunder");
+        harness.assertOnBattlefield(player1, "Araba Mothrider");
+        harness.assertOnBattlefield(player2, "Araba Mothrider");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Arashi, the Sky Asunder");
         harness.assertOnBattlefield(player2, "Inner-Chamber Guard");
         harness.assertInGraveyard(player1, "Araba Mothrider");
+        harness.assertInGraveyard(player2, "Araba Mothrider");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void channelAllowsZeroDamageAndStillDiscardsSource() {
+        harness.setHand(player1, List.of(new ArashiTheSkyAsunder()));
+        harness.addToBattlefield(player1, new ArabaMothrider());
+        harness.addToBattlefield(player2, new ArabaMothrider());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null, 0);
+        harness.assertNotInHand(player1, "Arashi, the Sky Asunder");
+        harness.assertInGraveyard(player1, "Arashi, the Sky Asunder");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Araba Mothrider");
+        harness.assertOnBattlefield(player2, "Araba Mothrider");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void battlefieldAbilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent arashi = addCreatureReady(player1, new ArashiTheSkyAsunder());
+        Permanent target = addCreatureReady(player2, new ArabaMothrider());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(arashi);
+        gd.playerGraveyards.get(player1.getId()).add(arashi.getCard());
+        harness.passBothPriorities();
+
         harness.assertInGraveyard(player2, "Araba Mothrider");
     }
 

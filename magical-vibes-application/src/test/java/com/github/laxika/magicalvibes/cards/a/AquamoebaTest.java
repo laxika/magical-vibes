@@ -65,6 +65,54 @@ class AquamoebaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, aquamoeba)).isEqualTo(1);
     }
 
+    @Test
+    void discardIsPaidBeforeTheAbilityResolves() {
+        Permanent aquamoeba = addReadyAquamoeba();
+        harness.setHand(player1, List.of(new Aquamoeba()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aquamoeba");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, aquamoeba)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, aquamoeba)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, aquamoeba)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, aquamoeba)).isEqualTo(1);
+    }
+
+    @Test
+    void twoActivationsSwitchPowerAndToughnessBack() {
+        Permanent aquamoeba = addReadyAquamoeba();
+        harness.setHand(player1, List.of(new Aquamoeba(), new Aquamoeba()));
+
+        activateAndDiscard();
+        activateAndDiscard();
+
+        assertThat(gqs.getEffectivePower(gd, aquamoeba)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, aquamoeba)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void canActivateWhileTappedOnOpponentsTurn() {
+        Permanent aquamoeba = addReadyAquamoeba();
+        aquamoeba.tap();
+        harness.setHand(player1, List.of(new Aquamoeba()));
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player1);
+
+        activateAndDiscard();
+
+        assertThat(gqs.getEffectivePower(gd, aquamoeba)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, aquamoeba)).isEqualTo(1);
+        assertThat(aquamoeba.isTapped()).isTrue();
+    }
     private Permanent addReadyAquamoeba() {
         prepareAquamoebaActivation();
         return addCreatureReady(player1, new Aquamoeba());

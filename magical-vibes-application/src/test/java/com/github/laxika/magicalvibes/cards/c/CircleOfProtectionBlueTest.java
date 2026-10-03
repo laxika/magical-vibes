@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.Stasis;
 import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.VolcanicEruption;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CircleOfProtectionBlue.class)
+@CardUsed({CircleOfProtectionBlue.class, Deathlace.class, GrizzlyBears.class, Mountain.class,
+        ProdigalSorcerer.class, Stasis.class, Thoughtlace.class, Unsummon.class, VolcanicEruption.class})
 class CircleOfProtectionBlueTest extends BaseCardTest {
 
     @Test
@@ -364,5 +366,33 @@ class CircleOfProtectionBlueTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CircleOfProtectionBlue.class, ProdigalSorcerer.class, Unsummon.class})
+    @DisplayName("A blue source that left the battlefield can be chosen while its damage ability is pending")
+    void canChooseDepartedSourceOfPendingDamageAbility() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent wizard = addReadyBlueCreature(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, wizard.getId());
+        harness.assertNotOnBattlefield(player2, "Prodigal Sorcerer");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(wizard.getId());
+        harness.handlePermanentChosen(player1, wizard.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
     }
 }

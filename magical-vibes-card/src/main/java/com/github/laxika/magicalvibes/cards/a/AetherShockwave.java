@@ -20,7 +20,7 @@ public class AetherShockwave extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap all Spirits",
-                        new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, spirit)),
+                        new TapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, spirit)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap all non-Spirit creatures",
                         new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentNotPredicate(spirit)))

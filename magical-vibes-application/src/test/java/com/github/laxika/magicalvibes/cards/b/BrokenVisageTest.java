@@ -99,9 +99,8 @@ class BrokenVisageTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Spirit");
 
         // Advance to the end step — the token should be sacrificed.
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Spirit");
     }
@@ -113,14 +112,7 @@ class BrokenVisageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DwarvenTrader());
         UUID targetId = harness.getPermanentId(player1, "Dwarven Trader");
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new BrokenVisage()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.passPriority(player1);
-
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, targetId))
+        assertThatThrownBy(() -> castBrokenVisage(targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -175,5 +167,58 @@ class BrokenVisageTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Dwarven Trader");
         assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The next-end-step sacrifice uses the stack and allows responses")
+    void sacrificeWaitsForDelayedTriggerToResolve() {
+        Permanent attacker = addAttacker(player1);
+        castBrokenVisage(attacker.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player2, "Spirit");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    @DisplayName("The caster cannot sacrifice the Spirit after another player gains control")
+    void spiritSurvivesWhenAnotherPlayerControlsIt() {
+        Permanent attacker = addAttacker(player1);
+        castBrokenVisage(attacker.getId());
+        harness.passBothPriorities();
+
+        Permanent spirit = findSpiritToken(player2);
+        gd.playerBattlefields.get(player2.getId()).remove(spirit);
+        gd.playerBattlefields.get(player1.getId()).add(spirit);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spirit");
+    }
+
+    @Test
+    @DisplayName("An indestructible target's abilities are not copied onto the Spirit")
+    void spiritDoesNotCopyTargetsAbilities() {
+        Card card = new DwarvenTrader();
+        card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
+        Permanent attacker = addAttacker(player1, card);
+        castBrokenVisage(attacker.getId());
+        harness.passBothPriorities();
+
+        Permanent spirit = findSpiritToken(player2);
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
+        spirit.setRegenerationShield(1);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Spirit");
+        harness.assertOnBattlefield(player1, "Dwarven Trader");
     }
 }

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(AzimaetDrake.class)
+@CardUsed({AzimaetDrake.class})
 class AzimaetDrakeTest extends BaseCardTest {
 
     @Test
@@ -64,10 +64,7 @@ class AzimaetDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, null);
@@ -87,9 +84,57 @@ class AzimaetDrakeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A second activation is rejected while the first is still on the stack")
+    void activationLimitAppliesBeforeResolution() {
+        Permanent drake = addCreatureReady(player1, new AzimaetDrake());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Drake has its own activation limit and boosts only itself")
+    void separateDrakesCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new AzimaetDrake());
+        Permanent second = addCreatureReady(player1, new AzimaetDrake());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Drake can activate its pump ability")
+    void summoningSicknessDoesNotPreventActivation() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new AzimaetDrake());
+        drake.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, drake)).isEqualTo(3);
     }
 }

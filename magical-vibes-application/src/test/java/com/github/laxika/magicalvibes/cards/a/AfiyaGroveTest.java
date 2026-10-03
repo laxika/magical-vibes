@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AfiyaGrove.class, BayFalcon.class})
+@CardUsed({AfiyaGrove.class, BayFalcon.class, Solemnity.class})
 class AfiyaGroveTest extends BaseCardTest {
 
     private Permanent castGrove(Player player) {
@@ -94,9 +95,8 @@ class AfiyaGroveTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(countPermanents(player1, "Afiya Grove")).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> "Afiya Grove".equals(c.getName()));
+        harness.assertNotOnBattlefield(player1, "Afiya Grove");
+        harness.assertInGraveyard(player1, "Afiya Grove");
     }
 
     @Test
@@ -109,8 +109,54 @@ class AfiyaGroveTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(countPermanents(player1, "Afiya Grove")).isZero();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> "Afiya Grove".equals(c.getName()));
+        harness.assertNotOnBattlefield(player1, "Afiya Grove");
+        harness.assertInGraveyard(player1, "Afiya Grove");
+    }
+
+    @Test
+    @CardUsed({AfiyaGrove.class, BayFalcon.class, Solemnity.class})
+    @DisplayName("Cannot remove a counter when the recipient cannot receive it")
+    void counterRemainsWhenPlacementIsForbidden() {
+        Permanent grove = castGrove(player1);
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.castFromHand(player1, new Solemnity(), "{2}{W}");
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, falcon.getId());
+        resolveAllTriggers();
+
+        assertThat(grove.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(falcon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Afiya Grove");
+    }
+
+    @Test
+    @DisplayName("The sacrifice trigger still resolves if counters are restored in response")
+    void restoringCountersDoesNotStopPendingSacrifice() {
+        Permanent grove = castGrove(player1);
+        grove.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        grove.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Afiya Grove");
+        harness.assertInGraveyard(player1, "Afiya Grove");
+    }
+
+    @Test
+    @DisplayName("An empty Grove does not trigger repeatedly while its sacrifice is pending")
+    void pendingSacrificeDoesNotTriggerAgain() {
+        castGrove(player1).setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Afiya Grove");
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Afiya Grove");
     }
 }

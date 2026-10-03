@@ -130,4 +130,43 @@ class AvenAugurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Aven Augur");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and a remaining legal target is returned")
+    void canTargetItselfAndAnotherCreature() {
+        Permanent augur = addCreatureReady(player1, new AvenAugur());
+        Permanent target = addCreatureReady(player2, new BlindPhantasm());
+        advanceToUpkeep(player1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(augur.getId(), target.getId()));
+
+        harness.assertInGraveyard(player1, "Aven Augur");
+        harness.assertNotOnBattlefield(player1, "Aven Augur");
+        harness.assertOnBattlefield(player2, "Blind Phantasm");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Blind Phantasm");
+        harness.assertNotOnBattlefield(player2, "Blind Phantasm");
+        harness.assertInGraveyard(player1, "Aven Augur");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Aven Augur"));
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can pay the sacrifice cost")
+    void tappedSummoningSickAugurCanActivate() {
+        advanceToUpkeep(player1);
+        Permanent augur = harness.addToBattlefieldAndReturn(player1, new AvenAugur());
+        augur.setSummoningSick(true);
+        augur.setTapped(true);
+        Permanent target = addCreatureReady(player2, new BlindPhantasm());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aven Augur");
+        harness.assertInHand(player2, "Blind Phantasm");
+    }
 }

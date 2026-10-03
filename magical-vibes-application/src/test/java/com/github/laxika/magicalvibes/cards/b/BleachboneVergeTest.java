@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BleachboneVerge.class, Plains.class, Swamp.class})
 class BleachboneVergeTest extends BaseCardTest {
 
     @Test
@@ -71,10 +73,64 @@ class BleachboneVergeTest extends BaseCardTest {
         assertThat(verge.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Swamp still enables white mana")
+    void tappedSwampEnablesWhiteMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+        Permanent verge = addReadyVerge(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Bleachbone Verge does not enable white mana")
+    void anotherVergeDoesNotEnableWhiteMana() {
+        addReadyVerge(player1);
+        Permanent verge = addReadyVerge(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Plains or a Swamp");
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("White mana is unavailable after the qualifying land leaves")
+    void losingQualifyingLandDisablesWhiteMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent verge = addReadyVerge(player1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        verge.untap();
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        gd.playerGraveyards.get(player1.getId()).add(swamp.getCard());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Plains or a Swamp");
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A newly entered Verge can immediately produce black mana")
+    void newlyEnteredVergeCanProduceMana() {
+        Permanent verge = harness.addToBattlefieldAndReturn(player1, new BleachboneVerge());
+        verge.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyVerge(Player player) {
-        Permanent verge = new Permanent(new BleachboneVerge());
-        verge.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(verge);
-        return verge;
+        return addCreatureReady(player, new BleachboneVerge());
     }
 }

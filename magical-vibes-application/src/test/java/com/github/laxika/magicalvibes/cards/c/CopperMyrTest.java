@@ -13,8 +13,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed(CopperMyr.class)
 class CopperMyrTest extends BaseCardTest {
 
-    // ===== Mana production =====
-
     @Test
     @DisplayName("Tapping Copper Myr produces one green mana")
     void tappingProducesGreenMana() {
@@ -49,6 +47,20 @@ class CopperMyrTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mana resolves immediately and is added only to Copper Myr's controller")
+    void manaResolvesImmediatelyForControllerOnly() {
+        Permanent perm = addCreatureReady(player1, new CopperMyr());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
         assertThat(perm.isTapped()).isTrue();
     }
 }

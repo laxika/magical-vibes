@@ -92,9 +92,85 @@ class CoastalWizardTest extends BaseCardTest {
     }
 
     private void setupWizardOnMyTurn(TurnStep step) {
-        harness.addToBattlefield(player1, new CoastalWizard());
-        findPermanent(player1, "Coastal Wizard").setSummoningSick(false);
+        addCreatureReady(player1, new CoastalWizard());
         harness.forceActivePlayer(player1);
         harness.forceStep(step);
+    }
+
+    @Test
+    @DisplayName("Can activate in beginning of combat before attackers are declared")
+    void canActivateAtBeginningOfCombat() {
+        setupWizardOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addToBattlefield(player2, new RagingGoblin());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Raging Goblin"));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Coastal Wizard");
+        harness.assertInHand(player2, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Can return another creature controlled by the Wizard's controller")
+    void canTargetOwnCreature() {
+        setupWizardOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Raging Goblin"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Coastal Wizard");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertInHand(player1, "Coastal Wizard");
+        harness.assertInHand(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Does not return the Wizard when its only target leaves before resolution")
+    void illegalTargetPreventsSelfReturn() {
+        setupWizardOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        var target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Coastal Wizard");
+        harness.assertNotInHand(player1, "Coastal Wizard");
+        assertThat(findPermanent(player1, "Coastal Wizard").isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        harness.assertNotInHand(player2, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Returns the target even if the Wizard leaves before resolution")
+    void sourceLeavingDoesNotPreventTargetReturn() {
+        setupWizardOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        var wizard = findPermanent(player1, "Coastal Wizard");
+        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Raging Goblin"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, wizard));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Coastal Wizard");
+        harness.assertNotInHand(player1, "Coastal Wizard");
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertInHand(player2, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CoastalWizard());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new RagingGoblin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player2, "Raging Goblin")))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

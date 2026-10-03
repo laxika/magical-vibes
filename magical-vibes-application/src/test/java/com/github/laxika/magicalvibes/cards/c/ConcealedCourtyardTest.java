@@ -1,19 +1,28 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LongtuskCub;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ConcealedCourtyard.class, Mountain.class, LongtuskCub.class})
 class ConcealedCourtyardTest extends BaseCardTest {
+
+    @Test
+    void entersUntappedWithNoOtherLands() {
+        castConcealedCourtyard();
+
+        assertThat(findCourtyard(player1).isTapped()).isFalse();
+    }
 
     @Test
     void entersUntappedWithTwoOtherLands() {
@@ -38,9 +47,9 @@ class ConcealedCourtyardTest extends BaseCardTest {
 
     @Test
     void nonLandPermanentsDoNotCount() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+        harness.addToBattlefield(player1, new LongtuskCub());
+        harness.addToBattlefield(player1, new LongtuskCub());
+        harness.addToBattlefield(player1, new LongtuskCub());
 
         castConcealedCourtyard();
 
@@ -68,6 +77,17 @@ class ConcealedCourtyardTest extends BaseCardTest {
     }
 
     @Test
+    void freshlyPlayedCourtyardCanProduceManaAndPaysTapCost() {
+        castConcealedCourtyard();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findCourtyard(player1).isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void tappingProducesBlackMana() {
         addReadyCourtyard(player1);
 
@@ -84,14 +104,11 @@ class ConcealedCourtyardTest extends BaseCardTest {
     }
 
     private Permanent addReadyCourtyard(Player player) {
-        Permanent permanent = new Permanent(new ConcealedCourtyard());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ConcealedCourtyard());
     }
 
     private void addMountain(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Mountain()));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findCourtyard(Player player) {

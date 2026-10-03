@@ -711,7 +711,9 @@ public class InteractionPromptProjectionRegistry {
                 .toList();
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cards, 1,
-                "Choose an instant or sorcery spell you control to exile as an activation cost.");
+                interaction.anySpell()
+                        ? "Choose a spell you control to exile as an activation cost."
+                        : "Choose an instant or sorcery spell you control to exile as an activation cost.");
     }
 
     private InteractionPromptMessage projectPutCardExiledWithSourceIntoGraveyardCostChoice(

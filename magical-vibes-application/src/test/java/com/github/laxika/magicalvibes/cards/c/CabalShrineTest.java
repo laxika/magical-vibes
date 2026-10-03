@@ -93,4 +93,77 @@ class CabalShrineTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Forest");
     }
+
+    @Test
+    void countsCardsAddedToGraveyardsBeforeResolution() {
+        harness.addToBattlefield(player1, new CabalShrine());
+        harness.setHand(player1, List.of(new DiligentFarmhand(), new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void doesNotCountCardsRemovedFromGraveyardsBeforeResolution() {
+        harness.addToBattlefield(player1, new CabalShrine());
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand()));
+        harness.setHand(player1, List.of(new DiligentFarmhand(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void discardsAvailableCardsWhenCountExceedsHandSize() {
+        harness.addToBattlefield(player1, new CabalShrine());
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand(), new DiligentFarmhand()));
+        harness.setHand(player1, List.of(new DiligentFarmhand(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Diligent Farmhand");
+    }
+
+    @Test
+    void eachShrineCountsCardsDiscardedByThePreviousTrigger() {
+        harness.addToBattlefield(player1, new CabalShrine());
+        harness.addToBattlefield(player1, new CabalShrine());
+        harness.setGraveyard(player2, List.of(new DiligentFarmhand()));
+        harness.setHand(player1, List.of(new DiligentFarmhand(), new DiligentFarmhand(),
+                new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Diligent Farmhand");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Island");
+    }
 }

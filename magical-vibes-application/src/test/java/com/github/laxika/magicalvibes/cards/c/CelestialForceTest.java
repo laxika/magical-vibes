@@ -34,4 +34,51 @@ class CelestialForceTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Life is gained when the upkeep trigger resolves, not when it triggers")
+    void gainsLifeOnlyOnResolution() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new CelestialForce());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each copy grants its controller 3 life during the same upkeep")
+    void multipleCopiesTriggerIndependently() {
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player1, new CelestialForce());
+        harness.addToBattlefield(player1, new CelestialForce());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opposing copies each grant life to their own controller")
+    void opposingCopiesGainLifeForTheirControllers() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 12);
+        harness.addToBattlefield(player1, new CelestialForce());
+        harness.addToBattlefield(player2, new CelestialForce());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 15);
+    }
 }

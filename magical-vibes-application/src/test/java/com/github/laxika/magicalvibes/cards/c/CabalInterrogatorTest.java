@@ -142,4 +142,79 @@ class CabalInterrogatorTest extends BaseCardTest {
 
         assertThat(interrogator.isTapped()).isFalse();
     }
+
+    @Test
+    void emptyHandResolvesWithoutAChoice() {
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent interrogator = readyInterrogator();
+
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(interrogator.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void targetChoosesSubsetAndControllerChoosesOnlyFromThatSubset() {
+        CabalConditioning hidden = new CabalConditioning();
+        CabalInterrogator revealed = new CabalInterrogator();
+        harness.setHand(player2, List.of(hidden, revealed));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        readyInterrogator();
+
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(activeChoice().revealedCardIds()).containsExactly(revealed.getId());
+        assertThat(activeChoice().validIndices()).containsExactly(0);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(hidden);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(revealed);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        Permanent interrogator = readyInterrogator();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(interrogator.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileAnotherAbilityIsOnTheStack() {
+        readyInterrogator();
+        Permanent second = addCreatureReady(player1, new CabalInterrogator());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void newlyEnteredInterrogatorCannotPayTheTapCost() {
+        harness.addToBattlefield(player1, new CabalInterrogator());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

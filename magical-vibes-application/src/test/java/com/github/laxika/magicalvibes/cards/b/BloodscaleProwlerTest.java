@@ -50,6 +50,50 @@ class BloodscaleProwlerTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Bloodthirst checks damage when the creature enters, after it was cast")
+    void bloodthirstChecksDamageAtResolution() {
+        harness.castFromHand(player1, new BloodscaleProwler(), "{2}{R}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bloodscale Prowler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst applies immediately when entering without being cast")
+    void bloodthirstAppliesWithoutCasting() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+
+        var prowler = harness.enterBattlefieldAndReturn(player1, new BloodscaleProwler());
+
+        assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst does not add a counter for damage dealt after entry")
+    void bloodthirstDoesNotApplyRetroactively() {
+        castProwler();
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Bloodscale Prowler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst ignores life loss without damage")
+    void bloodthirstIgnoresLifeLoss() {
+        harness.setLife(player2, 15);
+        castProwler();
+
+        assertThat(findPermanent(player1, "Bloodscale Prowler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void castProwler() {
         harness.castFromHand(player1, new BloodscaleProwler(), "{2}{R}");
         resolveAllTriggers();

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,9 +28,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChangelingWayfinder.class, FieldMarshal.class, Forest.class, GrizzlyBears.class,
+        Island.class, Mountain.class, Plains.class, EvolvingWilds.class})
 class ChangelingWayfinderTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Changeling Wayfinder puts it on the stack")
@@ -64,8 +65,6 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
-
-    // ===== ETB: Accept and search =====
 
     @Test
     @DisplayName("Accepting may ability resolves inner effect inline — library search proceeds")
@@ -113,7 +112,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         // Choose the first basic land (index 0)
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card is in hand
         assertThat(gd.playerHands.get(player1.getId()))
@@ -144,13 +143,11 @@ class ChangelingWayfinderTest extends BaseCardTest {
         List<Card> searchCards = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = searchCards.get(2).getName(); // pick the third card
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(2));
+        harness.handleCardChosen(player1, 2);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals(chosenName));
     }
-
-    // ===== ETB: Fail to find (decline to take a card) =====
 
     @Test
     @DisplayName("Player can fail to find by choosing index -1")
@@ -165,7 +162,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // No card added to hand
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -179,8 +176,6 @@ class ChangelingWayfinderTest extends BaseCardTest {
         // Log mentions declining
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("chooses not to take a card"));
     }
-
-    // ===== ETB: Decline may ability =====
 
     @Test
     @DisplayName("Declining may ability does not search library")
@@ -197,17 +192,13 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("searches their library"));
     }
 
-    // ===== ETB: No basic lands in library =====
-
     @Test
     @DisplayName("ETB with no basic lands in library shuffles and logs")
     void noBasicLandsInLibrary() {
         setupAndCast();
 
         // Library has only non-basic-land cards
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -224,7 +215,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         setupAndCast();
 
         // Clear the library
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -235,16 +226,12 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
-    // ===== Only basic lands are offered =====
-
     @Test
     @DisplayName("Only basic land cards are offered, non-lands are excluded")
     void onlyBasicLandsOffered() {
         setupAndCast();
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new Plains(), new GrizzlyBears(), new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Plains(), new GrizzlyBears(), new Mountain()));
 
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
@@ -255,8 +242,6 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
-
-    // ===== Changeling keyword: counts as every creature type =====
 
     @Test
     @DisplayName("Changeling gets boost from Field Marshal (Soldier lord) due to being every creature type")
@@ -275,16 +260,52 @@ class ChangelingWayfinderTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Changeling inherently has the CHANGELING keyword")
-    void hasChangelingKeyword() {
-        harness.addToBattlefield(player1, new ChangelingWayfinder());
+    @DisplayName("ETB search still resolves after Wayfinder leaves the battlefield")
+    void searchResolvesAfterSourceLeavesBattlefield() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        Island opponentsCard = new Island();
+        harness.setLibrary(player2, List.of(opponentsCard));
+        harness.passBothPriorities();
 
+        GameData gd = harness.getGameData();
         Permanent wayfinder = findPermanent(player1, "Changeling Wayfinder");
+        gd.playerBattlefields.get(player1.getId()).remove(wayfinder);
+        gd.playerGraveyards.get(player1.getId()).add(wayfinder.getCard());
 
-        assertThat(wayfinder.hasKeyword(Keyword.CHANGELING)).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card instanceof Forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Basic-land search excludes nonbasic lands")
+    void searchExcludesNonbasicLand() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new EvolvingWilds(), new Forest()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .hasSize(1).allMatch(card -> card instanceof Forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card instanceof Forest);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card instanceof EvolvingWilds);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new ChangelingWayfinder()));
@@ -293,9 +314,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
     }
 
     private void setupLibraryWithBasicLands() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
 

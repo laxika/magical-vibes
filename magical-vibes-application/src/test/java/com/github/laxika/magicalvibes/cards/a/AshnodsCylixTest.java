@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(AshnodsCylix.class)
 class AshnodsCylixTest extends BaseCardTest {
@@ -42,9 +43,7 @@ class AshnodsCylixTest extends BaseCardTest {
         Card c1 = new AshnodsCylix();
         Card c2 = new AshnodsCylix();
         Card c3 = new AshnodsCylix();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(c0, c1, c2, c3));
+        harness.setLibrary(player2, List.of(c0, c1, c2, c3));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -73,9 +72,7 @@ class AshnodsCylixTest extends BaseCardTest {
 
         Card top = new AshnodsCylix();
         Card bottom = new AshnodsCylix();
-        List<Card> deck = gd.playerDecks.get(player2.getId());
-        deck.clear();
-        deck.addAll(List.of(top, bottom));
+        harness.setLibrary(player2, List.of(top, bottom));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -101,9 +98,7 @@ class AshnodsCylixTest extends BaseCardTest {
         Card c0 = new AshnodsCylix();
         Card c1 = new AshnodsCylix();
         Card c2 = new AshnodsCylix();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(c0, c1, c2));
+        harness.setLibrary(player1, List.of(c0, c1, c2));
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -126,12 +121,51 @@ class AshnodsCylixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void singleCardLibraryKeepsItsOnlyCardAndExilesNothing() {
+        harness.addToBattlefield(player1, new AshnodsCylix());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card onlyCard = new AshnodsCylix();
+        harness.setLibrary(player2, List.of(onlyCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(onlyCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void targetPlayerCannotDeclineToKeepACard() {
+        harness.addToBattlefield(player1, new AshnodsCylix());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card kept = new AshnodsCylix();
+        Card exiled = new AshnodsCylix();
+        harness.setLibrary(player2, List.of(kept, exiled));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, -1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
     }
 }

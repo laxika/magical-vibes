@@ -24,8 +24,7 @@ class CloudPiratesTest extends BaseCardTest {
 
         addCreatureReady(player1, new AlabasterDragon());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -44,6 +43,19 @@ class CloudPiratesTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Cloud Pirates can be blocked by a creature with flying")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new CloudPirates());
+        Permanent dragon = addCreatureReady(player2, new AlabasterDragon());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(dragon.isBlocking()).isTrue();
     }
 
     @Test

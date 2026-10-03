@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultZeppelid;
 import com.github.laxika.magicalvibes.cards.c.CacklingFlames;
+import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BraceForImpact.class, AssaultZeppelid.class, CacklingFlames.class, MistralCharger.class})
+@CardUsed({BraceForImpact.class, AssaultZeppelid.class, CacklingFlames.class, MistralCharger.class, Malignus.class})
 class BraceForImpactTest extends BaseCardTest {
 
     @Test
@@ -89,6 +89,69 @@ class BraceForImpactTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage and adds counters without preventing the target's damage")
+    void preventsCombatDamageAndAddsCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+
+        castBraceForImpact(target);
+        dealCombatDamageTo(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertInGraveyard(player2, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Does not heal earlier damage or add counters until new damage is prevented")
+    void leavesEarlierDamageMarked() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        dealCombatDamageTo(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+
+        castBraceForImpact(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        castDamage(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    private void dealCombatDamageTo(Permanent target) {
+        Permanent attacker = addCreatureReady(player2, new MistralCharger());
+        attacker.setAttacking(true);
+        target.setBlocking(true);
+        target.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+    }
+
+    @Test
+    @DisplayName("Unpreventable combat damage gives no counters and can kill the protected creature")
+    void unpreventableCombatDamageDoesNotAddCounters() {
+        harness.setLife(player1, 20);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AssaultZeppelid());
+        castBraceForImpact(target);
+
+        Permanent attacker = addCreatureReady(player2, new Malignus());
+        attacker.setAttacking(true);
+        target.setBlocking(true);
+        target.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Assault Zeppelid");
+        harness.assertNotOnBattlefield(player1, "Assault Zeppelid");
     }
 
     private void castBraceForImpact(Permanent target) {

@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.w.Willbender;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,15 +21,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BileBlight.class, AvatarOfMight.class, GrizzlyBears.class, LlanowarElves.class, Willbender.class})
 class BileBlightTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives the target and all creatures with the same name -3/-3")
     void debuffsTargetAndAllSameNameCreatures() {
-        Permanent ownAvatar = addCreature(player1, new AvatarOfMight());
-        Permanent target = addCreature(player2, new AvatarOfMight());
-        Permanent otherAvatar = addCreature(player2, new AvatarOfMight());
-        Permanent elf = addCreature(player2, new LlanowarElves());
+        Permanent ownAvatar = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent otherAvatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         castBileBlight(target.getId());
 
@@ -43,8 +45,8 @@ class BileBlightTest extends BaseCardTest {
     @Test
     @DisplayName("A same-name hexproof creature is affected without being targeted")
     void affectsSameNameHexproofCreature() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
-        Permanent hexproof = addCreature(player2, new AvatarOfMight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         TestCards.mutableCard(hexproof).setKeywords(EnumSet.of(Keyword.HEXPROOF));
 
         castBileBlight(target.getId());
@@ -55,7 +57,7 @@ class BileBlightTest extends BaseCardTest {
     @Test
     @DisplayName("The reduction wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
 
         castBileBlight(target.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
@@ -72,10 +74,10 @@ class BileBlightTest extends BaseCardTest {
     @Test
     @DisplayName("Lethal reduction puts every same-name creature into its owner's graveyard")
     void killsAllSameNameCreatures() {
-        addCreature(player1, new GrizzlyBears());
-        Permanent target = addCreature(player2, new GrizzlyBears());
-        addCreature(player2, new GrizzlyBears());
-        addCreature(player2, new LlanowarElves());
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         castBileBlight(target.getId());
 
@@ -94,17 +96,70 @@ class BileBlightTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A face-down creature does not interfere with debuffing named creatures")
+    void ignoresNamelessCreaturesWhenTargetHasAName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new Willbender());
+        faceDown.setFaceDown(2, 2, EnumSet.of(CardType.CREATURE));
+
+        castBileBlight(target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, faceDown)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faceDown)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Bile Blight");
+    }
+
+    @Test
+    @DisplayName("Targeting a face-down creature affects only that creature")
+    void namelessTargetDoesNotShareANameWithOtherNamelessCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Willbender());
+        target.setFaceDown(2, 2, EnumSet.of(CardType.CREATURE));
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new Willbender());
+        other.setFaceDown(2, 2, EnumSet.of(CardType.CREATURE));
+
+        castBileBlight(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        harness.assertInGraveyard(player2, "Willbender");
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An illegal target at resolution prevents all of the reductions")
+    void doesNotAffectOtherCopiesWhenTargetBecomesIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.setHand(player1, List.of(new BileBlight()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, target.getId());
+        TestCards.mutableCard(target).setKeywords(EnumSet.of(Keyword.HEXPROOF));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(8);
+        harness.assertInGraveyard(player1, "Bile Blight");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not inherit the reduction")
+    void doesNotDebuffLaterCreaturesWithTheSameName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        castBileBlight(target.getId());
+
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(8);
+    }
+
     private void castBileBlight(UUID targetId) {
         harness.setHand(player1, List.of(new BileBlight()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

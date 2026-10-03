@@ -95,11 +95,75 @@ class CaromTest extends BaseCardTest {
                 .hasMessageContaining("All targets must be different");
     }
 
+    @Test
+    @DisplayName("Redirected damage can be redirected by another Carom")
+    void redirectsAlreadyRedirectedDamage() {
+        Permanent first = addCreatureReady(player1, new AzoriusFirstWing());
+        Permanent middle = addCreatureReady(player2, new AzoriusFirstWing());
+        Permanent last = addCreatureReady(player2, new AzoriusFirstWing());
+
+        castCarom(first.getId(), middle.getId());
+        castCarom(middle.getId(), last.getId());
+        castDemonfire(1, first.getId());
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(middle.getMarkedDamage()).isZero();
+        assertThat(last.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Draws when one target leaves before resolution without redirecting")
+    void drawsWithOneRemainingTarget() {
+        Permanent first = addCreatureReady(player1, new AzoriusFirstWing());
+        Permanent destination = addCreatureReady(player2, new AzoriusFirstWing());
+        Demonfire drawnCard = new Demonfire();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Carom()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(first.getId(), destination.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        castDemonfire(1, first.getId());
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when both targets leave before resolution")
+    void doesNotDrawWithNoRemainingTargets() {
+        Permanent first = addCreatureReady(player1, new AzoriusFirstWing());
+        Permanent destination = addCreatureReady(player2, new AzoriusFirstWing());
+        Demonfire drawnCard = new Demonfire();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Carom()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(first.getId(), destination.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Does not redirect when the destination leaves after resolution")
+    void destinationLeavesBeforeDamage() {
+        Permanent first = addCreatureReady(player1, new AzoriusFirstWing());
+        Permanent destination = addCreatureReady(player2, new AzoriusFirstWing());
+
+        castCarom(first.getId(), destination.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(destination);
+        castDemonfire(1, first.getId());
+
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+    }
+
     private void castCarom(java.util.UUID protectedId, java.util.UUID destinationId) {
         harness.setHand(player1, List.of(new Carom()));
         addMana();
-        harness.castInstant(player1, 0, List.of(protectedId, destinationId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(protectedId, destinationId));
     }
 
     private void castDemonfire(int xValue, java.util.UUID targetId) {
@@ -111,8 +175,7 @@ class CaromTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Demonfire()));
         harness.addMana(caster, ManaColor.RED, 1);
         harness.addMana(caster, ManaColor.COLORLESS, xValue);
-        harness.castSorcery(caster, 0, xValue, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(caster, 0, xValue, targetId);
     }
 
     private void addMana() {

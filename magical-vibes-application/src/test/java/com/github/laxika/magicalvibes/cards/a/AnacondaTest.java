@@ -19,6 +19,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AnacondaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Anaconda deals combat damage through swampwalk despite an available blocker")
+    void dealsCombatDamageThroughSwampwalk() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new Swamp());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new Anaconda());
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+        assertThat(blocker.isBlocking()).isFalse();
+        harness.assertOnBattlefield(player1, "Anaconda");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Anaconda cannot be blocked when defending player controls a Swamp")
     void cannotBeBlockedWhenDefenderControlsSwamp() {
         harness.addToBattlefield(player2, new Swamp());

@@ -63,20 +63,48 @@ class AzoriusPloyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("First target cannot deal combat damage and second target cannot receive it")
+    void preventsDamageInSeparateDirectionsForDifferentTargets() {
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        Permanent blocker = addBlocker(player2, 3, 3, 0);
+        harness.setHand(player1, List.of(new AzoriusPloy()));
+        addAzoriusPloyMana(player1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(blocker.getId(), attacker.getId()));
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Both target choices are required even when choosing the same creature")
+    void cannotCastWithOnlyOneTargetChoice() {
+        Permanent target = addCreature(player1, 2, 2);
+        harness.setHand(player1, List.of(new AzoriusPloy()));
+        addAzoriusPloyMana(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent signet = harness.addToBattlefieldAndReturn(player2, new AzoriusSignet());
         harness.setHand(player1, List.of(new AzoriusPloy()));
         addAzoriusPloyMana(player1);
 
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, signet.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(signet.getId(), signet.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void castAzoriusPloy(Permanent target) {
         harness.setHand(player1, List.of(new AzoriusPloy()));
         addAzoriusPloyMana(player1);
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId(), target.getId()));
     }
 
     private void addAzoriusPloyMana(Player player) {

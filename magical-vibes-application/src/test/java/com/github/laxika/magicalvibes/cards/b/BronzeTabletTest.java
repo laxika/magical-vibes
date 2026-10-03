@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.t.TimeElemental;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BronzeTablet.class, ControlMagic.class, GrizzlyBears.class, Shatter.class, TimeElemental.class,
-        TheHive.class, WoundReflection.class})
+        TheHive.class, WoundReflection.class, EverybodyLives.class})
 class BronzeTabletTest extends BaseCardTest {
 
     private boolean inExile(String cardName) {
@@ -55,7 +56,7 @@ class BronzeTabletTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining to pay leaves both cards exiled (ownership swap not modeled)")
+    @DisplayName("Declining to pay leaves both cards exiled and exchanges their ownership")
     void decliningExiles() {
         Permanent tablet = addReadyTablet();
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -72,6 +73,8 @@ class BronzeTabletTest extends BaseCardTest {
         assertThat(inExile("Bronze Tablet")).isTrue();
         assertThat(inExile("Grizzly Bears")).isTrue();
         harness.assertNotInGraveyard(player1, "Bronze Tablet");
+        assertThat(gd.findExiledCard(tablet.getOriginalCard().getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.findExiledCard(bears.getOriginalCard().getId()).ownerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -90,6 +93,8 @@ class BronzeTabletTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(5);
         assertThat(inExile("Bronze Tablet")).isTrue();
         assertThat(inExile("Grizzly Bears")).isTrue();
+        assertThat(gd.findExiledCard(tablet.getOriginalCard().getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.findExiledCard(bears.getOriginalCard().getId()).ownerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -114,8 +119,7 @@ class BronzeTabletTest extends BaseCardTest {
         harness.setHand(player2, java.util.List.of(new Shatter()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, tablet.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, tablet.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(tablet.getOriginalCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tablet);
@@ -225,6 +229,58 @@ class BronzeTabletTest extends BaseCardTest {
         resolveEndStep(player1);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(0);
+    }
+
+    @Test
+    void playerWhoCannotLoseLifeCannotPay() {
+        Permanent tablet = addReadyTablet();
+        harness.addToBattlefield(player2, new TheHive());
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        harness.setHand(player2, java.util.List.of(new EverybodyLives()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, tabletIndex(tablet), null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player2, 20);
+        harness.assertNotInGraveyard(player1, "Bronze Tablet");
+        assertThat(gd.findExiledCard(tablet.getOriginalCard().getId()).ownerId()).isEqualTo(player2.getId());
+        assertThat(gd.findExiledCard(target.getOriginalCard().getId()).ownerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void mayPayExactlyRemainingTenLife() {
+        Permanent tablet = addReadyTablet();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player2, 10);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, tabletIndex(tablet), null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 0);
+        harness.assertInGraveyard(player1, "Bronze Tablet");
+        assertThat(gd.findExiledCard(bears.getOriginalCard().getId())).isNotNull();
+    }
+
+    @Test
+    void cannotTargetYourPermanentControlledByOpponent() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, java.util.List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent tablet = addReadyTablet();
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, tabletIndex(tablet), null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a nontoken permanent an opponent owns");
     }
 
     private Permanent addReadyTablet() {

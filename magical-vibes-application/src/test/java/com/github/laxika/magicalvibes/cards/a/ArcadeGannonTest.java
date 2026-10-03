@@ -94,6 +94,123 @@ class ArcadeGannonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The permission allows only one spell each turn")
+    void rejectsSecondSpellInSameTurn() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        harness.setGraveyard(player1, List.of(new DarksteelRelic(), new DarksteelRelic()));
+        prepareMainPhase(player1);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Darksteel Relic");
+    }
+
+    @Test
+    @DisplayName("The permission does not apply during an opponent's turn")
+    void rejectsCastingOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        harness.setGraveyard(player1, List.of(new DarksteelRelic()));
+        prepareMainPhase(player2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An eligible Human still requires its normal mana cost")
+    void requiresManaAndDoesNotConsumePermissionOnFailedCast() {
+        Permanent arcade = addReadyArcade();
+        arcade.setCounterCount(CounterType.QUEST, 1);
+        harness.setGraveyard(player1, List.of(new EliteVanguard()));
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elite Vanguard");
+    }
+
+    @Test
+    @DisplayName("An eligible Human above the quest counter limit cannot be cast")
+    void rejectsHumanAboveQuestCounterCount() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        harness.setGraveyard(player1, List.of(new EliteVanguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Enough quest counters do not permit a nonartifact non-Human creature")
+    void rejectsNonHumanWithEnoughQuestCountersAndMana() {
+        Permanent arcade = addReadyArcade();
+        arcade.setCounterCount(CounterType.QUEST, 2);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Graveyard casting obeys normal artifact timing")
+    void rejectsArtifactDuringUpkeep() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        harness.setGraveyard(player1, List.of(new DarksteelRelic()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The graveyard casting permission resets on the next controller turn")
+    void castsAgainOnNextTurn() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of(new DarksteelRelic(), new DarksteelRelic()));
+        prepareMainPhase(player1);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof DarksteelRelic)
+                .hasSize(2);
+        harness.assertNotInGraveyard(player1, "Darksteel Relic");
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while summoning sick")
+    void rejectsTapAbilityWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ArcadeGannon());
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyArcade() {
         Permanent arcade = harness.addToBattlefieldAndReturn(player1, new ArcadeGannon());
         arcade.setSummoningSick(false);

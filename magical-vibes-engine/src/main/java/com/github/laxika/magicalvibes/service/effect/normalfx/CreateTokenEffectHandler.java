@@ -157,9 +157,19 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        entry.getCreatedPermanentIds().addAll(
-                permanentControlSupport.applyCreateToken(gameData, controllerId, bindDeathReturn(e, entry), amount,
-                        entry.getCard().getSetCode(), power, toughness));
+        List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
+                bindDeathReturn(e, entry), amount, entry.getCard().getSetCode(), power, toughness);
+        entry.getCreatedPermanentIds().addAll(createdIds);
+        List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> exileActions =
+                gameData.drainDelayedActions(
+                        com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,
+                        action -> createdIds.contains(action.permanentId())
+                                && action.kind() == com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+        for (var action : exileActions) {
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
+                    controllerId, entry.getCard(), entry.getSourcePermanentId(), action.permanentId(),
+                    new com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect()));
+        }
     }
 
     private Permanent availableMirrormindCrown(GameData gameData, UUID controllerId) {

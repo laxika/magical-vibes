@@ -27,8 +27,7 @@ class BotBashingTimeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BotBashingTime()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -43,20 +42,70 @@ class BotBashingTimeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BotBashingTime(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Avatar of Might");
         harness.assertNotInGraveyard(player2, "Avatar of Might");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Avatar of Might"));
+    }
+
+    @Test
+    @DisplayName("Deals exactly 6 damage to a surviving creature you control")
+    void damagesOwnCreatureWithoutExilingItImmediately() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight());
+        harness.setHand(player1, List.of(new BotBashingTime()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Avatar of Might");
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile replacement expires at the end of the turn")
+    void doesNotExileTargetThatDiesNextTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.setHand(player1, List.of(new BotBashingTime()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player1, 0, target.getId());
+        }
+
+        harness.assertNotOnBattlefield(player2, "Avatar of Might");
+        harness.assertInGraveyard(player2, "Avatar of Might");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not establish an exile replacement when its target dies before resolution")
+    void targetDiesInResponse() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BotBashingTime(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Bot Bashing Time");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 
     @Test

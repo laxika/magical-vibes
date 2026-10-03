@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HollowhengeHuntmaster;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
@@ -15,14 +16,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvabruckCaretaker.class, HollowhengeHuntmaster.class, GrizzlyBears.class})
+@CardUsed({AvabruckCaretaker.class, HollowhengeHuntmaster.class, DawnhartDisciple.class, Forest.class})
 class AvabruckCaretakerTest extends BaseCardTest {
 
     @Test
     void caretakerPutsTwoCountersOnAnotherCreatureYouControlAtCombat() {
         gd.dayNight = DayNight.DAY;
         Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
@@ -36,8 +37,8 @@ class AvabruckCaretakerTest extends BaseCardTest {
     void caretakerCannotTargetItselfOrAnOpponentsCreature() {
         gd.dayNight = DayNight.DAY;
         Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DawnhartDisciple());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
 
         advanceToCombat(player1);
 
@@ -55,11 +56,13 @@ class AvabruckCaretakerTest extends BaseCardTest {
     void huntmasterGivesOtherPermanentsHexproofAndCountersEachCreature() {
         gd.dayNight = DayNight.NIGHT;
         Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
-        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DawnhartDisciple());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         assertThat(huntmaster.getCard()).isInstanceOf(HollowhengeHuntmaster.class);
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HEXPROOF)).isFalse();
 
         advanceToCombat(player1);
@@ -68,6 +71,7 @@ class AvabruckCaretakerTest extends BaseCardTest {
         assertThat(huntmaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -76,22 +80,120 @@ class AvabruckCaretakerTest extends BaseCardTest {
         Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
 
         gd.spellsCastLastTurn.clear();
-        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(caretaker.getCard()).isInstanceOf(HollowhengeHuntmaster.class);
 
-        gd.spellsCastLastTurn.put(player1.getId(), 2);
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(caretaker.getCard()).isInstanceOf(AvabruckCaretaker.class);
     }
 
+    @Test
+    void dayStaysDayWhenPreviousActivePlayerCastOneSpell() {
+        gd.dayNight = DayNight.DAY;
+        Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(caretaker.getCard()).isInstanceOf(AvabruckCaretaker.class);
+    }
+
+    @Test
+    void nightBecomesDayWhenPreviousActivePlayerCastTwoSpells() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(huntmaster.getCard()).isInstanceOf(AvabruckCaretaker.class);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    void spellsCastByNonactivePlayerDoNotMakeItDay() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(huntmaster.getCard()).isInstanceOf(HollowhengeHuntmaster.class);
+    }
+
+    @Test
+    void enteringWhenNeitherDayNorNightMakesItDay() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(caretaker.getCard()).isInstanceOf(AvabruckCaretaker.class);
+    }
+
+    @Test
+    void caretakerWithNoOtherCreatureDoesNotPutCountersOnItself() {
+        gd.dayNight = DayNight.DAY;
+        Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(caretaker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void caretakerDoesNotTriggerDuringOpponentsCombat() {
+        gd.dayNight = DayNight.DAY;
+        Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(caretaker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void huntmasterDoesNotTriggerDuringOpponentsCombat() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(huntmaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void huntmasterIncludesCreaturesThatEnterBeforeItsTriggerResolves() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
+        advanceToCombat(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+
+        harness.passBothPriorities();
+
+        assertThat(huntmaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 }

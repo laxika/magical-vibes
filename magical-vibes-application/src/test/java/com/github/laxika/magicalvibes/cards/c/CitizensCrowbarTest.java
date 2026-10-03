@@ -89,29 +89,82 @@ class CitizensCrowbarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Equip moves the boost and granted ability to the new creature")
+    void equipMovesBoostAndGrantedAbility() {
+        Permanent first = addReadyCreature(player1);
+        Permanent second = addReadyCreature(player1);
+        Permanent crowbar = addReadyCrowbar(player1);
+        crowbar.setAttachedTo(first.getId());
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 2, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(crowbar.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Citizen's Crowbar");
+        assertThat(second.isTapped()).isTrue();
+        assertThat(first.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature cannot activate the granted tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setSummoningSick(true);
+        Permanent crowbar = addReadyCrowbar(player1);
+        crowbar.setAttachedTo(creature.getId());
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Citizen's Crowbar");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature cannot sacrifice an opponent-controlled Crowbar")
+    void cannotSacrificeOpponentControlledCrowbar() {
+        Permanent creature = addReadyCreature(player1);
+        Permanent crowbar = addReadyCrowbar(player2);
+        crowbar.setAttachedTo(creature.getId());
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Citizen's Crowbar");
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
     private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addReadyCrowbar(Player player) {
-        Permanent permanent = new Permanent(new CitizensCrowbar());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CitizensCrowbar());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addReadyArtifact(Player player) {
-        Permanent permanent = new Permanent(new LeoninScimitar());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        Permanent permanent = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 }

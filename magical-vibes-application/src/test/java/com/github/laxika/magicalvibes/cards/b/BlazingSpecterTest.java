@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +21,7 @@ class BlazingSpecterTest extends BaseCardTest {
     @DisplayName("Combat damage to a player makes that player discard a card")
     void combatDamageMakesDamagedPlayerDiscard() {
         addAttackingSpecter(player1);
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new RazorfootGriffin())));
+        harness.setHand(player2, List.of(new Forest(), new RazorfootGriffin()));
 
         resolveCombatAndTrigger();
 
@@ -57,12 +56,55 @@ class BlazingSpecterTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new RazorfootGriffin());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+        harness.setHand(player2, List.of(new Forest()));
 
         resolveCombatAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("The damaged player discards when the opponent controls Blazing Specter")
+    void opponentControlledSpecterMakesPlayerOneDiscard() {
+        addAttackingSpecter(player2);
+        harness.setHand(player1, List.of(new Forest(), new RazorfootGriffin()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Razorfoot Griffin");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The discard trigger resolves after Blazing Specter leaves the battlefield")
+    void discardTriggerSurvivesSourceLeavingBattlefield() {
+        Permanent specter = addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new Forest(), new RazorfootGriffin()));
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(specter);
+        gd.playerGraveyards.get(player1.getId()).add(specter.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Forest");
+        harness.assertInGraveyard(player2, "Razorfoot Griffin");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addAttackingSpecter(Player player) {

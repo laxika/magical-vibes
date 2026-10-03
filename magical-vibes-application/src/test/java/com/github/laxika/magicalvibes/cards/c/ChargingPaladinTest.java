@@ -59,6 +59,26 @@ class ChargingPaladinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each attacking Paladin gets its own +0/+3 bonus")
+    void multipleAttackersEachGetTheirOwnBonus() {
+        Permanent first = addCreatureReady(player1, new ChargingPaladin());
+        Permanent second = addCreatureReady(player1, new ChargingPaladin());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isEqualTo(3);
+        assertThat(second.getPowerModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("+0/+3 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent paladin = addCreatureReady(player1, new ChargingPaladin());

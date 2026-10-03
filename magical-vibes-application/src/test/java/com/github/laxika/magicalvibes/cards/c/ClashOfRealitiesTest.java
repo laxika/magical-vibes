@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
+import com.github.laxika.magicalvibes.cards.o.OgreRecluse;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +13,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ClashOfRealities.class, GoblinCohort.class, KamiOfFalseHope.class})
+@CardUsed({ClashOfRealities.class, GoblinCohort.class, KamiOfFalseHope.class,
+        OgreRecluse.class, Opalescence.class})
 class ClashOfRealitiesTest extends BaseCardTest {
 
     @Test
@@ -116,5 +119,77 @@ class ClashOfRealitiesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertNotOnBattlefield(player1, "Kami of False Hope");
+    }
+
+    @Test
+    @DisplayName("A Spirit can deal exactly 3 damage to its controller's non-Spirit creature")
+    void spiritCanDamageOwnCreatureForExactlyThree() {
+        harness.addToBattlefield(player1, new ClashOfRealities());
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new OgreRecluse());
+
+        harness.enterBattlefieldAndReturn(player1, new KamiOfFalseHope());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ogre.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Ogre Recluse");
+        assertThat(ogre.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The entering creature still deals damage after it leaves the battlefield")
+    void damageResolvesAfterSourceIsSacrificed() {
+        harness.addToBattlefield(player1, new ClashOfRealities());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+
+        harness.enterBattlefieldAndReturn(player1, new KamiOfFalseHope());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Kami of False Hope");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Goblin Cohort");
+    }
+
+    @Test
+    @DisplayName("Clash of Realities does not trigger creatures that entered before it")
+    void enteringEnchantmentDoesNotTriggerExistingCreatures() {
+        harness.addToBattlefield(player1, new KamiOfFalseHope());
+        harness.addToBattlefield(player2, new GoblinCohort());
+
+        harness.castFromHand(player1, new ClashOfRealities(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.assertOnBattlefield(player1, "Kami of False Hope");
+        harness.assertOnBattlefield(player2, "Goblin Cohort");
+    }
+
+    @Test
+    @CardUsed({ClashOfRealities.class, KamiOfFalseHope.class, Opalescence.class})
+    @DisplayName("Clash of Realities grants itself an enter trigger when Opalescence animates it")
+    void animatedClashOfRealitiesTriggersForItsOwnEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent kami = harness.addToBattlefieldAndReturn(player2, new KamiOfFalseHope());
+
+        harness.castFromHand(player1, new ClashOfRealities(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(kami.getId());
+        harness.handlePermanentChosen(player1, kami.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Kami of False Hope");
     }
 }

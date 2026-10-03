@@ -148,7 +148,7 @@ public class EtbTriggerService {
 
     public void processLandETBEffects(GameData gameData, UUID controllerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
@@ -253,7 +253,7 @@ public class EtbTriggerService {
                                           List<String> repeatedAdditionalCosts,
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        Permanent enteringPermanent = battlefield != null && !battlefield.isEmpty() ? battlefield.getLast() : null;
+        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
@@ -383,11 +383,11 @@ public class EtbTriggerService {
             // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
             // was stamped from the spell's cast context at resolution time.
             List<Permanent> evokeBf = gameData.playerBattlefields.get(controllerId);
-            boolean evoked = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isEvoked();
+            boolean evoked = enteringPermanent != null && enteringPermanent.isEvoked();
             // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
             // spell's cast context at resolution time.
-            boolean prowl = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isProwl();
-            boolean madness = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isMadness();
+            boolean prowl = enteringPermanent != null && enteringPermanent.isProwl();
+            boolean madness = enteringPermanent != null && enteringPermanent.isMadness();
             boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
@@ -396,12 +396,40 @@ public class EtbTriggerService {
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
+                    .filter(e -> !(e instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
                     .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
                             ? e : etbEffectResolver.resolve(etbCtx, e))
                     .filter(Objects::nonNull)
                     .toList();
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
+            List<CardEffect> independentEffects = card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
+                    .filter(registration -> !(registration.effect() instanceof MayEffect))
+                    .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
+                    .filter(registration -> !(registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
+                    .map(registration -> etbEffectResolver.resolve(etbCtx, registration.effect()))
+                    .filter(Objects::nonNull).toList();
+            if (!independentEffects.isEmpty()) {
+                List<CardEffect> combinedEffects = new ArrayList<>(mandatoryEffects);
+                independentEffects.forEach(combinedEffects::remove);
+                mandatoryEffects = List.copyOf(combinedEffects);
+                for (CardEffect independentEffect : independentEffects) {
+                    var independentFilter = independentEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            ? new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
+                            new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
+                            "Target must satisfy this ability's restrictions") : modeTargetFilter;
+                    queueMandatoryETBEffects(gameData, controllerId, card, null, List.of(),
+                            List.of(independentEffect), independentFilter, extraTriggerCopies, etbMode, xValue,
+                            repeatedAdditionalCosts, convokeCreatureIds);
+                }
+            }
+            if (evoked && triggeredEffects.stream().anyMatch(
+                    com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance)) {
+                queueMandatoryETBEffects(gameData, controllerId, card, null, List.of(),
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
+                        null, extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
+            }
             for (ChooseOneAtTriggerTimeEffect triggerTimeChoice : triggerTimeChoices) {
                 ChooseOneEffect choice = triggerTimeChoice.choice();
                 boolean additionalModesAllowed = choice.additionalModesCondition() == null
@@ -632,6 +660,7 @@ public class EtbTriggerService {
                                           int etbMode, int xValue,
                                           List<String> repeatedAdditionalCosts,
                                           List<UUID> convokeCreatureIds) {
+        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         // Separate graveyard exile effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
@@ -729,25 +758,25 @@ public class EtbTriggerService {
                 .filter(e -> !isMixedPermanentAndSpellTarget(e)).toList();
 
         List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
-        boolean sourceWasCastForSpectacle = sourceBattlefield != null
-                && !sourceBattlefield.isEmpty()
-                && sourceBattlefield.getLast().isSpectacle();
-        boolean collectEvidenceCostPaid = sourceBattlefield != null
-                && !sourceBattlefield.isEmpty()
-                && sourceBattlefield.getLast().isCollectEvidenceCostPaid();
-        boolean waterbendCostPaid = sourceBattlefield != null
-                && !sourceBattlefield.isEmpty()
-                && sourceBattlefield.getLast().isWaterbendCostPaid();
-        boolean revealCardFromHandCostPaid = sourceBattlefield != null
-                && !sourceBattlefield.isEmpty()
-                && sourceBattlefield.getLast().isRevealCardFromHandCostPaid();
-        boolean controlledDragonAsCast = sourceBattlefield != null
-                && !sourceBattlefield.isEmpty()
-                && sourceBattlefield.getLast().isControlledDragonAsCast();
+        boolean sourceWasCastForSpectacle = enteringPermanent != null
+                && enteringPermanent.isSpectacle();
+        boolean collectEvidenceCostPaid = enteringPermanent != null
+                && enteringPermanent.isCollectEvidenceCostPaid();
+        boolean waterbendCostPaid = enteringPermanent != null
+                && enteringPermanent.isWaterbendCostPaid();
+        boolean revealCardFromHandCostPaid = enteringPermanent != null
+                && enteringPermanent.isRevealCardFromHandCostPaid();
+        boolean controlledDragonAsCast = enteringPermanent != null
+                && enteringPermanent.isControlledDragonAsCast();
 
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty() && !combinesGraveyardCardExileWithOtherEffects) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
+            Map<UUID, Integer> dividedAssignments = otherEffects.stream().anyMatch(effect ->
+                    effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                            && divided.etbAssignments() && divided.targetRestriction() == null)
+                    ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
+            if (!dividedAssignments.isEmpty()) gameData.pendingETBDamageAssignments = Map.of();
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
             // A permanent that entered without a target chosen at cast time — a token copy,
@@ -803,7 +832,7 @@ public class EtbTriggerService {
                 // For non-token casts with "up to N" abilities where 0 was chosen,
                 // the ETB still triggers but has no effect — we skip queueing it.
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
                 if (card.getSpellTargets().size() > 1 || etbTokenTargetService.needsSlotBySlotTargetSelection(card)) {
                     // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
@@ -846,7 +875,7 @@ public class EtbTriggerService {
                 }
             } else if (!etbNeedsTarget || hasTarget) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
                 // Snapshot the paid X onto the ETB stack entry so DynamicAmount XValue effects read
                 // the cast context on resolution.
@@ -859,10 +888,10 @@ public class EtbTriggerService {
                         xValue,
                         targetId,
                         sourcePermanentId,
-                        Map.of(),
+                        dividedAssignments,
                         null,
                         List.of(),
-                        activeTargetIds
+                        dividedAssignments.isEmpty() ? activeTargetIds : new ArrayList<>(dividedAssignments.keySet())
                 );
                 if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -901,10 +930,10 @@ public class EtbTriggerService {
                             xValue,
                             targetId,
                             sourcePermanentId,
-                            Map.of(),
+                            dividedAssignments,
                             null,
                             List.of(),
-                            activeTargetIds
+                            dividedAssignments.isEmpty() ? activeTargetIds : new ArrayList<>(dividedAssignments.keySet())
                     );
                     if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -935,8 +964,7 @@ public class EtbTriggerService {
         // Handle effects that target a player and then choose cards from that player's graveyard.
         for (CardEffect effect : targetPlayerGraveyardChoiceEffects) {
             List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
-            UUID sourcePermanentId = enteredBattlefield == null || enteredBattlefield.isEmpty()
-                    ? null : enteredBattlefield.getLast().getId();
+            UUID sourcePermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
@@ -946,8 +974,7 @@ public class EtbTriggerService {
 
         // Handle graveyard exile effects: targets must be chosen at trigger time
         List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
-        UUID graveyardSourcePermanentId = enteredBattlefield == null || enteredBattlefield.isEmpty()
-                ? null : enteredBattlefield.getLast().getId();
+        UUID graveyardSourcePermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
         for (CardEffect effect : graveyardExileEffects) {
             ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
             int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
@@ -977,8 +1004,7 @@ public class EtbTriggerService {
         // creature cards, chosen as the trigger goes on the stack.
         for (CardEffect effect : mixedZoneChoiceEffects) {
             List<Permanent> mixedZoneBf = gameData.playerBattlefields.get(controllerId);
-            UUID mixedZoneSourceId = mixedZoneBf != null && !mixedZoneBf.isEmpty()
-                    ? mixedZoneBf.getLast().getId() : null;
+            UUID mixedZoneSourceId = enteringPermanent != null ? enteringPermanent.getId() : null;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId,
                         card, List.of(effect), mixedZoneSourceId,
@@ -1003,8 +1029,7 @@ public class EtbTriggerService {
         // Handle graveyard exile-and-may-play effects: target card in controller's graveyard
         for (CardEffect effect : graveyardMayPlayEffects) {
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                UUID sourcePermanentId = sourceBattlefield != null && !sourceBattlefield.isEmpty()
-                        ? sourceBattlefield.getLast().getId() : null;
+                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
                 graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
                         gameData, controllerId, card, List.of(effect), sourcePermanentId);
             }
@@ -1220,4 +1245,11 @@ public class EtbTriggerService {
         }
         return false;
     }
+    private Permanent findEnteringPermanent(GameData gameData, Card card) {
+        return gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId())
+                        || permanent.getOriginalCard().getId().equals(card.getId()))
+                .findFirst().orElse(null);
+    }
+
 }

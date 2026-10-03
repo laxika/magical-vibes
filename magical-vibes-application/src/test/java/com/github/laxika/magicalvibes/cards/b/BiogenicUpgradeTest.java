@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GruulLocket;
+import com.github.laxika.magicalvibes.cards.s.SauroformHybrid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,15 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BiogenicUpgrade.class, SauroformHybrid.class, GruulLocket.class})
 class BiogenicUpgradeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Distributes three counters, then doubles the selected creatures' +1/+1 counters")
     void distributesAndDoublesSelectedCreatures() {
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent untouched = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
+        Permanent untouched = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         second.setCounterCount(CounterType.CHARGE, 3);
@@ -42,7 +44,7 @@ class BiogenicUpgradeTest extends BaseCardTest {
     @Test
     @DisplayName("Can put all three counters on one creature before doubling them")
     void canChooseOneTarget() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         harness.setHand(player1, List.of(new BiogenicUpgrade()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -56,8 +58,8 @@ class BiogenicUpgradeTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects an invalid assignment or a noncreature target")
     void rejectsInvalidCastChoices() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GruulLocket());
         harness.setHand(player1, List.of(new BiogenicUpgrade()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -65,6 +67,56 @@ class BiogenicUpgradeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(creature.getId(), 2)))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(artifact.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Can distribute one counter to each of three targets before doubling")
+    void canChooseThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        third.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new BiogenicUpgrade()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1));
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Counters assigned to a removed target are lost rather than redistributed")
+    void doesNotRedistributeCountersFromRemovedTarget() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
+        survivor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new BiogenicUpgrade()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castSorcery(player1, 0, Map.of(survivor.getId(), 1, removed.getId(), 2));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(removed.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Biogenic Upgrade");
+    }
+
+    @Test
+    @DisplayName("Every selected creature must be assigned at least one counter")
+    void rejectsZeroCounterAssignment() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
+        harness.setHand(player1, List.of(new BiogenicUpgrade()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(first.getId(), 3, second.getId(), 0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

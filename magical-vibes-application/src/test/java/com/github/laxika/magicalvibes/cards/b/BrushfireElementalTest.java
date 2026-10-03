@@ -68,8 +68,7 @@ class BrushfireElementalTest extends BaseCardTest {
         Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -83,12 +82,68 @@ class BrushfireElementalTest extends BaseCardTest {
         Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
         Permanent blocker = addCreatureReady(player2, new HillGiant());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(elemental))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Haste allows Brushfire Elemental to attack the turn it enters")
+    void canAttackWhileSummoningSick() {
+        Permanent elemental = harness.enterBattlefieldAndReturn(player1, new BrushfireElemental());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental))));
+
+        assertThat(elemental.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each land entering without being played creates a separate cumulative landfall boost")
+    void multipleLandEntriesStackTheirBoosts() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new BrushfireElemental());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(elemental.getEffectivePower()).isEqualTo(1);
+        assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
+        resolveAllTriggers();
+
+        assertThat(elemental.getEffectivePower()).isEqualTo(5);
+        assertThat(elemental.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A creature with printed power 2 can block after its power increases to 3")
+    void boostedLowPowerCreatureCanBlock() {
+        Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(1);
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elemental))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with printed power 3 cannot block after its power decreases to 2")
+    void weakenedHighPowerCreatureCannotBlock() {
+        Permanent elemental = addCreatureReady(player1, new BrushfireElemental());
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        blocker.setPowerModifier(-1);
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(elemental)));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elemental)))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

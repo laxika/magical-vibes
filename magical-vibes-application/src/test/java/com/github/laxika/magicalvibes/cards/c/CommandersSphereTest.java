@@ -101,4 +101,41 @@ class CommandersSphereTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
 
+    @Test
+    @DisplayName("Without a commander the mana ability taps the sphere but produces no mana")
+    void noCommanderProducesNoMana() {
+        gd.playerCommanders.put(player1.getId(), List.of());
+        Permanent sphere = harness.addToBattlefieldAndReturn(player1, new CommandersSphere());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(sphere.isTapped()).isTrue();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The sphere is sacrificed as a cost before its draw ability resolves")
+    void sacrificeIsPaidBeforeDrawing() {
+        harness.addToBattlefield(player1, new CommandersSphere());
+        harness.setLibrary(player1, List.of(new Plains()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Commander's Sphere");
+        harness.assertInGraveyard(player1, "Commander's Sphere");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertInHand(player1, "Plains");
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

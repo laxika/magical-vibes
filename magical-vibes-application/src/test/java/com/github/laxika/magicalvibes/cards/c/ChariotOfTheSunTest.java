@@ -124,4 +124,38 @@ class ChariotOfTheSunTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+    @Test
+    @DisplayName("Only the targeted creature gains flying and has its toughness changed")
+    void leavesOtherCreaturesUnaffected() {
+        harness.addToBattlefield(player1, new ChariotOfTheSun());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature with a minus-one counter dies when its base toughness becomes one")
+    void toughnessReductionCanKillCreature() {
+        harness.addToBattlefield(player1, new ChariotOfTheSun());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        goblin.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Elite Infantry");
+        harness.assertInGraveyard(player1, "Goblin Elite Infantry");
+    }
 }

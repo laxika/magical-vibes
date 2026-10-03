@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ColossalPlow;
 import com.github.laxika.magicalvibes.cards.f.FiftyFeetOfRope;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeatherArmor;
 import com.github.laxika.magicalvibes.cards.m.MagistratesScepter;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BrazenBoarding.class, AdmiralBeckettBrass.class, ColossalPlow.class,
         FiftyFeetOfRope.class, FurnaceOfRath.class, Gingerbrute.class, GrizzlyBears.class,
-        LeatherArmor.class, MagistratesScepter.class, Millstone.class, OrazcaRelic.class,
+        JaceBeleren.class, LeatherArmor.class, MagistratesScepter.class, Millstone.class, OrazcaRelic.class,
         PyreOfHeroes.class, RaidersKarve.class, RelicAmulet.class, ReplicatingRing.class,
         SpikedPitTrap.class, TreasureChest.class, WeaponRack.class, Whirlermaker.class})
 class BrazenBoardingTest extends BaseCardTest {
@@ -46,7 +47,7 @@ class BrazenBoardingTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .map(permanent -> permanent.getCard().getName()))
-                .anyMatch(Set.of("Colossal Plow", "Fifty Feet of Rope", "Millstone", "Relic Amulet",
+                .anyMatch(Set.of("Colossal Plow", "Millstone", "Relic Amulet",
                         "Pyre of Heroes")::contains);
     }
 
@@ -79,6 +80,60 @@ class BrazenBoardingTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void accountsForDamageAlreadyMarkedWhenChoosingSpellbookCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setMarkedDamage(1);
+
+        castBrazenBoarding(target);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard().getName())
+                .isIn("Whirlermaker", "Magistrate's Scepter", "Replicating Ring",
+                        "Raiders' Karve", "Orazca Relic", "Treasure Chest");
+    }
+
+    @Test
+    void conjuresThreeManaCardForThreeExcessDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Gingerbrute());
+
+        castBrazenBoarding(target);
+
+        harness.assertInGraveyard(player2, "Gingerbrute");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard().getName())
+                .isIn("Whirlermaker", "Magistrate's Scepter", "Replicating Ring",
+                        "Raiders' Karve", "Orazca Relic", "Treasure Chest");
+    }
+
+    @Test
+    void usesPlaneswalkerLoyaltyToDetermineExcessDamage() {
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new JaceBeleren());
+
+        castBrazenBoarding(target);
+
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard().getName())
+                .isIn("Fifty Feet of Rope", "Leather Armor", "Spiked Pit Trap", "Gingerbrute");
+    }
+
+    @Test
+    void doesNotConjureWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new BrazenBoarding()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Brazen Boarding");
     }
 
     private void castBrazenBoarding(Permanent target) {

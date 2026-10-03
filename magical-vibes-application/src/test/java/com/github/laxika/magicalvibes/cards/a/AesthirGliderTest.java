@@ -57,4 +57,30 @@ class AesthirGliderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
     }
+
+    @Test
+    @DisplayName("Aesthir Glider cannot block even a flying attacker")
+    void cannotBlockFlyingAttacker() {
+        addCreatureReady(player1, new AesthirGlider());
+        addCreatureReady(player2, new AesthirGlider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Aesthir Glider can attack and deal combat damage")
+    void canAttackAndDealCombatDamage() {
+        addCreatureReady(player1, new AesthirGlider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Aesthir Glider");
+    }
 }

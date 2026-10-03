@@ -44,6 +44,59 @@ class ChainDevilTest extends BaseCardTest {
                 harness.getGameData().playerBattlefields.get(player2.getId())).contains(token);
     }
 
+    @Test
+    @DisplayName("Each player chooses one creature and sacrifices wait for both choices")
+    void choicesAreCollectedBeforeSacrificing() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new ChainDevil());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new ChainDevil());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new ChainDevil());
+
+        castChainDevil();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(own.getId()));
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player1.getId())).contains(own);
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(own).hasSize(1);
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactly(remaining);
+        harness.assertInGraveyard(player1, "Chain Devil");
+        harness.assertInGraveyard(player2, "Chain Devil");
+    }
+
+    @Test
+    @DisplayName("A creature token is ignored when a nontoken creature is available")
+    void sacrificesNontokenCreatureOnMixedBoard() {
+        Permanent token = harness.addToBattlefieldAndReturn(player2, createTokenCreature());
+        harness.addToBattlefield(player2, new ChainDevil());
+
+        castChainDevil();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chain Devil");
+        harness.assertInGraveyard(player2, "Chain Devil");
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactly(token);
+    }
+
+    @Test
+    @DisplayName("The controller still sacrifices when the opponent has no creatures")
+    void opponentWithNoCreaturesDoesNotPreventSacrifice() {
+        castChainDevil();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Chain Devil");
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        org.assertj.core.api.Assertions.assertThat(gd.stack).isEmpty();
+    }
     private void castChainDevil() {
         harness.setHand(player1, List.of(new ChainDevil()));
         harness.addMana(player1, ManaColor.BLACK, 1);

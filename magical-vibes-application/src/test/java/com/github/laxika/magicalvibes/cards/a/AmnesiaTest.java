@@ -23,8 +23,7 @@ class AmnesiaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Amnesia()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertInGraveyard(player2, "Bog Rats");
         harness.assertInGraveyard(player2, "Dark Sphere");
@@ -42,8 +41,7 @@ class AmnesiaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Amnesia()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -55,11 +53,41 @@ class AmnesiaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MazeOfIth(), new DarkSphere(), new Amnesia()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 2, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 2, player1.getId());
 
         harness.assertInGraveyard(player1, "Dark Sphere");
         harness.assertInHand(player1, "Maze of Ith");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Discards the entire hand when every card is a nonland")
+    void discardsEntireNonlandHand() {
+        harness.setHand(player2, List.of(new BogRats(), new BogRats(), new DarkSphere()));
+        harness.setHand(player1, List.of(new Amnesia()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Bog Rats", "Bog Rats", "Dark Sphere");
+        harness.assertInGraveyard(player1, "Amnesia");
+    }
+
+    @Test
+    @DisplayName("Resolves normally when the target player's hand is empty")
+    void resolvesWithEmptyHand() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new Amnesia()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Amnesia");
+        assertThat(gd.stack).isEmpty();
     }
 }

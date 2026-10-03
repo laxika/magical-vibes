@@ -232,9 +232,9 @@ public class AnimationSupport {
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            if (effect.dynamicPowerToughness()) {
+            if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
                 addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
-            } else {
+            } else if (effect.power() != null || effect.toughness() != null) {
                 addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
                         EffectDuration.UNTIL_END_OF_TURN);
             }

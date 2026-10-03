@@ -125,6 +125,56 @@ class BrowseTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Cards below the top five remain in library order and cannot be chosen")
+    void leavesDeeperCardsUntouched() {
+        addReadyBrowse(player1);
+        payMana(player1);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        Card fifth = new GrizzlyBears();
+        Card sixth = new GrizzlyBears();
+        Card seventh = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth, seventh));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(sixth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(fifth.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(fifth);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second, third, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even after Browse leaves the battlefield")
+    void resolvesWithoutSource() {
+        addReadyBrowse(player1);
+        payMana(player1);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, null);
+        Card source = gd.playerBattlefields.get(player1.getId()).removeFirst().getCard();
+        harness.setGraveyard(player1, List.of(source));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void payMana(Player player) {
         harness.addMana(player, ManaColor.BLUE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 2);

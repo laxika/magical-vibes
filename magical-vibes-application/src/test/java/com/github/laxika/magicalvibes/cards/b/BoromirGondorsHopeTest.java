@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AragornKingOfGondor;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BoromirGondorsHope.class)
+@CardUsed({BoromirGondorsHope.class, AragornKingOfGondor.class, SolRing.class, SwordsToPlowshares.class})
 class BoromirGondorsHopeTest extends BaseCardTest {
 
     @Test
@@ -64,19 +67,73 @@ class BoromirGondorsHopeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
     }
 
+    @Test
+    void canChooseArtifactFromShortLibrary() {
+        Card human = new AragornKingOfGondor();
+        Card artifact = new SolRing();
+        Card instant = new SwordsToPlowshares();
+        setLibrary(human, artifact, instant);
+
+        castBoromir();
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(human, instant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotOfferEligibleSeventhCardAndBottomsOnlyTopSix() {
+        Card seventh = new SolRing();
+        List<Card> topSix = java.util.stream.IntStream.range(0, 6)
+                .mapToObj(i -> (Card) new SwordsToPlowshares()).toList();
+        List<Card> library = new java.util.ArrayList<>(topSix);
+        library.add(seventh);
+        harness.setLibrary(player1, library);
+
+        castBoromir();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(seventh);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 7))
+                .containsExactlyInAnyOrderElementsOf(topSix);
+    }
+
+    @Test
+    void soleEligibleCardMayBeDeclined() {
+        Card human = new AragornKingOfGondor();
+        setLibrary(human);
+
+        castBoromir();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(human);
+    }
+
+    @Test
+    void emptyLibraryFinishesWithoutChoice() {
+        setLibrary();
+
+        castBoromir();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void castBoromir() {
         harness.setHand(player1, List.of(new BoromirGondorsHope()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 
     private static Card creature(String name, CardSubtype subtype) {

@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(BattlefieldForge.class)
+@CardUsed({BattlefieldForge.class, Bandage.class})
 class BattlefieldForgeTest extends BaseCardTest {
 
     @Test
@@ -87,5 +89,44 @@ class BattlefieldForgeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Preventing pain damage still produces mana and consumes prevention")
+    void preventingPainDamageStillProducesMana() {
+        harness.addToBattlefield(player1, new BattlefieldForge());
+        harness.addToBattlefield(player1, new BattlefieldForge());
+        harness.setHand(player1, List.of(new Bandage()));
+        harness.setLibrary(player1, List.of(new BattlefieldForge()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 1, 2, null, null);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled Forge produces mana and deals damage to that opponent")
+    void opponentControlledForgeDamagesItsController() {
+        Permanent forge = harness.addToBattlefieldAndReturn(player2, new BattlefieldForge());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(forge.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

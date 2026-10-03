@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.SilkenfistOrder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AvengerEnDal.class, SilkenfistOrder.class, AccumulatedKnowledge.class})
+@CardUsed({AvengerEnDal.class, SilkenfistOrder.class, AccumulatedKnowledge.class, PlatinumEmperion.class})
 class AvengerEnDalTest extends BaseCardTest {
 
     @Test
@@ -122,6 +123,68 @@ class AvengerEnDalTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiles Platinum Emperion before its controller gains life")
+    void exilesLifeLockBeforeGainingLife() {
+        addReadyAvenger(player1);
+        Permanent attacker = addCreatureReady(player2, new PlatinumEmperion());
+        declareAttackers(player2, List.of(0));
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Platinum Emperion");
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                .contains("Platinum Emperion");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Does not exile or grant life if the target stops attacking before resolution")
+    void fizzlesIfTargetStopsAttacking() {
+        addReadyAvenger(player1);
+        Permanent attacker = addAttacker(player2);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.handleCardChosen(player1, 0);
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 10);
+        harness.assertOnBattlefield(player2, "Silkenfist Order");
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                .doesNotContain("Silkenfist Order");
+        harness.assertInGraveyard(player1, "Accumulated Knowledge");
+    }
+
+    @Test
+    @DisplayName("Resolves independently after Avenger en-Dal leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent avenger = addReadyAvenger(player1);
+        Permanent attacker = addAttacker(player2);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new AccumulatedKnowledge()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(avenger);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player2, "Silkenfist Order");
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getName())
+                .contains("Silkenfist Order");
     }
 
     private Permanent addReadyAvenger(Player player) {

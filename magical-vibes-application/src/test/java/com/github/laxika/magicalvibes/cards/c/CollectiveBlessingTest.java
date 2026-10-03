@@ -2,16 +2,16 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CollectiveBlessing.class, GrizzlyBears.class, GloriousAnthem.class, Opalescence.class})
 class CollectiveBlessingTest extends BaseCardTest {
 
     @Test
@@ -42,15 +42,11 @@ class CollectiveBlessingTest extends BaseCardTest {
     @DisplayName("Bonus applies when Collective Blessing resolves onto battlefield")
     void bonusAppliesOnResolve() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new CollectiveBlessing()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CollectiveBlessing(), "{3}{G}{G}{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
@@ -84,5 +80,29 @@ class CollectiveBlessingTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Collective Blessing buffs itself when it becomes a creature")
+    void buffsItselfWhenAnimated() {
+        Permanent blessing = harness.addToBattlefieldAndReturn(player1, new CollectiveBlessing());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, blessing)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, blessing)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, blessing)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Multiple Collective Blessings stack for creatures entering later")
+    void multipleCopiesBuffLaterCreatures() {
+        harness.addToBattlefield(player1, new CollectiveBlessing());
+        harness.addToBattlefield(player1, new CollectiveBlessing());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(8);
     }
 }

@@ -8,12 +8,86 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArmorerGuildmage.class, Forest.class})
 class ArmorerGuildmageTest extends BaseCardTest {
+
+    @ParameterizedTest
+    @CsvSource({"0, BLACK, 2, 1", "1, GREEN, 1, 2"})
+    void canTargetItself(int abilityIndex, ManaColor manaColor, int power, int toughness) {
+        Permanent guildmage = addCreatureReady(player1, new ArmorerGuildmage());
+        harness.addMana(player1, manaColor, 1);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, guildmage.getId());
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(guildmage.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(toughness);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, BLACK", "1, GREEN"})
+    void cannotActivateWhileSummoningSick(int abilityIndex, ManaColor manaColor) {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new ArmorerGuildmage());
+        guildmage.setSummoningSick(true);
+        harness.addMana(player1, manaColor, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, guildmage.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(guildmage.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, BLACK", "1, GREEN"})
+    void cannotActivateWhileTapped(int abilityIndex, ManaColor manaColor) {
+        Permanent guildmage = addCreatureReady(player1, new ArmorerGuildmage());
+        guildmage.tap();
+        harness.addMana(player1, manaColor, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, guildmage.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, GREEN", "1, BLACK"})
+    void cannotPayWithWrongColor(int abilityIndex, ManaColor wrongColor) {
+        Permanent guildmage = addCreatureReady(player1, new ArmorerGuildmage());
+        harness.addMana(player1, wrongColor, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, guildmage.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(guildmage.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(wrongColor)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, BLACK, 2, 1", "1, GREEN, 1, 2"})
+    void abilityResolvesAfterSourceLeavesBattlefield(int abilityIndex, ManaColor manaColor, int power, int toughness) {
+        Permanent guildmage = addCreatureReady(player1, new ArmorerGuildmage());
+        Permanent target = addCreatureReady(player2, new ArmorerGuildmage());
+        harness.addMana(player1, manaColor, 1);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(guildmage);
+        gd.playerGraveyards.get(player1.getId()).add(guildmage.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(toughness);
+    }
 
     @Test
     @DisplayName("{B}, {T}: target creature gets +1/+0 until end of turn")

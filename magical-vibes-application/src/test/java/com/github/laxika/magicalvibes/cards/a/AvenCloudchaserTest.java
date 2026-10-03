@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,14 +21,36 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AvenCloudchaserTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Aven Cloudchaser has flying")
-    void hasFlying() {
-        Permanent cloudchaser = harness.addToBattlefieldAndReturn(player1, new AvenCloudchaser());
+    @DisplayName("Entering without being cast still destroys an enchantment")
+    void enteringWithoutCastingTriggersDestruction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.enterBattlefieldAndReturn(player1, new AvenCloudchaser());
 
-        assertThat(gqs.hasKeyword(gd, cloudchaser, Keyword.FLYING)).isTrue();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aven Cloudchaser");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
     }
 
-    // ===== Casting and resolving =====
+    @Test
+    @DisplayName("ETB destroys its target even after Aven Cloudchaser leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        Permanent source = findPermanent(player1, "Aven Cloudchaser");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Aven Cloudchaser");
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
 
     @Test
     @DisplayName("Casting Aven Cloudchaser does not choose its ETB target")
@@ -156,8 +177,6 @@ class AvenCloudchaserTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== No target scenarios =====
-
     @Test
     @DisplayName("Can choose an enchantment when the ETB trigger is put on the stack")
     void canChooseEnchantmentAtTriggerTime() {
@@ -184,8 +203,8 @@ class AvenCloudchaserTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB cannot remain on the stack when no legal enchantment target exists")
+    void etbHasNoLegalTarget() {
         harness.castFromHand(player1, new AvenCloudchaser(), "{3}{W}");
 
         // Resolve creature spell

@@ -74,4 +74,121 @@ class AtarkasCommandTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertInGraveyard(player2, "Forest");
     }
+
+    @Test
+    void decliningLandPlacementStillResolvesCreatureMode() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtarkasCommand(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{2, 3}, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void creatureModeOnlyAffectsOwnCreaturesPresentAtResolutionAndExpires() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AtarkasCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{1, 3}, List.of());
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.REACH)).isTrue();
+        for (Permanent unaffected : List.of(opponentCreature, laterCreature)) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.REACH)).isFalse();
+        }
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    void lifeGainRestrictionExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player2, new ZuranOrb());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new AtarkasCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{0, 1}, List.of());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @CardUsed({AtarkasCommand.class, Forest.class})
+    void canPutLandOntoBattlefieldAfterUsingNormalLandPlay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Forest(), new AtarkasCommand(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{1, 2}, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(permanent -> !permanent.isTapped());
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @CardUsed({AtarkasCommand.class})
+    void acceptingLandModeWithoutLandDoesNotPreventOtherMode() {
+        harness.setHand(player1, List.of(new AtarkasCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 2, 2, new int[]{1, 2}, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Atarka's Command");
+        assertThat(gd.stack).isEmpty();
+    }
 }

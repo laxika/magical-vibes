@@ -133,6 +133,56 @@ class BrigidHeroOfKinsbaileTest extends BaseCardTest {
         assertThat(brigid.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Uses combat status at resolution rather than activation")
+    void checksCombatStatusAtResolution() {
+        addBrigidReady(player1);
+        Permanent formerAttacker = addAttacker(player2, new CloudgoatRanger());
+        Permanent newAttacker = addCreatureReady(player2, new CloudgoatRanger());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, player2.getId());
+        formerAttacker.setAttacking(false);
+        newAttacker.setAttacking(true);
+        harness.passBothPriorities();
+
+        assertThat(formerAttacker.getMarkedDamage()).isZero();
+        assertThat(newAttacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Brigid leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent brigid = addBrigidReady(player1);
+        Permanent attacker = addAttacker(player2, new CloudgoatRanger());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(brigid);
+        gd.playerGraveyards.get(player1.getId()).add(brigid.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent brigid = addBrigidReady(player1);
+        brigid.setSummoningSick(true);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(brigid.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBrigidReady(Player player) {
         return addCreatureReady(player, new BrigidHeroOfKinsbaile());
     }

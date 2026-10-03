@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CharmedGriffin.class, Embargo.class, FreshVolunteers.class, WorryBeads.class})
 class CharmedGriffinTest extends BaseCardTest {
@@ -31,8 +32,7 @@ class CharmedGriffinTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.EachPlayerMayPutCardFromHandChoice choice =
                 (PendingInteraction.EachPlayerMayPutCardFromHandChoice) gd.interaction.activeInteraction();
@@ -50,8 +50,7 @@ class CharmedGriffinTest extends BaseCardTest {
         harness.setHand(player2, List.of(opponentArtifact));
 
         harness.castFromHand(player1, griffin, "{3}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player2, List.of(opponentArtifact.getId()));
 
         harness.assertOnBattlefield(player2, "Worry Beads");
@@ -67,12 +66,52 @@ class CharmedGriffinTest extends BaseCardTest {
         harness.setHand(player2, List.of(opponentArtifact));
 
         harness.castFromHand(player1, griffin, "{3}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player2, List.of());
 
         harness.assertNotOnBattlefield(player2, "Worry Beads");
         harness.assertInHand(player2, "Worry Beads");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent may put an enchantment onto the battlefield without paying its mana cost")
+    void opponentPutsChosenEnchantmentOntoBattlefield() {
+        Embargo enchantment = new Embargo();
+        WorryBeads artifact = new WorryBeads();
+        harness.setHand(player2, List.of(enchantment, artifact));
+
+        harness.castFromHand(player1, new CharmedGriffin(), "{3}{W}");
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player2, List.of(enchantment.getId()));
+
+        harness.assertOnBattlefield(player2, "Embargo");
+        harness.assertNotOnBattlefield(player2, "Worry Beads");
+        harness.assertInHand(player2, "Worry Beads");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opponent cannot put more than one eligible card onto the battlefield")
+    void opponentCannotChooseTwoCards() {
+        Embargo enchantment = new Embargo();
+        WorryBeads artifact = new WorryBeads();
+        harness.setHand(player2, List.of(enchantment, artifact));
+
+        harness.castFromHand(player1, new CharmedGriffin(), "{3}{W}");
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(enchantment.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player2, "Embargo");
+        harness.assertNotOnBattlefield(player2, "Worry Beads");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+
+        harness.handleMultipleCardsChosen(player2, List.of(artifact.getId()));
+        harness.assertOnBattlefield(player2, "Worry Beads");
+        harness.assertInHand(player2, "Embargo");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -83,8 +122,7 @@ class CharmedGriffinTest extends BaseCardTest {
         harness.setHand(player2, List.of(new FreshVolunteers()));
 
         harness.castFromHand(player1, griffin, "{3}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInHand(player2, "Fresh Volunteers");

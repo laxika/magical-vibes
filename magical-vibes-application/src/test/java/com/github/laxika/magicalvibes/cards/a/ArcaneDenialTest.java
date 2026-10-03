@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcaneDenial.class, KjeldoranHomeGuard.class})
+@CardUsed({ArcaneDenial.class, KjeldoranHomeGuard.class, Banefire.class})
 class ArcaneDenialTest extends BaseCardTest {
 
     /** player1 casts Kjeldoran Home Guard, player2 counters it with Arcane Denial. */
@@ -35,8 +35,7 @@ class ArcaneDenialTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, homeGuard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, homeGuard.getId());
     }
 
     @Test
@@ -96,7 +95,6 @@ class ArcaneDenialTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Banefire.class)
     @DisplayName("Still schedules both draws when the targeted Banefire cannot be countered")
     void schedulesDrawsForUncounterableSpell() {
         harness.forceActivePlayer(player1);
@@ -114,8 +112,7 @@ class ArcaneDenialTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 5, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, banefire.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, banefire.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
@@ -126,6 +123,51 @@ class ArcaneDenialTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
 
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The countered spell's controller may draw exactly one card")
+    void mayDrawOneCard() {
+        counterHomeGuard();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both delayed abilities are controlled by Arcane Denial's controller")
+    void casterControlsBothDelayedAbilities() {
+        counterHomeGuard();
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allSatisfy(entry ->
+                assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
+    }
+
+    @Test
+    @DisplayName("An additional upkeep in the current turn does not trigger the delayed draws")
+    void waitsForNextTurnsUpkeep() {
+        counterHomeGuard();
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }

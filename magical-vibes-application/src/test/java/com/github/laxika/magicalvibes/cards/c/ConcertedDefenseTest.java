@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.t.TajuruParagon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ConcertedDefense.class, BoggartBrute.class, FaerieMiscreant.class, FugitiveWizard.class,
-        GrizzlyBears.class, MightOfOaks.class, SoulWarden.class})
+        GrizzlyBears.class, MightOfOaks.class, SoulWarden.class, TajuruParagon.class})
 class ConcertedDefenseTest extends BaseCardTest {
 
     @Test
@@ -43,9 +44,7 @@ class ConcertedDefenseTest extends BaseCardTest {
     @DisplayName("Counters a noncreature spell when its controller cannot pay {1}")
     void countersNoncreatureSpellWhenControllerCannotPay() {
         MightOfOaks target = castMightOfOaks(4);
-        castConcertedDefense(target.getId());
-
-        harness.passBothPriorities();
+        castAndResolveConcertedDefense(target.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");
     }
@@ -55,9 +54,7 @@ class ConcertedDefenseTest extends BaseCardTest {
     void partyIncreasesPaymentCost() {
         addFullParty();
         MightOfOaks target = castMightOfOaks(9);
-        castConcertedDefense(target.getId());
-
-        harness.passBothPriorities();
+        castAndResolveConcertedDefense(target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
@@ -68,6 +65,72 @@ class ConcertedDefenseTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Might of Oaks");
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    void controllerCanDeclineAffordablePayment() {
+        MightOfOaks target = castMightOfOaks(5);
+        castAndResolveConcertedDefense(target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void duplicateRolesCountOnlyOnce() {
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        MightOfOaks target = castMightOfOaks(6);
+        castAndResolveConcertedDefense(target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    void oneCreatureWithAllPartyTypesCountsOnlyOnce() {
+        harness.addToBattlefield(player2, new TajuruParagon());
+        MightOfOaks target = castMightOfOaks(6);
+        castAndResolveConcertedDefense(target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    void opponentsPartyDoesNotIncreasePayment() {
+        harness.addToBattlefield(player1, new TajuruParagon());
+        MightOfOaks target = castMightOfOaks(5);
+        castAndResolveConcertedDefense(target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
+    }
+
+    @Test
+    void partyIsCountedWhenSpellResolves() {
+        MightOfOaks target = castMightOfOaks(5);
+        harness.setHand(player2, List.of(new ConcertedDefense()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.addToBattlefield(player2, new TajuruParagon());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     private void addFullParty() {
@@ -87,9 +150,9 @@ class ConcertedDefenseTest extends BaseCardTest {
         return might;
     }
 
-    private void castConcertedDefense(java.util.UUID targetId) {
+    private void castAndResolveConcertedDefense(java.util.UUID targetId) {
         harness.setHand(player2, List.of(new ConcertedDefense()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, targetId);
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 }

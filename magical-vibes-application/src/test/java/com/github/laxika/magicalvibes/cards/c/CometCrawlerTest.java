@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,7 +22,7 @@ class CometCrawlerTest extends BaseCardTest {
     void attackingOffersAnotherCreatureOrArtifact() {
         Permanent crawler = addCreatureReady(player1, new CometCrawler());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent spellbook = addPermanentReady(player1, new Spellbook());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -54,7 +52,7 @@ class CometCrawlerTest extends BaseCardTest {
     @DisplayName("Sacrificing an artifact gives Comet Crawler +2/+0")
     void sacrificingArtifactBoosts() {
         Permanent crawler = addCreatureReady(player1, new CometCrawler());
-        Permanent spellbook = addPermanentReady(player1, new Spellbook());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         attackAndAcceptMay();
         harness.handlePermanentChosen(player1, spellbook.getId());
@@ -103,10 +101,72 @@ class CometCrawlerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
     }
 
-    private Permanent addPermanentReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Accepting with no other creature or artifact does not boost the crawler")
+    void noEligibleSacrificeDoesNotBoost() {
+        Permanent crawler = addCreatureReady(player1, new CometCrawler());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        attackAndAcceptMay();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(crawler);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A returned crawler is eligible for its old attack trigger's sacrifice")
+    void returnedCrawlerIsAnotherCreatureForOldTrigger() {
+        Permanent crawler = addCreatureReady(player1, new CometCrawler());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        Permanent returned = returnCrawlerAsNewPermanent(crawler);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), returned.getId());
+    }
+
+    @Test
+    @DisplayName("The old attack trigger does not boost a crawler that left and returned")
+    void oldTriggerDoesNotBoostReturnedCrawler() {
+        Permanent crawler = addCreatureReady(player1, new CometCrawler());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        Permanent returned = returnCrawlerAsNewPermanent(crawler);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life equal to the boosted combat damage")
+    void boostedCombatDamageGainsFourLife() {
+        addCreatureReady(player1, new CometCrawler());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        attackAndAcceptMay();
+        harness.handlePermanentChosen(player1, spellbook.getId());
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    private Permanent returnCrawlerAsNewPermanent(Permanent crawler) {
+        // Model a leave-and-return interaction while the attack trigger is pending.
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, crawler);
+        gd.playerGraveyards.get(player1.getId()).remove(crawler.getCard());
+        return harness.enterBattlefieldAndReturn(player1, crawler.getCard());
     }
 }

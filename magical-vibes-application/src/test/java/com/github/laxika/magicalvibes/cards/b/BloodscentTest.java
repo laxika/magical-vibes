@@ -115,6 +115,75 @@ class BloodscentTest extends BaseCardTest {
         assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("A blocker cannot choose another attacker instead of the Bloodscent target")
+    void cannotDivertBlockerToAnotherAttacker() {
+        Permanent target = addCreatureReady(player1, new LumengridWarden());
+        Permanent otherAttacker = addCreatureReady(player1, new LumengridWarden());
+        Permanent blocker = addCreatureReady(player2, new LumengridWarden());
+
+        castAndResolveBloodscent(target);
+
+        target.setAttacking(true);
+        otherAttacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("With two Bloodscent targets a normal blocker may block either one")
+    void competingRequirementsAllowEitherTarget() {
+        Permanent first = addCreatureReady(player1, new LumengridWarden());
+        Permanent second = addCreatureReady(player1, new LumengridWarden());
+        Permanent blocker = addCreatureReady(player2, new LumengridWarden());
+
+        castAndResolveBloodscent(first);
+        castAndResolveBloodscent(second);
+
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("Bloodscent can target an opposing creature and requires the caster's creatures to block it")
+    void opposingCreatureCanBeTargeted() {
+        Permanent target = addCreatureReady(player2, new LumengridWarden());
+        Permanent blocker = addCreatureReady(player1, new LumengridWarden());
+
+        castAndResolveBloodscent(target);
+
+        target.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(0);
+    }
+
     private void castAndResolveBloodscent(Permanent target) {
         prepareBloodscent();
         harness.castAndResolveInstant(player1, 0, target.getId());

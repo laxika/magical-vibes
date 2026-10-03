@@ -10,9 +10,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,6 +51,66 @@ class AncientSilverDragonTest extends BaseCardTest {
     @DisplayName("Combat damage grants no maximum hand size for the rest of the game")
     void combatDamageGrantsNoMaximumHandSize() {
         attackWithRoll(1);
+
+        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+        assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Combat damage puts the entire ability on the stack as one trigger")
+    void combatDamageCreatesOneTrigger() {
+        addCreatureReady(player1, new AncientSilverDragon()).setAttacking(true);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 9, 10, 19, 20})
+    @DisplayName("Each d20 branch draws exactly the rolled number for the controller")
+    void drawsExactlyTheRollAtBranchBoundaries(int result) {
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(result));
+        harness.setLibrary(player1, IntStream.range(0, 20).mapToObj(i -> new Forest()).toList());
+        int controllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        addCreatureReady(player1, new AncientSilverDragon());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + result);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(20 - result);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId()).doesNotContain(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Prevented combat damage does not trigger drawing or remove the hand limit")
+    void preventedCombatDamageDoesNotTrigger() {
+        addCreatureReady(player1, new AncientSilverDragon()).setAttacking(true);
+        harness.forceActivePlayer(player1);
+        gd.preventAllCombatDamage = true;
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playersWithNoMaximumHandSize).doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The hand-size grant persists after the Dragon leaves and a new turn begins")
+    void handSizeGrantPersistsWithoutDragon() {
+        attackWithRoll(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        advanceToUpkeep(player1);
 
         assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
         assertThat(gd.playersWithNoMaximumHandSizeUntilNextTurn).doesNotContain(player1.getId());

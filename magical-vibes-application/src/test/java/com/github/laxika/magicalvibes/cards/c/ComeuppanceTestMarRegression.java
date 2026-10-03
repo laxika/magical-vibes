@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Comeuppance.class, ChandraNalaar.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Comeuppance.class, ChandraNalaar.class, GrizzlyBears.class, Shock.class, UrzasArmor.class})
 class ComeuppanceTestMarRegression extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class ComeuppanceTestMarRegression extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         preparePlayer2MainPhase();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -60,8 +60,7 @@ class ComeuppanceTestMarRegression extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         preparePlayer2MainPhase();
-        harness.castInstant(player2, 0, chandra.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, chandra.getId());
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
@@ -78,6 +77,68 @@ class ComeuppanceTestMarRegression extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.comeuppanceDamagePreventionShields).isEmpty();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        preparePlayer2MainPhase();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Returned damage is reduced by the recipient's Urza's Armor")
+    void returnedDamageRespectsStaticPrevention() {
+        castComeuppance();
+        harness.addToBattlefield(player2, new UrzasArmor());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        preparePlayer2MainPhase();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage from a source its controller controls")
+    void doesNotPreventOwnSourceDamage() {
+        castComeuppance();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not protect ordinary creatures from opponent sources")
+    void doesNotProtectControlledCreatures() {
+        castComeuppance();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        preparePlayer2MainPhase();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Prevention continues for subsequent damage events in the same turn")
+    void preventsRepeatedDamageEvents() {
+        castComeuppance();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        preparePlayer2MainPhase();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
     }
 
     private void castComeuppance() {
@@ -86,8 +147,7 @@ class ComeuppanceTestMarRegression extends BaseCardTest {
         harness.setHand(player1, List.of(new Comeuppance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void preparePlayer2MainPhase() {

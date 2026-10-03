@@ -65,7 +65,7 @@ class AshenMonstrosityTest extends BaseCardTest {
     @Test
     @DisplayName("Haste lets a summoning-sick Ashen Monstrosity attack, and it must do so")
     void hasteMakesItAttackTheTurnItEnters() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new AshenMonstrosity()));
+        harness.addToBattlefield(player1, new AshenMonstrosity());
 
         assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -77,10 +77,36 @@ class AshenMonstrosityTest extends BaseCardTest {
     void hasteAllowsImmediateAttack() {
         harness.setLife(player2, 20);
 
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new AshenMonstrosity()));
+        harness.addToBattlefield(player1, new AshenMonstrosity());
 
         declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("A tapped Ashen Monstrosity is not required to attack")
+    void tappedMonstrosityDoesNotHaveToAttack() {
+        Permanent monstrosity = addCreatureReady(player1, new AshenMonstrosity());
+        monstrosity.tap();
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of());
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Ashen Monstrosity");
+    }
+
+    @Test
+    @DisplayName("An opponent's Ashen Monstrosity does not force the active player to attack")
+    void opponentsMonstrosityDoesNotRequireAttacking() {
+        addCreatureReady(player2, new AshenMonstrosity());
+        addCreatureReady(player1, new GnarledMass());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of());
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Ashen Monstrosity");
     }
 }

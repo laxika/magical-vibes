@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArmorcraftJudge.class, GrizzlyBears.class, Forest.class})
 class ArmorcraftJudgeTest extends BaseCardTest {
 
     @Test
@@ -54,5 +56,64 @@ class ArmorcraftJudgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeTrigger + 1);
+    }
+
+    @Test
+    void drawsOneCardPerCreatureRatherThanPerCounter() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void drawsNothingWhenNoCreatureHasPlusOneCounters() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        creature.setCounterCount(CounterType.CHARGE, 2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countsCountersAddedBeforeResolutionIncludingOnTheJudgeItself() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+
+        Permanent judge = harness.enterBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        judge.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotCountCountersRemovedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new ArmorcraftJudge());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

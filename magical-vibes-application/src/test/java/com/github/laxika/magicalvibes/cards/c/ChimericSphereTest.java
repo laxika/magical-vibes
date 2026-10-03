@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,12 +105,53 @@ class ChimericSphereTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(sphere.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, sphere)).isFalse();
         assertThat(sphere.getTransientSubtypes()).isEmpty();
         assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 1, 2, 1, true", "1, 0, 3, 2, false"})
+    void stackedAbilitiesApplyInResolutionOrder(int firstAbility, int secondAbility,
+                                                int power, int toughness, boolean flying) {
+        Permanent sphere = addCreatureReady(player1, new ChimericSphere());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, firstAbility, null, null);
+        harness.activateAbility(player1, 0, secondAbility, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, sphere)).isTrue();
+        assertThat(gqs.isArtifact(gd, sphere)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, sphere)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isEqualTo(flying);
+        assertThat(sphere.isTapped()).isFalse();
+    }
+
+    @Test
+    void secondAbilityExpiresAndDoesNotPreventFlyingNextTurn() {
+        Permanent sphere = addCreatureReady(player1, new ChimericSphere());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, sphere)).isFalse();
+        assertThat(gqs.isArtifact(gd, sphere)).isTrue();
+        assertThat(sphere.getTransientSubtypes()).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sphere)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sphere)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, sphere, Keyword.FLYING)).isTrue();
     }
 }

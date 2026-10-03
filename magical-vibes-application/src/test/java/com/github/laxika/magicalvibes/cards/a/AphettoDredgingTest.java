@@ -109,4 +109,59 @@ class AphettoDredgingTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
                 .containsExactly(opponentGoblin.getId());
     }
+
+    @Test
+    void mayChooseZeroTargetsEvenWhenMatchingCreaturesExist() {
+        Card goblin = new GoblinPiledriver();
+        harness.setGraveyard(player1, List.of(goblin));
+        harness.setHand(player1, List.of(new AphettoDredging()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithChosenCreatureType(player1, 0, 0, CardSubtype.GOBLIN, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Goblin Piledriver");
+        harness.assertInGraveyard(player1, "Aphetto Dredging");
+    }
+
+    @Test
+    void mayReturnOnlyOneOfSeveralMatchingCreatures() {
+        Card selected = new GoblinPiledriver();
+        Card unselected = new GoblinPiledriver();
+        harness.setGraveyard(player1, List.of(selected, unselected));
+        harness.setHand(player1, List.of(new AphettoDredging()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithChosenCreatureType(player1, 0, 0, CardSubtype.GOBLIN, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(selected.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(unselected.getId()).doesNotContain(selected.getId());
+        harness.assertInGraveyard(player1, "Aphetto Dredging");
+    }
+
+    @Test
+    void returnsRemainingLegalTargetWhenAnotherTargetLeavesTheGraveyard() {
+        Card remaining = new GoblinPiledriver();
+        Card removed = new GoblinPiledriver();
+        harness.setGraveyard(player1, List.of(remaining, removed));
+        harness.setHand(player1, List.of(new AphettoDredging()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithChosenCreatureType(player1, 0, 0, CardSubtype.GOBLIN, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(remaining.getId(), removed.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(remaining.getId());
+        harness.assertNotInGraveyard(player1, "Goblin Piledriver");
+        harness.assertInGraveyard(player1, "Aphetto Dredging");
+    }
 }

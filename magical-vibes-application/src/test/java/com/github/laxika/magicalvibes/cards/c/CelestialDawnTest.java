@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BadRiver;
 import com.github.laxika.magicalvibes.cards.d.Dissipate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
+import com.github.laxika.magicalvibes.cards.s.SkyDiamond;
 import com.github.laxika.magicalvibes.cards.s.Sirocco;
 import com.github.laxika.magicalvibes.cards.s.StalkingTiger;
 import com.github.laxika.magicalvibes.cards.u.UnyaroGriffin;
@@ -24,8 +27,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({
         CelestialDawn.class,
+        BadRiver.class,
         Forest.class,
         Mountain.class,
+        CrystalVein.class,
+        SkyDiamond.class,
+        MycosynthLattice.class,
         StalkingTiger.class,
         ViashinoWarrior.class,
         UnyaroGriffin.class,
@@ -114,10 +121,7 @@ class CelestialDawnTest extends BaseCardTest {
     @DisplayName("White mana pays a red pip — Viashino Warrior castable off {W}{W}{W}{W}")
     void whitePaysColoredPipsOfAnyColor() {
         harness.addToBattlefield(player1, new CelestialDawn());
-        harness.setHand(player1, List.of(new ViashinoWarrior()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ViashinoWarrior(), "{W}{W}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Viashino Warrior")).hasSize(1);
@@ -197,5 +201,95 @@ class CelestialDawnTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(dissipate);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void paymentDoesNotChangeUnspentManaColor() {
+        harness.addToBattlefield(player1, new CelestialDawn());
+        harness.setHand(player1, List.of(new ViashinoWarrior()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Viashino Warrior")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void nonlandManaAbilityStillProducesItsOriginalColor() {
+        harness.addToBattlefield(player1, new SkyDiamond());
+        harness.addToBattlefield(player1, new CelestialDawn());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    void nonbasicLandLosesItsPrintedSacrificeAbility() {
+        harness.addToBattlefield(player1, new CrystalVein());
+        harness.addToBattlefield(player1, new CelestialDawn());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player1, "Crystal Vein")).hasSize(1);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void ownedNonlandCardsInOtherZonesBecomeWhite() {
+        harness.addToBattlefield(player1, new CelestialDawn());
+        Incinerate graveyardCard = new Incinerate();
+        Dissipate libraryCard = new Dissipate();
+        StalkingTiger exiledCard = new StalkingTiger();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setExile(player1, List.of(exiledCard));
+
+        assertThat(gqs.getEffectiveCardColors(gd, graveyardCard)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveCardColors(gd, libraryCard)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveCardColors(gd, exiledCard)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
+    void landCardsOutsideBattlefieldAreUnaffected() {
+        harness.addToBattlefield(player1, new CelestialDawn());
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(forest));
+
+        assertThat(gqs.getEffectiveCardColors(gd, forest)).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CelestialDawn.class, MycosynthLattice.class, Dissipate.class})
+    void laterDawnOverridesLatticeForCardsInHand() {
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.setHand(player1, List.of(new CelestialDawn(), new Dissipate()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveCardColors(gd, gd.playerHands.get(player1.getId()).getFirst()))
+                .containsExactly(CardColor.WHITE);
+    }
+
+    @Test
+    void landEntersUntappedBecauseDawnRemovesItsPrintedEntryAbility() {
+        harness.addToBattlefield(player1, new CelestialDawn());
+        harness.setHand(player1, List.of(new BadRiver()));
+
+        harness.playLand(player1, 0);
+
+        Permanent river = findPermanents(player1, "Bad River").getFirst();
+        assertThat(river.isTapped()).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, river, CardSubtype.PLAINS)).isTrue();
     }
 }

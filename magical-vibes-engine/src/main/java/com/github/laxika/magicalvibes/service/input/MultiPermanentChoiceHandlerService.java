@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseUpToThreeNon
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherCreatureWithManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutUpToNControlledPermanentsEffectHandler;
@@ -132,6 +133,8 @@ public class MultiPermanentChoiceHandlerService {
     private final ReturnNControlledPermanentsToHandEffectHandler returnNControlledPermanentsToHandEffectHandler;
     private final ReturnUpToNControlledPermanentsToHandEffectHandler returnUpToNControlledPermanentsToHandEffectHandler;
     private final PhaseOutUpToNControlledPermanentsEffectHandler phaseOutUpToNControlledPermanentsEffectHandler;
+    private final EachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler
+            eachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .PhaseOutPermanentsThatReceivedCountersThisWayEffectHandler phaseOutPermanentsThatReceivedCountersThisWayEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
@@ -902,6 +905,8 @@ public class MultiPermanentChoiceHandlerService {
             handleReturnUpToNControlledPermanentsToHand(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PhaseOutUpToNControlledPermanents ctx) {
             handlePhaseOutUpToNControlledPermanents(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPermanentsThenPhaseOutRestChoice ctx) {
+            handleEachPlayerChoosesPermanentsThenPhaseOutRest(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PhaseOutPermanentsThatReceivedCountersThisWay) {
             handlePhaseOutPermanentsThatReceivedCountersThisWay(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.FlickerAnyNumber ctx) {
@@ -2001,6 +2006,17 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
+    private void handleEachPlayerChoosesPermanentsThenPhaseOutRest(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesPermanentsThenPhaseOutRestChoice context) {
+        eachPlayerChoosesPermanentsThenPhaseOutRestEffectHandler.completeChoice(
+                gameData, permanentIds, context);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
     private void handlePhaseOutPermanentsThatReceivedCountersThisWay(
             GameData gameData, List<UUID> permanentIds) {
         StackEntry entry = gameData.pendingEffectResolutionEntry;
@@ -2688,6 +2704,16 @@ public class MultiPermanentChoiceHandlerService {
                     }
                     proliferatedCards.add(perm.getCard());
                 } else if (gameData.playerIds.contains(permId)) {
+                    if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
+                        int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
+                        if (added > 0) {
+                            gameData.setPlayerEnergyCounters(permId,
+                                    gameData.playerEnergyCounters.get(permId) + added);
+                            triggerCollectionService.checkEnergyGainTriggers(gameData, permId, added);
+                            triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, added);
+                            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+                        }
+                    }
                     if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
                         lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
                         proliferatedPlayers.add(gameData.playerIdToName.get(permId));

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "236")
 @CardRegistration(set = "MKC", collectorNumber = "117")
+@CardRegistration(set = "BRC", collectorNumber = "95")
 public class ShimmerDragon extends Card {
 
     public ShimmerDragon() {

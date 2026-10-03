@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.s.SteadyProgress;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ChimericMass.class, SteadyProgress.class})
 class ChimericMassTest extends BaseCardTest {
-
-    // ===== Casting with X charge counters =====
 
     @Test
     @DisplayName("Casting Chimeric Mass with X=3 enters with 3 charge counters")
@@ -60,18 +60,13 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
     }
 
-    // ===== Not a creature before activation =====
-
     @Test
     @DisplayName("Chimeric Mass is not a creature before activation")
     void notACreatureBeforeActivation() {
         Permanent mass = addMassReady(player1, 3);
 
         assertThat(gqs.isCreature(gd, mass)).isFalse();
-        assertThat(mass.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
-
-    // ===== Activated ability: animate by charge counters =====
 
     @Test
     @DisplayName("Activating ability with 3 charge counters makes it a 3/3 creature")
@@ -102,20 +97,17 @@ class ChimericMassTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Activating ability with 0 charge counters makes it a 0/0 creature")
+    @DisplayName("Animating with zero charge counters puts Chimeric Mass into the graveyard")
     void animateWith0CountersMakesIt0x0() {
-        Permanent mass = addMassReady(player1, 0);
+        addMassReady(player1, 0);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mass.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(0);
-        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(0);
+        harness.assertNotOnBattlefield(player1, "Chimeric Mass");
+        harness.assertInGraveyard(player1, "Chimeric Mass");
     }
-
-    // ===== Gains Construct subtype =====
 
     @Test
     @DisplayName("Gains Construct creature subtype when animated")
@@ -130,8 +122,6 @@ class ChimericMassTest extends BaseCardTest {
 
         assertThat(mass.getTransientSubtypes()).containsExactly(CardSubtype.CONSTRUCT);
     }
-
-    // ===== Charge counters persist =====
 
     @Test
     @DisplayName("Charge counters persist after animation ends at end of turn")
@@ -156,8 +146,6 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
-    // ===== Re-animation uses current charge counters =====
-
     @Test
     @DisplayName("Re-activating in same turn uses same charge counters")
     void reactivatingUsesSameChargeCounters() {
@@ -174,8 +162,6 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(3);
     }
-
-    // ===== End of turn resets animation =====
 
     @Test
     @DisplayName("Animation resets at end of turn — reverts to non-creature artifact")
@@ -196,8 +182,6 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, mass)).isFalse();
     }
 
-    // ===== Does not tap to activate =====
-
     @Test
     @DisplayName("Activating ability does NOT tap the permanent")
     void activatingAbilityDoesNotTap() {
@@ -209,19 +193,49 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(mass.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Animated power and toughness follow charge counters added by proliferate")
+    void proliferatingAnimatedMassIncreasesPowerAndToughness() {
+        Permanent mass = addMassReady(player1, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SteadyProgress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(mass.getId()));
+
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, mass)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mass)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Animation affects only its source and waits for resolution")
+    void animationAffectsOnlySourceAfterResolution() {
+        Permanent mass = addMassReady(player1, 3);
+        Permanent other = addMassReady(player1, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.isCreature(gd, mass)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, mass)).isTrue();
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+        assertThat(other.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+    }
 
     private Permanent addMassReady(Player player, int chargeCounters) {
-        Permanent perm = new Permanent(new ChimericMass());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChimericMass());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.CHARGE, chargeCounters);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent findMass(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Chimeric Mass"))
-                .findFirst().orElse(null);
+        return findPermanent(player, "Chimeric Mass");
     }
 }

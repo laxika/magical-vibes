@@ -17,6 +17,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChamberedNautilusTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Does not draw when Chambered Nautilus blocks another creature")
+    void doesNotDrawWhenBlocking() {
+        harness.setHand(player2, new ArrayList<>());
+        harness.setLibrary(player2, List.of(new FreshVolunteers()));
+
+        Permanent attacker = addCreatureReady(player1, new FreshVolunteers());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new ChamberedNautilus());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attacking Nautilus's controller draws when player two attacks")
+    void playerTwoDrawsWhenTheirNautilusBecomesBlocked() {
+        harness.setHand(player1, new ArrayList<>());
+        harness.setHand(player2, new ArrayList<>());
+        harness.setLibrary(player1, List.of(new FreshVolunteers()));
+        harness.setLibrary(player2, List.of(new FreshVolunteers()));
+
+        Permanent nautilus = addCreatureReady(player2, new ChamberedNautilus());
+        nautilus.setAttacking(true);
+        addCreatureReady(player1, new FreshVolunteers());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Draws a card when the optional ability is accepted after it becomes blocked")
     void drawsCardWhenBlockedAndAccepted() {
         harness.setHand(player1, new ArrayList<>());

@@ -21,8 +21,7 @@ class Borrowing100000ArrowsTest extends BaseCardTest {
     private void castArrows() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -96,6 +95,30 @@ class Borrowing100000ArrowsTest extends BaseCardTest {
 
         // Only the opponent's one tapped creature counts.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Does not count a creature untapped before resolution, and only the caster draws")
+    void excludesCreatureUntappedBeforeResolution() {
+        harness.setHand(player1, new ArrayList<>(List.of(new Borrowing100000Arrows())));
+        Permanent untappedBeforeResolution = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        Permanent stillTapped = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        untappedBeforeResolution.tap();
+        stillTapped.tap();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        int opponentDeckSize = gd.playerDecks.get(player2.getId()).size();
+        int casterDeckSize = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+        untappedBeforeResolution.untap();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(casterDeckSize - 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckSize);
     }
 
     @Test
