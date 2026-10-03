@@ -157,29 +157,31 @@ class AngerOfTheGodsTest extends BaseCardTest {
     @Test
     @DisplayName("A creature dealt only redirected damage is exiled if destroyed later that turn")
     void redirectedDamageRecipientIsExiledWhenDestroyed() {
-        Permanent giant = harness.addToBattlefieldAndReturn(player1, new PalisadeGiant());
-        harness.addToBattlefield(player1, new SilentArtisan());
-        harness.addToBattlefield(player1, new SilentArtisan());
-        harness.setHand(player1, List.of(new HealingSalve()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, 1, giant.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            Permanent giant = harness.addToBattlefieldAndReturn(player1, new PalisadeGiant());
+            harness.addToBattlefield(player1, new SilentArtisan());
+            harness.addToBattlefield(player1, new SilentArtisan());
+            harness.setHand(player1, List.of(new HealingSalve()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.castInstant(player1, 0, 1, giant.getId());
+            harness.passBothPriorities();
 
-        castAnger();
+            castAnger();
 
-        harness.assertOnBattlefield(player1, "Palisade Giant");
-        assertThat(giant.getMarkedDamage()).isEqualTo(6);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Silent Artisan"))
-                .allSatisfy(p -> assertThat(p.getMarkedDamage()).isZero());
+            harness.assertOnBattlefield(player1, "Palisade Giant");
+            assertThat(giant.getMarkedDamage()).isEqualTo(6);
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .filteredOn(p -> p.getCard().getName().equals("Silent Artisan"))
+                    .allSatisfy(p -> assertThat(p.getMarkedDamage()).isZero());
 
-        harness.setHand(player1, List.of(new SipOfHemlock()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.castAndResolveSorcery(player1, 0, giant.getId());
+            harness.setHand(player1, List.of(new SipOfHemlock()));
+            harness.addMana(player1, ManaColor.BLACK, 6);
+            harness.castAndResolveSorcery(player1, 0, giant.getId());
 
-        harness.assertNotOnBattlefield(player1, "Palisade Giant");
-        harness.assertNotInGraveyard(player1, "Palisade Giant");
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(giant.getCard().getId()));
+            harness.assertNotOnBattlefield(player1, "Palisade Giant");
+            harness.assertNotInGraveyard(player1, "Palisade Giant");
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
+                    .anyMatch(c -> c.getId().equals(giant.getCard().getId()));
+        });
     }
 }

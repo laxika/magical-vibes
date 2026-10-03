@@ -130,6 +130,9 @@ class AkromasWillTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castMode(new int[]{1});
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
@@ -144,6 +147,9 @@ class AkromasWillTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castMode(new int[]{0});
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         for (Keyword keyword : List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DOUBLE_STRIKE)) {

@@ -279,7 +279,8 @@ public class UntapStepService {
                     // Storage Matrix / untap cap: not selected to untap — stays tapped this step
                 } else if (cannotBecomeUntapped) {
                     // A hard prevention effect such as Blossombind also suppresses optional untap choices.
-                } else if (hasMayNotUntap) {
+                } else if (hasMayNotUntap && !hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
+                        && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock

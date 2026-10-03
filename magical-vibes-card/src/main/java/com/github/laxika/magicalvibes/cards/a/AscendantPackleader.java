@@ -26,7 +26,7 @@ public class AscendantPackleader extends Card {
         ));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardMinManaValuePredicate(4),
+                new CardMinManaValuePredicate(4, true),
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))
         ));
     }

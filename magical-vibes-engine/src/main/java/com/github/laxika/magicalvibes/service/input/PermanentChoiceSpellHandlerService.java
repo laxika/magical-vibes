@@ -399,6 +399,7 @@ public class PermanentChoiceSpellHandlerService {
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
                 entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
             }
+            entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(ect.cardToCast().getId()));
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -417,6 +418,7 @@ public class PermanentChoiceSpellHandlerService {
             }
         } else {
             gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId());
+            gameData.spellsGrantedSuspendHasteOnEntry.remove(ect.cardToCast().getId());
             if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                 gameData.exilePlayCostModifiers.remove(ect.cardToCast().getId());
                 gameLogService.append(gameData, GameLog.cardThen(ect.cardToCast(),
@@ -470,6 +472,7 @@ public class PermanentChoiceSpellHandlerService {
                 // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
                 // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
                 gameData.spellsGrantedHasteOnEntry.remove(card.getId());
+                gameData.spellsGrantedSuspendHasteOnEntry.remove(card.getId());
                 if (ect.genericCostReduction() > 0 || ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.exilePlayCostModifiers.remove(card.getId());
                 } else if (ect.payManaCost() && ect.copy()) {
@@ -564,6 +567,7 @@ public class PermanentChoiceSpellHandlerService {
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
             entry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
+        entry.setSuspendHasteOnEntry(gameData.spellsGrantedSuspendHasteOnEntry.remove(card.getId()));
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(ect.controllerId(), card);

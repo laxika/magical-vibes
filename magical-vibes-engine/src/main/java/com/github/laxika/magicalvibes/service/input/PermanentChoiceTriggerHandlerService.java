@@ -1448,16 +1448,19 @@ public class PermanentChoiceTriggerHandlerService {
         List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(context.controllerId()))
                 .toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
+                        && opponentIds.contains(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                        || (gameQueryService.isBattle(gameData, permanent)
+                        && opponentIds.contains(permanent.getProtectorPlayerId())))
                 .map(Permanent::getId)
                 .toList();
 
         gameData.interaction.setPermanentChoiceContext(context);
         playerInputService.beginAnyTargetChoice(
                 gameData, context.controllerId(), planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the next token to attack.");
+                "Choose the player, planeswalker, or battle for the next token to attack.");
     }
 
     public void handleExileReturnAttackTarget(GameData gameData, UUID attackTargetId,

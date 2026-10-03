@@ -418,13 +418,18 @@ public class StateBasedActionService {
         try {
             for (DeathEntry entry : toDie) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, entry.permanent().getId());
+                Permanent dyingSnapshot = new Permanent(entry.permanent());
+                dyingSnapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, entry.permanent()));
+                dyingSnapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                dyingSnapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, entry.permanent()));
+                dyingSnapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, entry.permanent()));
                 if (controllerId != null) {
-                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), entry.permanent());
+                    gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), dyingSnapshot);
                     gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
                 }
                 if (gameQueryService.isCreature(gameData, entry.permanent())) {
                     if (controllerId != null) {
-                        gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), entry.permanent());
+                        gameData.simultaneousDyingCreatures.put(entry.permanent().getId(), dyingSnapshot);
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));

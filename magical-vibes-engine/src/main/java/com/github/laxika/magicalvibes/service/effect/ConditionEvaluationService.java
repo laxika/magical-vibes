@@ -383,6 +383,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterCountParity;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerParity;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredThisTurn;
@@ -963,7 +964,8 @@ public class ConditionEvaluationService {
             }
             case ControllerLifeAtLeast c ->
                     ctx.controllerId() != null
-                            && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) >= c.threshold();
+                            && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20)
+                            >= c.threshold() + (c.relativeToStartingLifeTotal() ? gameData.format.startingLife() : 0);
             case ControllerLifeAtMost c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) <= c.threshold();
@@ -1108,11 +1110,11 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null
                             && gameData.playerRadCounters.getOrDefault(ctx.targetId(), 0) > 0;
             case CastFromZone c ->
-                    c.sourceZone() == ctx.sourceZone();
+                    !ctx.copiedSpell() && c.sourceZone() == ctx.sourceZone();
             case EnteredFromZone c ->
                     ctx.sourcePermanent() != null && c.sourceZone() == ctx.sourcePermanent().getEnteredFromZone();
             case CastNotFromHand ignored ->
-                    ctx.sourceZone() != Zone.HAND;
+                    !ctx.copiedSpell() && ctx.sourceZone() != null && ctx.sourceZone() != Zone.HAND;
             case NoManaSpentToCast ignored -> {
                 Permanent castPermanent = ctx.triggeringPermanentId() == null
                         ? ctx.sourcePermanent()
@@ -1121,6 +1123,7 @@ public class ConditionEvaluationService {
                         || castPermanent.getManaSpentToCast() == 0;
             }
             case WasCast ignored -> {
+                if (ctx.copiedSpell()) yield false;
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
                 yield triggeringPermanent != null
@@ -1691,10 +1694,19 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 int counterCount = source == null
                         ? -1
+                        : c.counterType() == CounterType.LEVEL
+                                && source.getCard().getActivatedAbilities().stream()
+                                .flatMap(ability -> ability.getEffects().stream())
+                                .anyMatch(com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect.class::isInstance)
+                                ? source.getClassLevel() - 1
                         : c.counterType() == CounterType.ANY
                                 ? source.getCounters().values().stream().mapToInt(Integer::intValue).sum()
                                 : source.getCounterCount(c.counterType());
                 yield counterCount >= c.threshold();
+            }
+            case SourceClassLevelAtLeast c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.getClassLevel() >= c.level();
             }
             case SourceIntensityThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -1784,8 +1796,10 @@ public class ConditionEvaluationService {
             case TriggeringPermanentPowerAtLeast c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
-                yield triggeringPermanent != null
-                        && gameQueryService.getEffectivePower(gameData, triggeringPermanent) >= c.threshold();
+                Integer power = triggeringPermanent != null
+                        ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)
+                        : ctx.triggeringPermanentPowerAtTrigger();
+                yield power != null && power >= c.threshold();
             }
             case TriggeringPermanentHasSubtype c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
@@ -2815,20 +2829,18 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * The game model keeps commander cards in a player's command-zone registry rather than
-     * marking battlefield permanents directly. Match the controlled permanent to that registry
-     * by card name; this also works with the separate card instances used for command-zone setup.
+     * Matches controlled permanents against every player's designated commander identities.
      */
     private boolean controlsCommander(GameData gameData, ConditionContext ctx) {
         UUID controllerId = ctx.controllerId();
         if (controllerId == null) return false;
 
-        List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (commandZone == null || commandZone.isEmpty() || battlefield == null) return false;
+        if (battlefield == null) return false;
 
-        return battlefield.stream().anyMatch(permanent -> commandZone.stream()
-                .anyMatch(commander -> commander.getName().equals(permanent.getCard().getName())));
+        return battlefield.stream().anyMatch(permanent -> gameData.playerCommanders.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
     }
 
     private boolean controllerControlsCommander(GameData gameData, ConditionContext ctx) {
@@ -3548,8 +3560,16 @@ public class ConditionEvaluationService {
     private boolean enchantedPermanentMatches(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
         Permanent aura = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (ctx.triggeringPermanentId() != null && ctx.sourcePermanent() != null) {
+            aura = ctx.sourcePermanent();
+        }
+        if (aura == null) {
+            aura = ctx.sourcePermanent();
+        }
         if (aura == null || !aura.isAttached()) return false;
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        UUID enchantedId = ctx.triggeringPermanentId() != null
+                ? ctx.triggeringPermanentId() : aura.getAttachedTo();
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchanted == null) return false;
         return matchesPermanent(gameData, enchanted, filter, ctx);
     }

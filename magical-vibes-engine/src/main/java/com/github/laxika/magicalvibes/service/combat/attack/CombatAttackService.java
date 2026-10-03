@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AllMatchingCreaturesAttack;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
@@ -758,11 +760,9 @@ public class CombatAttackService {
             }
             // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
             Permanent attacker = battlefield.get(idx);
-            // A permanent-directed requirement (Gideon, Battle-Forged's +2) lapses once that permanent
-            // is no longer attackable; a player-directed one (Alluring Siren) always stands.
             if (attacker.getMustAttackTargetId() != null
-                    && (gameData.playerIds.contains(attacker.getMustAttackTargetId())
-                            || validTargetIds.contains(attacker.getMustAttackTargetId()))
+                    && validTargetIds.contains(attacker.getMustAttackTargetId())
+                    && attackLegalityService.canAttackDefender(gameData, attacker, attacker.getMustAttackTargetId())
                     && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
@@ -1634,10 +1634,12 @@ public class CombatAttackService {
                 }
                 if (normalizedEffect != effect) {
                     if (normalizedEffect instanceof ConditionalEffect conditional
-                            && containsHasAttackerCondition(conditional.condition())
-                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                            ConditionContext.forPermanent(perm, playerId))) {
-                        continue;
+                            && containsHasAttackerCondition(conditional.condition())) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            continue;
+                        }
+                        normalizedEffect = conditional.wrapped();
                     }
                     filteredEffects.add(normalizedEffect);
                 } else if (effect instanceof ConditionalEffect ce && ce.condition() instanceof MinimumAttackers minimumAttackers) {
@@ -1741,7 +1743,8 @@ public class CombatAttackService {
             }
             if (filteredEffects.isEmpty()) continue;
 
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
+            int previousCopies = oncePerTurn ? gameData.beginTriggeredAbilityCopies(1)
+                    : beginAttackTriggerCopies(gameData, playerId, perm);
             try {
                 if (filteredEffects.size() == 1
                         && filteredEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
@@ -1781,6 +1784,9 @@ public class CombatAttackService {
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
                                 gameData.id, perm.getCard().getName());
                     } else {
+                        boolean referencesDeclaredAttackers = filteredEffects.stream()
+                                .anyMatch(e -> e instanceof GrantKeywordEffect grant
+                                        && grant.scope() == GrantScope.TARGETS);
                         StackEntry attackTrigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -1793,8 +1799,11 @@ public class CombatAttackService {
                                 null,
                                 null,
                                 null,
-                                null
+                                referencesDeclaredAttackers
+                                        ? attackerIndices.stream().map(battlefield::get).map(Permanent::getId).toList()
+                                        : null
                         );
+                        attackTrigger.setNonTargeting(referencesDeclaredAttackers);
                         if (matchingAttackerCount != null) {
                             attackTrigger.setEventValue(matchingAttackerCount);
                         }
@@ -1997,8 +2006,17 @@ public class CombatAttackService {
                 int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
                 try {
                     for (CardEffect effect : mayEffects) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId(),
-                                attacker.getAttackTarget());
+                        if (effect.targetSpec().declaredTarget() != null) {
+                            UUID damageSourceId = effect instanceof MayEffect may
+                                    && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect
+                                    ? attacker.getId() : perm.getId();
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    perm.getCard(), playerId, List.of(effect), damageSourceId, playerId,
+                                    attacker.getAttackTarget(), attacker.getId()));
+                        } else {
+                            gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null,
+                                    attacker.getId(), attacker.getAttackTarget());
+                        }
                     }
 
                     if (!mandatoryEffects.isEmpty()) {
@@ -2830,10 +2848,12 @@ public class CombatAttackService {
                         attacker.getCard(),
                         playerId,
                         attacker.getCard().getName() + "'s enlist trigger",
-                        List.of(new BoostSelfEffect(boost.getValue(), 0)),
+                        List.of(new BoostSelfEffect(
+                                new ChosenPermanentPower(), new Fixed(0))),
                         attacker.getId(),
                         attacker.getId());
                 enlistTrigger.setNonTargeting(true);
+                enlistTrigger.setChosenPermanentId(enlistedSupporters.get(boost.getKey()));
                 enlistTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                 gameData.stack.add(enlistTrigger);
                 Permanent enlistedCreature = gameQueryService.findPermanentById(

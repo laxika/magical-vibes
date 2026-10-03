@@ -141,6 +141,8 @@ class AshlingThePilgrimTest extends BaseCardTest {
         activateAndResolve();
         activateAndResolve();
 
+        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.RED, 6);
         activateAndResolve();
@@ -178,8 +180,10 @@ class AshlingThePilgrimTest extends BaseCardTest {
     }
 
     private void activateAndResolve() {
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
     }
 
     private Permanent addAshling(Player player) {

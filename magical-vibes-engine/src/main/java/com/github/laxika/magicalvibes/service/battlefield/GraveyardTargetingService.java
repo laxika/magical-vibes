@@ -36,6 +36,9 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +57,7 @@ public class GraveyardTargetingService {
     private final GameQueryService gameQueryService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final AmountEvaluationService amountEvaluationService;
+    @Autowired @Lazy private TargetLegalityService targetLegalityService;
 
     /**
      * Returns the given player's graveyard as a pool of legal targets, or {@code null} when no card
@@ -115,6 +119,8 @@ public class GraveyardTargetingService {
             for (Permanent permanent : battlefield) {
                 if (choosingEffect.mixedZoneExcludesSourcePermanent()
                         && permanent.getId().equals(sourcePermanentId)) continue;
+                if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, permanent, card, controllerId).isPresent()) continue;
                 if (battlefieldPredicate == null
                         ? gameQueryService.isCreature(gameData, permanent)
                         : predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,

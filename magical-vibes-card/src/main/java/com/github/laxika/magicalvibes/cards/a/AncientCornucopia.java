@@ -18,7 +18,7 @@ import java.util.List;
 public class AncientCornucopia extends Card {
 
     public AncientCornucopia() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new OncePerTurnTriggerEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, OncePerTurnTriggerEffect.markOnAcceptance(
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardIsColorlessPredicate()),
                         List.of(new MayEffect(

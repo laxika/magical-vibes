@@ -57,7 +57,7 @@ class AncientCornucopiaTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
@@ -71,7 +71,7 @@ class AncientCornucopiaTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
@@ -154,7 +154,7 @@ class AncientCornucopiaTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
     }
 

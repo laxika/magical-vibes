@@ -272,6 +272,8 @@ public class CombatTriggerService {
                                         ? creature.getAttackTarget()
                                         : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
+                                trigger.setSourcePermanentSnapshot(new Permanent(perm));
+                                trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
                                 gameData.stack.add(trigger);
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",

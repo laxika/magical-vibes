@@ -125,7 +125,7 @@ class AvelineDeGrandpreTest extends BaseCardTest {
         Permanent aveline = harness.addToBattlefieldAndReturn(player1, new AvelineDeGrandpre());
         Permanent viper = addReady(new AmbushViper());
         viper.setAttacking(true);
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(aveline);
@@ -140,7 +140,7 @@ class AvelineDeGrandpreTest extends BaseCardTest {
         Permanent aveline = harness.addToBattlefieldAndReturn(player1, new AvelineDeGrandpre());
         Permanent viper = addReady(new AmbushViper());
         viper.setAttacking(true);
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(viper);

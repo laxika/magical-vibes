@@ -24,7 +24,7 @@ public class AkkiScrapchomper extends Card {
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsLandPredicate()
                                 )),
-                                "an artifact or land"),
+                                "an artifact or land", false),
                         new DrawCardEffect(1)
                 ),
                 "{1}{R}, {T}, Sacrifice an artifact or land: Draw a card."

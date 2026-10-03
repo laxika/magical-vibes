@@ -79,6 +79,7 @@ class AlienInvasionTest extends BaseCardTest {
         assertThat(firstAlien.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(invasion.getCounterCount(CounterType.INVASION)).isEqualTo(1);
 
+        gd.interaction.clearAwaitingInput();
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
 

@@ -31,9 +31,9 @@ public class AssembleFromParts extends Card {
                         "{1}{B}{B}",
                         List.of(
                                 new ExileSelfFromGraveyardCost(),
+                                new ShuffleSourceFromExileIntoOwnersLibraryEffect(),
                                 new CreateTokenCopyOfSourceEffect(
-                                        false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, true, 4, 4),
-                                new ShuffleSourceFromExileIntoOwnersLibraryEffect()),
+                                        false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, false, 4, 4)),
                         "{1}{B}{B}, Exile this card from your graveyard: Create a token that's a copy of it, "
                                 + "except it's a 4/4 black Zombie in addition to its other types. Activate only as a sorcery.",
                         ActivationTimingRestriction.SORCERY_SPEED)));

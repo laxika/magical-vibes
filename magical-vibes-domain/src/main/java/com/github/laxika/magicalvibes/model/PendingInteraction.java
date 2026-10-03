@@ -520,8 +520,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * payment, so the CR 605.3a tap window is open while the prompt is up.
      */
     record AlternateCastXValueChoice(UUID playerId, UUID cardId, String manaCost, int maxValue,
-                                     String prompt, String cardName, String costLabel)
+                                     String prompt, String cardName, String costLabel, int xReduction)
             implements PendingInteraction {
+
+        public AlternateCastXValueChoice(UUID playerId, UUID cardId, String manaCost, int maxValue,
+                                         String prompt, String cardName, String costLabel) {
+            this(playerId, cardId, manaCost, maxValue, prompt, cardName, costLabel, 0);
+        }
 
         @Override
         public UUID decidingPlayerId() {

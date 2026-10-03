@@ -41,7 +41,8 @@ public class ApplejackFamilyGatheringEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        List<Card> toys = gameData.playerSideboards.getOrDefault(controllerId, List.of());
+        List<Card> toys = gameData.playerSideboards.getOrDefault(controllerId, List.of()).stream()
+                .filter(card -> card.getSubtypes().contains(CardSubtype.TOY)).toList();
         if (!toys.isEmpty()) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ApplejackToyChoice(controllerId, toys));

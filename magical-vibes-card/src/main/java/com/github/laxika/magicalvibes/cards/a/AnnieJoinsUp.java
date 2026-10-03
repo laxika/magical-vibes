@@ -43,6 +43,6 @@ public class AnnieJoinsUp extends Card {
                 new AdditionalTriggeredAbilityEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
-                ))));
+                )), null, true, false));
     }
 }

@@ -79,10 +79,20 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) implements ChoiceContext {}
+    record TextChangeFromWord(UUID targetId, boolean untilEndOfTurn,
+                             CardSubtype excludedReplacementCreatureType) implements ChoiceContext {
+        public TextChangeFromWord(UUID targetId, boolean untilEndOfTurn) {
+            this(targetId, untilEndOfTurn, CardSubtype.WALL);
+        }
+    }
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
-                            boolean isCreatureType) implements ChoiceContext {
+                            boolean isCreatureType, CardSubtype excludedReplacementCreatureType) implements ChoiceContext {
+
+        public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn,
+                                boolean isCreatureType) {
+            this(targetId, fromWord, isColor, untilEndOfTurn, isCreatureType, CardSubtype.WALL);
+        }
 
         public TextChangeToWord(UUID targetId, String fromWord, boolean isColor, boolean untilEndOfTurn) {
             this(targetId, fromWord, isColor, untilEndOfTurn, false);
@@ -838,10 +848,21 @@ public sealed interface ChoiceContext {
     }
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
+    /** The affected player orders competing delayed library-look replacements for one draw. */
+    record DrawLookReplacementOrder(UUID playerId, List<Integer> counts) implements ChoiceContext {
+        public DrawLookReplacementOrder {
+            counts = List.copyOf(counts);
+        }
+    }
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
                           boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType,
-                          Zone landPlayZone) implements ChoiceContext {
+                          Zone landPlayZone, Permanent preparedPermanent) implements ChoiceContext {
+        public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
+                              boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType, Zone landPlayZone) {
+            this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType, landPlayZone, null);
+        }
+
         public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
                               boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType) {
             this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType, null);
@@ -1755,8 +1776,15 @@ public sealed interface ChoiceContext {
     record AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                        List<CounterType> counterTypes, boolean poisonCounters,
                                        boolean distributeToOtherControlledCreatures,
-                                       UUID placementTargetId)
+                                       UUID placementTargetId, boolean energyCounters)
             implements ChoiceContext {
+
+        public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                           List<CounterType> counterTypes, boolean poisonCounters,
+                                           boolean distributeToOtherControlledCreatures, UUID placementTargetId) {
+            this(targetId, controllerId, sourceCardName, counterTypes, poisonCounters,
+                    distributeToOtherControlledCreatures, placementTargetId, false);
+        }
 
         public AddAnotherCounterTypeChoice(UUID targetId, UUID controllerId, String sourceCardName,
                                            List<CounterType> counterTypes, boolean poisonCounters) {
@@ -1771,12 +1799,14 @@ public sealed interface ChoiceContext {
         }
 
         public static final String POISON = "poison counters";
+        public static final String ENERGY = "energy counters";
 
         public List<String> options() {
-            if (poisonCounters) {
-                return List.of(POISON);
-            }
-            return counterTypes.stream().map(AddAnotherCounterTypeChoice::counterLabel).toList();
+            List<String> options = new ArrayList<>(counterTypes.stream()
+                    .map(AddAnotherCounterTypeChoice::counterLabel).toList());
+            if (poisonCounters) options.add(POISON);
+            if (energyCounters) options.add(ENERGY);
+            return options;
         }
 
         public static String counterLabel(CounterType counterType) {

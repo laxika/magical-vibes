@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -44,6 +46,12 @@ public class GainKeywordsOfCardsExiledWithSourceSelfEffectHandler implements Sta
             for (Keyword keyword : card.getKeywords()) {
                 if (WATCHED_KEYWORDS.contains(keyword)) {
                     accumulator.addKeyword(keyword);
+                }
+            }
+            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+                if (staticEffect instanceof ProtectionGrantingEffect protection
+                        && protection.protectionScope() == null) {
+                    accumulator.addGrantedEffect(staticEffect);
                 }
             }
         }

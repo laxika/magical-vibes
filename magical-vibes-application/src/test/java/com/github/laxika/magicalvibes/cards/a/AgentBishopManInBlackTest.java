@@ -62,7 +62,6 @@ class AgentBishopManInBlackTest extends BaseCardTest {
         advanceToCombat(player1);
 
         harness.handlePermanentChosen(player1, bishop.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(bishop.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

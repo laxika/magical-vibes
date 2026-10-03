@@ -126,7 +126,7 @@ public class CopySupport {
                 controllerId,
                 "Copy of " + source.getDescription(),
                 new ArrayList<>(source.getEffectsToResolve()),
-                source.getXValue(),
+                copyCard.hasKeyword(Keyword.CONVERGE) ? 0 : source.getXValue(),
                 targetId,
                 source.getSourcePermanentId(),
                 source.getDamageAssignments(),

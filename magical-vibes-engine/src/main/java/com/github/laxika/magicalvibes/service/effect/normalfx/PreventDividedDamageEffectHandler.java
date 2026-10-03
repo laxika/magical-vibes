@@ -26,6 +26,10 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final AmountEvaluationService amountEvaluationService;
@@ -40,7 +44,7 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PreventDividedDamageEffect prevention = (PreventDividedDamageEffect) effect;
         Map<UUID, Integer> assignments;
-        if (prevention.etbAssignments()) {
+        if (prevention.etbAssignments() && entry.getDamageAssignments().isEmpty()) {
             assignments = gameData.pendingETBDamageAssignments;
             gameData.pendingETBDamageAssignments = Map.of();
         } else {
@@ -67,6 +71,8 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
                 if (prevention.etbAssignments() && !damageSupport.isAnyTargetDamageRecipient(gameData, target)) continue;
+                if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, target, entry.getCard(), entry.getControllerId()).isPresent()) continue;
                 target.setDamagePreventionShield(target.getDamagePreventionShield() + amount);
                 gameLogService.append(gameData, GameLog.textCardText("The next " + amount + " damage that would be dealt to ", target.getCard(), " is prevented."));
                 continue;

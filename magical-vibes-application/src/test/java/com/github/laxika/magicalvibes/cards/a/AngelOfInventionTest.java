@@ -36,6 +36,9 @@ class AngelOfInventionTest extends BaseCardTest {
     void fabricateServoMode() {
         castAngel(1);
         resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -68,7 +71,10 @@ class AngelOfInventionTest extends BaseCardTest {
     private void castAngel(int mode) {
         harness.setHand(player1, List.of(new AngelOfInvention()));
         harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, mode == 0);
     }
 
     @Test
@@ -87,7 +93,7 @@ class AngelOfInventionTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Create two 1/1 colorless Servo artifact creature tokens");
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -100,7 +106,9 @@ class AngelOfInventionTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates Servos if the Angel leaves before the trigger resolves")
     void fabricateCreatesServosWhenSourceIsGone() {
-        castAngel(0);
+        harness.setHand(player1, List.of(new AngelOfInvention()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent angel = findPermanent(player1, "Angel of Invention");
         harness.setHand(player2, List.of(new EssenceExtraction()));
@@ -110,6 +118,9 @@ class AngelOfInventionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(angel);
         resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))

@@ -15,13 +15,20 @@ import java.util.UUID;
  * @param discardedCardId the discarded creature being held in the graveyard
  * @param returnControllerId the discarded card's owner/controller
  * @param remainingPayerIds players who have not yet been offered the payment
+ * @param discardReplacementChoice whether the pending choice determines the discarded card's destination
  */
 public record DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect(
         int lifeCost,
         UUID discardedCardId,
         UUID returnControllerId,
-        List<UUID> remainingPayerIds
+        List<UUID> remainingPayerIds,
+        boolean discardReplacementChoice
 ) implements CardEffect {
+
+    public DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect(
+            int lifeCost, UUID discardedCardId, UUID returnControllerId, List<UUID> remainingPayerIds) {
+        this(lifeCost, discardedCardId, returnControllerId, remainingPayerIds, false);
+    }
 
     public DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffect(int lifeCost) {
         this(lifeCost, null, null, List.of());

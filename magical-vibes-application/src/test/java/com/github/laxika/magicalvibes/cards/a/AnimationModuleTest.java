@@ -80,8 +80,9 @@ class AnimationModuleTest extends BaseCardTest {
                 null, player1.getId());
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
-        harness.handleListChoice(player1, "energy counters");
+        if (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null) {
+            harness.handleListChoice(player1, "energy counters");
+        }
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
     }
 

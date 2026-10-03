@@ -114,7 +114,8 @@ class ArmasaurGuideTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0, 1, 2));
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.BlockerDeclaration.class);
         assertThat(gd.stack).isEmpty();
         assertThat(guide.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

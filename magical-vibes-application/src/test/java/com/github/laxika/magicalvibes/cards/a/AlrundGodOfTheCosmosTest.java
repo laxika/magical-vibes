@@ -24,6 +24,12 @@ import static org.assertj.core.api.Assertions.assertThat;
         Forest.class, Island.class, GrizzlyBears.class})
 class AlrundGodOfTheCosmosTest extends BaseCardTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void emptyStartingHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
+
     @Test
     void getsPowerAndToughnessForCardsInHandAndForetoldCardsInExile() {
         Permanent alrund = harness.addToBattlefieldAndReturn(player1, new AlrundGodOfTheCosmos());
@@ -99,7 +105,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         harness.castCreature(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Alrund, God of the Cosmos").getOriginalCard()).isSameAs(card);
+        assertThat(findPermanent(player1, "Alrund, God of the Cosmos").getOriginalCard().getId()).isEqualTo(card.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -227,7 +233,7 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).containsExactly(card.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hakka);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 

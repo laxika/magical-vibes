@@ -178,7 +178,7 @@ class ArlinnThePacksHopeTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         Permanent interveningCreature = harness.enterBattlefieldAndReturn(player1, new SnarlingWolf());
         assertThat(interveningCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
         Permanent nextTurnCreature = harness.enterBattlefieldAndReturn(player1, new SnarlingWolf());
 
@@ -195,7 +195,7 @@ class ArlinnThePacksHopeTest extends BaseCardTest {
         Permanent arlinn = addReadyBackFace(player1, 3);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, arlinn)).isFalse();

@@ -174,6 +174,9 @@ class ActOfTreasonTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);

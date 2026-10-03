@@ -164,7 +164,7 @@ class AllWillBeOneTest extends BaseCardTest {
         Permanent archfiend = harness.addToBattlefieldAndReturn(player2, new ArchfiendOfTheDross());
         archfiend.setCounterCount(CounterType.OIL, 4);
         PrologueToPhyresis topCard = new PrologueToPhyresis();
-        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player1, List.of(topCard, new PrologueToPhyresis()));
         harness.setHand(player1, List.of(new ExperimentalAugury()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -190,7 +190,7 @@ class AllWillBeOneTest extends BaseCardTest {
         adaptive.setCounterCount(CounterType.OIL, 1);
         adaptive.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         PrologueToPhyresis topCard = new PrologueToPhyresis();
-        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player1, List.of(topCard, new PrologueToPhyresis()));
         harness.setHand(player1, List.of(new ExperimentalAugury()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

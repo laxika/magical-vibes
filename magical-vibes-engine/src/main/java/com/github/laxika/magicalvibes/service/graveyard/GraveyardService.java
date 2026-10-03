@@ -1465,7 +1465,7 @@ public class GraveyardService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                         .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
                     return true;
                 }

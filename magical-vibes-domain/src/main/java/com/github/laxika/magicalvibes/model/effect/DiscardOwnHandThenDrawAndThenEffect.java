@@ -7,10 +7,14 @@ import java.util.Objects;
 
 /**
  * Discards the controller's entire hand, draws a fixed number of cards, then resolves a
- * reflexive follow-up only if at least one card was discarded.
+ * follow-up. The follow-up may be a reflexive triggered ability or continue the same resolution.
  */
-public record DiscardOwnHandThenDrawAndThenEffect(int drawCount, CardEffect thenEffect)
+public record DiscardOwnHandThenDrawAndThenEffect(int drawCount, CardEffect thenEffect, boolean reflexiveFollowUp)
         implements CardDrawingEffect {
+
+    public DiscardOwnHandThenDrawAndThenEffect(int drawCount, CardEffect thenEffect) {
+        this(drawCount, thenEffect, true);
+    }
 
     public DiscardOwnHandThenDrawAndThenEffect {
         if (drawCount < 0) {

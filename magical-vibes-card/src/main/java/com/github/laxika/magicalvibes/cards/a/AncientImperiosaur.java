@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "174")
 public class AncientImperiosaur extends Card {
 
     public AncientImperiosaur() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new ConvokeCreatureCount(), 2)));
     }

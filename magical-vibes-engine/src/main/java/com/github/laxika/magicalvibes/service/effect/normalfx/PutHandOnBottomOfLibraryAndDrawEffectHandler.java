@@ -64,9 +64,7 @@ public class PutHandOnBottomOfLibraryAndDrawEffectHandler implements NormalEffec
                 gameData.id, playerName, handSize, sourceName);
 
         // Draw that many cards.
-        for (int i = 0; i < handSize; i++) {
-            drawService.resolveDrawCard(gameData, playerId);
-        }
+        drawService.resolveDrawCards(gameData, playerId, handSize);
 
         gameLogService.append(gameData, GameLog.text(playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + "."));
         log.info("Game {} - {} draws {} cards ({})", gameData.id, playerName, handSize, sourceName);

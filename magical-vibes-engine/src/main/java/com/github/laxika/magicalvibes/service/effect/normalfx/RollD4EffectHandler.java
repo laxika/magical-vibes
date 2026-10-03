@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD4Effect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -50,6 +51,10 @@ public class RollD4EffectHandler implements NormalEffectHandlerBean {
             for (int i = 0; i < entry.getEffectsToResolve().size(); i++) {
                 CardEffect current = entry.getEffectsToResolve().get(i);
                 if (current instanceof MayEffect may && may.wrapped() == effect) {
+                    effectIndex = i;
+                    break;
+                }
+                if (current instanceof ConditionalEffect conditional && conditional.wrapped() == effect) {
                     effectIndex = i;
                     break;
                 }

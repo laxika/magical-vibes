@@ -198,7 +198,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         UUID returnControllerId = e.returnUnderController()
                 ? entry.getControllerId()
-                : source.getCard().getOwnerId() != null ? source.getCard().getOwnerId() : entry.getControllerId();
+                : gameData.stolenCreatures.getOrDefault(source.getId(),
+                        source.getCard().getOwnerId() != null ? source.getCard().getOwnerId() : entry.getControllerId());
         exileSupport.exileAndScheduleReturn(gameData, entry, source, returnControllerId, e.returnTapped(), e.returnStep(),
                 e.plusOnePlusOneCountersOnReturn(), e.returnAtControllerNextStep(),
                 e.returnAtControllerNextStep() ? entry.getControllerId() : null);

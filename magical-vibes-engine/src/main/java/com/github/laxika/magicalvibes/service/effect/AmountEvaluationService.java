@@ -894,10 +894,16 @@ public class AmountEvaluationService {
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
             case SourcePower ignored ->
                     ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
+                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
+                            && ctx.sourcePermanent().getLastKnownPower() != null
+                            ? ctx.sourcePermanent().getLastKnownPower()
+                            : gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
             case SourceToughness ignored ->
                     ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
+                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
+                            && ctx.sourcePermanent().getLastKnownToughness() != null
+                            ? ctx.sourcePermanent().getLastKnownToughness()
+                            : gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
             case TargetToughness ignored ->
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
@@ -1910,12 +1916,13 @@ public class AmountEvaluationService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 if (card.isToken()
-                        || !predicateEvaluationService.matchesCardPredicate(card, amount.filter(), null)
-                        || card.getPower() == null) {
+                        || !predicateEvaluationService.matchesCardPredicate(card, amount.filter(), null, gameData, playerId)
+                        || power == null) {
                     continue;
                 }
-                greatestPower = Math.max(greatestPower, card.getPower());
+                greatestPower = Math.max(greatestPower, power);
             }
         }
         return greatestPower;
@@ -3264,7 +3271,8 @@ public class AmountEvaluationService {
         if (ctx.sourcePermanent() == null) return 0;
         int total = 0;
         for (Card exiled : gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId())) {
-            Integer value = power ? exiled.getPower() : exiled.getToughness();
+            Integer value = power ? gameQueryService.getEffectiveCardPower(gameData, exiled)
+                    : gameQueryService.getEffectiveCardToughness(gameData, exiled);
             if (value != null) {
                 total += value;
             }

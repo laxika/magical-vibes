@@ -40,6 +40,10 @@ public class ReturnTriggeringCreatureToBattlefieldEffectHandler implements Norma
         if (dyingCardId == null || controllerId == null) {
             return;
         }
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && entry.getTriggeringCardGraveyardEntryVersion() != gameData.graveyardEntryVersion(dyingCardId)) {
+            return;
+        }
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null) {

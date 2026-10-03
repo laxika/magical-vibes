@@ -500,6 +500,18 @@ public class DamageSupport {
         }
         damagePreventionService.applyDamageHealingReplacement(gameData, target, damage);
 
+        UUID damageSourceControllerId = damageSource != null
+                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                : entry.getControllerId();
+        if (gameQueryService.isCreature(gameData, target)
+                && gameQueryService.noncombatDamageToOpponentCreatureAsCounters(
+                        gameData, damageSourceControllerId, targetControllerId)) {
+            placeDamageMinusOneCounters(gameData, entry, target, damage, damageSourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getCard());
+            processPendingRedirectDamage(gameData);
+            return 0;
+        }
+
         if (damageSource != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, damageSource.getId(), target, damage);
         } else if (entry.getSourcePermanentId() != null) {
@@ -676,34 +688,10 @@ public class DamageSupport {
         // CR 702.2b — deathtouch applies only to damage this source actually dealt, so a hit
         // that was fully prevented must not mark the creature for a deathtouch kill.
         // Infect and wither both deal creature damage as -1/-1 counters (CR 702.90 / 702.80).
-        // Soul-Scar Mage likewise replaces its controller's noncombat damage to an opponent's
-        // creature with that many -1/-1 counters. This helper is the noncombat damage path only
-        // (combat damage is handled in CombatDamageService), so the "noncombat" clause is satisfied
-        // structurally — no combat check is needed here.
-        UUID damageSourceControllerId = damageSource != null
-                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
-                : entry.getControllerId();
-        boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource)
-                || gameQueryService.noncombatDamageToOpponentCreatureAsCounters(gameData, damageSourceControllerId, targetControllerId);
+        boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource);
 
         if (dealsCounterDamage) {
-            if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)
-                    && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-                // Vizier of Remedies reduces the -1/-1 counters (CR ruling: wither/infect counters
-                // count), while the deathtouch marking below still keys off the full damage dealt.
-                int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
-                if (counters > 0) {
-                    target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    permanentCounterSupport.notifyCountersPlaced(
-                            gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
-                    gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
-                            " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
-                    log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, counters, target.getCard().getName());
-                    // CR ruling (Nest of Scarabs): the damage source's controller is the player who
-                    // "puts" the wither/infect counters, so the controller-restricted watcher keys off it.
-                    permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, counters, damageSourceControllerId);
-                }
-            }
+            placeDamageMinusOneCounters(gameData, entry, target, damage, damageSourceControllerId, sourceCard);
             // Counter damage is still damage dealt, so a deathtouch+wither/infect source
             // marks the creature for the CR 704.5h destruction check as well.
             if (sourceHasDeathtouch) {
@@ -731,6 +719,23 @@ public class DamageSupport {
         }
         processPendingRedirectDamage(gameData);
         return damage;
+    }
+
+    /** Places counters for counter damage or a replacement that puts counters instead of dealing damage. */
+    private void placeDamageMinusOneCounters(GameData gameData, StackEntry entry, Permanent target,
+                                            int damage, UUID controllerId, Card sourceCard) {
+        if (damage <= 0 || gameQueryService.cantHaveCounters(gameData, target)
+                || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) return;
+        int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, target, damage);
+        if (counters <= 0) return;
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+        permanentCounterSupport.notifyCountersPlaced(gameData, entry, target, counters, CounterType.MINUS_ONE_MINUS_ONE);
+        gameLogService.append(gameData, GameLog.cardTextCard(sourceCard,
+                " puts " + counters + " -1/-1 counters on ", target.getCard(), "."));
+        log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id,
+                sourceCard.getName(), counters, target.getCard().getName());
+        permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, counters, controllerId);
     }
 
     /**
@@ -1350,6 +1355,12 @@ public class DamageSupport {
                                         Collection<Permanent> permanents, Predicate<Permanent> filter,
                                         boolean exileInsteadOfDie, boolean cantRegenerate,
                                         boolean tapDamagedCreatures) {
+        UUID damageSourceId = damageSourceKey(entry, null);
+        Map<UUID, Integer> damageBefore = new HashMap<>();
+        if (exileInsteadOfDie) {
+            gameData.damageDealtToPermanentsBySourceThisTurn.forEach((permanentId, sources) ->
+                    damageBefore.put(permanentId, sources.getOrDefault(damageSourceId, 0)));
+        }
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
@@ -1362,6 +1373,18 @@ public class DamageSupport {
             }
             if (tapDamagedCreatures && damageDealt > 0) {
                 tapUntapSupport.tapPermanent(gameData, p);
+            }
+        }
+        if (exileInsteadOfDie) {
+            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+                for (Permanent permanent : battlefield) {
+                    int sourceDamage = gameData.damageDealtToPermanentsBySourceThisTurn
+                            .getOrDefault(permanent.getId(), Map.of()).getOrDefault(damageSourceId, 0);
+                    if (sourceDamage > damageBefore.getOrDefault(permanent.getId(), 0)
+                            && gameQueryService.isCreature(gameData, permanent)) {
+                        permanent.setExileInsteadOfDieThisTurn(true);
+                    }
+                }
             }
         }
     }
@@ -2370,15 +2393,21 @@ public class DamageSupport {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return 0;
 
-        boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PreventAllDamageToControllerAndMillEffect.class::isInstance));
-        if (!hasEffect) return 0;
+        long sources = battlefield.stream().filter(p ->
+                gameQueryService.hasActiveStaticEffect(gameData, p,
+                        PreventAllDamageToControllerAndMillEffect.class)).count();
+        if (sources == 0) return 0;
 
+        int prevented = gameQueryService.isDamagePreventable(gameData)
+                ? Math.min(damage, Math.max(0, preventableDamage)) : 0;
         graveyardService.resolveMillPlayer(gameData, playerId, damage * 2);
-        return gameQueryService.isDamagePreventable(gameData)
-                ? Math.min(damage, Math.max(0, preventableDamage))
-                : 0;
+        int remainingDamage = damage - prevented;
+        if (remainingDamage > 0) {
+            for (int i = 1; i < sources; i++) {
+                graveyardService.resolveMillPlayer(gameData, playerId, remainingDamage * 2);
+            }
+        }
+        return prevented;
     }
 
     /**

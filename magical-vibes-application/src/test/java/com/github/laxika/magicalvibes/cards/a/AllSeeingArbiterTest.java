@@ -96,6 +96,9 @@ class AllSeeingArbiterTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(-1);
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }

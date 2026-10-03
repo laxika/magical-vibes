@@ -108,6 +108,7 @@ class AgentOfTreacheryTest extends BaseCardTest {
     void doesNotTriggerOnOpponentsEndStep() {
         stealThreePermanents(false);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
 
         advanceToEndStep(player2);
 
@@ -168,6 +169,6 @@ class AgentOfTreacheryTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

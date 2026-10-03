@@ -35,7 +35,12 @@ public class DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffectHandler impleme
         var e = (DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawCount());
+        if (e.drawCount() > 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    new DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect(0, e.putCount(), e.placement())));
+            playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawCount());
+            return;
+        }
 
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {

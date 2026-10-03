@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+
+import java.util.List;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArtifactPossession.class, AetherSpellbomb.class, DromarsAttendant.class, ClayStatue.class,
-        IcyManipulator.class, IronMyr.class, Ornithopter.class})
+        IcyManipulator.class, IronMyr.class, Ornithopter.class, RayOfCommand.class})
 class ArtifactPossessionTest extends BaseCardTest {
 
     @Test
@@ -108,13 +112,18 @@ class ArtifactPossessionTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, 0, null, null);
-        gd.playerBattlefields.get(player2.getId()).remove(artifact);
-        gd.playerBattlefields.get(player1.getId()).add(artifact);
-        resolveAllTriggers();
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player2, 0, null, null);
+            harness.castInstant(player1, 0, artifact.getId());
+            harness.passBothPriorities();
+            resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        });
     }
 
     @Test

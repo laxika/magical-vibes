@@ -291,10 +291,15 @@ public class DestructionSupport {
         for (Permanent perm : dying) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
             if (controllerId == null) continue;
-            gameData.simultaneousDyingPermanents.put(perm.getId(), perm);
+            Permanent snapshot = new Permanent(perm);
+            snapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, perm));
+            snapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, perm));
+            snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, perm));
+            snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, perm));
+            gameData.simultaneousDyingPermanents.put(perm.getId(), snapshot);
             gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
             if (!gameQueryService.isCreature(gameData, perm)) continue;
-            gameData.simultaneousDyingCreatures.put(perm.getId(), perm);
+            gameData.simultaneousDyingCreatures.put(perm.getId(), snapshot);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
             gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
             gameData.simultaneousDyingGrantedCreatureDeathEffects.put(

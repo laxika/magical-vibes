@@ -2236,18 +2236,19 @@ public class MultiPermanentChoiceHandlerService {
     private void handleSacrificeAnyNumberAndRecordCount(
             GameData gameData, UUID playerId, List<UUID> permanentIds,
             MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount context) {
-        int sacrificed = 0;
-        int sacrificedPower = 0;
-        for (UUID permanentId : permanentIds) {
-            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent != null && playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
-                if (context.recordSacrificedPower()) {
-                    sacrificedPower += gameQueryService.getEffectivePower(gameData, permanent);
-                }
+        List<Permanent> selected = permanentIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .filter(permanent -> playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                .toList();
+        int sacrificedPower = context.recordSacrificedPower() ? selected.stream()
+                .mapToInt(permanent -> gameQueryService.getEffectivePower(gameData, permanent)).sum() : 0;
+        int sacrificed = selected.size();
+        permanentRemovalService.performSimultaneousRemovals(gameData, selected, () -> {
+            for (Permanent permanent : selected) {
                 destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-                sacrificed++;
             }
-        }
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
         context.resolvingEntry().setEventValue(sacrificed);
         if (context.recordSacrificedPower()) {

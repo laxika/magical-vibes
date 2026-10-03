@@ -144,6 +144,7 @@ class ArchmagesCharmTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, target.getId());
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");

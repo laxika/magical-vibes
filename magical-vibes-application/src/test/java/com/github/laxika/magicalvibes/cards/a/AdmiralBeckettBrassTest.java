@@ -176,6 +176,10 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             gd.playerGraveyards.get(player1.getId()).add(admiral.getCard());
             harness.setHand(player1, List.of());
             harness.setHand(player2, List.of());
+            gd.interaction.clearAwaitingInput();
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
             harness.passUntil(player2, TurnStep.UPKEEP);
 
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);

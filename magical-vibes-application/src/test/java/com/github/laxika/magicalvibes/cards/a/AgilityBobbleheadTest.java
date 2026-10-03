@@ -205,6 +205,9 @@ class AgilityBobbleheadTest extends BaseCardTest {
         assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(creature.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();

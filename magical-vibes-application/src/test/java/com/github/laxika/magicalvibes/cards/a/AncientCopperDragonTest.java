@@ -108,17 +108,20 @@ class AncientCopperDragonTest extends BaseCardTest {
         ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(10));
         var dragon = addCreatureReady(player1, new AncientCopperDragon());
 
-        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareAttackers(List.of(0)));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+            harness.forceStep(TurnStep.COMBAT_DAMAGE);
+            harness.resolveCombatDamage();
+            harness.assertLife(player2, 14);
+            assertThat(gd.stack).hasSize(1);
+            assertThat(countPermanents(player1, "Treasure")).isZero();
+            gd.playerBattlefields.get(player1.getId()).remove(dragon);
+            gd.playerGraveyards.get(player1.getId()).add(dragon.getCard());
+            resolveAllTriggers();
 
-        harness.assertLife(player2, 14);
-        assertThat(gd.stack).hasSize(1);
-        assertThat(countPermanents(player1, "Treasure")).isZero();
-        gd.playerBattlefields.get(player1.getId()).remove(dragon);
-        gd.playerGraveyards.get(player1.getId()).add(dragon.getCard());
-        resolveAllTriggers();
-
-        assertThat(countPermanents(player1, "Treasure")).isEqualTo(10);
-        assertThat(countPermanents(player2, "Treasure")).isZero();
+            assertThat(countPermanents(player1, "Treasure")).isEqualTo(10);
+            assertThat(countPermanents(player2, "Treasure")).isZero();
+        });
     }
 
     private static final class FixedD20RollService extends D20RollService {

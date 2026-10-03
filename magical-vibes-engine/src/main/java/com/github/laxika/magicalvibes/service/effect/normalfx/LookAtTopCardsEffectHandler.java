@@ -166,6 +166,11 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
         boolean remainingToExile = e.restDestination() == LookDestination.EXILE;
+        if (e.exileBeforeChoosing()) {
+            for (Card card : topCards) {
+                gameData.addToExile(controllerId, card);
+            }
+        }
         boolean restToGraveyard = e.restDestination() == LookDestination.GRAVEYARD;
         boolean remainingToHand = e.restDestination() == LookDestination.HAND;
         boolean shuffleIntoLibrary = e.restDestination() == LookDestination.SHUFFLE_INTO_LIBRARY;
@@ -180,8 +185,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     gameData.addCardToHand(controllerId, card);
                 }
             } else if (remainingToExile) {
-                for (Card card : topCards) {
-                    gameData.addToExile(controllerId, card);
+                if (!e.exileBeforeChoosing()) {
+                    for (Card card : topCards) {
+                        gameData.addToExile(controllerId, card);
+                    }
                 }
             } else if (restToGraveyard) {
                 for (Card card : topCards) {
@@ -217,8 +224,6 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
                         .enterWithCounters(e.battlefieldEntryReplacement())
-                        .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
-                                ? entry.getControllerId() : null)
                         .build(),
                         prompt,
                         e.optional()));
@@ -236,8 +241,6 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
                     .enterWithCounters(e.battlefieldEntryReplacement())
-                    .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep()
-                            ? entry.getControllerId() : null)
                     .destination(e.chosenDestination())
                     .build(),
                     "You may put one of these cards onto the battlefield.",

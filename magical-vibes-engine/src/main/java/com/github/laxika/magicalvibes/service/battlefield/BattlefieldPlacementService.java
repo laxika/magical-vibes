@@ -268,7 +268,6 @@ public class BattlefieldPlacementService {
             carrySpellColorOverride(gameData, controllerId, permanent);
             applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
             PerpetualCardBattlefieldEffectSupport.applyStored(gameData, controllerId, permanent);
-            applyPerpetualPowerToughnessModifier(gameData, permanent);
             applyPerpetualKeywords(gameData, permanent);
             applyPerpetualTriggeredAbilityGrants(gameData, permanent);
             applyPerpetualEnterTapped(gameData, permanent);
@@ -291,9 +290,7 @@ public class BattlefieldPlacementService {
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
             applyControlledLandsEnterUntapped(gameData, controllerId, permanent);
             applyAllPermanentsEnterUntapped(gameData, permanent);
-            // Lands bypass planeswalker spell resolution, which normally supplies starting loyalty.
-            if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.LAND)
-                    && permanent.getCard().hasType(CardType.PLANESWALKER)
+            if (!permanent.isFaceDown() && permanent.getCard().hasType(CardType.PLANESWALKER)
                     && permanent.getCard().getLoyalty() != null
                     && permanent.getCounterCount(CounterType.LOYALTY) == 0) {
                 int loyalty = gameQueryService.replaceCounters(gameData, permanent, controllerId,
@@ -814,7 +811,8 @@ public class BattlefieldPlacementService {
                 .collect(Collectors.joining(" or "));
         List<Card> hand = gameData.playerHands.get(controllerId);
         boolean canReveal = hand != null && hand.stream()
-                .anyMatch(c -> c.getSubtypes().stream().anyMatch(activeEffect.subtypes()::contains));
+                .anyMatch(card -> activeEffect.subtypes().stream().anyMatch(subtype ->
+                        gameQueryService.cardHasSubtype(card, subtype, gameData, controllerId)));
         if (!canReveal) {
             permanent.tap();
             log.info("Game {} - {} enters tapped (no {} card to reveal)",
@@ -968,18 +966,6 @@ public class BattlefieldPlacementService {
                 return;
             }
         }
-    }
-
-    private void applyPerpetualPowerToughnessModifier(GameData gameData, Permanent permanent) {
-        if (permanent.getOriginalCard() == null) {
-            return;
-        }
-        var modifier = gameData.perpetualPowerToughnessModifiers.get(permanent.getOriginalCard().getId());
-        if (modifier == null) {
-            return;
-        }
-        permanent.setPowerModifier(permanent.getPowerModifier() + modifier.power());
-        permanent.setToughnessModifier(permanent.getToughnessModifier() + modifier.toughness());
     }
 
     private void applyPerpetualEnterTapped(GameData gameData, Permanent permanent) {
@@ -1136,7 +1122,7 @@ public class BattlefieldPlacementService {
             if (sourcePlayerId.equals(enteringControllerId)) return;
 
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                     if (!(effect instanceof EnterPermanentsOfTypesTappedEffect enterTapped)) {
                         continue;
                     }

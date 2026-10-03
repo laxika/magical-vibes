@@ -159,7 +159,7 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect, new CostModificationSource(perm, pid)));

@@ -152,8 +152,7 @@ class AtraxasSkitterfangTest extends BaseCardTest {
 
         assertThat(skitterfang.getCounterCount(CounterType.OIL)).isZero();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gqs.hasKeyword(gd, skitterfang, Keyword.FLYING)).isFalse();
     }
 

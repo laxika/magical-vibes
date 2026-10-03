@@ -76,7 +76,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
-                            true, choiceGroupId, null, false, e.afterSuccessfulCastEffect())),
+                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())),
                     "Cast " + c.getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));

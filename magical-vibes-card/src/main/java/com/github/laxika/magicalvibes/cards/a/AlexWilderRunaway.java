@@ -18,7 +18,7 @@ public class AlexWilderRunaway extends Card {
     public AlexWilderRunaway() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureNotCastFromHandConditionalEffect(
-                        new BoostEnteringCreatureEffect(2, 0, Set.of(Keyword.HASTE))));
+                        new BoostEnteringCreatureEffect(2, 0, Set.of(Keyword.HASTE)), true));
 
         addCastingOption(new GraveyardCast(null, "{2}{R}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)),

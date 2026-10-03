@@ -107,7 +107,7 @@ class AgateAssaultTest extends BaseCardTest {
         target.setDamagePreventionShield(2);
         harness.setHand(player1, List.of(new AgateAssault(), new FeedTheCycle()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
         harness.assertOnBattlefield(player2, "Barkform Harvester");
@@ -128,7 +128,7 @@ class AgateAssaultTest extends BaseCardTest {
         target.setDamagePreventionShield(4);
         harness.setHand(player1, List.of(new AgateAssault(), new FeedTheCycle()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, 0, target.getId());
         harness.assertOnBattlefield(player2, "Barkform Harvester");

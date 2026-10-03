@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -53,7 +52,7 @@ public class AjaniStrengthOfThePride extends Card {
         addActivatedAbility(new ActivatedAbility(
                 0,
                 List.of(new ConditionalEffect(
-                        new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 15),
+                        new ControllerLifeAtLeast(15, true),
                         new ExileAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),
                                 new PermanentAllOfPredicate(List.of(

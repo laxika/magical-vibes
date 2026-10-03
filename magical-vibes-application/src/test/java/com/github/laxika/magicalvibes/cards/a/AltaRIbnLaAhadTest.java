@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -137,7 +138,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
                 () -> harness.handleMultipleCardsChosen(player1, List.of(target.getId())));
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of(previouslyMarked, target));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(findPermanents(player1, "Assassin Initiate")).isEmpty();
         assertThat(gd.exiledCardsWithMemoryCounters).containsExactly(previouslyMarked.getId());
@@ -151,6 +152,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         gd.exiledCardsWithMemoryCounters.add(exiled.getId());
         addCreatureReady(player1, new AltaRIbnLaAhad());
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
         battle.setProtectorPlayerId(player2.getId());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -200,6 +202,8 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         resolveAllTriggers();
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> harness.handlePermanentChosen(player1, player2.getId()));
+        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(findPermanents(player1, "Assassin Initiate")).hasSize(1);

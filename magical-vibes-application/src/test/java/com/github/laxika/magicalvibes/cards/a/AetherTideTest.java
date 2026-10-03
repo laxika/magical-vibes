@@ -179,6 +179,7 @@ class AetherTideTest extends BaseCardTest {
 
     @Test
     void xAboveOneHundredStillReturnsExactlyXCreatures() {
+        harness.setHand(player2, List.of());
         List<Card> hand = new ArrayList<>();
         hand.add(new AetherTide());
         List<Integer> discards = new ArrayList<>();

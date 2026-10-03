@@ -50,8 +50,10 @@ class AngelOfUnityTest extends BaseCardTest {
         Permanent permanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(candidate -> candidate.getCard().getId().equals(healerToBoostId))
                 .findFirst().orElseThrow();
-        assertThat(permanent.getPowerModifier()).isEqualTo(2);
-        assertThat(permanent.getToughnessModifier()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, permanent))
+                .isEqualTo(permanent.getCard().getPower() + 2);
+        assertThat(gqs.getEffectiveToughness(gd, permanent))
+                .isEqualTo(permanent.getCard().getToughness() + 2);
     }
 
     @Test
@@ -90,8 +92,10 @@ class AngelOfUnityTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent rogue = findPermanent(player1, "Merfolk Windrobber");
-        assertThat(rogue.getPowerModifier()).isEqualTo(1);
-        assertThat(rogue.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, rogue))
+                .isEqualTo(rogue.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, rogue))
+                .isEqualTo(rogue.getCard().getToughness() + 1);
     }
 
     @Test
@@ -132,8 +136,10 @@ class AngelOfUnityTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         Permanent healer = findPermanent(player1, "Expedition Healer");
-        assertThat(healer.getPowerModifier()).isEqualTo(1);
-        assertThat(healer.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, healer))
+                .isEqualTo(healer.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, healer))
+                .isEqualTo(healer.getCard().getToughness() + 1);
     }
 
     @Test
@@ -178,8 +184,10 @@ class AngelOfUnityTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         Permanent healer = findPermanent(player1, "Expedition Healer");
-        assertThat(healer.getPowerModifier()).isEqualTo(1);
-        assertThat(healer.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, healer))
+                .isEqualTo(healer.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, healer))
+                .isEqualTo(healer.getCard().getToughness() + 1);
     }
 
     @Test

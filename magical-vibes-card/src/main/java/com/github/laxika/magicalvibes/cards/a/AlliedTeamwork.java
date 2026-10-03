@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,7 @@ public class AlliedTeamwork extends Card {
     public AlliedTeamwork() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 "Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_PERMANENTS,
+                new PermanentHasSubtypePredicate(CardSubtype.ALLY)));
     }
 }

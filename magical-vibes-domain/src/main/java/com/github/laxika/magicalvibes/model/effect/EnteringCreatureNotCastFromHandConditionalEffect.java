@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 
 /**
- * Gates an ally-creature-enters trigger on the creature being nontoken and not having been cast
- * from hand.
+ * Gates an ally-creature-enters trigger on a nontoken creature not cast from hand.
+ * When {@code requiresCast} is true, the entering creature must have been cast.
  */
-public record EnteringCreatureNotCastFromHandConditionalEffect(CardEffect wrapped)
+public record EnteringCreatureNotCastFromHandConditionalEffect(CardEffect wrapped, boolean requiresCast)
         implements EnterCreatureConditionalEffect {
+
+    public EnteringCreatureNotCastFromHandConditionalEffect(CardEffect wrapped) {
+        this(wrapped, false);
+    }
 
     @Override
     public boolean testEnteringCreature(Card enteringCreature) {
@@ -20,6 +24,7 @@ public record EnteringCreatureNotCastFromHandConditionalEffect(CardEffect wrappe
     public boolean testEnteringPermanent(Permanent enteringPermanent) {
         return enteringPermanent != null
                 && !enteringPermanent.getCard().isToken()
+                && (!requiresCast || enteringPermanent.isCast())
                 && (!enteringPermanent.isCast() || enteringPermanent.getCastFromZone() != Zone.HAND);
     }
 

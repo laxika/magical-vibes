@@ -32,11 +32,11 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || source.getCounterCount(CounterType.LEVEL) != levelUp.level() - 2) {
+        if (source == null || source.getClassLevel() != levelUp.level() - 1) {
             return;
         }
 
-        source.setCounterCount(CounterType.LEVEL, levelUp.level() - 1);
+        source.setClassLevel(levelUp.level());
         if (levelUp.gainedEffects().isEmpty()) {
             return;
         }

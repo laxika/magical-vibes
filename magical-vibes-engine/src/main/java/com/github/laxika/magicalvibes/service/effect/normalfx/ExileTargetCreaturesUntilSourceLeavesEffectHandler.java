@@ -17,6 +17,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 /**
  * Resolves the mixed-zone exile half of Angel of Serenity. The chosen ids ride on the trigger's
@@ -33,6 +38,8 @@ public class ExileTargetCreaturesUntilSourceLeavesEffectHandler implements Norma
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final ExileService exileService;
+    @Autowired @Lazy private EffectHandlerRegistry effectHandlerRegistry;
+    @Autowired @Lazy private TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,6 +53,13 @@ public class ExileTargetCreaturesUntilSourceLeavesEffectHandler implements Norma
         if (chosenCardIds.isEmpty()) {
             return;
         }
+        if (e.optionalAtResolution()) {
+            MayEffect optionalExile = new MayEffect(new ExileTargetCreaturesUntilSourceLeavesEffect(
+                    e.maxTargets(), e.returnToHand(), e.xScaled(), false), "Exile the chosen creatures or creature cards?");
+            entry.replaceEffectToResolve(entry.getResolvingEffectIndex(), optionalExile);
+            effectHandlerRegistry.getHandler(optionalExile).resolve(gameData, entry, optionalExile);
+            return;
+        }
 
         // The source may have left in response to the trigger — then the cards are still exiled,
         // but nothing is left to return them.
@@ -54,6 +68,24 @@ public class ExileTargetCreaturesUntilSourceLeavesEffectHandler implements Norma
                 ? entry.getSourcePermanentId() : null;
 
         for (UUID cardId : chosenCardIds) {
+            UUID originalPermanentId = entry.getMixedZoneTargetPermanentIds().get(cardId);
+            if (originalPermanentId != null) {
+                Permanent originalTarget = gameQueryService.findPermanentById(gameData, originalPermanentId);
+                if (originalTarget != null && gameQueryService.isCreature(gameData, originalTarget)
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, originalTarget, entry.getCard(), entry.getControllerId()).isEmpty()) {
+                    exileFromBattlefield(gameData, entry, e, sourcePermanentId, originalTarget);
+                }
+                continue;
+            }
+            Long graveyardVersion = entry.getMixedZoneTargetGraveyardVersions().get(cardId);
+            if (graveyardVersion != null) {
+                Card graveyardTarget = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (graveyardTarget != null && graveyardVersion == gameData.graveyardEntryVersion(cardId)) {
+                    exileFromGraveyard(gameData, entry, e, sourcePermanentId, cardId, graveyardTarget);
+                }
+                continue;
+            }
             Permanent permanent = findCreaturePermanentByCardId(gameData, cardId);
             if (permanent != null) {
                 exileFromBattlefield(gameData, entry, e, sourcePermanentId, permanent);

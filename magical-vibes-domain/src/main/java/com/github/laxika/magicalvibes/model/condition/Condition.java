@@ -356,6 +356,7 @@ public sealed interface Condition permits
         SourceCounterCountParity,
         SourcePowerParity,
         SourceCounterThreshold,
+        SourceClassLevelAtLeast,
         SourceIntensityThreshold,
         SourceExiledCardsThreshold,
         SourceExiledCardsMatchingAtLeast,

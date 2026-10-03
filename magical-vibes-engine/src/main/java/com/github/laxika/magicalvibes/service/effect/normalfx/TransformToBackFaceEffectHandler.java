@@ -29,6 +29,10 @@ public class TransformToBackFaceEffectHandler implements NormalEffectHandlerBean
         if (self == null || self.isTransformed()) {
             return;
         }
-        animationSupport.transformToBackFace(gameData, self);
+        if (((TransformToBackFaceEffect) effect).flip()) {
+            animationSupport.flipToBackFace(gameData, self);
+        } else {
+            animationSupport.transformToBackFace(gameData, self);
+        }
     }
 }

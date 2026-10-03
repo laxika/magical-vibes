@@ -52,7 +52,7 @@ public class MiracleMayCastEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 card,
                 controllerId,
-                List.of(new MayCastForMiracleCostEffect()),
+                List.of(new MayCastForMiracleCostEffect(((MiracleMayCastEffect) effect).xReduction())),
                 "Cast " + card.getName() + " for its miracle cost (" + cost + ")?",
                 null,
                 cost

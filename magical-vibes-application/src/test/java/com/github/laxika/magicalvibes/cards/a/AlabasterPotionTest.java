@@ -69,19 +69,21 @@ class AlabasterPotionTest extends BaseCardTest {
 
         @Test
         void unusedPreventionCarriesOverToTheNextDamageEvent() {
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.setLife(player2, 20);
             harness.setHand(player1, List.of(new AlabasterPotion(), new LightningBolt(), new LightningBolt()));
-            harness.addMana(player1, ManaColor.WHITE, 6);
+            harness.addMana(player1, ManaColor.WHITE, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
             harness.addMana(player1, ManaColor.RED, 2);
 
             harness.castModalInstantForX(player1, 0, 1, 4, player2.getId());
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
             harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
             harness.assertLife(player2, 20);
 
             harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
             harness.assertLife(player2, 18);
         }
 
@@ -109,7 +111,7 @@ class AlabasterPotionTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 1);
 
             harness.castModalInstantForX(player1, 0, 1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
             harness.castInstant(player1, 0, player2.getId());
             harness.passBothPriorities();
 

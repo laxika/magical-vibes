@@ -32,17 +32,19 @@ class AndRilFlameOfTheWestTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DwarvenWarriors());
         anduril.setAttachedTo(creature.getId());
 
-        declareAttackers(List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
 
-        List<Permanent> spirits = findPermanents(player1, "Spirit");
-        assertThat(spirits).hasSize(2);
-        assertThat(spirits).allSatisfy(spirit -> {
-            assertThat(spirit.isTapped()).isTrue();
-            assertThat(spirit.isAttackedThisTurn()).isFalse();
-            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
-            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
-            assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
+            List<Permanent> spirits = findPermanents(player1, "Spirit");
+            assertThat(spirits).hasSize(2);
+            assertThat(spirits).allSatisfy(spirit -> {
+                assertThat(spirit.isTapped()).isTrue();
+                assertThat(spirit.isAttackedThisTurn()).isFalse();
+                assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+                assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+                assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isTrue();
+            });
         });
     }
 

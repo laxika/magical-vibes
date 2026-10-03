@@ -1135,13 +1135,26 @@ public class Card {
 
     /** Returns per-position target filters for the selected kicker branch. */
     public List<TargetFilter> getMultiTargetFilters(boolean kicked) {
-        List<TargetFilter> expanded = new ArrayList<>();
-        for (SpellTarget st : spellTargets) {
-            for (int i = 0; i < Math.max(st.getMaxTargets(), st.getKickedMaxTargets()); i++) {
-                expanded.add(st.getFilter(kicked));
+        int positionCount = (int) Math.min(Integer.MAX_VALUE, spellTargets.stream()
+                .mapToLong(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets())).sum());
+        return new java.util.AbstractList<>() {
+            @Override
+            public TargetFilter get(int index) {
+                java.util.Objects.checkIndex(index, positionCount);
+                int remaining = index;
+                for (SpellTarget st : spellTargets) {
+                    int count = Math.max(st.getMaxTargets(), st.getKickedMaxTargets());
+                    if (remaining < count) return st.getFilter(kicked);
+                    remaining -= count;
+                }
+                throw new IndexOutOfBoundsException(index);
             }
-        }
-        return expanded;
+
+            @Override
+            public int size() {
+                return positionCount;
+            }
+        };
     }
 
     /**

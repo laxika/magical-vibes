@@ -768,6 +768,8 @@ public class PredicateEvaluationService {
                         : gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 Integer sourcePower = sourcePermanent != null
                         ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        : sourcePermanentSnapshot != null && sourcePermanentSnapshot.getLastKnownPower() != null
+                        ? sourcePermanentSnapshot.getLastKnownPower()
                         : sourcePowerAtTrigger != null
                         ? sourcePowerAtTrigger
                         : sourcePermanentSnapshot != null
@@ -892,7 +894,8 @@ public class PredicateEvaluationService {
                         : sourcePowerAtTrigger != null
                         ? sourcePowerAtTrigger
                         : sourcePermanentSnapshot != null
-                        ? sourcePermanentSnapshot.getEffectivePower()
+                        ? sourcePermanentSnapshot.getLastKnownPower() != null
+                        ? sourcePermanentSnapshot.getLastKnownPower() : sourcePermanentSnapshot.getEffectivePower()
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 yield sourcePower != null && power != null && power < sourcePower;
@@ -4793,7 +4796,7 @@ public class PredicateEvaluationService {
                             * (entry.getCard().getParsedManaCost() == null ? 0
                             : entry.getCard().getParsedManaCost().getXSymbolCount()) <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue()
+                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0
                             : entry.getCard().getParsedManaCost().getXSymbolCount());
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.

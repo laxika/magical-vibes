@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -149,7 +150,7 @@ public class TargetValidationService {
             UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
             if (!predicateEvaluationService.matchesCardPredicate(
                     exiled.card(), restriction.inner(), sourceCardId, ctx.gameData(), exiled.ownerId(),
-                    ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                    ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
                 throw new IllegalStateException("Target card does not match the required predicate");
             }
             return;
@@ -166,7 +167,7 @@ public class TargetValidationService {
                 UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
                 if (!predicateEvaluationService.matchesCardPredicate(
                         target, restriction.inner(), sourceCardId, ctx.gameData(), controllerId,
-                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                        ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
                     throw new IllegalStateException("Target card does not match the required predicate");
                 }
                 if (!predicate.admits(TargetPredicate.Kind.PERMANENT)
@@ -242,9 +243,16 @@ public class TargetValidationService {
             throw new IllegalStateException("Target card is not in an allowed graveyard");
         }
         UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
+        if (ctx.sourceCard() != null && ctx.sourceCard().getSpellTargets().size() == 1
+                && ctx.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter filter
+                && !predicateEvaluationService.matchesCardPredicate(target, filter.predicate(),
+                sourceCardId, ctx.gameData(), graveyardOwnerId, ctx.sourcePermanentId(),
+                ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
+            throw new IllegalStateException("Target card no longer matches the required predicate");
+        }
         if (!predicateEvaluationService.matchesCardPredicate(
                 target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
-                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue())) {
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
             String description = CardPredicateUtils.describeFilter(restriction.inner());
             throw new IllegalStateException(description.equals("card")
                     ? "Target card does not match the required predicate"

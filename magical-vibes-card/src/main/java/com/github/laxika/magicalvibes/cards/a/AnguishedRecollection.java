@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekCardsNotSharingCardTypeWi
 public class AnguishedRecollection extends Card {
 
     public AnguishedRecollection() {
-        addEffect(EffectSlot.SPELL, new DiscardCardThenEffect(
+        addEffect(EffectSlot.SPELL, DiscardCardThenEffect.continuing(
                 null,
                 new SeekCardsNotSharingCardTypeWithTriggeringCardEffect(2),
                 "a card"));

@@ -78,7 +78,8 @@ public class AmbergrisCitadelAgent extends Card {
         int drawCount = color == CardColor.BLUE ? 3 : 2;
         CardEffect discardAndDraw = color == CardColor.BLUE
                 ? new DiscardOwnHandThenDrawEffect(new Fixed(drawCount))
-                : new DiscardOwnHandThenDrawAndThenEffect(drawCount, specializedAttackRider(color));
+                : new DiscardOwnHandThenDrawAndThenEffect(drawCount, specializedAttackRider(color),
+                        color == CardColor.BLACK || color == CardColor.GREEN);
         return new MayEffect(discardAndDraw,
                 "Discard your hand and draw " + drawCount + " cards?");
     }

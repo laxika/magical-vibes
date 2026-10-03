@@ -97,6 +97,7 @@ class AeonChroniclerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -114,6 +115,7 @@ class AeonChroniclerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
 
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -225,6 +227,7 @@ class AeonChroniclerTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -239,6 +242,7 @@ class AeonChroniclerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AeonChronicler(), new AeonChronicler()));
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();

@@ -170,6 +170,10 @@ public class ActivatedAbilityExecutionService {
         stateBasedActionService.performStateBasedActions(gameData);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+
     private final DamagePreventionService damagePreventionService;
     private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
@@ -699,6 +703,14 @@ public class ActivatedAbilityExecutionService {
             equipSupport.expireAttachedCopyEffects(gameData, equipment);
         }
 
+        for (CardEffect effect : abilityEffects) {
+            if (effect instanceof SkipNextUntapEffect skip
+                    && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
+                permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
+                permanent.setSkipUntapControllerId(playerId);
+            }
+        }
+
         int loyaltyCountersAdded = ability.getLoyaltyCost() != null
                 && !ability.isToughnessAsLoyalty() && ability.getLoyaltyCost() > 0
                 ? ability.getLoyaltyCost()
@@ -1010,6 +1022,10 @@ public class ActivatedAbilityExecutionService {
             CardEffect effect = TextChangeTransformer.transform(printedEffect,
                     permanent.getTextReplacements(), TextChangeTransformer.globalColorWordReplacements(gameData));
             if (effect instanceof CostEffect) {
+                continue;
+            }
+            if (effect instanceof SkipNextUntapEffect skip
+                    && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
                 continue;
             }
             if (effect instanceof ActivationCostCardReferenceEffect referenceEffect) {
@@ -1463,6 +1479,9 @@ public class ActivatedAbilityExecutionService {
                             permanent, ofColors.colors().get(0));
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(manaColor, picks);
+                    if (snowSource) {
+                        pool.addSnowManaTag(manaColor, picks);
+                    }
                     if (manaSourceColorSupport.canProduceMultipleColors(gameData, permanent)) {
                         pool.addMulticoloredSourceManaTag(manaColor, picks);
                     }
@@ -1486,6 +1505,7 @@ public class ActivatedAbilityExecutionService {
                     // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
                     ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
                             .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors())
+                            .withSnowSource(snowSource)
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource)
@@ -1680,83 +1700,13 @@ public class ActivatedAbilityExecutionService {
                     lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
-                String cardName = permanent.getCard().getName();
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0));
-                if (gameQueryService.isDamagePreventable(gameData)) {
-                    CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
-                    boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
-                            gameData, playerId, permanent.getId());
-                    if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)) {
-                        damagePreventionService.applySourceDamagePreventionForPlayer(
-                                gameData, playerId, permanent.getId(), damage,
-                                gameQueryService.getEffectiveColors(gameData, permanent));
-                    }
-                    if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
-                            || sourceDamagePrevented
-                            || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, permanent)
-                            || gameData.isPreventedFromDealingDamage(permanent.getId())
-                            || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
-                        damage = 0;
-                    } else {
-                        // One-shot Circle-of-Protection shields may prevent only part of the damage
-                        damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage);
-                    }
-                }
-                if (damage > 0) {
-                    damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
-                }
-                if (damage > 0) {
-                    int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-                    effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                            gameData, playerId, effectiveDamage, cardName, false, permanent.getId());
-                    effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                            gameData, playerId, effectiveDamage);
-                    if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
-                        if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                            int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
-                            if (poisonAmount > 0) {
-                                int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                                gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
-                                String logEntry = player.getUsername() + " gets " + poisonAmount + " poison counters from " + cardName + ".";
-                                gameLogService.append(gameData, GameLog.text(logEntry));
-                            }
-                        }
-                        lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-                    } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
-                        gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
-                    } else {
-                        int lifeLoss = effectiveDamage
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-                        gameData.playerLifeTotals.put(playerId,
-                                gameQueryService.lifeAfterDamage(gameData, playerId, lifeLoss));
-                        if (effectiveDamage > 0) {
-                            String logEntry = player.getUsername() + " takes " + effectiveDamage + " damage from " + cardName + ".";
-                            gameLogService.append(gameData, GameLog.text(logEntry));
-                            log.info("Game {} - {} takes {} damage from {}", gameData.id, player.getUsername(), effectiveDamage, cardName);
-                        }
-                    }
-                    if (effectiveDamage > 0) {
-                        gameData.recordRedSourceNoncombatDamage(playerId,
-                                gameQueryService.getDamageSourceColors(
-                                        gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
-                                effectiveDamage);
-                        gameData.recordDamageToPlayer(playerId, effectiveDamage,
-                                gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
-                        gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
-                        gameData.recordDamageDealtBySourceToPlayer(
-                                permanent.getId(), playerId, effectiveDamage);
-                        gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
-                        gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
-                        triggerCollectionService.checkOpponentDealtDamageTriggers(
-                                gameData, playerId, permanent.getId(), effectiveDamage);
-                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
-                                gameData, permanent, playerId, playerId, effectiveDamage);
-                        if (gameQueryService.isCreature(gameData, permanent)) {
-                            gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
-                        }
-                    }
-                }
+                StackEntry damageEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
+                        permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability", List.of(dmg),
+                        playerId, permanent.getId());
+                damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId,
+                        gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry));
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
                 // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
                 // "Add {R}. When you do, this creature deals 1 damage to each opponent."

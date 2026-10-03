@@ -410,6 +410,7 @@ public class TurnProgressionService {
             } else if (next == TurnStep.DRAW) {
                 stepTriggerService.handleDrawStep(gameData);
             } else if (next == TurnStep.BEGINNING_OF_COMBAT) {
+                gameData.playersAttackedThisCombat.clear();
                 gameData.combatPhasesThisTurn++;
                 UUID combatController = gameData.pendingCombatControl.remove(gameData.activePlayerId);
                 if (combatController != null && gameData.playerIds.contains(combatController)) {
@@ -554,6 +555,7 @@ public class TurnProgressionService {
     }
 
     private void beginSequentialCombatPhase(GameData gameData) {
+        gameData.playersAttackedThisCombat.clear();
         gameData.combatPhasesThisTurn++;
         UUID combatController = gameData.pendingCombatControl.remove(gameData.activePlayerId);
         if (combatController != null && gameData.playerIds.contains(combatController)) {
@@ -916,6 +918,7 @@ public class TurnProgressionService {
             log.info("Game {} - {} skips their untap step", gameData.id, nextActiveName);
         }
 
+        gameData.previousTurnActivePlayerId = gameData.activePlayerId;
         gameData.activePlayerId = nextActive;
         gameData.turnStartTimestamp = gameData.timestampCounter + 1;
         if (gameData.planechase != null) gameData.planechase.controllerId = nextActive;
@@ -1134,6 +1137,7 @@ public class TurnProgressionService {
         gameData.sorcerySpellDamageDealtThisTurn.clear();
         gameData.damageSourcesControlledByPlayerThisTurn.clear();
         gameData.playersAttackedThisTurn.clear();
+        gameData.playersAttackedThisCombat.clear();
         gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn.clear();
         gameData.playersWhoAttackedPlayersThisTurn.clear();
         gameData.creaturesThatSaddledPermanentThisTurn.clear();

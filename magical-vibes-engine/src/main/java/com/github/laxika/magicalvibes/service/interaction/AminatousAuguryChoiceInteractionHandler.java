@@ -43,14 +43,25 @@ public class AminatousAuguryChoiceInteractionHandler
 
     /** Starts the optional land choice, or the first available nonland type. */
     public void begin(GameData gameData, UUID playerId, List<UUID> exiledCardIds) {
-        List<CardType> cardTypes = representedSpellTypes(gameData, exiledCardIds);
+        UUID groupId = UUID.randomUUID();
+        gameData.registerExileSpellTypePermissionGroup(groupId);
+        for (UUID cardId : exiledCardIds) {
+            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+            if (exiled == null || exiled.card().hasType(CardType.LAND)) continue;
+            gameData.exilePlayPermissions.put(cardId, playerId);
+            gameData.exilePlayPermissionGroups.put(cardId, groupId);
+            gameData.exilePlayWithoutPayingManaCost.add(cardId);
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+        }
+        gameData.exilePlayPermissionGroupUsesRemaining.put(groupId, CardType.values().length);
+        List<CardType> cardTypes = List.of();
         List<UUID> landIds = validLandIds(gameData, exiledCardIds);
         if (!landIds.isEmpty()) {
             beginChoice(gameData, playerId, exiledCardIds, List.of(), cardTypes, landIds,
                     CardType.LAND);
             return;
         }
-        beginNextType(gameData, playerId, exiledCardIds, List.of(), cardTypes);
+
     }
 
     @Override
@@ -86,23 +97,8 @@ public class AminatousAuguryChoiceInteractionHandler
             }
         }
 
-        List<UUID> chosenSpellIds = new ArrayList<>(interaction.chosenSpellIds());
-        if (chosenCardId != null && interaction.offeredCardType() != CardType.LAND) {
-            chosenSpellIds.add(chosenCardId);
-        }
-
         inputCompletionService.publishStateAfterInput(gameData);
-        boolean begunNext = beginNextType(gameData, player.getId(), interaction.exiledCardIds(),
-                chosenSpellIds, interaction.remainingCardTypes());
-        if (begunNext) {
-            return;
-        }
-        if (!chosenSpellIds.isEmpty()) {
-            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(
-                    gameData, player, chosenSpellIds);
-        } else {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private boolean beginNextType(GameData gameData, UUID playerId, List<UUID> exiledCardIds,

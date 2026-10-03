@@ -20,4 +20,7 @@ public interface MiracleGrantingEffect extends CardEffect {
     default String miracleCostFor(Card card) {
         return miracleCost();
     }
+    default int miracleXReductionFor(Card card) {
+        return 0;
+    }
 }

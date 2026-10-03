@@ -215,6 +215,8 @@ class AuntiesSnitchTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(snitch);
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.ensurePriority(player1);
         harness.castInstant(player1, 0, 0, player1.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);

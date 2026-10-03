@@ -734,6 +734,7 @@ public class LayerSystemService {
         h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.hashCode());
         h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.size());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.hashCode());
+        h = mix(h, gameData.perpetualPowerToughnessModifiers.hashCode());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.size());
         h = mix(h, gameData.perpetualCardKeywords.hashCode());
         h = mix(h, gameData.perpetualCardKeywords.size());
@@ -809,6 +810,7 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getSecondChosenSubtype()));
         h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
         h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
+        h = mix(h, p.getClassLevel());
         long chosenModeByPlayerSum = 0;
         for (Map.Entry<UUID, String> choice : p.getChosenModeByPlayer().entrySet()) {
             chosenModeByPlayerSum += mix64(choice.getKey().hashCode()

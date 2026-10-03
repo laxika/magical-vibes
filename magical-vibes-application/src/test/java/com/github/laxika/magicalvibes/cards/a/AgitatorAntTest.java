@@ -26,7 +26,6 @@ class AgitatorAntTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1Creature.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, player2Creature.getId());
         resolveAgitatorAbilities();
 
         assertThat(player1Creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -45,7 +44,6 @@ class AgitatorAntTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1Creature.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, player2Creature.getId());
         resolveAgitatorAbilities();
 
         gd.expireFloatingEffectsAtTurnStart(player1.getId());
@@ -61,9 +59,7 @@ class AgitatorAntTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, ant.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, opponentCreature.getId());
 
         assertThat(ant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

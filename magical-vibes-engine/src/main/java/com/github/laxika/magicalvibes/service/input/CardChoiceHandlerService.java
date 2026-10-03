@@ -1248,19 +1248,17 @@ public class CardChoiceHandlerService {
             CardEffect thenEffect = selectedThenEffect;
             Card sourceCard = followUp.thenEffectSourceCard();
 
-            // Some discard follow-ups are part of the same spell or ability rather than a
-            // reflexive "if you do" trigger. Insert those effects into the parked resolution so
-            // they resolve immediately after the discard completes.
-            if (thenEffect instanceof InlineDiscardFollowUpEffect
+            // Discard follow-ups that belong to the resolving spell or ability resume that
+            // resolution after the discard completes.
+            if ((thenEffect instanceof InlineDiscardFollowUpEffect || followUp.resolveThenDuringSameResolution())
                     && gameData.pendingEffectResolutionEntry != null) {
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                copyDiscardFollowUpContext(gameData, pendingEntry, discardedCard, followUp);
                 pendingEntry.setTriggeringCardIds(followUp.discardedCardIds());
-                pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                        List.of(thenEffect));
+                pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(thenEffect));
                 resumeRemainingEffectsAfterDiscard(gameData);
                 return;
             }
-
             int thenEffectTargetGroup = thenEffect.targetGroup();
             if (followUp.thenEffectTargetId() == null
                     && thenEffectTargetGroup >= 0

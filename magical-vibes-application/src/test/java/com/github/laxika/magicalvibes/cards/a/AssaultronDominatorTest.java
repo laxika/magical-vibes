@@ -146,7 +146,8 @@ class AssaultronDominatorTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
         assertThat(attacker.getCounterCount(CounterType.TRAMPLE)).isZero();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.BlockerDeclaration.class);
     }
 
 }

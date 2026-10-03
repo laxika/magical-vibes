@@ -219,7 +219,6 @@ public class ExileAndReturnTransformedService {
         Permanent newPerm = new Permanent(originalCard);
         newPerm.setCard(backFace);
         newPerm.setTransformed(true);
-        newPerm.setSummoningSick(false);
         gameData.transferCardsExiledByPermanent(oldSourcePermanentId, newPerm.getId());
         if (backFace.hasType(CardType.PLANESWALKER) && backFace.getLoyalty() != null) {
             int loyalty = gameQueryService.replaceCounters(gameData, newPerm, ownerId,

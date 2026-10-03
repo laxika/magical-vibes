@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GarrukUnleashed;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.u.Unsubstantiate;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AngelicAscension.class, AlpineWatchdog.class, GarrukUnleashed.class,
-        Plains.class, Unsubstantiate.class})
+        Plains.class, Unsubstantiate.class, ControlMagic.class})
 class AngelicAscensionTest extends BaseCardTest {
 
     @Test
@@ -93,8 +94,10 @@ class AngelicAscensionTest extends BaseCardTest {
     @Test
     @DisplayName("The controller gets the Angel while a stolen creature is exiled for its owner")
     void stolenCreatureGivesTokenToController() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlpineWatchdog());
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        AlpineWatchdog stolenCard = new AlpineWatchdog();
+        stolenCard.setOwnerId(player1.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, stolenCard);
+        harness.addToBattlefieldAndReturn(player2, new ControlMagic()).setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new AngelicAscension()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

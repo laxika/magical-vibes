@@ -82,6 +82,7 @@ class AnaBattlemageTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);

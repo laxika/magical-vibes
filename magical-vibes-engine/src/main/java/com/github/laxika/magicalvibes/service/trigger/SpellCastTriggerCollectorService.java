@@ -3140,6 +3140,8 @@ public class SpellCastTriggerCollectorService {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             preservePlanarSource(entry, match);
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                    && once.markOnAcceptance());
             match.gameData().stack.add(entry);
         }
         if (match.permanent() != null) {

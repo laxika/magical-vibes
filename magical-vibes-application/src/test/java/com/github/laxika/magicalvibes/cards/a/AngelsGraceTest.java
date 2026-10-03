@@ -128,7 +128,7 @@ class AngelsGraceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AngelsGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.passUntil(player2, TurnStep.DRAW);
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
@@ -184,11 +184,12 @@ class AngelsGraceTest extends BaseCardTest {
     @DisplayName("The controller cannot lose from drawing from an empty library")
     void emptyLibraryDoesNotCauseLoss() {
         gd.turnNumber = 2;
+        harness.forceActivePlayer(player1);
         harness.setLibrary(player1, List.of());
         harness.forceStep(TurnStep.UPKEEP);
         harness.setHand(player1, List.of(new AngelsGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castAndResolveInstant(player1, 0);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.castAndResolveInstant(player1, 0));
 
         harness.passUntil(player1, TurnStep.DRAW);
 

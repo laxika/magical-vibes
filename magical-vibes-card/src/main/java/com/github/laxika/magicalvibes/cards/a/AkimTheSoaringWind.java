@@ -21,7 +21,7 @@ public class AkimTheSoaringWind extends Card {
 
     public AkimTheSoaringWind() {
         addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(
+                OncePerTurnTriggerEffect.firstTokenCreation(new CreateTokenEffect(
                         1, "Bird", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));
 
@@ -29,7 +29,7 @@ public class AkimTheSoaringWind extends Card {
                 false,
                 "{3}{U}{R}{W}",
                 List.of(new GrantKeywordEffect(
-                        Keyword.DOUBLE_STRIKE, GrantScope.OWN_CREATURES,
+                        Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsTokenPredicate())),
                 "{3}{U}{R}{W}: Creature tokens you control gain double strike until end of turn."
         ));

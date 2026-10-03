@@ -20,7 +20,7 @@ public class AscendantEvincar extends Card {
     public AscendantEvincar() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))));
     }
 }

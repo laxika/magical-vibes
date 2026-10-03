@@ -154,7 +154,7 @@ class AncientGreenwardenTest extends BaseCardTest {
         harness.castFromHand(player1, new KazanduMammoth(), "{1}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())).hasSize(2);

@@ -66,25 +66,31 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 : p -> baseFilter.test(p)
                         && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
 
-        if (e.perCreatureAmount()) {
-            // The amount describes the creature being damaged, so it is evaluated per creature with
-            // that creature standing in as the amount's source permanent (Baki's Curse).
-            damageSupport.damageAllCreaturesOnBattlefield(gameData, entry,
-                    p -> gameQueryService.applyDamageMultiplier(gameData,
-                            amountEvaluationService.evaluate(gameData, e.amount(),
-                                    AmountContext.forStackEntry(entry, p)), entry),
-                    creatureFilter, e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
-            return;
-        }
-
-        damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter,
-                e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
-
-        if (e.damagesPlayers()) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
+        boolean previousExilesCreaturesDamaged = entry.isExilesCreaturesDamaged();
+        entry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged || e.exileInsteadOfDie());
+        try {
+            if (e.perCreatureAmount()) {
+                // The amount describes the creature being damaged, so it is evaluated per creature with
+                // that creature standing in as the amount's source permanent (Baki's Curse).
+                damageSupport.damageAllCreaturesOnBattlefield(gameData, entry,
+                        p -> gameQueryService.applyDamageMultiplier(gameData,
+                                amountEvaluationService.evaluate(gameData, e.amount(),
+                                        AmountContext.forStackEntry(entry, p)), entry),
+                        creatureFilter, e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
+                return;
             }
-            gameOutcomeService.checkWinCondition(gameData);
+
+            damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter,
+                    e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
+
+            if (e.damagesPlayers()) {
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
+                }
+                gameOutcomeService.checkWinCondition(gameData);
+            }
+        } finally {
+            entry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged);
         }
     }
 }

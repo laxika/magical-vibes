@@ -30,7 +30,7 @@ public class ArcaneProxy extends Card {
                 new CardManaValueAtMostSourcePowerPredicate()));
         target(new GraveyardCardPredicateTargetFilter(
                 instantOrSorceryWithManaValue, GraveyardSearchScope.CONTROLLERS_GRAVEYARD
-        ), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        ), 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new WasCast(),
                 new ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(true)
         ));

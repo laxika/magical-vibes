@@ -230,6 +230,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
@@ -274,9 +275,10 @@ class ArchaicsAgonyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castSorcery(player1, 0, target.getId());
+            resolveAllTriggers();
+        });
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);

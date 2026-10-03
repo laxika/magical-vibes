@@ -67,8 +67,10 @@ class AmphinMutineerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanent(player1, "Amphin Mutineer");
         assertThat(token.getCard().isToken()).isTrue();

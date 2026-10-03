@@ -107,6 +107,8 @@ public class Permanent {
     private boolean summoningSick;
     /** Perpetual power modifier attached to this card identity; survives turn cleanup and zone changes. */
     @Setter private int persistentPowerModifier;
+    /** Class progression is permanent state and is independent of counters. */
+    @Setter private int classLevel = 1;
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
     @Setter private int damagePreventionShield;
@@ -805,6 +807,7 @@ public class Permanent {
         this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
         this.persistentPowerModifier = source.persistentPowerModifier;
+        this.classLevel = source.classLevel;
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
         this.damagePreventionShield = source.damagePreventionShield;
@@ -1220,6 +1223,11 @@ public class Permanent {
                 playersAttackedThisCombat.add(attackTarget);
             }
         }
+    }
+
+    /** Puts this permanent into combat attacking without declaring it as an attacker. */
+    public void enterAttacking(boolean attacking) {
+        this.attacking = attacking;
     }
 
     public void setAttackTarget(UUID attackTarget) {

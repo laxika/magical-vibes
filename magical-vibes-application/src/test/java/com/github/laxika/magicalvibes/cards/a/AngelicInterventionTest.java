@@ -28,7 +28,7 @@ class AngelicInterventionTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         castAt(target);
 
-        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
         harness.handleListChoice(player1, "RED");

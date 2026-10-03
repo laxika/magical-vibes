@@ -341,9 +341,11 @@ class AmberPrisonTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.performUntapStep(newActivePlayer);
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -351,9 +353,11 @@ class AmberPrisonTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceStep(TurnStep.END_STEP);
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.performUntapStep(newActivePlayer);
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

@@ -58,6 +58,7 @@ class AirborneAidTest extends BaseCardTest {
     @Test
     @DisplayName("Counts Birds that enter after casting but before resolution")
     void countsBirdsAtResolution() {
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.castFromHand(player1, new AirborneAid(), "{3}{U}");
 

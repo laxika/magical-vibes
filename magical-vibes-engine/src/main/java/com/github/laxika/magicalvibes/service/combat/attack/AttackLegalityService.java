@@ -818,14 +818,9 @@ public class AttackLegalityService {
                 .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
                 .count();
 
-        // Check for transient "must attack this turn" flag (e.g. Alluring Siren). When the flag names
-        // a specific thing to attack (a planeswalker for Gideon, Battle-Forged's +2) the requirement
-        // lapses once that permanent is no longer a legal attack target.
         if ((creature.isMustAttackThisTurn() || creature.isMustAttackThisCombat())
                 && (creature.getMustAttackTargetId() == null
-                        || gameData.playerIds.contains(creature.getMustAttackTargetId())
-                        || getValidAttackTargetIds(gameData, creatureControllerId)
-                                .contains(creature.getMustAttackTargetId()))) {
+                        || canAttackRequiredTarget(gameData, creature, creature.getMustAttackTargetId()))) {
             count[0]++;
         }
 

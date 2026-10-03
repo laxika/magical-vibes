@@ -127,6 +127,7 @@ class AradeshTheFounderTest extends BaseCardTest {
 
     @Test
     void opponentsAradeshDoesNotRewardYourEnlistingCreature() {
+        harness.setHand(player1, List.of());
         Permanent aradesh = addCreatureReady(player1, new AradeshTheFounder());
         Permanent supporter = addCreatureReady(player1, new CentaurCourser());
         addCreatureReady(player2, new AradeshTheFounder());

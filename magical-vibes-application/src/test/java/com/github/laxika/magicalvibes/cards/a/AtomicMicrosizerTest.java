@@ -112,6 +112,8 @@ class AtomicMicrosizerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);

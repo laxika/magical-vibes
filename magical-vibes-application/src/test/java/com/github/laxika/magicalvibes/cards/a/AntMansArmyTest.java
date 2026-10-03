@@ -81,8 +81,9 @@ class AntMansArmyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AntMansArmy()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleListChoice(player1, mode == 0 ? "Create a Food token" : "Create a Treasure token");
     }
 }

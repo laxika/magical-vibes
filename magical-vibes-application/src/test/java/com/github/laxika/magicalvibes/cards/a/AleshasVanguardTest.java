@@ -48,6 +48,9 @@ class AleshasVanguardTest extends BaseCardTest {
 
         Permanent vanguard = findPermanent(player1, "Alesha's Vanguard");
         assertThat(vanguard.hasKeyword(Keyword.HASTE)).isTrue();
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
         assertThat(findPermanent(player1, "Alesha's Vanguard")).isSameAs(vanguard);
         harness.assertNotInHand(player1, "Alesha's Vanguard");
@@ -66,11 +69,13 @@ class AleshasVanguardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+            harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Alesha's Vanguard");
-        assertThat(gd.stack).isEmpty();
+            harness.assertOnBattlefield(player1, "Alesha's Vanguard");
+            assertThat(gd.stack).isEmpty();
+        });
     }
 
     @Test
@@ -82,6 +87,9 @@ class AleshasVanguardTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         resolveAllTriggers();
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Alesha's Vanguard");

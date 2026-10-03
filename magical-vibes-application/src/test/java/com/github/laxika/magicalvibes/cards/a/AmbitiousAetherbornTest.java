@@ -22,7 +22,9 @@ class AmbitiousAetherbornTest extends BaseCardTest {
     @DisplayName("Fabricate mode puts a +1/+1 counter on Ambitious Aetherborn")
     void fabricateCountersMode() {
         castAetherborn(0);
-        resolveAllTriggers();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent aetherborn = findPermanent(player1, "Ambitious Aetherborn");
         assertThat(aetherborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -34,7 +36,9 @@ class AmbitiousAetherbornTest extends BaseCardTest {
     @DisplayName("Fabricate mode creates a 1/1 colorless Servo artifact creature token")
     void fabricateServoMode() {
         castAetherborn(1);
-        resolveAllTriggers();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -88,7 +92,7 @@ class AmbitiousAetherbornTest extends BaseCardTest {
     private void castAetherborn(int mode) {
         harness.setHand(player1, List.of(new AmbitiousAetherborn()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
     }
 
 }

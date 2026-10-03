@@ -43,7 +43,7 @@ public class AjaniInspiringLeader extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new GrantKeywordEffect(
-                        Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), GrantScope.OWN_CREATURES)),
+                        Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), GrantScope.ALL_OWN_CREATURES)),
                 "\u221210: Creatures you control gain flying and double strike until end of turn."
         ));
     }

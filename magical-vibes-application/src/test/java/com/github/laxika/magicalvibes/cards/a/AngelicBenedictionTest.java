@@ -63,7 +63,7 @@ class AngelicBenedictionTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1, 2)); // two attackers — not alone
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(enemy.isTapped()).isFalse();
         assertThat(gqs.getEffectivePower(gd, one)).isEqualTo(2);
     }
@@ -98,7 +98,7 @@ class AngelicBenedictionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }

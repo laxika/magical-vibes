@@ -42,7 +42,7 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
                     entry.getDescription(),
                     List.of(new CreateTokenCopyOfSourceEffect(
                             false, new Fixed(1), null, null, false, null, null,
-                            true, false, Map.of(), true, Set.of(), null, false, 0)),
+                            true, false, Map.of(), false, Set.of(), null, false, 0)),
                     0,
                     null,
                     null,
@@ -56,6 +56,12 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
 
             sourceCopyHandler.resolve(gameData, copyEntry, copyEntry.getEffectsToResolve().getFirst());
             for (var permanentId : copyEntry.getCreatedPermanentIds()) {
+                Permanent token = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                        .filter(permanent -> permanent.getId().equals(permanentId)).findFirst().orElse(null);
+                if (token != null) {
+                    token.setMustAttackThisTurn(true);
+                    token.setMustAttackTargetId(opponentId);
+                }
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         permanentId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
             }

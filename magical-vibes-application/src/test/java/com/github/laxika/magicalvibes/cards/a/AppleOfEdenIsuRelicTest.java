@@ -95,9 +95,11 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
-        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(spell, land);
-        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(spell, land);
+            assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        });
     }
 
     @Test

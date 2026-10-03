@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BallynockTrapper;
 import com.github.laxika.magicalvibes.cards.c.CinderPyromancer;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AntlerSkulkin.class, BallynockTrapper.class, CinderPyromancer.class})
+@CardUsed({AntlerSkulkin.class, BallynockTrapper.class, CinderPyromancer.class, ControlMagic.class})
 class AntlerSkulkinTest extends BaseCardTest {
 
     @Test
@@ -157,8 +158,8 @@ class AntlerSkulkinTest extends BaseCardTest {
     @Test
     void persistTriggerIsControlledByTheCreaturesControllerButReturnsToOwner() {
         addReadySkulkin(player1);
-        Permanent target = addReadyWhiteCreature(player2);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        Permanent target = addReadyWhiteCreature(player1);
+        harness.addToBattlefieldAndReturn(player2, new ControlMagic()).setAttachedTo(target.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

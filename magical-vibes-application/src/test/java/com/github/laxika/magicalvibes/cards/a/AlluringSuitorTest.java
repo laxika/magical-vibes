@@ -148,6 +148,9 @@ class AlluringSuitorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, dancer)).isEqualTo(3);

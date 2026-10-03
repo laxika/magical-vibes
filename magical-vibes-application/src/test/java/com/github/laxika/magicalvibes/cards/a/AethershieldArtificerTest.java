@@ -172,6 +172,7 @@ class AethershieldArtificerTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, creeper.getId());
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player2, 0, artificer.getId());
         harness.assertInGraveyard(player1, "Aethershield Artificer");
         harness.passBothPriorities();
@@ -191,6 +192,7 @@ class AethershieldArtificerTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, creeper.getId());
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player2, 0, creeper.getId());
         harness.assertInGraveyard(player1, "Field Creeper");
         harness.passBothPriorities();

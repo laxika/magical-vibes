@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -157,6 +158,7 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
 
         attackAndAccept(ambergris, 2);
         resolveAllTriggers();
+        resolveCombat();
 
         harness.assertLife(player2, 13);
     }
@@ -195,9 +197,11 @@ class AmbergrisCitadelAgentTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         if (discardCount != null) {
-            for (int i = 0; i < discardCount; i++) {
-                harness.handleCardChosen(player1, 0);
-            }
+            harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+                for (int i = 0; i < discardCount; i++) {
+                    harness.handleCardChosen(player1, 0);
+                }
+            });
         }
     }
 }

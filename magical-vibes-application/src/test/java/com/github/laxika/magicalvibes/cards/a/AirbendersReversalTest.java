@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.ForecastingFortuneTeller;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AirbendersReversal.class, ForecastingFortuneTeller.class})
+@CardUsed({AirbendersReversal.class, ForecastingFortuneTeller.class, ControlMagic.class})
 class AirbendersReversalTest extends BaseCardTest {
 
     @Test
@@ -112,9 +113,8 @@ class AirbendersReversalTest extends BaseCardTest {
     @DisplayName("Airbend grants casting permission to the owner of a borrowed creature")
     void airbendPermissionBelongsToOwner() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ForecastingFortuneTeller());
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        harness.addToBattlefieldAndReturn(player1, new ControlMagic()).setAttachedTo(creature.getId());
+        harness.runStateBasedActions();
 
         cast(1, creature.getId());
 
@@ -148,9 +148,8 @@ class AirbendersReversalTest extends BaseCardTest {
         addMana();
         harness.castModalInstant(player1, 0, 1, List.of(creature.getId()));
 
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        harness.addToBattlefieldAndReturn(player2, new ControlMagic()).setAttachedTo(creature.getId());
+        harness.runStateBasedActions();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Forecasting Fortune Teller");

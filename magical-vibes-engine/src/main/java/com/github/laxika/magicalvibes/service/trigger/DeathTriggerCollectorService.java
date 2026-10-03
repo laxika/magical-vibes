@@ -1121,8 +1121,17 @@ public class DeathTriggerCollectorService {
         if (wrapped instanceof DyingCreatureCardAwareEffect aware && death.dyingCard() != null) {
             wrapped = aware.boundToDyingCard(death.dyingCard().getId());
         }
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
-                new MayEffect(wrapped, may.prompt()), null, match.permanent().getId());
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new MayEffect(wrapped, may.prompt()))),
+                null, match.permanent().getId());
+        if (death.dyingCard() != null) {
+            entry.setTriggeringCardId(death.dyingCard().getId());
+            entry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(death.dyingCard().getId()));
+        }
+        match.gameData().stack.add(entry);
         return true;
     }
 

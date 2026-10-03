@@ -232,10 +232,10 @@ class AlluringSirenTest extends BaseCardTest {
     @CardUsed(JaceBeleren.class)
     void cannotAttackPlaneswalkerWhenSirenControllerCanBeAttacked() {
         addReadySiren(player1);
-        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceBeleren());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         prepareAttackDeclaration(player2);
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0), Map.of(0, jace.getId())))
@@ -248,10 +248,10 @@ class AlluringSirenTest extends BaseCardTest {
     void mayAttackPlaneswalkerWhenSirenControllerCannotBeAttacked() {
         addReadySiren(player1);
         harness.addToBattlefield(player1, new BlazingArchon());
-        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceBeleren());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
         prepareAttackDeclaration(player2);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
@@ -266,7 +266,7 @@ class AlluringSirenTest extends BaseCardTest {
     void mayDeclineToAttackWhenOnlyPlaneswalkerCanBeAttacked() {
         addReadySiren(player1);
         harness.addToBattlefield(player1, new BlazingArchon());
-        harness.addToBattlefield(player1, new JaceBeleren());
+        harness.enterBattlefieldAndReturn(player1, new JaceBeleren());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

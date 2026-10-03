@@ -78,7 +78,6 @@ class ArmamentDragonTest extends BaseCardTest {
         Permanent dragon = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.handlePermanentChosen(player1, dragon.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handleListChoice(player1, "3");
         harness.passBothPriorities();
 

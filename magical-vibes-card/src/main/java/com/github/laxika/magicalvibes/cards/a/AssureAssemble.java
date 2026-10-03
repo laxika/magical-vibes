@@ -49,12 +49,7 @@ public class AssureAssemble extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Assemble — Create three 2/2 green and white Elf Knight creature tokens with vigilance",
                         assemble
-                ).withManaCost("{4}{G}{W}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Assure and then Assemble",
-                        List.of(assure, assemble),
-                        List.of(creature)
-                ).withManaCost("{4}{G}{W}{G/W}{G/W}")
+                ).withManaCost("{4}{G}{W}")
         )));
     }
 }

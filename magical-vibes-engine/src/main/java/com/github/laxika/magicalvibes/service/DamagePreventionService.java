@@ -270,8 +270,8 @@ public class DamagePreventionService {
      */
     public boolean isCombatDamageFromBlockerPrevented(GameData gameData, Permanent target, Permanent source) {
         if (!gameQueryService.isDamagePreventable(gameData, true)) return false;
-        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventAllCombatDamageToSelfFromBlockersEffect.class::isInstance);
+        boolean hasEffect = gameQueryService.hasActiveStaticEffect(
+                gameData, target, PreventAllCombatDamageToSelfFromBlockersEffect.class);
         return hasEffect && source.isBlocking() && source.getBlockingTargetIds().contains(target.getId());
     }
 

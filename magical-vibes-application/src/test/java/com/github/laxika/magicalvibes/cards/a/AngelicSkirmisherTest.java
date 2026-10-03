@@ -26,9 +26,9 @@ class AngelicSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "First strike");
 
-        assertThat(skirmisher.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(opposingBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, skirmisher, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -37,17 +37,19 @@ class AngelicSkirmisherTest extends BaseCardTest {
         addCreatureReady(player1, new AngelicSkirmisher());
         Permanent bear = addCreatureReady(player1, new MillennialGargoyle());
 
-        advanceToCombat(player1);
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "Vigilance");
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            advanceToCombat(player1);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, "Vigilance");
+        });
 
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(bear.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isFalse();
     }
 
     @Test
@@ -61,9 +63,9 @@ class AngelicSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lifelink");
 
-        assertThat(skirmisher.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(bear.hasKeyword(Keyword.LIFELINK)).isTrue();
-        assertThat(opposingBear.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, skirmisher, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingBear, Keyword.LIFELINK)).isFalse();
     }
 
     @Test
@@ -76,12 +78,12 @@ class AngelicSkirmisherTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(1);
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lifelink");
 
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -95,8 +97,8 @@ class AngelicSkirmisherTest extends BaseCardTest {
         harness.handleListChoice(player1, "First strike");
         Permanent afterResolution = harness.enterBattlefieldAndReturn(player1, new MillennialGargoyle());
 
-        assertThat(beforeResolution.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(afterResolution.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -110,7 +112,7 @@ class AngelicSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lifelink");
 
-        assertThat(creature.hasKeyword(Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
     }
 
     @Test
@@ -124,8 +126,8 @@ class AngelicSkirmisherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "First strike");
 
-        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(skirmisher.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, skirmisher, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private void advanceToCombat(Player activePlayer) {

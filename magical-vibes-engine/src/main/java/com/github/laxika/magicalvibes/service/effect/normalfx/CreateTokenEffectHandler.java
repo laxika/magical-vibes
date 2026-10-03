@@ -30,6 +30,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
+
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
@@ -157,8 +161,35 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
+        UUID attackingOpponentId = null;
+        if (e.tappedAndAttacking() && controllerId.equals(gameData.activePlayerId)
+                && gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
+            attackingOpponentId = gameQueryService.getOpponentId(gameData, controllerId);
+            List<UUID> planeswalkers = gameData.playerBattlefields
+                    .getOrDefault(attackingOpponentId, List.of()).stream()
+                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                    .map(Permanent::getId).toList();
+            if (!planeswalkers.isEmpty()) {
+                int tokenCount = gameQueryService.getTokenCreationAmount(
+                        gameData, controllerId, amount, e.subtypes(), e.primaryType() == com.github.laxika.magicalvibes.model.CardType.CREATURE);
+                gameData.interaction.setPermanentChoiceContext(
+                        new com.github.laxika.magicalvibes.model.PermanentChoiceContext.CreateTokensAttacking(
+                                controllerId, entry.getCard(), e, amount, tokenCount, false, List.of()));
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkers,
+                        List.of(attackingOpponentId), "Choose what the next " + e.tokenName() + " token attacks.");
+                return;
+            }
+        }
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
                 bindDeathReturn(e, entry), amount, entry.getCard().getSetCode(), power, toughness);
+        if (attackingOpponentId != null) {
+            for (UUID createdId : createdIds) {
+                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+                if (token != null && token.isAttacking()) {
+                    token.setAttackTarget(attackingOpponentId);
+                }
+            }
+        }
         entry.getCreatedPermanentIds().addAll(createdIds);
         List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> exileActions =
                 gameData.drainDelayedActions(

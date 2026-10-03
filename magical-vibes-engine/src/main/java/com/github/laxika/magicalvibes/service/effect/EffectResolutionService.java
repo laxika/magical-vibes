@@ -225,6 +225,14 @@ public class EffectResolutionService {
                 }
             }
 
+            if (effectToResolve instanceof ConditionalEffect conditional) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        conditionContext, entry.getEventValue())) {
+                    continue;
+                }
+                effectToResolve = conditional.wrapped();
+            }
+
             // A resolution-time may can contain a conditional replacement (for example, a
             // monarch-dependent choice whose accepted branch is selected only after the may
             // prompt). Resolve that wrapper after the player has answered it.

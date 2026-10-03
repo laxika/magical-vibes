@@ -29,10 +29,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                          during the target player's untap step
  * @param controllerStepOnly whether the restriction expires during the resolving controller's
  *                           next untap step, even if the permanent changes controllers (exert)
+ * @param activationCost whether a self restriction is paid as exert during activation and
+ *                       omitted from the ability's resolution effects
  */
 public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                                  boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly)
+                                  boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly,
+                                  boolean activationCost)
         implements CardEffect, CombatOpponentReferencingEffect {
+
+    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
+                               boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly) {
+        this(scope, filter, untapSteps, matchAtUntap, allPlayersAtUntap, controllerStepOnly, false);
+    }
 
     public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
                                boolean matchAtUntap, boolean allPlayersAtUntap) {

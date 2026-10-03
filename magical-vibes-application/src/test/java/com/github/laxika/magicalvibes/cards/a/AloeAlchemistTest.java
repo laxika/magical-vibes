@@ -100,6 +100,7 @@ class AloeAlchemistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, aloe.getId());
         harness.passBothPriorities();

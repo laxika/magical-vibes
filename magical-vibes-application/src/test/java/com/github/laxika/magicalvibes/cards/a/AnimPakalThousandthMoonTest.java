@@ -23,18 +23,20 @@ class AnimPakalThousandthMoonTest extends BaseCardTest {
         Permanent anim = addCreatureReady(player1, new AnimPakalThousandthMoon());
         addCreatureReady(player1, creature("Soldier", CardSubtype.SOLDIER));
 
-        declareAttackers(List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
 
-        assertThat(anim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gnomeTokens()).hasSize(1);
-        Permanent token = gnomeTokens().getFirst();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isFalse();
-        assertThat(token.getCard().getPower()).isEqualTo(1);
-        assertThat(token.getCard().getToughness()).isEqualTo(1);
-        assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+            assertThat(anim.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gnomeTokens()).hasSize(1);
+            Permanent token = gnomeTokens().getFirst();
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.isAttackedThisTurn()).isFalse();
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ARTIFACT);
+        });
     }
 
     @Test

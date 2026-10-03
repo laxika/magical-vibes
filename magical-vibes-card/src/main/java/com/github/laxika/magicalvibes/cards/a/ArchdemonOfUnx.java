@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,16 +24,15 @@ public class ArchdemonOfUnx extends Card {
         // At the beginning of your upkeep, sacrifice a non-Zombie creature, then create a
         // 2/2 black Zombie creature token. The two instructions are unlinked: the token is
         // created regardless of whether a creature was sacrificed.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(new SacrificePermanentsEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))
                 )),
-                SacrificeRecipient.CONTROLLER));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+                SacrificeRecipient.CONTROLLER), new CreateTokenEffect(
                 "Zombie", 2, 2, CardColor.BLACK,
                 List.of(CardSubtype.ZOMBIE),
-                Set.of(), Set.of()));
+                Set.of(), Set.of())));
     }
 }

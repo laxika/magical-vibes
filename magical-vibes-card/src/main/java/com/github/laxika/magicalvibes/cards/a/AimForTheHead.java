@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,9 +20,7 @@ import java.util.List;
 public class AimForTheHead extends Card {
 
     public AimForTheHead() {
-        var zombiePredicate = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
+        var zombiePredicate = new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE);
         var zombieFilter = new PermanentPredicateTargetFilter(
                 zombiePredicate,
                 "Target must be a Zombie.");

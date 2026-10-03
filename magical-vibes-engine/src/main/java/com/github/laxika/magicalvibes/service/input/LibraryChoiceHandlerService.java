@@ -431,7 +431,11 @@ public class LibraryChoiceHandlerService {
                 } else if (toGraveyard) {
                     graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
-                    Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+                    boolean selectedFromExile = gameData.findExiledCard(chosenCard.getId()) != null;
+                    if (selectedFromExile) {
+                        gameData.removeFromExile(chosenCard.getId());
+                    }
+                    Permanent perm = new Permanent(chosenCard, selectedFromExile ? Zone.EXILE : Zone.LIBRARY);
                     var landEquilibriumPlan = playerId.equals(battlefieldControllerId) ? null
                             : landEquilibriumSupport.findPlan(gameData, playerId, perm);
                     if (grantHaste) {
@@ -666,7 +670,9 @@ public class LibraryChoiceHandlerService {
                     }
                     exileLog.text(".");
                     for (Card card : new ArrayList<>(sourceCards)) {
-                        exileService.exileCard(gameData, deckOwnerId, card);
+                        if (gameData.findExiledCard(card.getId()) == null) {
+                            exileService.exileCard(gameData, deckOwnerId, card);
+                        }
                     }
                     gameLogService.append(gameData, exileLog.build());
                 }
@@ -1535,6 +1541,7 @@ public class LibraryChoiceHandlerService {
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT) {
             Permanent perm = new Permanent(chosenCard, Zone.LIBRARY);
+            perm.setAttachedTo(librarySearch.attachToPermanentId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
                     battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
             initializeBattleDefenseCounters(perm);
@@ -1547,6 +1554,8 @@ public class LibraryChoiceHandlerService {
             if (!perm.getCard().isAura()) {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
             }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, playerId, perm.getCard(), null, false);
         } else {
             if (finalCardToHand) {
                 if (!accumulatedCards.isEmpty()) {
@@ -3042,7 +3051,20 @@ public class LibraryChoiceHandlerService {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<UUID> selectedPermanentIds = new ArrayList<>();
-        if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
+        if (selectedCards.size() == 1 && selectedCards.getFirst().isAura()
+                && !libraryRevealChoice.selectedToBattlefieldCloaked()
+                && !libraryRevealChoice.selectedToBattlefieldTapped()
+                && libraryRevealChoice.battlefieldEntryReplacement() == null) {
+            Card aura = selectedCards.getFirst();
+            List<Card> library = gameData.playerDecks.get(controllerId);
+            library.add(aura);
+            battlefieldEntryBatchSupport.begin(gameData, List.of(
+                    new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                            controllerId, controllerId, aura, Zone.LIBRARY, null)));
+            if (!gameData.interaction.isAwaitingInput() && library.remove(aura)) {
+                remainingCards.add(aura);
+            }
+        } else if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
             List<Permanent> entered = placeCardsOnBattlefieldSimultaneously(gameData, selectedCards, controllerId,
                     libraryRevealChoice.selectedToBattlefieldTapped(), false, false, false,
                     null, null, libraryRevealChoice.battlefieldEntryReplacement(),
@@ -3176,6 +3198,10 @@ public class LibraryChoiceHandlerService {
         }
 
         log.info("Game {} - {} resolves library reveal choice, {} cards to battlefield", gameData.id, playerName, selectedCards.size());
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
 
         performStateBasedActionsIfResolutionComplete(gameData);
 

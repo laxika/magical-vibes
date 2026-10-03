@@ -27,6 +27,6 @@ public class AkkiEmberKeeper extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringPermanentConditionalEffect(modifiedNontoken, spiritToken));
         addEffect(EffectSlot.ON_DEATH,
-                new TriggeringPermanentConditionalEffect(new PermanentIsModifiedPredicate(), spiritToken));
+                new TriggeringPermanentConditionalEffect(modifiedNontoken, spiritToken));
     }
 }

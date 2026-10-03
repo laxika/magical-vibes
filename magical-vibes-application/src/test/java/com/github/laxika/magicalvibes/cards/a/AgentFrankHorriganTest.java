@@ -51,7 +51,7 @@ class AgentFrankHorriganTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         proliferateOn(bears);
-        proliferateOn(bears);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> proliferateOn(bears));
 
         assertThat(horrigan.isAttacking()).isTrue();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -82,7 +82,7 @@ class AgentFrankHorriganTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        proliferateOn(opponent);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> proliferateOn(opponent));
 
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -100,7 +100,8 @@ class AgentFrankHorriganTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
-        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId())));
 
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(4);

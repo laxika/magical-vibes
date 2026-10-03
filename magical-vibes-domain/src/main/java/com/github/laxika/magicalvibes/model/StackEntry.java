@@ -106,6 +106,7 @@ public class StackEntry {
     /** When set, the resolved spell card is put into its owner's library at this 0-based position from the
      *  top instead of going to the graveyard (Approach of the Second Sun's "seventh from the top" = 6). */
     @Setter private Integer putIntoLibraryPositionAfterResolving;
+    @Setter private boolean spellMovedDuringResolution;
     @Setter private boolean castWithFlashback;
     /** Whether this spell was cast using an escape permission. */
     @Setter private boolean castWithEscape;
@@ -341,7 +342,10 @@ public class StackEntry {
     @Setter private UUID triggeringCardId;
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
-    @Setter private long triggeringCardGraveyardEntryVersion;
+    @Setter private long triggeringCardGraveyardEntryVersion = -1;
+    /** Mixed-zone card targets remember their original permanent identity or graveyard incarnation. */
+    private final Map<UUID, UUID> mixedZoneTargetPermanentIds = new HashMap<>();
+    private final Map<UUID, Long> mixedZoneTargetGraveyardVersions = new HashMap<>();
     /** Graveyard entry chosen as this spell's primary target when it was cast. */
     @Setter private long targetGraveyardEntryVersion = -1;
     @Setter private List<UUID> triggeringCardIds = List.of();
@@ -432,6 +436,8 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /** Suspend grants haste for as long as the same player controls the resulting permanent. */
+    @Setter private boolean suspendHasteOnEntry;
     /** Colors granted to the permanent as this spell enters the battlefield. */
     private final Set<CardColor> grantedColorsOnEntry = EnumSet.noneOf(CardColor.class);
     /** Creature subtypes granted to the permanent as this spell enters the battlefield. */
@@ -742,6 +748,7 @@ public class StackEntry {
         this.spellDispositionHandled = source.spellDispositionHandled;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.putIntoLibraryPositionAfterResolving = source.putIntoLibraryPositionAfterResolving;
+        this.spellMovedDuringResolution = source.spellMovedDuringResolution;
         this.castWithFlashback = source.castWithFlashback;
         this.castWithEscape = source.castWithEscape;
         this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
@@ -838,6 +845,8 @@ public class StackEntry {
         this.triggeringCardId = source.triggeringCardId;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
+        this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
+        this.mixedZoneTargetGraveyardVersions.putAll(source.mixedZoneTargetGraveyardVersions);
         this.targetGraveyardEntryVersion = source.targetGraveyardEntryVersion;
         this.triggeringCardIds = source.triggeringCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.triggeringCardIds);
@@ -881,6 +890,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.suspendHasteOnEntry = source.suspendHasteOnEntry;
         this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);
         this.grantedSubtypesOnEntry.addAll(source.grantedSubtypesOnEntry);
         this.basePowerOverrideOnEntry = source.basePowerOverrideOnEntry;
@@ -1098,6 +1108,7 @@ public class StackEntry {
         this.spellDispositionHandled = false;
         this.returnToHandAfterResolving = false;
         this.putIntoLibraryPositionAfterResolving = null;
+        this.spellMovedDuringResolution = false;
         this.exileAndReturnToHandAtNextEndStep = false;
         this.exileInsteadOfGraveyard = false;
         this.exilePermanentIfLeavesBattlefield = false;

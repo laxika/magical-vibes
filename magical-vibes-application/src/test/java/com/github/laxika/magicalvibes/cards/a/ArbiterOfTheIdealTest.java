@@ -76,7 +76,7 @@ class ArbiterOfTheIdealTest extends BaseCardTest {
         resolveUntapTrigger(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(nonmatching.getId()));
         harness.assertNotOnBattlefield(player1, "Retraction Helix");
     }

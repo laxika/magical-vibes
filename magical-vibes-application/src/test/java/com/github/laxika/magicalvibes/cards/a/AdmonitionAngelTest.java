@@ -131,7 +131,11 @@ class AdmonitionAngelTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, stolenBears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+        gd.landsPlayedThisTurn.put(player1.getId(), 0);
+        harness.playLand(player1, 0);
         harness.handlePermanentChosen(player1, ownBears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -37,7 +38,9 @@ public class AlharuSolemnRitualist extends Card {
         CreateTokenEffect spiritToken = CreateTokenEffect.whiteSpirit(1);
         TriggeringPermanentConditionalEffect counteredCreatureDies =
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE), spiritToken);
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate()))), spiritToken);
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, counteredCreatureDies);
         addEffect(EffectSlot.ON_DEATH, counteredCreatureDies);
     }

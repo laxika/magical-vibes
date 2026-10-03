@@ -30,7 +30,7 @@ public class AndRilFlameOfTheWest extends Card {
         CreateTokenEffect spirits = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Spirit", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, true, Map.of(), List.of(), false, false, false, 0, Set.of());
         CreateTokenEffect attackingSpirits = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Spirit", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),

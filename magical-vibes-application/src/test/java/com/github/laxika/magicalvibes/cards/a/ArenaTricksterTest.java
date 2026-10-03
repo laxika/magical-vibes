@@ -95,7 +95,7 @@ class ArenaTricksterTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }

@@ -33,7 +33,7 @@ class ApothecaryStomperTest extends BaseCardTest {
     void etbGainsFourLife() {
         harness.setLife(player1, 5);
 
-        harness.enterBattlefieldAndReturn(player1, new ApothecaryStomper());
+        castStomper();
         harness.handleListChoice(player1, "You gain 4 life");
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -45,7 +45,7 @@ class ApothecaryStomperTest extends BaseCardTest {
     void counterModeCannotTargetOpponentCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ApothecaryStomper());
 
-        Permanent stomper = harness.enterBattlefieldAndReturn(player1, new ApothecaryStomper());
+        Permanent stomper = castStomper();
         harness.handleListChoice(player1, "Put two +1/+1 counters on target creature you control");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
@@ -75,7 +75,7 @@ class ApothecaryStomperTest extends BaseCardTest {
     @DisplayName("Life gain resolves even after its source leaves the battlefield")
     void lifeGainResolvesAfterSourceLeaves() {
         harness.setLife(player1, 5);
-        Permanent stomper = harness.enterBattlefieldAndReturn(player1, new ApothecaryStomper());
+        Permanent stomper = castStomper();
         harness.handleListChoice(player1, "You gain 4 life");
         gd.playerBattlefields.get(player1.getId()).remove(stomper);
         gd.playerGraveyards.get(player1.getId()).add(stomper.getCard());
@@ -87,8 +87,14 @@ class ApothecaryStomperTest extends BaseCardTest {
     }
 
     private void enterWithCounterMode(UUID targetId) {
-        harness.enterBattlefieldAndReturn(player1, new ApothecaryStomper());
+        castStomper();
         harness.handleListChoice(player1, "Put two +1/+1 counters on target creature you control");
         harness.handlePermanentChosen(player1, targetId);
+    }
+
+    private Permanent castStomper() {
+        harness.castFromHand(player1, new ApothecaryStomper(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        return gd.playerBattlefields.get(player1.getId()).getLast();
     }
 }

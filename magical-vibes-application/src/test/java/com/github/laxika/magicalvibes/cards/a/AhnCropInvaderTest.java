@@ -61,6 +61,9 @@ class AhnCropInvaderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, invader)).isEqualTo(basePower + 2);
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, invader)).isEqualTo(basePower);

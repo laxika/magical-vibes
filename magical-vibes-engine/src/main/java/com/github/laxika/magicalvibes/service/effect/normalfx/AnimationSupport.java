@@ -795,6 +795,19 @@ public class AnimationSupport {
         return transformToBackFace(gameData, self, true);
     }
 
+    /** Turns a flip card to its alternative characteristics without a transformation event. */
+    public boolean flipToBackFace(GameData gameData, Permanent self) {
+        Card backFace = self.getOriginalCard().getBackFaceCard();
+        if (backFace == null || self.isTransformed()) {
+            return false;
+        }
+        Card front = self.getCard();
+        self.setCard(backFace);
+        self.setTransformed(true);
+        gameLogService.append(gameData, GameLog.cardTextCard(front, " flips to ", backFace, "."));
+        return true;
+    }
+
     private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         Card originalCard = self.getOriginalCard();
         Card backFace = originalCard.getBackFaceCard();

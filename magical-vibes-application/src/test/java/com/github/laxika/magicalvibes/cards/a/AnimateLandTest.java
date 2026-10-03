@@ -67,7 +67,7 @@ class AnimateLandTest extends BaseCardTest {
     @DisplayName("Animating a tapped land does not untap it")
     void tappedLandRemainsTapped() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new KorHaven());
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         castAnimateLand(land);
 
@@ -82,7 +82,7 @@ class AnimateLandTest extends BaseCardTest {
         land.setSummoningSick(false);
         castAnimateLand(land);
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

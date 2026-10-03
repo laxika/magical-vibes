@@ -29,6 +29,7 @@ public class LookAtTopCardMayRevealSharingCardTypeWithEnteringPermanentToHandEff
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,6 +59,9 @@ public class LookAtTopCardMayRevealSharingCardTypeWithEnteringPermanentToHandEff
 
         Set<CardType> enteringTypes = enteringPermanentTypes(gameData, entry);
         Card topCard = deck.getFirst();
+        cardRevealService.revealToPlayer(gameData, controllerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.LIBRARY,
+                List.of(topCard), controllerId);
         if (!sharesCardType(topCard, enteringTypes)) {
             log.info("Game {} - top card {} shares no card type with the entering permanent",
                     gameData.id, topCard.getName());
@@ -89,7 +93,10 @@ public class LookAtTopCardMayRevealSharingCardTypeWithEnteringPermanentToHandEff
             return types;
         }
 
-        Card enteringCard = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
+        Card enteringCard = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
+        if (enteringCard == null) {
+            enteringCard = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
+        }
         if (enteringCard == null) {
             return Set.of();
         }

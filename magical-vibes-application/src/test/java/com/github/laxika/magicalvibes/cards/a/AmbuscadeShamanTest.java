@@ -101,6 +101,9 @@ class AmbuscadeShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
         assertThat(shaman.hasKeyword(Keyword.HASTE)).isTrue();
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
@@ -120,6 +123,9 @@ class AmbuscadeShamanTest extends BaseCardTest {
         Permanent shaman = findPermanent(player1, "Ambuscade Shaman");
         assertThat(gqs.hasKeyword(gd, shaman, Keyword.HASTE)).isFalse();
 
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
@@ -169,6 +175,9 @@ class AmbuscadeShamanTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         resolveAllTriggers();
+        gd.interaction.clearAwaitingInput();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Ambuscade Shaman");

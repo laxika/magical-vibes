@@ -70,8 +70,10 @@ class AlaundoTheSeerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        });
 
         Permanent cast = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasKeyword(gd, cast, Keyword.HASTE)).isTrue();
@@ -128,6 +130,23 @@ class AlaundoTheSeerTest extends BaseCardTest {
     }
 
     @Test
+    void nativeSuspendAndGrantedCastingAbilityTriggerIndependently() {
+        Permanent alaundo = alaundo();
+        ErrantEphemeron exiled = new ErrantEphemeron();
+        harness.setHand(player1, List.of(exiled));
+        harness.setLibrary(player1, List.of(new GnollHunter(), new GnollHunter()));
+        activateAndChoose(alaundo);
+        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        harness.performUntapStep(player1);
+
+        activateAndChoose(alaundo);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     void decliningTheFreeCastLeavesTheCardExiledWithoutCounters() {
         Permanent alaundo = alaundo();
         GnollHunter exiled = new GnollHunter();
@@ -147,6 +166,28 @@ class AlaundoTheSeerTest extends BaseCardTest {
         assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(exiled.getId());
         harness.assertNotOnBattlefield(player1, "Gnoll Hunter");
+    }
+
+    @Test
+    void decliningCastingPreservesTheAbilityForALaterLastCounter() {
+        Permanent alaundo = alaundo();
+        GnollHunter exiled = new GnollHunter();
+        harness.setHand(player1, List.of(exiled));
+        harness.setLibrary(player1, List.of(new GnollHunter(), new GnollHunter(), new GnollHunter()));
+        activateAndChoose(alaundo);
+        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        harness.performUntapStep(player1);
+        activateAndChoose(alaundo);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, false));
+        gd.exiledCardTimeCounters.put(exiled.getId(), 1);
+        harness.performUntapStep(player1);
+
+        activateAndChoose(alaundo);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
     }
 
     @Test
@@ -182,8 +223,10 @@ class AlaundoTheSeerTest extends BaseCardTest {
         if (!gd.interaction.isAwaitingInput()) {
             harness.passBothPriorities();
         }
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        });
         Permanent cast = findPermanent(player1, "Gnoll Hunter");
         assertThat(gqs.hasKeyword(gd, cast, Keyword.HASTE)).isTrue();
 
@@ -206,6 +249,6 @@ class AlaundoTheSeerTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(alaundo), null, null);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.handleCardChosen(player1, 0));
     }
 }

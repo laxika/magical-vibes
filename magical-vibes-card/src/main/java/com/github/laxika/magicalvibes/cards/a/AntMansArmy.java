@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -16,10 +17,10 @@ import java.util.List;
 public class AntMansArmy extends Card {
 
     public AntMansArmy() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Create a Food token", foodToken()),
                 new ChooseOneEffect.ChooseOneOption("Create a Treasure token", CreateTokenEffect.ofTreasureToken(1))
-        )));
+        ))));
     }
 
     private static CreateTokenEffect foodToken() {

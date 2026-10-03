@@ -166,7 +166,9 @@ class AnticausalVestigeTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, vestige));
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
-        harness.handleMultiplePermanentsChosen(player2, List.of(opposingLand.getId()));
+        if (gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) != null) {
+            harness.handleMultiplePermanentsChosen(player2, List.of(opposingLand.getId()));
+        }
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.HandCardChoice choice =

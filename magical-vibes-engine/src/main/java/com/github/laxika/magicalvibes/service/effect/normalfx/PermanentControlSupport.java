@@ -249,7 +249,8 @@ public class PermanentControlSupport {
 
             if (tokenBlueprint.tappedAndAttacking()) {
                 tokenPermanent.tap();
-                tokenPermanent.setAttacking(true);
+                tokenPermanent.enterAttacking(controllerId.equals(gameData.activePlayerId)
+                        && gameData.currentStep != null && gameData.currentStep.isCombatPhase());
             } else if (tokenBlueprint.tapped()) {
                 tokenPermanent.tap();
             }

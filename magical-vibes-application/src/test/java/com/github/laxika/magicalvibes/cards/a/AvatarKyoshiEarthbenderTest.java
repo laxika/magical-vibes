@@ -83,7 +83,6 @@ class AvatarKyoshiEarthbenderTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         earthbend(land);
         land.tap();
-
         earthbend(land);
 
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(16);
@@ -96,7 +95,8 @@ class AvatarKyoshiEarthbenderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvatarKyoshiEarthbender());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         earthbend(land);
-
+        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player1, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, land)).isTrue();
@@ -109,6 +109,7 @@ class AvatarKyoshiEarthbenderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvatarKyoshiEarthbender());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         earthbend(land);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, land));
         resolveAllTriggers();
@@ -121,6 +122,7 @@ class AvatarKyoshiEarthbenderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AvatarKyoshiEarthbender());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         earthbend(land);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, land));
         resolveAllTriggers();
@@ -146,8 +148,10 @@ class AvatarKyoshiEarthbenderTest extends BaseCardTest {
 
     private void earthbend(Permanent land) {
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, land.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.handlePermanentChosen(player1, land.getId());
+            harness.passBothPriorities();
+        });
     }
 
     private void assertReturnedAsOrdinaryTappedLand() {

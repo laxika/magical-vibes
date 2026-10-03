@@ -52,12 +52,11 @@ public class SacrificeTargetArtifactCreatureThenMaySearchLibraryForNoncreatureAr
         }
 
         String targetControllerName = gameData.playerIdToName.get(targetControllerId);
-        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
-            return;
+        if (gameQueryService.canEffectCauseSacrifice(gameData, targetControllerId, entry.getControllerId())
+                && permanentRemovalService.sacrificePermanentToGraveyard(gameData, target)) {
+            gameLogService.append(gameData,
+                    GameLog.textCardText(targetControllerName + " sacrifices ", target.getCard(), "."));
         }
-
-        gameLogService.append(gameData,
-                GameLog.textCardText(targetControllerName + " sacrifices ", target.getCard(), "."));
 
         CardAllOfPredicate noncreatureArtifact = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.ARTIFACT),

@@ -41,7 +41,7 @@ class AkroanPhalanxTest extends BaseCardTest {
     void vigilanceKeepsAttackerUntapped() {
         Permanent phalanx = addCreatureReady(player1, new AkroanPhalanx());
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(phalanx.isAttacking()).isTrue();
         assertThat(phalanx.isTapped()).isFalse();

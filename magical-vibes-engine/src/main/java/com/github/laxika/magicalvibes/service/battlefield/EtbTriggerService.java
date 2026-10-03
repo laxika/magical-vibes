@@ -415,11 +415,39 @@ public class EtbTriggerService {
                 independentEffects.forEach(combinedEffects::remove);
                 mandatoryEffects = List.copyOf(combinedEffects);
                 for (CardEffect independentEffect : independentEffects) {
-                    var independentFilter = independentEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            ? new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
-                            new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
-                            "Target must satisfy this ability's restrictions") : modeTargetFilter;
-                    queueMandatoryETBEffects(gameData, controllerId, card, null, List.of(),
+                    int independentGroup = card.getEffectTargetIndex(independentEffect);
+                    TargetFilter independentFilter = modeTargetFilter;
+                    List<UUID> independentTargets = targetIds;
+                    if (independentGroup >= 0) {
+                        int offset = 0;
+                        independentTargets = List.of();
+                        for (SpellTarget group : card.getSpellTargets()) {
+                            int maximum = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
+                            if (group.getDynamicMaxTargets() != null) {
+                                maximum = amountEvaluationService.evaluate(gameData, group.getDynamicMaxTargets(),
+                                        new AmountContext(controllerId, enteringPermanent, null, xValue, 0, false,
+                                                null, repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts,
+                                                card));
+                            }
+                            if (group.isXScaled()) maximum = Math.min(maximum, xValue);
+                            int size = Math.min(Math.max(0, maximum), targetIds.size() - offset);
+                            if (group.getIndex() == independentGroup) {
+                                independentFilter = kicked ? group.getKickedFilter() : group.getFilter();
+                                independentTargets = List.copyOf(targetIds.subList(offset, offset + size));
+                                break;
+                            }
+                            offset += size;
+                        }
+                    }
+                    if (independentFilter == null
+                            && independentEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                        independentFilter = new com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate(),
+                                "Target must satisfy this ability's restrictions");
+                    }
+                    UUID independentTargetId = independentTargets.isEmpty()
+                            ? independentGroup <= 0 ? targetId : null : independentTargets.getFirst();
+                    queueMandatoryETBEffects(gameData, controllerId, card, independentTargetId, independentTargets,
                             List.of(independentEffect), independentFilter, extraTriggerCopies, etbMode, xValue,
                             repeatedAdditionalCosts, convokeCreatureIds);
                 }
@@ -591,7 +619,9 @@ public class EtbTriggerService {
         triggerCollectionService.checkPermanentEntersFromExileTriggers(gameData, controllerId, card);
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
-        if (!faceDown && card.hasType(CardType.LAND)) {
+        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
+        if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
+                : gameQueryService.isLand(gameData, enteringPermanent))) {
             triggerCollectionService.checkEnchantedPlayerLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
@@ -774,7 +804,9 @@ public class EtbTriggerService {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             Map<UUID, Integer> dividedAssignments = otherEffects.stream().anyMatch(effect ->
                     effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                            && divided.etbAssignments() && divided.targetRestriction() == null)
+                            && divided.etbAssignments() && divided.targetRestriction() == null
+                            || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
+                            && prevention.etbAssignments())
                     ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
             if (!dividedAssignments.isEmpty()) gameData.pendingETBDamageAssignments = Map.of();
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
@@ -897,6 +929,11 @@ public class EtbTriggerService {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                 }
                 etbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                if (card.isAura() && !etbNeedsTarget
+                        && otherEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null
+                        || EffectResolution.targetsSpellOnStack(effect))) {
+                    etbEntry.setNonTargeting(true);
+                }
                 if (targetId != null && otherEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
                         && gameQueryService.findStackEntryByCardId(gameData, targetId) != null) {
                     etbEntry.setTargetZone(com.github.laxika.magicalvibes.model.Zone.STACK);
@@ -939,6 +976,7 @@ public class EtbTriggerService {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                     }
                     extraEtbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                    extraEtbEntry.setNonTargeting(etbEntry.isNonTargeting());
                     extraEtbEntry.setTargetZone(etbEntry.getTargetZone());
                     if (modeTargetFilter != null) {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);

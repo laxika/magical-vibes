@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -201,6 +202,41 @@ class AnafenzaTheForemostTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, anafenza.getId());
         harness.castAndResolveInstant(player1, 0, bears.getId());
 
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    void simultaneousDestructionDoesNotRestoreSuppressedReplacement() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble(), new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player1, 0, anafenza.getId()));
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    void simultaneousLethalDamageDoesNotRestoreSuppressedReplacement() {
+        Permanent anafenza = harness.addToBattlefieldAndReturn(player1, new AnafenzaTheForemost());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player1, 0, anafenza.getId()));
+        anafenza.setMarkedDamage(1);
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Anafenza, the Foremost");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(isExiled("Grizzly Bears")).isFalse();
     }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RubblebackRhino;
 import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AngelOfSerenity.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Unsummon.class,
-        ArmoryGuard.class, RubblebackRhino.class, UltimatePrice.class})
+        ArmoryGuard.class, RubblebackRhino.class, UltimatePrice.class, Humble.class})
 class AngelOfSerenityTest extends BaseCardTest {
 
     private AngelOfSerenity castAngel() {
@@ -99,6 +100,28 @@ class AngelOfSerenityTest extends BaseCardTest {
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Hill Giant");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void losingAbilitiesBeforeLeavingKeepsLinkedCardsExiled() {
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getCard().getId();
+        castAngel();
+        harness.handleMultipleCardsChosen(player1, List.of(bearsId));
+        resolveExileTrigger();
+        UUID angelPermanentId = harness.getPermanentId(player1, "Angel of Serenity");
+        harness.setHand(player2, List.of(new Humble(), new Unsummon()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player2, 0, angelPermanentId));
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player2, 0, angelPermanentId));
+
+        harness.assertNotOnBattlefield(player1, "Angel of Serenity");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bearsId)).isNotNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

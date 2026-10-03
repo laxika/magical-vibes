@@ -130,7 +130,7 @@ class ArchfiendOfSpiteTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.passBothPriorities();

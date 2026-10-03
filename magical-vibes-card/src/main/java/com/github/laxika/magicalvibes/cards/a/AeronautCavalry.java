@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -22,11 +21,10 @@ public class AeronautCavalry extends Card {
         // When this creature enters, put a +1/+1 counter on another target Soldier you control.
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.SOLDIER),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
-                "Target must be another Soldier creature you control"
+                "Target must be another Soldier you control"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }

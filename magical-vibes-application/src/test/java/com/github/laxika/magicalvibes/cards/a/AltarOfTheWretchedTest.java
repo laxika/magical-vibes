@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -103,15 +104,16 @@ class AltarOfTheWretchedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleMultipleCardsChosen(player1, List.of(material.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
 
-        Permanent bonemass = findBonemass();
-        assertThat(gqs.getEffectivePower(gd, bonemass)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bonemass, Keyword.FIRST_STRIKE)).isTrue();
-        assertThat(gqs.hasProtectionFrom(gd, bonemass, CardColor.BLACK)).isTrue();
-        assertThat(gqs.hasProtectionFrom(gd, bonemass, CardColor.RED)).isFalse();
+            Permanent bonemass = findBonemass();
+            assertThat(gqs.getEffectivePower(gd, bonemass)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, bonemass, Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, bonemass, CardColor.BLACK)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, bonemass, CardColor.RED)).isFalse();
+        });
     }
 
     @Test
@@ -122,11 +124,12 @@ class AltarOfTheWretchedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleMultipleCardsChosen(player1, List.of(material.getCard().getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
 
-        assertThat(als.canAttack(gd, findBonemass(), player1.getId())).isFalse();
+            assertThat(als.canAttack(gd, findBonemass(), player1.getId())).isFalse();
+        });
     }
 
     @Test

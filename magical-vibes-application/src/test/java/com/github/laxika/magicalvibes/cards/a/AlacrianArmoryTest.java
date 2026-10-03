@@ -146,7 +146,7 @@ class AlacrianArmoryTest extends BaseCardTest {
         Permanent opposingVehicle = addVehicle(player2);
 
         advanceToBeginningOfCombat();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> harness.passBothPriorities());
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

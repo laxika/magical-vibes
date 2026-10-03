@@ -28,7 +28,10 @@ public class ArahboTheFirstFang extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.CAT))));
 
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new CreateTokenEffect("Cat", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.CAT), Set.of(), Set.of()));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.CAT),

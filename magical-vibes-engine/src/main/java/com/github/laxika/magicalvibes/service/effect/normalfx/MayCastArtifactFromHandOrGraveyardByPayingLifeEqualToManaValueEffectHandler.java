@@ -36,7 +36,7 @@ public class MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffec
         if (hand != null) {
             eligible.addAll(hand.stream()
                     .filter(card -> !card.isCastOnlyFromGraveyard())
-                    .filter(this::isEligibleArtifact)
+                    .filter(card -> isEligibleArtifact(gameData, controllerId, card))
                     .filter(card -> canPayLife(gameData, controllerId, card))
                     .toList());
         }
@@ -44,7 +44,8 @@ public class MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffec
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             eligible.addAll(graveyard.stream()
-                    .filter(this::isEligibleArtifact)
+                    .filter(card -> gameQueryService.canCastSpellFromZone(gameData, card, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD, controllerId))
+                    .filter(card -> isEligibleArtifact(gameData, controllerId, card))
                     .filter(card -> canPayLife(gameData, controllerId, card))
                     .toList());
         }
@@ -61,8 +62,9 @@ public class MayCastArtifactFromHandOrGraveyardByPayingLifeEqualToManaValueEffec
         }
     }
 
-    private boolean isEligibleArtifact(Card card) {
-        return card.hasType(CardType.ARTIFACT) && !card.hasType(CardType.LAND);
+    private boolean isEligibleArtifact(GameData gameData, UUID controllerId, Card card) {
+        return gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, controllerId)
+                && !gameQueryService.cardHasType(card, CardType.LAND, gameData, controllerId);
     }
 
     private boolean canPayLife(GameData gameData, UUID playerId, Card card) {

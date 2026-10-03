@@ -53,16 +53,12 @@ public class MillTargetPlayerAndDrawIfTypeMilledEffectHandler implements NormalE
         int requestedCount = amountEvaluationService.evaluate(gameData, e.count(),
                 AmountContext.forStackEntry(entry, source));
         int cardsToMill = Math.min(Math.max(0, requestedCount), deck == null ? 0 : deck.size());
-        List<Card> preview = cardsToMill == 0 ? List.of() : new ArrayList<>(deck.subList(0, cardsToMill));
-
-        if (cardsToMill > 0) {
-            graveyardService.resolveMillPlayer(gameData, targetPlayerId, cardsToMill);
-        }
-
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        Set<Card> inGraveyard = graveyard == null ? Set.of() : new HashSet<>(graveyard);
-        boolean matchingCardMilled = preview.stream()
-                .anyMatch(card -> card.hasType(e.cardType()) && inGraveyard.contains(card));
+        List<Card> milledCards = requestedCount <= 0 ? List.of()
+                : graveyardService.resolveMillPlayerAndReturnAllMilledCards(
+                        gameData, targetPlayerId, requestedCount);
+        boolean matchingCardMilled = milledCards.stream()
+                .anyMatch(card -> gameQueryService.cardHasType(
+                        card, e.cardType(), gameData, targetPlayerId));
         if (matchingCardMilled) {
             UUID controllerId = entry.getControllerId();
             drawService.resolveDrawCard(gameData, controllerId);

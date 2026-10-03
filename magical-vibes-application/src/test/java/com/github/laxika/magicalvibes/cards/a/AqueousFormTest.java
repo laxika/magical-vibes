@@ -112,7 +112,7 @@ class AqueousFormTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     @Test
@@ -144,7 +144,7 @@ class AqueousFormTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }

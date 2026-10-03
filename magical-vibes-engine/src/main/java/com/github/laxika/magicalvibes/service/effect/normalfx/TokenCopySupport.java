@@ -87,10 +87,15 @@ public class TokenCopySupport {
         }
 
         List<Permanent> tokens = new ArrayList<>();
+        List<UUID> expandedAttackTargets = new ArrayList<>();
+        int sourceCardIndex = 0;
         Card artifactTokenTemplate = null;
         CreateTokenEffect manufactorOriginal = null;
         int manufactorAmount = 0;
         for (Card sourceCard : sourceCards) {
+            UUID sourceAttackTarget = attackTargetIds != null && sourceCardIndex < attackTargetIds.size()
+                    ? attackTargetIds.get(sourceCardIndex) : null;
+            sourceCardIndex++;
             Card tokenTemplate = buildTokenCopyCard(
                     sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
             if (copyException != null) {
@@ -123,6 +128,7 @@ public class TokenCopySupport {
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
                 tokens.add(new Permanent(tokenCard));
+                expandedAttackTargets.add(sourceAttackTarget);
             }
         }
         if (manufactorOriginal != null) {
@@ -200,8 +206,8 @@ public class TokenCopySupport {
             }
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
-                if (attackTargetIds != null && tokenIndex < attackTargetIds.size()) {
-                    tokenPermanent.setAttackTarget(attackTargetIds.get(tokenIndex));
+                if (attackTargetIds != null && tokenIndex < expandedAttackTargets.size()) {
+                    tokenPermanent.setAttackTarget(expandedAttackTargets.get(tokenIndex));
                 } else if (attackTargetIds == null && sourcePermanent != null) {
                     tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
                 }

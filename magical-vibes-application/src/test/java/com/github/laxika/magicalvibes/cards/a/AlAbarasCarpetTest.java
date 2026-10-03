@@ -90,7 +90,10 @@ class AlAbarasCarpetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+            resolveAllTriggers();
+        });
         resolveCombat(player2);
 
         harness.assertLife(player1, 20);

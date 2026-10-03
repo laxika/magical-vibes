@@ -9,11 +9,6 @@ public record RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEff
         implements CombatDamageTriggerContextEffect {
 
     @Override
-    public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.player());
-    }
-
-    @Override
     public TriggerContext combatDamageTriggerContext() {
         return TriggerContext.DAMAGED_PLAYER;
     }

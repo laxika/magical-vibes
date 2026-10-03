@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -62,8 +63,9 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                     gameLogService.append(gameData, GameLog.cardTextCard(other.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
                     continue;
                 }
-                int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
-                damageSupport.dealCreatureDamage(gameData, entry, other, damage, target);
+                StackEntry damageEntry = creatureDamageEntry(gameData, target, entry);
+                int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, damageEntry);
+                damageSupport.dealCreatureDamage(gameData, damageEntry, other, damage, target);
             }
         }
 
@@ -81,11 +83,17 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                 gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", other.getCard(), " prevented."));
                 continue;
             }
-            int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);
-            damageSupport.dealCreatureDamage(gameData, entry, target, damage, other);
+            StackEntry damageEntry = creatureDamageEntry(gameData, other, entry);
+            int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, damageEntry);
+            damageSupport.dealCreatureDamage(gameData, damageEntry, target, damage, other);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
-    
+    }
+
+    private StackEntry creatureDamageEntry(GameData gameData, Permanent source, StackEntry resolvingEntry) {
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), sourceControllerId,
+                resolvingEntry.getDescription(), List.of(), null, source.getId());
     }
 }

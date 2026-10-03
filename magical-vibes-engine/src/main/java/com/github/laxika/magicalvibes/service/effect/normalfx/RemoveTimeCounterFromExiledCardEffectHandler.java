@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.CastExiledCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -45,7 +47,6 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
         Integer counters = gameData.exiledCardTimeCounters.get(cardId);
         if (exiledEntry == null || counters == null || counters <= 0) {
             gameData.exiledCardTimeCounters.remove(cardId);
-            gameData.exiledCardsWithNonSuspendTimeCounters.remove(cardId);
             return;
         }
 
@@ -59,19 +60,36 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
             return;
         }
 
+        boolean hasAlaundoCastAbility = gameData.exiledCardsWithAlaundoCastAbility.contains(cardId);
+        boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
+                || exiledEntry.card().getHandActivatedAbilities().stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
         gameData.exiledCardTimeCounters.remove(cardId);
-        gameData.exiledCardsWithNonSuspendTimeCounters.remove(cardId);
         triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
                 gameData, exiledEntry.card(), exiledEntry.ownerId(), 0);
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                exiledEntry.card(),
-                exiledEntry.ownerId(),
-                List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(false, true)),
-                "Cast " + exiledEntry.card().getName() + " without paying its mana cost?",
-                cardId));
+        if (!hasAlaundoCastAbility && !hasSuspend) {
+            return;
+        }
+        if (hasAlaundoCastAbility) {
+            queueCastTrigger(gameData, exiledEntry, false);
+        }
+        if (hasSuspend) {
+            queueCastTrigger(gameData, exiledEntry, true);
+        }
         gameLogService.append(gameData,
                 GameLog.cardThen(exiledEntry.card(), " has no time counters left; its suspend ability may be cast."));
         log.info("Game {} - {} has no time counters left and may be cast from suspend",
                 gameData.id, exiledEntry.card().getName());
+    }
+
+    private void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean nativeSuspend) {
+        StackEntry castTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                exiledEntry.card(), exiledEntry.ownerId(), exiledEntry.card().getName() + "'s casting ability",
+                new ArrayList<>(List.of(new MayEffect(new CastExiledCardWithoutPayingManaCostEffect(
+                        exiledEntry.card().getId(), !nativeSuspend, nativeSuspend),
+                        "Cast " + exiledEntry.card().getName() + " without paying its mana cost?"))),
+                exiledEntry.card().getId(), (UUID) null);
+        castTrigger.setNonTargeting(true);
+        gameData.stack.add(castTrigger);
     }
 }

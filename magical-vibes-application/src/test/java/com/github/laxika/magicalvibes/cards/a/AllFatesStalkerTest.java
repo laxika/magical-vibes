@@ -188,6 +188,7 @@ class AllFatesStalkerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dual-Sun Adepts");
         assertThat(gd.findExiledCard(stalker.getId())).isNotNull();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

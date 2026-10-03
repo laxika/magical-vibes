@@ -120,7 +120,8 @@ class AssureAssembleTest extends BaseCardTest {
     @Test
     void assureDoesNotResolveWhenTargetLeavesBattlefield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new VernadiShieldmate());
-        harness.setHand(player1, List.of(new AssureAssemble()));
+        AssureAssemble spell = new AssureAssemble();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -130,6 +131,8 @@ class AssureAssembleTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(creature.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();
-        harness.assertInGraveyard(player1, "Assure // Assemble");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(com.github.laxika.magicalvibes.model.Card::getId)
+                .contains(spell.getId());
     }
 }

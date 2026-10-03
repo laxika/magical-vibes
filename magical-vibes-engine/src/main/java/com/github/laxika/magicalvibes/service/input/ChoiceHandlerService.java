@@ -235,6 +235,16 @@ public class ChoiceHandlerService {
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
+        if (colorChoice.context() instanceof ChoiceContext.DrawLookReplacementOrder choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            drawService.resolveChosenNextDrawLookAtTop(gameData, choice.playerId(), Integer.parseInt(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (colorChoice.context() instanceof ChoiceContext.VentureChoice choice) {
             ventureHandlerProvider.getObject().completeChoice(gameData, choice, colorName);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2527,7 +2537,7 @@ public class ChoiceHandlerService {
 
         ChoiceContext.TextChangeToWord choiceContext =
                 new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor, ctx.untilEndOfTurn(),
-                        isCreatureType);
+                        isCreatureType, ctx.excludedReplacementCreatureType());
 
         List<String> remainingOptions;
         String promptType;
@@ -2539,7 +2549,8 @@ public class ChoiceHandlerService {
             promptType = "basic land type";
         } else {
             remainingOptions = GameQueryService.TEXT_CHANGE_CREATURE_TYPES.stream()
-                    .filter(t -> !t.equals(chosenWord) && !t.equals("WALL"))
+                    .filter(t -> !t.equals(chosenWord) && (ctx.excludedReplacementCreatureType() == null
+                            || !t.equals(ctx.excludedReplacementCreatureType().name())))
                     .toList();
             promptType = "creature type";
         }
@@ -2559,7 +2570,9 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid color choice: " + chosenWord);
             }
         } else if (ctx.isCreatureType()) {
-            if (!GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord) || chosenWord.equals("WALL")) {
+            if (!GameQueryService.TEXT_CHANGE_CREATURE_TYPES.contains(chosenWord)
+                    || ctx.excludedReplacementCreatureType() != null
+                    && chosenWord.equals(ctx.excludedReplacementCreatureType().name())) {
                 throw new IllegalArgumentException("Invalid creature type choice: " + chosenWord);
             }
         } else {
@@ -2623,7 +2636,7 @@ public class ChoiceHandlerService {
         Card card = ctx.card();
         UUID controllerId = ctx.controllerId();
 
-        Permanent perm = new Permanent(card);
+        Permanent perm = ctx.preparedPermanent() == null ? new Permanent(card) : ctx.preparedPermanent();
         perm.setChosenName(cardName);
         if (ctx.attachedTo() != null) {
             perm.setAttachedTo(ctx.attachedTo());
@@ -2652,7 +2665,7 @@ public class ChoiceHandlerService {
             }
         } else {
             battlefieldEntryService.processCreatureETBEffects(
-                    gameData, controllerId, perm.getCard(), ctx.attachedTo(), true);
+                    gameData, controllerId, perm.getCard(), ctx.attachedTo(), ctx.preparedPermanent() == null);
         }
 
         if (!gameData.interaction.isAwaitingInput()) {
@@ -3307,6 +3320,14 @@ public class ChoiceHandlerService {
                     gameData.pendingEffectResolutionEntry != null
                             ? gameData.pendingEffectResolutionEntry.getControllerId()
                             : gameData.currentlyResolvingControllerId);
+        } else if (ChoiceContext.AddAnotherCounterTypeChoice.ENERGY.equals(choice)) {
+            UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
+            int amount = gameQueryService.replaceEnergyCounters(gameData, targetId, 1);
+            if (amount > 0) {
+                gameData.setPlayerEnergyCounters(targetId,
+                        gameData.playerEnergyCounters.getOrDefault(targetId, 0) + amount);
+                triggerCollectionService.checkEnergyGainTriggers(gameData, targetId, amount);
+            }
         } else {
             CounterType counterType = ctx.counterTypes().stream()
                     .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))

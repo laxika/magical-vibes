@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AngelicRenewal.class, CruelEdict.class, GrizzlyBears.class, WrathOfGod.class})
+@CardUsed({AngelicRenewal.class, CruelEdict.class, GrizzlyBears.class, WrathOfGod.class, StealEnchantment.class})
 class AngelicRenewalTest extends BaseCardTest {
 
     /** Player 2 edicts away player 1's only creature, firing Angelic Renewal's death trigger. */
@@ -215,9 +216,7 @@ class AngelicRenewalTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         putIntoGraveyard(creature);
 
-        gd.playerBattlefields.get(player1.getId()).remove(renewal);
-        gd.playerBattlefields.get(player2.getId()).add(renewal);
-        gd.stolenCreatures.put(renewal.getId(), player1.getId());
+        harness.addToBattlefieldAndReturn(player2, new StealEnchantment()).setAttachedTo(renewal.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
