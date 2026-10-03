@@ -55,4 +55,34 @@ class CaptainSisayTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertNotInHand(player1, "Ancient Kavu");
     }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a legendary card is available")
+    void mayFailToFindLegendaryCard() {
+        setUpCaptainSisay();
+        CrosisThePurger crosis = new CrosisThePurger();
+        AncientKavu kavu = new AncientKavu();
+        harness.setLibrary(player1, List.of(crosis, kavu));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Crosis, the Purger");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(crosis, kavu);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without a choice")
+    void emptyLibrarySearchCompletes() {
+        setUpCaptainSisay();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Captain Sisay").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
 }
