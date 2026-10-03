@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.a.Atogatog;
 import com.github.laxika.magicalvibes.cards.a.Auramancer;
 import com.github.laxika.magicalvibes.cards.k.KirtarsDesire;
 import com.github.laxika.magicalvibes.cards.o.OtarianJuggernaut;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.Repel;
 import com.github.laxika.magicalvibes.cards.s.SecondThoughts;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EarnestFellowship.class, Auramancer.class, OtarianJuggernaut.class,
-        Atogatog.class, Repel.class, SecondThoughts.class, KirtarsDesire.class})
+        Atogatog.class, Repel.class, SecondThoughts.class, KirtarsDesire.class, Opalescence.class})
 class EarnestFellowshipTest extends BaseCardTest {
 
     @Test
@@ -114,6 +115,54 @@ class EarnestFellowshipTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EarnestFellowship());
         Permanent target = addCreatureReady(player2, new Auramancer());
 
+        harness.setHand(player1, List.of(new KirtarsDesire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
+    @Test
+    @DisplayName("A spell of a different color can target a colored creature")
+    void differentColorSpellCanTargetCreature() {
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        Permanent target = addCreatureReady(player2, new Auramancer());
+        harness.setHand(player1, List.of(new Repel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Auramancer");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(target.getCard());
+    }
+
+    @Test
+    @DisplayName("An already attached Aura goes to the graveyard when protection is granted")
+    void existingSameColorAuraFallsOff() {
+        Permanent target = addCreatureReady(player2, new Auramancer());
+        harness.setHand(player1, List.of(new KirtarsDesire(), new EarnestFellowship()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Kirtar's Desire");
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Earnest Fellowship");
+        harness.assertOnBattlefield(player2, "Auramancer");
+        harness.assertNotOnBattlefield(player1, "Kirtar's Desire");
+        harness.assertInGraveyard(player1, "Kirtar's Desire");
+    }
+
+    @Test
+    @DisplayName("Earnest Fellowship has protection from white when it becomes a creature")
+    void animatedFellowshipProtectsItself() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new EarnestFellowship());
         harness.setHand(player1, List.of(new KirtarsDesire()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
