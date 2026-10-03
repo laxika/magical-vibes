@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -132,6 +130,57 @@ class DakmorLancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can be cast when there are no legal nonblack creatures")
+    void canBeCastWithoutLegalTargets() {
+        harness.addToBattlefield(player2, new ScatheZombies());
+        harness.castFromHand(player1, new DakmorLancer(), "{4}{B}{B}");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Dakmor Lancer");
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can destroy a nonblack creature controlled by its controller")
+    void canDestroyOwnCreature() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.setHand(player1, List.of(new DakmorLancer()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castCreature(player1, 0, targetId);
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Dakmor Lancer");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB still destroys its target after Dakmor Lancer leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.setHand(player1, List.of(new DakmorLancer()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Dakmor Lancer");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dakmor Lancer");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
