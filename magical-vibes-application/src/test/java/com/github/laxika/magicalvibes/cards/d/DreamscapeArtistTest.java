@@ -129,6 +129,60 @@ class DreamscapeArtistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The selected lands enter together after the search choices are complete")
+    void selectedLandsEnterSimultaneouslyAndUntapped() {
+        Permanent artist = addCreatureReady(player1, new DreamscapeArtist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactly(artist.getCard());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactlyInAnyOrder(artist.getCard(), forest, island);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Island").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("May stop after finding one basic land even when another is available")
+    void mayFindOnlyOneOfTwoAvailableBasicLands() {
+        Permanent artist = addCreatureReady(player1, new DreamscapeArtist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest, island));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard)
+                .containsExactlyInAnyOrder(artist.getCard(), forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLUE, 3);
     }
