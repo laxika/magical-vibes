@@ -63,7 +63,7 @@ class DreadSlagTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Dies when three cards reduce its toughness to zero")
+    @DisplayName("Dies when three cards reduce its toughness below zero")
     void diesWhenReducedToZeroToughness() {
         harness.setHand(player1, handOf(3));
         addDreadSlag(player1);
@@ -83,8 +83,7 @@ class DreadSlagTest extends BaseCardTest {
         addCreatureReady(player1, new DreadSlag());
         Permanent blocker = addCreatureReady(player2, new MistralCharger());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -97,6 +96,33 @@ class DreadSlagTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dread Slag");
     }
 
+    @Test
+    @DisplayName("Grows immediately when its controller's hand becomes empty")
+    void growsWhenHandEmpties() {
+        harness.setHand(player1, handOf(2));
+        Permanent dreadSlag = addDreadSlag(player1);
+        assertThat(gqs.getEffectivePower(gd, dreadSlag)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, dreadSlag)).isEqualTo(1);
+
+        harness.setHand(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, dreadSlag)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, dreadSlag)).isEqualTo(9);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Dread Slag");
+    }
+
+    @Test
+    @DisplayName("Casting Dread Slag removes it from the hand before its static penalty applies")
+    void castingWithNoOtherCardsLeavesNoPenalty() {
+        harness.castFromHand(player1, new DreadSlag(), "{3}{B}{R}");
+        harness.passBothPriorities();
+
+        Permanent dreadSlag = findPermanent(player1, "Dread Slag");
+        assertThat(gqs.getEffectivePower(gd, dreadSlag)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, dreadSlag)).isEqualTo(9);
+        harness.assertOnBattlefield(player1, "Dread Slag");
+    }
     private Permanent addDreadSlag(Player player) {
         return harness.addToBattlefieldAndReturn(player, new DreadSlag());
     }
