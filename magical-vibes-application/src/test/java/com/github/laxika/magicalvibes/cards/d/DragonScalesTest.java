@@ -71,7 +71,7 @@ class DragonScalesTest extends BaseCardTest {
     }
 
     @Test
-    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+    void acceptedReturnStaysInGraveyardWhenEnteringCreatureLeavesBeforeResolution() {
         harness.setGraveyard(player1, List.of(new DragonScales()));
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
 
@@ -82,8 +82,33 @@ class DragonScalesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gameLogContains("Dragon Scales returns to the battlefield unattached.")).isTrue();
+        assertThat(gameLogContains("Dragon Scales returns to the battlefield")).isFalse();
         harness.assertInGraveyard(player1, "Dragon Scales");
+        harness.assertNotOnBattlefield(player1, "Dragon Scales");
+    }
+
+    @Test
+    void returnDoesNothingWhenSourceLeavesGraveyardBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new DragonScales()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
+        harness.setGraveyard(player1, List.of());
+
+        resolveMayAbility(true);
+
+        harness.assertNotOnBattlefield(player1, "Dragon Scales");
+        harness.assertNotInGraveyard(player1, "Dragon Scales");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void creatureEnteringDoesNotTriggerScalesInHand() {
+        harness.setHand(player1, List.of(new DragonScales()));
+
+        harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Dragon Scales");
         harness.assertNotOnBattlefield(player1, "Dragon Scales");
     }
 
