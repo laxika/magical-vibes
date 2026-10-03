@@ -45,6 +45,30 @@ class DauthiHorrorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Dauthi Horror can block another creature with shadow")
+    void canBlockCreatureWithShadow() {
+        Permanent attacker = addCreatureReady(player1, new DauthiGhoul());
+        Permanent blocker = addCreatureReady(player2, new DauthiHorror());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        declareBlock(blocker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Dauthi Horror cannot block a creature without shadow")
+    void cannotBlockCreatureWithoutShadow() {
+        Permanent attacker = addCreatureReady(player1, new MoggFanatic());
+        Permanent blocker = addCreatureReady(player2, new DauthiHorror());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private Permanent setUpCombat(com.github.laxika.magicalvibes.model.Card blocker) {
         Permanent blockerPerm = addCreatureReady(player2, blocker);
 
