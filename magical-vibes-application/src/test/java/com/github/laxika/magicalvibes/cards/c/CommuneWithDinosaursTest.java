@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FirecannonBlast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CommuneWithDinosaurs.class, ChargingMonstrosaur.class, FirecannonBlast.class, Plains.class, Forest.class})
 class CommuneWithDinosaursTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Commune with Dinosaurs puts it on the stack")
@@ -34,7 +34,7 @@ class CommuneWithDinosaursTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Commune with Dinosaurs");
+        assertThat(entry.getCard()).isInstanceOf(CommuneWithDinosaurs.class);
     }
 
     @Test
@@ -42,16 +42,15 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     void resolvesOfferingDinosaursAndLands() {
         setupTopFive(List.of(
                 new ChargingMonstrosaur(),
-                new Shock(),
-                new Shock(),
+                new FirecannonBlast(),
+                new FirecannonBlast(),
                 new Plains(),
                 new Forest()
         ));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -66,20 +65,19 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     @DisplayName("Choosing a Dinosaur puts it into hand then orders rest on bottom")
     void choosingDinosaurThenOrderingBottom() {
         ChargingMonstrosaur dino = new ChargingMonstrosaur();
-        Shock shock1 = new Shock();
-        Shock shock2 = new Shock();
+        FirecannonBlast blast1 = new FirecannonBlast();
+        FirecannonBlast blast2 = new FirecannonBlast();
         Plains plains = new Plains();
         Forest forest = new Forest();
-        setupTopFive(List.of(dino, shock1, shock2, plains, forest));
+        setupTopFive(List.of(dino, blast1, blast2, plains, forest));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose Charging Monstrosaur
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Charging Monstrosaur");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -90,21 +88,20 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     @DisplayName("Choosing a land puts it into hand")
     void choosingLandPutsIntoHand() {
         ChargingMonstrosaur dino = new ChargingMonstrosaur();
-        Shock shock1 = new Shock();
-        Shock shock2 = new Shock();
+        FirecannonBlast blast1 = new FirecannonBlast();
+        FirecannonBlast blast2 = new FirecannonBlast();
         Plains plains = new Plains();
         Forest forest = new Forest();
-        setupTopFive(List.of(dino, shock1, shock2, plains, forest));
+        setupTopFive(List.of(dino, blast1, blast2, plains, forest));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The eligible cards are: Charging Monstrosaur (0), Plains (1), Forest (2)
         // Choose Plains (index 1)
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         harness.assertInHand(player1, "Plains");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -116,20 +113,19 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     void mayChooseNothing() {
         setupTopFive(List.of(
                 new ChargingMonstrosaur(),
-                new Shock(),
-                new Shock(),
+                new FirecannonBlast(),
+                new FirecannonBlast(),
                 new Plains(),
                 new Forest()
         ));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -140,17 +136,16 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     @DisplayName("If top five has no Dinosaurs or lands, directly reorder to bottom")
     void noMatchesDirectlyReordersBottom() {
         setupTopFive(List.of(
-                new Shock(),
-                new Shock(),
-                new Shock(),
-                new Shock(),
-                new Shock()
+                new FirecannonBlast(),
+                new FirecannonBlast(),
+                new FirecannonBlast(),
+                new FirecannonBlast(),
+                new FirecannonBlast()
         ));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -162,29 +157,111 @@ class CommuneWithDinosaursTest extends BaseCardTest {
     void goesToGraveyardAfterResolving() {
         setupTopFive(List.of(
                 new ChargingMonstrosaur(),
-                new Shock(),
-                new Shock(),
+                new FirecannonBlast(),
+                new FirecannonBlast(),
                 new Plains(),
                 new Forest()
         ));
         harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1, 2, 3)));
 
         harness.assertInGraveyard(player1, "Commune with Dinosaurs");
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Only the top five are inspected and the remainder stays above the ordered bottom cards")
+    void preservesUnlookedCardsAndChosenBottomOrder() {
+        ChargingMonstrosaur dinosaur = new ChargingMonstrosaur();
+        FirecannonBlast first = new FirecannonBlast();
+        FirecannonBlast second = new FirecannonBlast();
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        ChargingMonstrosaur sixth = new ChargingMonstrosaur();
+        Forest seventh = new Forest();
+        harness.setLibrary(player1, List.of(dinosaur, first, second, plains, forest, sixth, seventh));
+        harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(dinosaur, plains, forest);
+        harness.handleCardChosen(player1, 0);
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(3, 1, 0, 2)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(dinosaur);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(sixth, seventh, forest, second, first, plains);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A single eligible card in a short library can still be declined")
+    void mayDeclineOnlyEligibleCardInShortLibrary() {
+        Forest forest = new Forest();
+        FirecannonBlast other = new FirecannonBlast();
+        harness.setLibrary(player1, List.of(forest, other));
+        harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, -1);
+        GameData gd = harness.getGameData();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other, forest);
+        harness.assertInGraveyard(player1, "Commune with Dinosaurs");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing the only card in the library completes resolution without a reorder")
+    void choosesOnlyLibraryCard() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Commune with Dinosaurs");
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or drawing a card")
+    void emptyLibraryResolves() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new CommuneWithDinosaurs()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Commune with Dinosaurs");
+    }
     private void setupTopFive(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }
