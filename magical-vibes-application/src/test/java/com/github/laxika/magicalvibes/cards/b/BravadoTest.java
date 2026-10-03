@@ -101,6 +101,40 @@ class BravadoTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's creature gets no bonus when the Aura controller controls no creatures")
+    void opponentHostGetsNoBonusWithoutOwnCreatures() {
+        Permanent host = harness.addToBattlefieldAndReturn(player2, new BullHippo());
+        harness.addToBattlefield(player2, new BullHippo());
+        harness.addToBattlefield(player1, new WornPowerstone());
+        harness.setHand(player1, List.of(new Bravado()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bravado").getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two Bravados stack without counting either Aura as a creature")
+    void multipleAurasStack() {
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new BullHippo());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new BullHippo());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Bravado());
+        first.setAttachedTo(host.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Bravado());
+        second.setAttachedTo(host.getId());
+
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
         harness.addToBattlefield(player1, new WornPowerstone());
