@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChelonianTackle.class, GrizzlyBears.class, LlanowarElves.class})
 class ChelonianTackleTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Boost only — single target creature you control gets +0/+10")
@@ -93,18 +94,12 @@ class ChelonianTackleTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature as second target")
     void cannotTargetOwnCreatureAsSecondTarget() {
-        GrizzlyBears bear1 = new GrizzlyBears();
-        GrizzlyBears bear2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bear1);
-        harness.addToBattlefield(player1, bear2);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ChelonianTackle()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        List<Permanent> bf = harness.getGameData().playerBattlefields.get(player1.getId());
-        UUID id1 = bf.get(0).getId();
-        UUID id2 = bf.get(1).getId();
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(id1, id2)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear1.getId(), bear2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
     }
@@ -127,5 +122,37 @@ class ChelonianTackleTest extends BaseCardTest {
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getToughnessModifier()).isEqualTo(10);
+    }
+
+    @Test
+    void noFightOrBoostToOpponentWhenFirstTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new ChelonianTackle()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId()));
+
+        harness.getGameData().playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(elves.getToughnessModifier()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Chelonian Tackle");
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ChelonianTackle()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castSorcery(player1, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+        assertThat(bear.getToughnessModifier()).isEqualTo(10);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(bear.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
