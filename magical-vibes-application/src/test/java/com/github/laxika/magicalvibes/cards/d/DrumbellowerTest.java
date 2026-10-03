@@ -76,4 +76,35 @@ class DrumbellowerTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Drumbellower untaps summoning-sick creatures without removing summoning sickness")
+    void untapsSummoningSickCreatures() {
+        Permanent drumbellower = harness.addToBattlefieldAndReturn(player1, new Drumbellower());
+        drumbellower.tap();
+
+        harness.performUntapStep(player2);
+
+        assertThat(drumbellower.isTapped()).isFalse();
+        assertThat(drumbellower.isSummoningSick()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping during an opponent's turn does not consume a controller's next-untap restriction")
+    void opponentsUntapDoesNotConsumeControllersUntapRestriction() {
+        Permanent drumbellower = addCreatureReady(player1, new Drumbellower());
+        drumbellower.setSkipUntapCount(1);
+        drumbellower.setSkipUntapControllerId(player1.getId());
+        drumbellower.tap();
+
+        harness.performUntapStep(player2);
+
+        assertThat(drumbellower.isTapped()).isFalse();
+        drumbellower.tap();
+
+        harness.performUntapStep(player1);
+
+        assertThat(drumbellower.isTapped()).isTrue();
+    }
 }
