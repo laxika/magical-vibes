@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.Befoul;
+import com.github.laxika.magicalvibes.cards.h.HideousLaughter;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DrippingTongueZubera.class, Befoul.class, SakuraTribeElder.class})
+@CardUsed({DrippingTongueZubera.class, Befoul.class, SakuraTribeElder.class, HideousLaughter.class})
 class DrippingTongueZuberaTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,66 @@ class DrippingTongueZuberaTest extends BaseCardTest {
         assertThat(spirit.getCard().getPower()).isEqualTo(1);
         assertThat(spirit.getCard().getToughness()).isEqualTo(1);
         assertThat(spirit.getCard().getSubtypes()).containsExactly(CardSubtype.SPIRIT);
+    }
+
+    @Test
+    @DisplayName("Each simultaneous death trigger counts all Zubera that died")
+    void countsSimultaneousDeaths() {
+        harness.addToBattlefield(player1, new DrippingTongueZubera());
+        harness.addToBattlefield(player2, new DrippingTongueZubera());
+        harness.addToBattlefield(player2, new SakuraTribeElder());
+        harness.setHand(player1, List.of(new HideousLaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Spirit")).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Sakura-Tribe Elder");
+    }
+
+    @Test
+    @DisplayName("Counts deaths occurring in response to the death trigger")
+    void countsDeathsAtResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DrippingTongueZubera());
+        harness.addToBattlefield(player2, new DrippingTongueZubera());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Befoul(), new HideousLaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 8);
+
+        harness.castAndResolveSorcery(player1, 0, first.getId());
+        assertThat(spiritTokens()).isZero();
+        harness.castAndResolveInstant(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(spiritTokens()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not count Zubera deaths from the previous turn")
+    void resetsDeathCountEachTurn() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DrippingTongueZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DrippingTongueZubera());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Befoul()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player1, 0, first.getId());
+        resolveAllTriggers();
+
+        harness.setLibrary(player2, List.of(new Befoul()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Befoul()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player2, 0, second.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Spirit")).isZero();
     }
 
     private long spiritTokens() {
