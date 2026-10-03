@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -81,6 +82,52 @@ class DreamPillagerTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(shock.getId());
     }
 
+    @Test
+    @DisplayName("A short library exiles only the available cards without losing the game")
+    void shortLibraryExilesAvailableCards() {
+        addAttackingPillager(player1);
+        Card spell = new Shock();
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(spell, land));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell, land);
+        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Combat damage with an empty library does not cause a loss")
+    void emptyLibraryDoesNotCauseLoss() {
+        addAttackingPillager(player1);
+        harness.setLibrary(player1, List.of());
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The exile count uses damage dealt even if power changes before resolution")
+    void exileCountSnapshotsCombatDamage() {
+        Permanent pillager = addAttackingPillager(player1);
+        pillager.setPowerModifier(-2);
+        Card first = new Shock();
+        Card second = new Forest();
+        Card third = new Shock();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        resolveCombat();
+        pillager.setPowerModifier(3);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
     private Permanent addAttackingPillager(Player player) {
         Permanent pillager = addCreatureReady(player, new DreamPillager());
         pillager.setAttacking(true);
@@ -89,6 +136,6 @@ class DreamPillagerTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
     }
 }
