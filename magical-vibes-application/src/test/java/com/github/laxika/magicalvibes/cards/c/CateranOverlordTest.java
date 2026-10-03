@@ -19,6 +19,55 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CateranOverlordTest extends BaseCardTest {
 
     @Test
+    void canSacrificeItselfButRegenerationDoesNotReturnIt() {
+        Permanent overlord = addCreatureReady(player1, new CateranOverlord());
+        overlord.setRegenerationShield(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, overlord.getId());
+
+        harness.assertNotOnBattlefield(player1, "Cateran Overlord");
+        harness.assertInGraveyard(player1, "Cateran Overlord");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cateran Overlord");
+        harness.assertInGraveyard(player1, "Cateran Overlord");
+    }
+
+    @Test
+    void canRegenerateWhileTappedWithoutPayingMana() {
+        Permanent overlord = addCreatureReady(player1, new CateranOverlord());
+        overlord.setTapped(true);
+        Permanent fodder = addCreatureReady(player1, new CeremonialGuard());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        harness.assertInGraveyard(player1, "Ceremonial Guard");
+        assertThat(overlord.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(overlord.getRegenerationShield()).isEqualTo(1);
+        assertThat(overlord.isTapped()).isTrue();
+    }
+
+    @Test
+    void canFailToFindEvenWhenAnEligibleMercenaryExists() {
+        addCreatureReady(player1, new CateranOverlord());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setLibrary(player1, List.of(new CateranSlaver()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Cateran Slaver");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Cateran Slaver");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+    @Test
     void sacrificingACreatureRegeneratesCateranOverlord() {
         Permanent overlord = addCreatureReady(player1, new CateranOverlord());
         Permanent fodder = addCreatureReady(player1, new CeremonialGuard());
