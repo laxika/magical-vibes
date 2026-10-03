@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.UUID;
 
@@ -83,6 +85,75 @@ class CapriciousSorcererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"UPKEEP", "DRAW"})
+    void canActivateDuringBeginningPhase(TurnStep step) {
+        setupSorcererOnMyTurn(step);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"DECLARE_BLOCKERS", "COMBAT_DAMAGE",
+            "END_OF_COMBAT", "POSTCOMBAT_MAIN", "END_STEP"})
+    void cannotActivateLaterInTurn(TurnStep step) {
+        setupSorcererOnMyTurn(step);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+        assertThat(findPermanent(player1, "Capricious Sorcerer").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateBeforeAttackersInSecondCombat() {
+        setupSorcererOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    void cannotActivateWhenAlreadyTapped() {
+        setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        findPermanent(player1, "Capricious Sorcerer").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetItsController() {
+        setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void canTargetItself() {
+        setupSorcererOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Capricious Sorcerer"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Capricious Sorcerer");
+        harness.assertInGraveyard(player1, "Capricious Sorcerer");
     }
 
     private void setupSorcererOnMyTurn(TurnStep step) {
