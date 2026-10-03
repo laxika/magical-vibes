@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
+import com.github.laxika.magicalvibes.cards.h.Hushbringer;
 import com.github.laxika.magicalvibes.cards.p.Python;
 import com.github.laxika.magicalvibes.cards.w.WandOfDenial;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -25,9 +26,8 @@ class DeathWatchTest extends BaseCardTest {
     void enchantedCreatureDeathDrainsPowerGainsToughness() {
         // Python is 3/2 — loss tracks power (3), gain tracks toughness (2).
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
 
         int p1Before = gd.getLife(player1.getId());
         int p2Before = gd.getLife(player2.getId());
@@ -44,9 +44,8 @@ class DeathWatchTest extends BaseCardTest {
     @DisplayName("Enchanting your own creature applies both halves to you")
     void ownCreatureBothHalves() {
         Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new HulkingCyclops());
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(cyclops.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
 
         int lifeBefore = gd.getLife(player1.getId());
 
@@ -63,9 +62,8 @@ class DeathWatchTest extends BaseCardTest {
     void usesLastKnownEffectivePowerAndToughness() {
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
         python.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
 
         int p1Before = gd.getLife(player1.getId());
         int p2Before = gd.getLife(player2.getId());
@@ -82,10 +80,9 @@ class DeathWatchTest extends BaseCardTest {
     @DisplayName("Resolves both life changes before checking state-based actions")
     void resolvesBothLifeChangesBeforeCheckingStateBasedActions() {
         Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new HulkingCyclops());
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(cyclops.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
-        gd.playerLifeTotals.put(player1.getId(), 5);
+        harness.setLife(player1, 5);
 
         cyclops.setMarkedDamage(5);
         harness.runStateBasedActions();
@@ -99,10 +96,9 @@ class DeathWatchTest extends BaseCardTest {
     @DisplayName("The controller's life gain still happens when the creature's controller reaches zero")
     void gainsLifeAfterCreatureControllerReachesZero() {
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
-        gd.playerLifeTotals.put(player2.getId(), 3);
+        harness.setLife(player2, 3);
 
         python.setMarkedDamage(2);
         harness.runStateBasedActions();
@@ -114,11 +110,9 @@ class DeathWatchTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new WandOfDenial());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WandOfDenial());
         harness.setHand(player1, List.of(new DeathWatch()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-
-        Permanent artifact = findPermanent(player1, "Wand of Denial");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -129,9 +123,8 @@ class DeathWatchTest extends BaseCardTest {
     @DisplayName("Does not trigger when the enchanted creature is exiled")
     void doesNotTriggerWhenEnchantedCreatureIsExiled() {
         Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
-        Permanent deathWatch = new Permanent(new DeathWatch());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
         deathWatch.setAttachedTo(python.getId());
-        gd.playerBattlefields.get(player1.getId()).add(deathWatch);
         int p1Before = gd.getLife(player1.getId());
         int p2Before = gd.getLife(player2.getId());
 
@@ -139,6 +132,95 @@ class DeathWatchTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(p1Before);
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2Before);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Death Watch attaches it and its ability survives the Aura going to the graveyard")
+    void castAuraTriggersAfterCreatureDies() {
+        Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
+        harness.setHand(player1, List.of(new DeathWatch()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, python.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Death Watch").getAttachedTo()).isEqualTo(python.getId());
+        python.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(countPermanents(player1, "Death Watch")).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Negative power causes no life loss but positive toughness still grants life")
+    void negativePowerDoesNotReverseLifeLoss() {
+        Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
+        python.setPowerModifier(-4);
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
+        deathWatch.setAttachedTo(python.getId());
+
+        python.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Negative toughness causes no life gain but positive power still causes life loss")
+    void negativeToughnessDoesNotReverseLifeGain() {
+        Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
+        deathWatch.setAttachedTo(python.getId());
+        python.setToughnessModifier(-3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each Death Watch attached to the same creature triggers independently")
+    void multipleAurasEachTrigger() {
+        Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
+        first.setAttachedTo(python.getId());
+        second.setAttachedTo(python.getId());
+
+        python.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(14);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+    }
+
+    @Test
+    @CardUsed({DeathWatch.class, Python.class, Hushbringer.class})
+    @DisplayName("Hushbringer prevents Death Watch from triggering when the enchanted creature dies")
+    void hushbringerSuppressesDeathTrigger() {
+        harness.addToBattlefield(player1, new Hushbringer());
+        Permanent python = harness.addToBattlefieldAndReturn(player2, new Python());
+        Permanent deathWatch = harness.addToBattlefieldAndReturn(player1, new DeathWatch());
+        deathWatch.setAttachedTo(python.getId());
+
+        python.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
     }
 }
