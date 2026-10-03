@@ -93,4 +93,37 @@ class ClutchOfUndeathTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Multiple Clutches give a Zombie cumulative bonuses")
+    void multipleClutchesBoostZombie() {
+        Permanent zombie = addCreatureReady(player2, new TwistedAbomination());
+        int basePower = gqs.getEffectivePower(gd, zombie);
+        int baseToughness = gqs.getEffectiveToughness(gd, zombie);
+
+        attach(zombie);
+        attach(zombie);
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(basePower + 6);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(baseToughness + 6);
+    }
+
+    @Test
+    @DisplayName("Cumulative penalties kill a non-Zombie and put its Auras into the graveyard")
+    void multipleClutchesKillNonZombie() {
+        Permanent creature = addCreatureReady(player2, new ElvishAberration());
+        attach(creature);
+        harness.setHand(player1, List.of(new ClutchOfUndeath()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Elvish Aberration");
+        harness.assertInGraveyard(player2, "Elvish Aberration");
+        harness.assertNotOnBattlefield(player1, "Clutch of Undeath");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof ClutchOfUndeath)
+                .hasSize(2);
+    }
 }
