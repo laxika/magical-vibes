@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WirewoodElf;
 import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrownOfFury.class, ElvishWarrior.class, GlorySeeker.class, WirewoodElf.class, WirewoodLodge.class})
+@CardUsed({CrownOfFury.class, ElvishWarrior.class, GlorySeeker.class, Shock.class, WirewoodElf.class, WirewoodLodge.class})
 class CrownOfFuryTest extends BaseCardTest {
 
     @Test
@@ -109,6 +110,71 @@ class CrownOfFuryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, lateElf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, lateElf)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, lateElf, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Aura can enchant an opponent's creature and its controller can sacrifice it")
+    void canEnchantAndBoostOpponentsCreature() {
+        Permanent warrior = addCreatureReady(player2, new ElvishWarrior());
+        Permanent elf = addCreatureReady(player1, new WirewoodElf());
+        harness.setHand(player1, List.of(new CrownOfFury()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, warrior.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+        Permanent crown = findPermanent(player1, "Crown of Fury");
+        assertThat(crown.getAttachedTo()).isEqualTo(warrior.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertInGraveyard(player1, "Crown of Fury");
+    }
+
+    @Test
+    @DisplayName("Sharing creatures entering before resolution receive both effects")
+    void sacrificeIncludesCreaturesEnteringBeforeResolution() {
+        Permanent warrior = addCreatureReady(player1, new ElvishWarrior());
+        Permanent crown = attachCrown(warrior);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+
+        Permanent elf = harness.enterBattlefieldAndReturn(player2, new WirewoodElf());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrifice uses the enchanted creature's last known types if it dies in response")
+    void sacrificeUsesLastKnownCreatureTypes() {
+        Permanent host = addCreatureReady(player1, new WirewoodElf());
+        Permanent warrior = addCreatureReady(player2, new ElvishWarrior());
+        Permanent human = addCreatureReady(player2, new GlorySeeker());
+        Permanent crown = attachCrown(host);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown), null, null);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, host.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Wirewood Elf");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private Permanent attachCrown(Permanent host) {
