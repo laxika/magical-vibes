@@ -136,4 +136,50 @@ class CrimsonManticoreTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Mons's Goblin Raiders");
     }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new CrimsonManticore());
+        Permanent attacker = addAttacker(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Can deal exactly one damage to its controller's attacking creature")
+    void damagesOwnAttackingCreature() {
+        addReadyManticore();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not damage a target that stops blocking before resolution")
+    void targetStopsBlockingBeforeResolution() {
+        addReadyManticore();
+        Permanent attacker = addAttacker(player1);
+        Permanent blocker = addBlocker(player2, attacker);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        blocker.getBlockingTargetIds().clear();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mons's Goblin Raiders");
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
 }
