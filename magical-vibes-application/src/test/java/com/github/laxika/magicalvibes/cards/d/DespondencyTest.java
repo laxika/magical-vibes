@@ -61,4 +61,57 @@ class DespondencyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("A Despondency controlled by another player returns to its owner's hand")
+    void returnsToOwnerWhenControlledByOpponent() {
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        Despondency card = new Despondency();
+        card.setOwnerId(player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, card);
+        aura.setAttachedTo(gorilla.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+
+        harness.assertInGraveyard(player1, "Despondency");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Despondency");
+        harness.assertNotInGraveyard(player1, "Despondency");
+        harness.assertNotInHand(player2, "Despondency");
+    }
+
+    @Test
+    @DisplayName("The return ability returns only its own Despondency")
+    void doesNotReturnOtherCopiesFromGraveyard() {
+        Despondency otherCopy = new Despondency();
+        harness.setGraveyard(player1, List.of(otherCopy));
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Despondency());
+        aura.setAttachedTo(gorilla.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
+    }
+
+    @Test
+    @DisplayName("Despondency returns when its enchanted creature leaves the battlefield")
+    void returnsAfterEnchantedCreatureDies() {
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Despondency());
+        aura.setAttachedTo(gorilla.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, gorilla));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+        harness.assertInHand(player1, "Despondency");
+        harness.assertNotOnBattlefield(player1, "Despondency");
+        harness.assertNotInGraveyard(player1, "Despondency");
+    }
 }
