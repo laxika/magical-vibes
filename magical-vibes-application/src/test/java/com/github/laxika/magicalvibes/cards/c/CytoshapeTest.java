@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GnatAlleyCreeper;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.m.MomirVigSimicVisionary;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -33,8 +34,7 @@ class CytoshapeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
                 .isNotNull();
@@ -88,5 +88,47 @@ class CytoshapeTest extends BaseCardTest {
         assertThat(target.isCopyUntilEndOfTurn()).isFalse();
         assertThat(target.getCard()).isSameAs(target.getOriginalCard());
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copying an opponent's creature preserves the target's controller and tapped status")
+    void copiesOpponentsCreatureWithoutCopyingStatus() {
+        Permanent target = addCreatureReady(player1, new GnatAlleyCreeper());
+        Permanent chosen = addCreatureReady(player2, new MistralCharger());
+        target.setTapped(true);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(chosen.isTapped()).isFalse();
+        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("The target may be chosen as its own nonlegendary copy source")
+    void mayChooseTargetItself() {
+        Permanent target = addCreatureReady(player1, new MistralCharger());
+        harness.setHand(player1, List.of(new Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
     }
 }
