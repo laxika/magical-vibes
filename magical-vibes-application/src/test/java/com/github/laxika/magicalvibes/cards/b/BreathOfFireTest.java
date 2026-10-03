@@ -58,10 +58,45 @@ class BreathOfFireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        castBreathOfFire(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Breath of Fire");
+    }
+
+    @Test
+    @DisplayName("Does not damage another creature when its target dies before resolution")
+    void targetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new BreathOfFire()));
+        harness.setHand(player2, List.of(new BreathOfFire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Breath of Fire");
+        harness.assertInGraveyard(player2, "Breath of Fire");
+    }
+
     private void castBreathOfFire(Permanent target) {
         harness.setHand(player1, List.of(new BreathOfFire()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
