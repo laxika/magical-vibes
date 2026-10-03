@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DefenseGrid.class, HolyDay.class})
+@CardUsed({DefenseGrid.class, HolyDay.class, IcyManipulator.class})
 class DefenseGridTest extends BaseCardTest {
 
     @Test
@@ -87,7 +87,6 @@ class DefenseGridTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(IcyManipulator.class)
     @DisplayName("An activated ability is not taxed")
     void doesNotTaxActivatedAbilities() {
         Permanent grid = harness.addToBattlefieldAndReturn(player1, new DefenseGrid());
@@ -99,5 +98,54 @@ class DefenseGridTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Defense Grid still taxes spells")
+    void tappedGridStillTaxesSpells() {
+        harness.addToBattlefieldAndReturn(player1, new DefenseGrid()).setTapped(true);
+        harness.forceActivePlayer(player1);
+
+        harness.castFromHand(player2, new HolyDay(), "{3}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Defense Grid does not tax spells while it is on the stack")
+    void gridOnStackDoesNotTaxSpells() {
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new DefenseGrid(), "{2}");
+
+        harness.castFromHand(player2, new HolyDay(), "{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Grids controlled by different players both tax an off-turn spell")
+    void gridsWithDifferentControllersStack() {
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.addToBattlefield(player2, new DefenseGrid());
+        harness.forceActivePlayer(player1);
+
+        harness.castFromHand(player2, new HolyDay(), "{6}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying only one Grid's tax is insufficient when two Grids are present")
+    void oneTaxIsInsufficientForTwoGrids() {
+        harness.addToBattlefield(player1, new DefenseGrid());
+        harness.addToBattlefield(player2, new DefenseGrid());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new HolyDay(), "{3}{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
