@@ -55,4 +55,16 @@ class DancingScimitarTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Dancing Scimitar can block a creature without flying")
+    void dancingScimitarCanBlockGroundCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new DancingScimitar());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
