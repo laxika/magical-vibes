@@ -112,7 +112,8 @@ class GarrukSavageHeraldTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
     }
 
-    private Permanent addCreatureReady(Player player, Card card) {
+    @Override
+    protected Permanent addCreatureReady(Player player, Card card) {
         Permanent permanent = new Permanent(card);
         permanent.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(permanent);
