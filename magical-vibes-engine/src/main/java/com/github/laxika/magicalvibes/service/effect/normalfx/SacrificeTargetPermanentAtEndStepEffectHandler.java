@@ -34,7 +34,13 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SacrificeTargetPermanentAtEndStepEffect e = (SacrificeTargetPermanentAtEndStepEffect) effect;
-        List<UUID> targetIds = entry.targetsForEffect(effect);
+        List<UUID> targetIds = entry.targetsForBoundEffectGroup(effect);
+        if (targetIds == null) {
+            targetIds = entry.getTargetIds();
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
+        }
         if (targetIds.isEmpty()) {
             return;
         }

@@ -35,9 +35,12 @@ class DepthshakerTitanTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, secondShield)).isTrue();
         assertThat(gqs.isCreature(gd, opponentShield)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            gs.advanceStep(gd);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(firstShield.getId())
