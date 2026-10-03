@@ -75,6 +75,55 @@ class ChronosavantTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Multiple activations return the card once but skip two successive turns")
+    void multipleActivationsSkipSuccessiveTurns() {
+        harness.setGraveyard(player1, List.of(new Chronosavant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Chronosavant").isTapped()).isTrue();
+        harness.assertNotInGraveyard(player1, "Chronosavant");
+
+        endTurn();
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        endTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        endTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Still skips a turn when the source has left the graveyard before resolution")
+    void skipsTurnWhenSourceIsAbsent() {
+        Chronosavant card = new Chronosavant();
+        harness.setGraveyard(player1, List.of(card));
+        addActivationMana();
+        harness.activateGraveyardAbility(player1, 0);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(card));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chronosavant");
+        harness.assertNotInGraveyard(player1, "Chronosavant");
+        endTurn();
+        endTurn();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
