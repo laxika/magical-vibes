@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.m.Mirari;
 import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -30,8 +31,7 @@ class DoggedHunterTest extends BaseCardTest {
         assertThat(hunter.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(token.getId()));
+        harness.assertNotOnBattlefield(player2, "Woodland Druid");
     }
 
     @Test
@@ -69,8 +69,104 @@ class DoggedHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, token.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(token.getId()));
+        harness.assertNotOnBattlefield(player1, "Woodland Druid");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Dogged Hunter cannot pay its tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent hunter = addHunter(player1);
+        hunter.setSummoningSick(true);
+        Permanent token = addCreature(player2, true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, token.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hunter.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Dogged Hunter cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent hunter = addHunter(player1);
+        hunter.setTapped(true);
+        Permanent token = addCreature(player2, true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, token.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature token can regenerate from Dogged Hunter's destruction")
+    void creatureTokenCanRegenerate() {
+        addHunter(player1);
+        Permanent token = addCreature(player2, true);
+        token.setRegenerationShield(1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, token.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+        assertThat(token.getRegenerationShield()).isZero();
+        assertThat(token.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Dogged Hunter cannot destroy an indestructible creature token")
+    void indestructibleCreatureTokenSurvives() {
+        addHunter(player1);
+        Permanent token = addCreature(player2, true);
+        token.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, token.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+        assertThat(token.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not resolve against a token that gains hexproof")
+    void targetGainingHexproofSurvives() {
+        Permanent hunter = addHunter(player1);
+        Permanent token = addCreature(player2, true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, token.getId());
+        token.getPersistentGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+        assertThat(hunter.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Dogged Hunter leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent hunter = addHunter(player1);
+        Permanent token = addCreature(player2, true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, token.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hunter);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Woodland Druid");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addHunter(Player player) {
