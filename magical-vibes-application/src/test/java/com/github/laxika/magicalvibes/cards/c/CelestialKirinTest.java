@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.d.DeathDenied;
 import com.github.laxika.magicalvibes.cards.g.GhostLitRedeemer;
+import com.github.laxika.magicalvibes.cards.m.ManrikiGusari;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeScout;
 import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,8 +15,56 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 @CardUsed({CelestialKirin.class, ArabaMothrider.class, DeathDenied.class, GhostLitRedeemer.class,
-        SakuraTribeScout.class, SpiritualVisit.class})
+        SakuraTribeScout.class, SpiritualVisit.class, ManrikiGusari.class})
 class CelestialKirinTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The triggering Spirit resolves after the destruction and survives")
+    void triggeringSpiritSurvivesDestruction() {
+        harness.addToBattlefield(player1, new CelestialKirin());
+        harness.addToBattlefield(player2, new SakuraTribeScout());
+
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sakura-Tribe Scout");
+        harness.assertNotOnBattlefield(player1, "Ghost-Lit Redeemer");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghost-Lit Redeemer");
+        harness.assertOnBattlefield(player1, "Celestial Kirin");
+    }
+
+    @Test
+    @DisplayName("Casting Celestial Kirin does not trigger its own ability")
+    void doesNotTriggerForItsOwnCast() {
+        harness.castFromHand(player1, new CelestialKirin(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Celestial Kirin");
+    }
+
+    @Test
+    @DisplayName("An Arcane spell with X zero destroys matching artifacts as well as creatures")
+    void xZeroDestroysMatchingNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new CelestialKirin());
+        harness.addToBattlefield(player1, new ManrikiGusari());
+        harness.addToBattlefield(player2, new ManrikiGusari());
+        harness.addToBattlefield(player2, new ArabaMothrider());
+        harness.addToBattlefield(player2, new GhostLitRedeemer());
+        harness.setHand(player1, List.of(new DeathDenied()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Manriki-Gusari");
+        harness.assertInGraveyard(player2, "Manriki-Gusari");
+        harness.assertInGraveyard(player2, "Araba Mothrider");
+        harness.assertOnBattlefield(player2, "Ghost-Lit Redeemer");
+        harness.assertOnBattlefield(player1, "Celestial Kirin");
+    }
 
     @Test
     @DisplayName("An Arcane spell destroys all permanents with its mana value")

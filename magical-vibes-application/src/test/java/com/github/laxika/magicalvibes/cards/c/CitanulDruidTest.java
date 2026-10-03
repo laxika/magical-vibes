@@ -1,21 +1,20 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryTower;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CitanulDruid.class, GrizzlyBears.class, Memnite.class})
+@CardUsed({CitanulDruid.class, GrizzlyBears.class, IvoryTower.class, Memnite.class, Ornithopter.class})
 class CitanulDruidTest extends BaseCardTest {
 
     @Test
@@ -39,8 +38,7 @@ class CitanulDruidTest extends BaseCardTest {
     @Test
     void doesNotTriggerForControllerArtifactSpell() {
         Permanent druid = addCreatureReady(player1, new CitanulDruid());
-        harness.setHand(player1, List.of(new Memnite()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Memnite(), "{0}");
         resolveAllTriggers();
 
         assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -50,11 +48,51 @@ class CitanulDruidTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(card));
-        if (card instanceof GrizzlyBears) {
-            harness.addMana(player2, ManaColor.GREEN, 2);
-        }
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, card, card instanceof GrizzlyBears ? "{1}{G}" : "{0}");
         resolveAllTriggers();
+    }
+
+    @Test
+    void counterResolvesBeforeOpponentsNoncreatureArtifactSpell() {
+        Permanent druid = addCreatureReady(player1, new CitanulDruid());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new IvoryTower(), "{1}");
+
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player2, "Ivory Tower")).isNull();
+
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Ivory Tower")).isNotNull();
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void eachDruidGetsOneCounterForEachOpponentArtifactSpell() {
+        Permanent firstDruid = addCreatureReady(player1, new CitanulDruid());
+        Permanent secondDruid = addCreatureReady(player1, new CitanulDruid());
+        Permanent castersDruid = addCreatureReady(player2, new CitanulDruid());
+
+        castCreatureForOpponent(new Ornithopter());
+        castCreatureForOpponent(new Ornithopter());
+
+        assertThat(firstDruid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondDruid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(castersDruid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentArtifactEntersWithoutBeingCast() {
+        Permanent druid = addCreatureReady(player1, new CitanulDruid());
+
+        harness.enterBattlefieldAndReturn(player2, new Ornithopter());
+        resolveAllTriggers();
+
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

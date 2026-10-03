@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AmrouKithkin;
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
 import com.github.laxika.magicalvibes.cards.b.BlackManaBattery;
+import com.github.laxika.magicalvibes.cards.r.RamirezDePietro;
 import com.github.laxika.magicalvibes.cards.w.WalkingDead;
 import com.github.laxika.magicalvibes.cards.w.WallOfPutridFlesh;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @CardUsed({Cleanse.class, WallOfPutridFlesh.class, BarbaryApes.class, AmrouKithkin.class,
-        BlackManaBattery.class, WalkingDead.class})
+        BlackManaBattery.class, WalkingDead.class, RamirezDePietro.class})
 class CleanseTest extends BaseCardTest {
 
     @Test
@@ -59,6 +60,43 @@ class CleanseTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Walking Dead");
         harness.assertNotInGraveyard(player2, "Walking Dead");
+    }
+
+    @Test
+    @DisplayName("Destroys multicolored creatures that are black")
+    void destroysMulticoloredBlackCreatures() {
+        harness.addToBattlefield(player2, new RamirezDePietro());
+
+        castCleanse();
+
+        harness.assertNotOnBattlefield(player2, "Ramirez DePietro");
+        harness.assertInGraveyard(player2, "Ramirez DePietro");
+    }
+
+    @Test
+    @DisplayName("A regeneration ability alone does not prevent destruction")
+    void destroysBlackCreatureWithoutRegenerationShield() {
+        harness.addToBattlefield(player2, new WalkingDead());
+
+        castCleanse();
+
+        harness.assertNotOnBattlefield(player2, "Walking Dead");
+        harness.assertInGraveyard(player2, "Walking Dead");
+    }
+
+    @Test
+    @DisplayName("Resolves without black creatures on the battlefield")
+    void resolvesWithoutBlackCreatures() {
+        harness.addToBattlefield(player1, new AmrouKithkin());
+        harness.addToBattlefield(player2, new BarbaryApes());
+        harness.addToBattlefield(player2, new BlackManaBattery());
+
+        castCleanse();
+
+        harness.assertInGraveyard(player1, "Cleanse");
+        harness.assertOnBattlefield(player1, "Amrou Kithkin");
+        harness.assertOnBattlefield(player2, "Barbary Apes");
+        harness.assertOnBattlefield(player2, "Black Mana Battery");
     }
 
     private void castCleanse() {

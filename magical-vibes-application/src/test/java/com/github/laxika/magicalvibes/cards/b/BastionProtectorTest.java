@@ -4,14 +4,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,36 +46,59 @@ class BastionProtectorTest extends BaseCardTest {
     }
 
     @Test
-    void respondsToCommanderDesignationChanges() {
+    void boostsCommanderEnteringAfterProtector() {
         Card creature = new GrizzlyBears();
-        Permanent permanent = addCreatureReady(player1, creature);
-        harness.addToBattlefield(player1, new BastionProtector());
-
-        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, permanent, Keyword.INDESTRUCTIBLE)).isFalse();
-
         gd.makeCommander(player1.getId(), creature);
+        harness.addToBattlefield(player1, new BastionProtector());
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, creature);
 
         assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, permanent, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
     @Test
+    void boostsOpponentsCommanderWhenControlledByProtectorController() {
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player2.getId());
+        gd.makeCommander(player2.getId(), creature);
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, creature);
+        harness.addToBattlefield(player1, new BastionProtector());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void multipleProtectorsStackTheirBonuses() {
+        Card creature = new GrizzlyBears();
+        gd.makeCommander(player1.getId(), creature);
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, creature);
+        harness.addToBattlefield(player1, new BastionProtector());
+        harness.addToBattlefield(player1, new BastionProtector());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
     void indestructibleCommanderSurvivesWrathOfGod() {
         Card commander = new GrizzlyBears();
         gd.makeCommander(player1.getId(), commander);
-        addCreatureReady(player1, commander);
+        Permanent permanent = addCreatureReady(player1, commander);
         harness.addToBattlefield(player1, new BastionProtector());
 
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Bastion Protector");
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

@@ -34,7 +34,7 @@ class BringerOfTheWhiteDawnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep trigger offers an artifact card in the graveyard as an optional target")
+    @DisplayName("Upkeep trigger requires an artifact target before the return decision")
     void upkeepOffersGraveyardArtifact() {
         harness.addToBattlefield(player1, new BringerOfTheWhiteDawn());
         Card artifact = new AnodetLurker();
@@ -46,7 +46,7 @@ class BringerOfTheWhiteDawnTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactly(artifact.getId());
-        assertThat(choice.minCount()).isZero();
+        assertThat(choice.minCount()).isEqualTo(1);
         assertThat(choice.maxCount()).isEqualTo(1);
     }
 
@@ -61,6 +61,9 @@ class BringerOfTheWhiteDawnTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
         harness.assertOnBattlefield(player1, "Anodet Lurker");
         harness.assertNotInGraveyard(player1, "Anodet Lurker");
     }
@@ -73,8 +76,11 @@ class BringerOfTheWhiteDawnTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact));
 
         advanceToUpkeep(player1);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Anodet Lurker");
         harness.assertNotOnBattlefield(player1, "Anodet Lurker");
@@ -114,5 +120,58 @@ class BringerOfTheWhiteDawnTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Ebon Drake");
+    }
+
+    @Test
+    @DisplayName("Can be cast for its normal mana cost")
+    void castsForNormalCost() {
+        harness.setHand(player1, List.of(new BringerOfTheWhiteDawn()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bringer of the White Dawn");
+    }
+
+    @Test
+    @DisplayName("Only the chosen artifact returns when multiple artifacts are available")
+    void returnsOnlyChosenArtifact() {
+        harness.addToBattlefield(player1, new BringerOfTheWhiteDawn());
+        Card chosen = new AnodetLurker();
+        Card other = new AnodetLurker();
+        harness.setGraveyard(player1, List.of(chosen, other, new EbonDrake()));
+
+        advanceToUpkeep(player1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), other.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Anodet Lurker").getCard().getId()).isEqualTo(chosen.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(chosen);
+        harness.assertInGraveyard(player1, "Ebon Drake");
+    }
+
+    @Test
+    @DisplayName("An artifact that leaves the graveyard before resolution is not returned")
+    void targetLeavingGraveyardIsNotReturned() {
+        harness.addToBattlefield(player1, new BringerOfTheWhiteDawn());
+        Card artifact = new AnodetLurker();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(artifact));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Anodet Lurker");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(artifact.getId()));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.e.EarthbendingLesson;
 import com.github.laxika.magicalvibes.cards.f.FireSages;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.cards.s.StrionicResonator;
 import com.github.laxika.magicalvibes.cards.w.WaterbendingLesson;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,7 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
         FireSages.class,
         AangTheLastAirbender.class,
         GrizzlyBears.class,
-        Forest.class
+        Forest.class,
+        StrionicResonator.class,
+        PorcelainLegionnaire.class
 })
 class AvatarAangTest extends BaseCardTest {
 
@@ -35,8 +39,8 @@ class AvatarAangTest extends BaseCardTest {
     @DisplayName("Avatar Aang draws when its controller waterbends")
     void drawsWhenControllerWaterbends() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
-        Permanent firstSource = addReadyCreature(player1);
-        Permanent secondSource = addReadyCreature(player1);
+        Permanent firstSource = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondSource = addCreatureReady(player1, new GrizzlyBears());
         WaterbendingLesson lesson = new WaterbendingLesson();
         harness.setHand(player1, List.of(lesson));
         harness.setLibrary(player1, List.of(
@@ -61,11 +65,10 @@ class AvatarAangTest extends BaseCardTest {
     @DisplayName("Avatar Aang transforms after its controller completes all four bends")
     void transformsAfterAllFourBends() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
-        Permanent firstSource = addReadyCreature(player1);
-        Permanent secondSource = addReadyCreature(player1);
+        Permanent firstSource = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondSource = addCreatureReady(player1, new GrizzlyBears());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent fireSages = harness.addToBattlefieldAndReturn(player1, new FireSages());
-        fireSages.setSummoningSick(false);
+        Permanent fireSages = addCreatureReady(player1, new FireSages());
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
@@ -138,10 +141,133 @@ class AvatarAangTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void ownFirebendingDrawsWithoutTransforming() {
+        Permanent aang = addCreatureReady(player1, new AvatarAang());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new FireSages(), new FireSages()));
+
+        declareAttacker(aang);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(aang.isTransformed()).isFalse();
+    }
+
+    @Test
+    void opponentsFirebendingDoesNotDraw() {
+        harness.addToBattlefield(player1, new AvatarAang());
+        addCreatureReady(player2, new FireSages());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new FireSages()));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void backFaceReducesColoredAndGenericSpellCostsToZero() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        harness.setHand(player1, List.of(new FireSages(), new AangTheLastAirbender()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Fire Sages");
+        harness.assertOnBattlefield(player1, "Aang, the Last Airbender");
+    }
+
+    @Test
+    void canDeclineTransformationOnOpponentsUpkeep() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new FireSages(), new FireSages(), new FireSages(), new FireSages()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(aang.isTransformed()).isTrue();
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void backFaceReducesPhyrexianManaWhenChoosingColoredPayment() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PorcelainLegionnaire()));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false, null, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Porcelain Legionnaire");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void rewardsAlsoApplyOnOpponentsUpkeep() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new FireSages(), new FireSages(), new FireSages(), new FireSages()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(aang.isTransformed()).isFalse();
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void copiedUpkeepAbilityCannotTransformAgainOrGiveRewardsTwice() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        Permanent resonator = harness.addToBattlefieldAndReturn(player1, new StrionicResonator());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new FireSages(), new FireSages(), new FireSages(), new FireSages(),
+                new FireSages(), new FireSages(), new FireSages(), new FireSages(), new FireSages()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(resonator),
+                null, gd.stack.getLast().getTargetableId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(aang.isTransformed()).isFalse();
+        assertThat(aang.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
     }
 
     private void addMana(com.github.laxika.magicalvibes.model.Player player, ManaColor color, int amount) {

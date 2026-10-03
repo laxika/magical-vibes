@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.Phthisis;
 import com.github.laxika.magicalvibes.cards.s.SuddenShock;
 import com.github.laxika.magicalvibes.cards.u.UrborgSyphonMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,8 +48,7 @@ class ChildrenOfKorlisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Phthisis()));
         harness.addMana(player1, ManaColor.BLACK, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, findPermanent(player1, "Urborg Syphon-Mage").getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, findPermanent(player1, "Urborg Syphon-Mage").getId());
 
         harness.assertLife(player1, 16);
         harness.assertLife(player2, 20);
@@ -73,6 +73,86 @@ class ChildrenOfKorlisTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertNotOnBattlefield(player1, "Children of Korlis");
+        harness.assertInGraveyard(player1, "Children of Korlis");
+    }
+
+    @Test
+    @DisplayName("Earlier life gain does not reduce the life lost counted by another activation")
+    void multipleChildrenEachCountAllLifeLost() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ChildrenOfKorlis());
+        harness.addToBattlefield(player1, new ChildrenOfKorlis());
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertLife(player1, 18);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertNotOnBattlefield(player1, "Children of Korlis");
+    }
+
+    @Test
+    @DisplayName("Counts life lost after activation and sacrifices immediately as a cost")
+    void countsLifeLostInResponse() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ChildrenOfKorlis());
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertNotOnBattlefield(player1, "Children of Korlis");
+        harness.assertInGraveyard(player1, "Children of Korlis");
+        harness.assertLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertLife(player1, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Does not count life lost during the previous turn")
+    void doesNotCountLifeLostLastTurn() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ChildrenOfKorlis());
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertLife(player1, 18);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Children of Korlis");
+    }
+
+    @Test
+    @DisplayName("Counts life lost before Children of Korlis entered the battlefield")
+    void countsLifeLostBeforeEntering() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SuddenShock(), new ChildrenOfKorlis()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Children of Korlis");
     }
 }

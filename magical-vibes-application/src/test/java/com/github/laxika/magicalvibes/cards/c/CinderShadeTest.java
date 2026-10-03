@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HoodedKavu;
+import com.github.laxika.magicalvibes.cards.m.ManiacalRage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CinderShade.class, Forest.class, HoodedKavu.class})
+@CardUsed({CinderShade.class, Forest.class, HoodedKavu.class, ManiacalRage.class})
 class CinderShadeTest extends BaseCardTest {
 
     @Test
@@ -29,7 +30,6 @@ class CinderShadeTest extends BaseCardTest {
         assertThat(shade.getToughnessModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(shade.getPowerModifier()).isZero();
@@ -82,6 +82,57 @@ class CinderShadeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Hooded Kavu");
         harness.assertInGraveyard(player2, "Hooded Kavu");
+    }
+
+    @Test
+    @DisplayName("Red ability retains power granted by an Aura before sacrifice")
+    void redAbilityUsesLastKnownAuraBoostedPower() {
+        Permanent shade = addCreatureReady(player1, new CinderShade());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ManiacalRage());
+        aura.setAttachedTo(shade.getId());
+        Permanent target = addCreatureReady(player2, new HoodedKavu());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cinder Shade");
+        harness.assertInGraveyard(player1, "Maniacal Rage");
+        harness.assertInGraveyard(player2, "Hooded Kavu");
+    }
+
+    @Test
+    @DisplayName("An unresolved pump does not increase sacrifice damage")
+    void unresolvedPumpDoesNotIncreaseDamage() {
+        addCreatureReady(player1, new CinderShade());
+        Permanent target = addCreatureReady(player2, new HoodedKavu());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Hooded Kavu");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cinder Shade may target itself and sacrifice makes that target illegal")
+    void redAbilityCanTargetSelf() {
+        Permanent shade = addCreatureReady(player1, new CinderShade());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, shade.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cinder Shade");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     @Test

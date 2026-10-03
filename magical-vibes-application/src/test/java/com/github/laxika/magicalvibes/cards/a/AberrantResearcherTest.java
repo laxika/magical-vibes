@@ -138,9 +138,9 @@ class AberrantResearcherTest extends BaseCardTest {
         Card milledCard = new Pyroclasm();
         harness.setLibrary(player1, List.of(milledCard));
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, researcher.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(researcher);

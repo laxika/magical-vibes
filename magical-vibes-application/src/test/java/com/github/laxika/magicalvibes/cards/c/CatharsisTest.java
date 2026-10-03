@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronShieldElf;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,38 +15,37 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Catharsis.class, IronShieldElf.class})
 class CatharsisTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Two white mana spent: creates two Kithkin Soldier tokens")
+    @DisplayName("Two white mana spent: creates two Kithkin tokens")
     void twoWhiteManaCreatesTokens() {
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Kithkin Soldier")).hasSize(2);
+        assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
         assertThat(findPermanent(player1, "Catharsis").getEffectivePower()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Two red mana spent: creatures you control get +1/+1 and haste")
     void twoRedManaBoostsAndHastesCreatures() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(elf.getEffectivePower()).isEqualTo(4);
+        assertThat(elf.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isTrue();
         Permanent catharsis = findPermanent(player1, "Catharsis");
         assertThat(catharsis.getEffectivePower()).isEqualTo(4);
         assertThat(catharsis.getEffectiveToughness()).isEqualTo(5);
@@ -53,37 +55,35 @@ class CatharsisTest extends BaseCardTest {
     @Test
     @DisplayName("One mana of each color does not satisfy either double-color clause")
     void oneOfEachColorDoesNotSatisfyDoubleColorClauses() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Kithkin Soldier")).isEmpty();
-        assertThat(bears.getEffectivePower()).isEqualTo(2);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        assertThat(findPermanents(player1, "Kithkin")).isEmpty();
+        assertThat(elf.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isFalse();
     }
 
     @Test
     @DisplayName("Two mana of each color spent: both ETB clauses apply")
     void twoOfEachColorAppliesBothClauses() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
         harness.setHand(player1, List.of(new Catharsis()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Kithkin Soldier")).hasSize(2);
-        assertThat(bears.getEffectivePower()).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
+        assertThat(elf.getEffectivePower()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -93,11 +93,79 @@ class CatharsisTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreatureWithEvoke(player1, 0, null);
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Kithkin")).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Catharsis");
+        harness.assertInGraveyard(player1, "Catharsis");
+    }
+    @Test
+    void whiteTriggerCreatesOracleTokens() {
+        harness.setHand(player1, List.of(new Catharsis()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(2);
+        for (Permanent token : tokens) {
+            assertThat(token.getCard().getName()).isEqualTo("Kithkin");
+            assertThat(token.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.KITHKIN);
+            assertThat(token.getEffectivePower()).isEqualTo(1);
+            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void bothColorAbilitiesUseSeparateStackEntries() {
+        harness.setHand(player1, List.of(new Catharsis()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Kithkin Soldier")).hasSize(2);
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    void redEvokeBoostsOnlyOwnExistingCreaturesAndSacrificesCatharsis() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new IronShieldElf());
+        harness.setHand(player1, List.of(new Catharsis()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(own.getEffectivePower()).isEqualTo(4);
+        assertThat(own.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, own, Keyword.HASTE)).isTrue();
+        assertThat(opposing.getEffectivePower()).isEqualTo(3);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.HASTE)).isFalse();
+        harness.assertInGraveyard(player1, "Catharsis");
         harness.assertNotOnBattlefield(player1, "Catharsis");
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
+        assertThat(later.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, later, Keyword.HASTE)).isFalse();
+        advanceToUpkeep(player2);
+        assertThat(own.getEffectivePower()).isEqualTo(3);
+        assertThat(own.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, own, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void mixedColorEvokeDoesNotTriggerEitherColorAbility() {
+        harness.setHand(player1, List.of(new Catharsis()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Catharsis");
     }
 }

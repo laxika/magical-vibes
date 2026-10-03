@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -116,15 +117,99 @@ class ChamberOfManipulationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the tap cost")
+    void cannotActivateTappedLand() {
+        Permanent land = addChamberToLand();
+        land.setTapped(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        harness.setHand(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Gaining control does not untap the creature")
+    void gainingControlDoesNotUntapCreature() {
+        addChamberToLand();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        creature.setTapped(true);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature its controller already controls")
+    void canTargetOwnCreature() {
+        Permanent land = addChamberToLand();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AngelicWall());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Chamber of Manipulation can enchant an opponent's land")
+    void canEnchantOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ChamberOfManipulation()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Chamber of Manipulation");
+        assertThat(aura.getAttachedTo()).isEqualTo(land.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("Chamber of Manipulation cannot enchant a nonland creature")
+    void cannotEnchantNonlandCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        harness.setHand(player1, List.of(new ChamberOfManipulation()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Chamber of Manipulation");
+    }
+
     private Permanent addChamberToLand() {
         return addChamberToLand(player1, player1);
     }
 
     private Permanent addChamberToLand(Player landController, Player auraController) {
         Permanent land = harness.addToBattlefieldAndReturn(landController, new Forest());
-        Permanent aura = new Permanent(new ChamberOfManipulation());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new ChamberOfManipulation());
         aura.setAttachedTo(land.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return land;
     }
 }

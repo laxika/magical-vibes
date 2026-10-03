@@ -119,10 +119,113 @@ class AgadeemsAwakeningTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Boomerang()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castInstant(player2, 0, land.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, land.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).singleElement()
                 .satisfies(card -> assertThat(card.getName()).isEqualTo("Agadeem's Awakening"));
+    }
+
+    @Test
+    void zeroXReturnsOneZeroManaCreature() {
+        Card creature = new Memnite();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Memnite");
+        harness.assertNotInGraveyard(player1, "Memnite");
+        harness.assertInGraveyard(player1, "Agadeem's Awakening");
+    }
+
+    @Test
+    void mayChooseNoTargetsEvenWhenLegalCreaturesExist() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 2, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature).hasSize(2);
+        harness.assertInGraveyard(player1, "Agadeem's Awakening");
+    }
+
+    @Test
+    void canCastWithAnEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Agadeem's Awakening");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void onlyOwnCreatureCardsWithManaValueAtMostXAreEligible() {
+        Card eligible = new Memnite();
+        Card tooExpensive = new ElvishMystic();
+        Card noncreature = new AgadeemsAwakening();
+        Card opponentsCreature = new Memnite();
+        harness.setGraveyard(player1, List.of(eligible, tooExpensive, noncreature));
+        harness.setGraveyard(player2, List.of(opponentsCreature));
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 0, List.of());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(tooExpensive, noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCreature);
+    }
+
+    @Test
+    void remainingLegalTargetReturnsWhenAnotherTargetLeavesTheGraveyard() {
+        Card removed = new Memnite();
+        Card remaining = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castModalSorceryWithModesForX(player1, 0, 1, new int[]{0}, 2, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Agadeem's Awakening");
+    }
+
+    @Test
+    void landEntersTappedWithoutOfferingPaymentWhenLifeIsInsufficient() {
+        harness.setLife(player1, 2);
+        harness.setHand(player1, List.of(new AgadeemsAwakening()));
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(land -> assertThat(land.isTapped()).isTrue());
+        harness.assertLife(player1, 2);
     }
 }

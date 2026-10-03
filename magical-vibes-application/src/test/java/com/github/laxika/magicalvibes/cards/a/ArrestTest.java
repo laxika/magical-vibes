@@ -221,4 +221,59 @@ class ArrestTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Arrest");
         harness.assertNotOnBattlefield(player1, "Arrest");
     }
+
+    @Test
+    @DisplayName("Arrest does not stop an ability that was already activated")
+    void alreadyActivatedAbilityStillResolves() {
+        Permanent infantry = addCreatureReady(player1, new CrossbowInfantry());
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        target.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent arrest = harness.addToBattlefieldAndReturn(player2, new Arrest());
+        arrest.setAttachedTo(infantry.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Arrest only prevents the enchanted creature from activating abilities")
+    void otherCreatureCanStillActivate() {
+        Permanent arrested = addCreatureReady(player1, new CrossbowInfantry());
+        Permanent free = addCreatureReady(player1, new CrossbowInfantry());
+        Permanent target = addCreatureReady(player2, new FreshVolunteers());
+        target.setAttacking(true);
+        Permanent arrest = harness.addToBattlefieldAndReturn(player2, new Arrest());
+        arrest.setAttachedTo(arrested.getId());
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(free.isTapped()).isTrue();
+        assertThat(arrested.isTapped()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Arrest restores the creature's mana ability")
+    void manaAbilityWorksAfterArrestRemoved() {
+        Permanent trellis = addCreatureReady(player1, new VineTrellis());
+        Permanent arrest = harness.addToBattlefieldAndReturn(player2, new Arrest());
+        arrest.setAttachedTo(trellis.getId());
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(trellis.isTapped()).isFalse();
+
+        gd.playerBattlefields.get(player2.getId()).remove(arrest);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(trellis.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
 }

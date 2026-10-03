@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.PalladiumMyr;
+import com.github.laxika.magicalvibes.cards.s.SwiftResponse;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChromeReplicator.class, Island.class, PalladiumMyr.class, SwiftResponse.class})
 class ChromeReplicatorTest extends BaseCardTest {
 
     @Test
@@ -20,8 +25,7 @@ class ChromeReplicatorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChromeReplicator());
         castChromeReplicator();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Construct");
         assertThat(tokens).hasSize(1);
@@ -57,9 +61,84 @@ class ChromeReplicatorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void matchingPairNeedNotShareChromeReplicatorsName() {
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        castChromeReplicator();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Construct")).hasSize(1);
+    }
+
+    @Test
+    void matchingLandsDoNotCount() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        castChromeReplicator();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void differentlyNamedNonlandPermanentsDoNotCount() {
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        castChromeReplicator();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void multipleMatchingPairsCreateOnlyOneToken() {
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        harness.addToBattlefield(player1, new ChromeReplicator());
+        castChromeReplicator();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Construct")).hasSize(1);
+    }
+
+    @Test
+    void losingMatchingPairBeforeResolutionPreventsToken() {
+        Permanent matching = harness.addToBattlefieldAndReturn(player1, new ChromeReplicator());
+        matching.setTapped(true);
+        castChromeReplicator();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        destroyTappedCreature(matching);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Chrome Replicator");
+        assertThat(findPermanents(player1, "Construct")).isEmpty();
+    }
+
+    @Test
+    void removingSourceDoesNotPreventTokenWhenAnotherPairRemains() {
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        harness.addToBattlefield(player1, new PalladiumMyr());
+        castChromeReplicator();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent source = findPermanents(player1, "Chrome Replicator").getFirst();
+        source.setTapped(true);
+
+        destroyTappedCreature(source);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Chrome Replicator");
+        assertThat(findPermanents(player1, "Construct")).hasSize(1);
+    }
+
+    private void destroyTappedCreature(Permanent target) {
+        harness.setHand(player1, List.of(new SwiftResponse()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, target.getId());
+    }
+
     private void castChromeReplicator() {
-        harness.setHand(player1, List.of(new ChromeReplicator()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ChromeReplicator(), "{5}");
     }
 }

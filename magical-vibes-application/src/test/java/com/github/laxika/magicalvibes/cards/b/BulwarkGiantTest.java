@@ -42,4 +42,26 @@ class BulwarkGiantTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
+
+    @Test
+    void lifeGainWaitsForTheEnterTriggerToResolve() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BulwarkGiant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Bulwark Giant");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -22,7 +22,7 @@ class CosmiumBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to an attacking creature")
     void dealsDamageToAttackingCreature() {
-        Permanent attacker = addCombatCreature(player2, new ColossalDreadmaw(), "Colossal Dreadmaw", true);
+        Permanent attacker = addCombatCreature(player2, new ColossalDreadmaw(), true);
 
         castSpellAt(attacker.getId());
 
@@ -32,7 +32,7 @@ class CosmiumBlastTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to a blocking creature")
     void dealsDamageToBlockingCreature() {
-        Permanent blocker = addCombatCreature(player2, new ColossalDreadmaw(), "Colossal Dreadmaw", false);
+        Permanent blocker = addCombatCreature(player2, new ColossalDreadmaw(), false);
 
         castSpellAt(blocker.getId());
 
@@ -53,20 +53,56 @@ class CosmiumBlastTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("Lethal damage destroys an attacking creature")
+    void lethalDamageDestroysAttacker() {
+        Permanent attacker = addCombatCreature(player2, new GrizzlyBears(), true);
+
+        castSpellAt(attacker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cosmium Blast");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void canTargetOwnBlockingCreature() {
+        Permanent blocker = addCombatCreature(player1, new ColossalDreadmaw(), false);
+
+        castSpellAt(blocker.getId());
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Deals no damage when the target leaves combat before resolution")
+    void targetLeavingCombatMakesSpellFailToResolve() {
+        Permanent attacker = addCombatCreature(player2, new ColossalDreadmaw(), true);
+        harness.setHand(player1, List.of(new CosmiumBlast()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Colossal Dreadmaw");
+        harness.assertInGraveyard(player1, "Cosmium Blast");
+    }
+
     private void castSpellAt(UUID targetId) {
         harness.setHand(player1, List.of(new CosmiumBlast()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
-    private Permanent addCombatCreature(Player owner, Card card, String name, boolean attacking) {
-        harness.addToBattlefield(owner, card);
-        Permanent permanent = findPermanent(owner, name);
-        permanent.setSummoningSick(false);
+    private Permanent addCombatCreature(Player owner, Card card, boolean attacking) {
+        Permanent permanent = addCreatureReady(owner, card);
         if (attacking) {
             permanent.setAttacking(true);
-            permanent.setAttackTarget(player1.getId());
+            permanent.setAttackTarget(owner == player1 ? player2.getId() : player1.getId());
         } else {
             permanent.setBlocking(true);
             permanent.addBlockingTargetId(UUID.randomUUID());

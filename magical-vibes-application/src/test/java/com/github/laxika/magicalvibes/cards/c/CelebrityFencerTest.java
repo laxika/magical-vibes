@@ -45,4 +45,37 @@ class CelebrityFencerTest extends BaseCardTest {
         assertThat(fencer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Each Fencer puts counters on itself when another Fencer enters")
+    void multipleFencersPutCountersOnTheirOwnSources() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        Permanent third = harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every allied creature entry triggers even before earlier triggers resolve")
+    void repeatedEntriesAccumulateCounters() {
+        Permanent fencer = harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+
+        harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+        harness.enterBattlefieldAndReturn(player1, new CelebrityFencer());
+        assertThat(fencer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveAllTriggers();
+
+        assertThat(fencer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }

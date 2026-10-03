@@ -55,6 +55,63 @@ class BogDownTest extends BaseCardTest {
     }
 
     @Test
+    void canTargetSelfAndChooseWhichCardsToDiscard() {
+        var keptCard = new AncientSpider();
+        var discardedLand = new MeteorCrater();
+        var discardedCreature = new AncientSpider();
+        harness.setHand(player1, List.of(new BogDown(), keptCard, discardedLand, discardedCreature));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(discardedLand, discardedCreature).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetWithOneCardDiscardsOnlyThatCard() {
+        var discardedCard = new AncientSpider();
+        harness.setHand(player2, List.of(discardedCard));
+        harness.setHand(player1, List.of(new BogDown()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedSpellCanTargetAnEmptyHandAndStillPaysSacrificesBeforeResolution() {
+        var firstLand = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        var secondLand = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new BogDown()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castKickedSorceryWithSacrifices(player1, 0, player2.getId(),
+                List.of(firstLand.getId(), secondLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstLand.getCard(), secondLand.getCard());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void kickerRequiresExactlyTwoLands() {
         var land = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
         harness.setHand(player1, List.of(new BogDown()));

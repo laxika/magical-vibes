@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.k.KuroPitlord;
 import com.github.laxika.magicalvibes.cards.n.NoDachi;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheSacredBell;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,12 +15,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BloodthirstyOgre.class, KuroPitlord.class, NoDachi.class, OrderOfTheSacredBell.class,
+@CardUsed({BloodthirstyOgre.class, ConsumingVortex.class, KuroPitlord.class, NoDachi.class, OrderOfTheSacredBell.class,
         WanderingOnes.class})
 class BloodthirstyOgreTest extends BaseCardTest {
 
@@ -148,6 +151,86 @@ class BloodthirstyOgreTest extends BaseCardTest {
         UUID targetId = target.getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, index, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Devotion counters are counted on resolution and the resulting debuff stays fixed")
+    void countsCountersOnResolution() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
+        forceMainPhase(player1);
+        putDevotionCounters(ogre, 1);
+
+        harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
+        putDevotionCounters(ogre, 2);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+        putDevotionCounters(ogre, 3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Losing the Demon after activation does not stop the debuff")
+    void resolvesAfterDemonLeaves() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        forceMainPhase(player1);
+        putDevotionCounters(ogre, 2);
+
+        harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
+        harness.castInstant(player2, 0, demon.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Kuro, Pitlord");
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("The debuff uses the Ogre's last known devotion counters after it leaves")
+    void resolvesAfterOgreLeaves() {
+        Permanent ogre = addCreatureReady(player1, new BloodthirstyOgre());
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        forceMainPhase(player1);
+        putDevotionCounters(ogre, 1);
+
+        harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId());
+        putDevotionCounters(ogre, 2);
+        harness.castInstant(player2, 0, ogre.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Bloodthirsty Ogre");
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(target.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents either tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new BloodthirstyOgre());
+        ogre.setSummoningSick(true);
+        harness.addToBattlefield(player1, new KuroPitlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrderOfTheSacredBell());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ogre), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ogre), 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ogre.isTapped()).isFalse();
+        assertThat(ogre.getCounterCount(CounterType.DEVOTION)).isZero();
     }
 
     private void putDevotionCounters(Permanent ogre, int count) {

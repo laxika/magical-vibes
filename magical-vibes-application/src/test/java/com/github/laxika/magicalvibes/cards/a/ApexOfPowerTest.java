@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,23 +16,24 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ApexOfPower.class, Divination.class, Island.class})
 class ApexOfPowerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles seven cards, permits nonlands to be cast, and adds ten chosen-color mana from hand")
     void exilesSevenAndAddsManaWhenCastFromHand() {
-        Card land = createLand("Exiled Land");
+        Card land = new Island();
         List<Card> topCards = List.of(
-                createSpell("Spell One"), land, createSpell("Spell Three"),
-                createSpell("Spell Four"), createSpell("Spell Five"),
-                createSpell("Spell Six"), createSpell("Spell Seven"));
+                new Divination(), land, new Divination(),
+                new Divination(), new Divination(),
+                new Divination(), new Divination());
         harness.setLibrary(player1, topCards);
         harness.setHand(player1, List.of(new ApexOfPower()));
         addApexMana(player1);
 
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId)
@@ -53,9 +56,9 @@ class ApexOfPowerTest extends BaseCardTest {
         harness.setExile(player1, List.of(apex));
         gd.exilePlayPermissions.put(apex.getId(), player1.getId());
         harness.setLibrary(player1, List.of(
-                createSpell("Spell One"), createSpell("Spell Two"), createSpell("Spell Three"),
-                createSpell("Spell Four"), createSpell("Spell Five"), createSpell("Spell Six"),
-                createSpell("Spell Seven")));
+                new Divination(), new Divination(), new Divination(),
+                new Divination(), new Divination(), new Divination(),
+                new Divination()));
         addApexMana(player1);
 
         harness.castFromExile(player1, apex.getId());
@@ -70,19 +73,85 @@ class ApexOfPowerTest extends BaseCardTest {
         harness.addMana(player, ManaColor.RED, 3);
     }
 
-    private Card createSpell(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.BLUE);
-        return card;
+    @Test
+    @DisplayName("Exiled spells require their normal mana cost and can use the ten mana")
+    void castsExiledSpellWithAwardedMana() {
+        Divination divination = new Divination();
+        List<Card> topCards = List.of(divination, new Island(), new Island(), new Island(),
+                new Island(), new Island(), new Island());
+        Island firstDraw = new Island();
+        Island secondDraw = new Island();
+        harness.setLibrary(player1, java.util.stream.Stream.concat(topCards.stream(),
+                java.util.stream.Stream.of(firstDraw, secondDraw)).toList());
+        harness.setHand(player1, List.of(new ApexOfPower()));
+        addApexMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.castFromExile(player1, divination.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(7);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.assertInGraveyard(player1, "Divination");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(divination);
     }
 
-    private Card createLand(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.LAND);
-        return card;
+    @Test
+    @DisplayName("A short library is fully exiled and casting permission does not allow lands or free spells")
+    void shortLibraryDoesNotGrantFreeCastingOrLandPlays() {
+        Divination divination = new Divination();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(divination, island));
+        harness.setHand(player1, List.of(new ApexOfPower()));
+        addApexMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(divination, island);
+        assertThatThrownBy(() -> harness.castFromExile(player1, divination.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castFromExile(player1, island.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(divination, island);
     }
+
+    @Test
+    @DisplayName("An empty library does not prevent the ten mana from being added")
+    void emptyLibraryStillAddsMana() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ApexOfPower()));
+        addApexMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(10);
+        harness.assertInGraveyard(player1, "Apex of Power");
+    }
+
+    @Test
+    @DisplayName("Exile permission preserves sorcery timing and expires after the turn")
+    void permissionPreservesTimingAndExpires() {
+        Divination divination = new Divination();
+        harness.setLibrary(player1, List.of(divination));
+        harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setHand(player1, List.of(new ApexOfPower()));
+        addApexMana(player1);
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        assertThatThrownBy(() -> harness.castFromExile(player1, divination.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(divination.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(divination);
+    }
+
 }

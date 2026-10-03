@@ -61,11 +61,9 @@ class AstralWingspanTest extends BaseCardTest {
     @Test
     @DisplayName("Astral Wingspan's static effects stop when it leaves the battlefield")
     void effectsStopWhenRemoved() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        Permanent aura = new Permanent(new AstralWingspan());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new AstralWingspan());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -88,6 +86,68 @@ class AstralWingspanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Enchanting an opposing creature draws for the Aura's controller")
+    void enchantsOpposingCreatureAndDrawsForAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AstralWingspan()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addAstralWingspanMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura with a vanished target does not enter or draw a card")
+    void vanishedTargetPreventsEntryAndDraw() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AstralWingspan()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addAstralWingspanMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Astral Wingspan");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves after the Aura leaves the battlefield")
+    void drawTriggerSurvivesAuraRemoval() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AstralWingspan()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addAstralWingspanMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof AstralWingspan)
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     private void addAstralWingspanMana() {

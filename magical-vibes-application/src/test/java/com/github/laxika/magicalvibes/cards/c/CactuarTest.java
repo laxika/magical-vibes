@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +18,7 @@ class CactuarTest extends BaseCardTest {
     @Test
     @DisplayName("Returns itself to its owner's hand at its controller's end step if it entered earlier")
     void returnsItselfWhenItDidNotEnterThisTurn() {
-        addCactuar(player1);
+        harness.addToBattlefield(player1, new Cactuar());
 
         advanceToEndStep(player1);
 
@@ -33,9 +32,7 @@ class CactuarTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return itself if it entered the battlefield this turn")
     void doesNotReturnWhenItEnteredThisTurn() {
-        Permanent cactuar = addCactuar(player1);
-        gd.permanentsEnteredBattlefieldThisTurn.put(
-                player1.getId(), new ArrayList<>(List.of(cactuar.getCard())));
+        harness.enterBattlefieldAndReturn(player1, new Cactuar());
 
         advanceToEndStep(player1);
 
@@ -47,7 +44,7 @@ class CactuarTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger at an opponent's end step")
     void doesNotTriggerAtOpponentsEndStep() {
-        addCactuar(player1);
+        harness.addToBattlefield(player1, new Cactuar());
 
         advanceToEndStep(player2);
 
@@ -55,11 +52,35 @@ class CactuarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Cactuar");
     }
 
-    private Permanent addCactuar(Player player) {
-        Permanent cactuar = new Permanent(new Cactuar());
-        cactuar.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(cactuar);
-        return cactuar;
+    @Test
+    @DisplayName("Only the copy that entered before this turn returns to hand")
+    void tracksEntryTimingSeparatelyForEachCopy() {
+        Permanent earlier = harness.addToBattlefieldAndReturn(player1, new Cactuar());
+        Permanent fresh = harness.enterBattlefieldAndReturn(player1, new Cactuar());
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fresh).doesNotContain(earlier);
+        assertThat(gd.playerHands.get(player1.getId())).contains(earlier.getCard()).doesNotContain(fresh.getCard());
+    }
+
+    @Test
+    @DisplayName("A controlled Cactuar returns to its owner at its controller's end step")
+    void returnsToOwnerInsteadOfController() {
+        Permanent cactuar = harness.addToBattlefieldAndReturn(player2, new Cactuar());
+        gd.stolenCreatures.put(cactuar.getId(), player1.getId());
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cactuar");
+        harness.assertInHand(player1, "Cactuar");
+        harness.assertNotInHand(player2, "Cactuar");
     }
 
     private void advanceToEndStep(Player activePlayer) {
@@ -67,7 +88,6 @@ class CactuarTest extends BaseCardTest {
         harness.setLibrary(player2, new ArrayList<>());
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
     }
 }

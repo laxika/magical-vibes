@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TheRack;
 import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
+import com.github.laxika.magicalvibes.cards.w.WhiteWard;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +17,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BlueWard.class, GrizzlyBears.class, TheRack.class, Thoughtlace.class})
+@CardUsed({BlueWard.class, GrizzlyBears.class, TheRack.class, Thoughtlace.class, WhiteWard.class})
 class BlueWardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Protection from white granted by another Aura removes Blue Ward")
+    void otherProtectionRemovesBlueWard() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlueWard());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new WhiteWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blue Ward");
+        harness.assertInGraveyard(player1, "Blue Ward");
+        harness.assertOnBattlefield(player1, "White Ward");
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.BLUE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Blue spells cannot target the enchanted creature")
+    void blueSpellCannotTargetEnchantedCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlueWard());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
 
     @Test
     @DisplayName("Enchanted creature has protection from blue")

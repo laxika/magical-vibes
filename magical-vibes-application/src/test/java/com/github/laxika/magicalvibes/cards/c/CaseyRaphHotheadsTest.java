@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CaseyRaphHotheads.class, GrizzlyBears.class})
 class CaseyRaphHotheadsTest extends BaseCardTest {
@@ -56,27 +57,50 @@ class CaseyRaphHotheadsTest extends BaseCardTest {
     }
 
     @Test
-    void bothModesCanTargetTheSamePlayer() {
+    void bothModesCannotTargetTheSamePlayer() {
         castCasey();
         harness.handleListChoice(player1, EXILE_MODE);
         harness.handleListChoice(player1, TREASURE_MODE);
         harness.handlePermanentChosen(player1, player2.getId());
 
-        harness.handlePermanentChosen(player1, player2.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThat(gd.stack.getLast().getTargetIds())
-                .containsExactly(player2.getId(), player2.getId());
+    @Test
+    void emptyLibraryDoesNotPreventTheOtherPlayersTreasures() {
+        harness.setLibrary(player1, List.of());
+        castCasey();
+        harness.handleListChoice(player1, EXILE_MODE);
+        harness.handleListChoice(player1, TREASURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(2);
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    @Test
+    void exilePermissionExpiresWhenTheTargetPlayersNextEndStepBegins() {
+        CaseyRaphHotheads exiledCard = new CaseyRaphHotheads();
+        harness.setLibrary(player1, List.of(exiledCard));
+        castCasey();
+        harness.handleListChoice(player1, EXILE_MODE);
+        harness.handleListChoice(player1, "Done");
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+
+        assertThat(gd.exilePlayPermissions).containsEntry(exiledCard.getId(), player1.getId());
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledCard.getId());
+        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(exiledCard.getId());
     }
 
     private void castCasey() {
-        harness.setHand(player1, List.of(new CaseyRaphHotheads()));
-        addCaseyMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CaseyRaphHotheads(), "{4}{R}");
         harness.passBothPriorities();
-    }
-
-    private void addCaseyMana() {
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
     }
 }

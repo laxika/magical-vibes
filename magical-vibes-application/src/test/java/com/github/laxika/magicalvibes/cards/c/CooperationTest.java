@@ -90,10 +90,7 @@ class CooperationTest extends BaseCardTest {
         plainBlocker.setBlocking(true);
         plainBlocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         PendingInteraction.CombatDamageAssignment prompt =
                 gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
@@ -105,5 +102,42 @@ class CooperationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(bandingBlocker)
                 .doesNotContain(plainBlocker);
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature without granting banding to other creatures")
+    void canEnchantOpponentsCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AdarkarUnicorn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AdarkarUnicorn());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new AdarkarUnicorn());
+        harness.setHand(player1, List.of(new Cooperation()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Cooperation").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.BANDING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted banding allows attacking in a band with one creature without banding")
+    void grantedBandingAllowsAttackingBand() {
+        Permanent enchanted = addCreatureReady(player1, new AdarkarUnicorn());
+        Permanent companion = addCreatureReady(player1, new AdarkarUnicorn());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Cooperation());
+        aura.setAttachedTo(enchanted.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService()
+                .declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1))));
+
+        assertThat(enchanted.getBandId()).isNotNull();
+        assertThat(companion.getBandId()).isEqualTo(enchanted.getBandId());
     }
 }

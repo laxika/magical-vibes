@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetPermanentAtEndStepIfManaValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -43,7 +45,6 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PermanentRemovalService permanentRemovalService;
-    private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final AmountEvaluationService amountEvaluationService;
@@ -119,17 +120,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 UUID battlefieldControllerId = effect.underOwnersControl()
                         ? graveyardCard.ownerId() : controllerId;
                 battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                        gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                        enteringCounters(effect));
                 simultaneouslyEntered.add(permanent);
                 entry.rememberReturnedPermanent(permanent.getId());
                 applyReturnRiders(gameData, permanent, effect);
                 returnedCards.add(card);
+            }
+            for (Permanent permanent : simultaneouslyEntered) {
+                UUID battlefieldControllerId = effect.underOwnersControl()
+                        ? permanent.getEnteredFromGraveyardOwnerId() : controllerId;
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(
-                        gameData, battlefieldControllerId, permanent, card);
-                if (effect.counterType() != null && effect.counterCount() > 0) {
-                    permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, entry, permanent, effect.counterType(), effect.counterCount());
-                }
+                        gameData, battlefieldControllerId, permanent, permanent.getCard());
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -228,7 +230,8 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
                 battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                        gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                        enteringCounters(e));
                 simultaneouslyEntered.add(permanent);
                 entry.rememberReturnedPermanent(permanent.getId());
                 if (e.attachToSourceHost() && !card.isAura()) {
@@ -236,11 +239,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 }
                 applyReturnRiders(gameData, permanent, e);
                 returnedCards.add(card);
-                graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, graveyardOwnerId, permanent, card);
-                if (e.counterType() != null && e.counterCount() > 0) {
-                    permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, entry, permanent, e.counterType(), e.counterCount());
-                }
+            }
+            for (Permanent permanent : simultaneouslyEntered) {
+                graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                        gameData, graveyardOwnerId, permanent, permanent.getCard());
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -318,17 +320,18 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 UUID battlefieldControllerId = effect.underOwnersControl()
                         ? graveyardOwnerId : entry.getControllerId();
                 battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered);
+                        gameData, battlefieldControllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                        enteringCounters(effect));
                 simultaneouslyEntered.add(permanent);
                 entry.rememberReturnedPermanent(permanent.getId());
                 applyReturnRiders(gameData, permanent, effect);
                 returnedCards.add(card);
+            }
+            for (Permanent permanent : simultaneouslyEntered) {
+                UUID battlefieldControllerId = effect.underOwnersControl()
+                        ? graveyardOwnerId : entry.getControllerId();
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(
-                        gameData, battlefieldControllerId, permanent, card);
-                if (effect.counterType() != null && effect.counterCount() > 0) {
-                    permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, entry, permanent, effect.counterType(), effect.counterCount());
-                }
+                        gameData, battlefieldControllerId, permanent, permanent.getCard());
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -354,6 +357,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         return source != null && source.isAttached()
                 ? gameQueryService.findPermanentById(gameData, source.getAttachedTo())
                 : null;
+    }
+
+    private EnterWithCountersEffect enteringCounters(ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
+        return effect.counterType() != null && effect.counterCount() > 0
+                ? new EnterWithCountersEffect(effect.counterType(), new Fixed(effect.counterCount())) : null;
     }
 
     private record GraveyardCard(UUID ownerId, Card card) {

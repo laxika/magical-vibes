@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "202")
+@CardRegistration(set = "BRC", collectorNumber = "25")
+@CardRegistration(set = "BRC", collectorNumber = "45")
 public class TitaniaNaturesForce extends Card {
 
     public TitaniaNaturesForce() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IllnessInTheRanks;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenevolentOffering.class, GrizzlyBears.class})
+@CardUsed({BenevolentOffering.class, GrizzlyBears.class, IllnessInTheRanks.class})
 class BenevolentOfferingTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,37 @@ class BenevolentOfferingTest extends BaseCardTest {
 
         harness.assertLife(player1, 26);
         harness.assertLife(player2, 26);
+    }
+
+    @Test
+    @DisplayName("Each player gains life only for their own creatures")
+    void countsEachPlayersCreaturesIndependently() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castBenevolentOffering();
+
+        harness.assertLife(player1, 30);
+        harness.assertLife(player2, 28);
+    }
+
+    @Test
+    @DisplayName("Zero-toughness Spirits count for life gain before state-based actions remove them")
+    void countsSpiritsBeforeTheyDie() {
+        harness.addToBattlefield(player2, new IllnessInTheRanks());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castBenevolentOffering();
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 26);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        harness.assertOnBattlefield(player2, "Illness in the Ranks");
     }
 
     private void castBenevolentOffering() {

@@ -50,6 +50,6 @@ public class AgeOfUltron extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(
-                Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, artifactCreature));
+                Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, artifactCreature));
     }
 }

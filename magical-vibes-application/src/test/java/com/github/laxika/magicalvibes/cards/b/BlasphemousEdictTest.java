@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BlasphemousEdict.class, SavannahLions.class, Forest.class})
 class BlasphemousEdictTest extends BaseCardTest {
 
     @Test
@@ -45,7 +45,6 @@ class BlasphemousEdictTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
@@ -61,22 +60,94 @@ class BlasphemousEdictTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    void alternateCostCountsCreaturesAcrossBothBattlefields() {
+        addCreatures(player1, 6);
+        addCreatures(player2, 7);
+        harness.setHand(player1, List.of(new BlasphemousEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(creatureCount(player1)).isZero();
+        assertThat(creatureCount(player2)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Blasphemous Edict");
+    }
+
+    @Test
+    void normalCostSacrificesAllCreaturesWhenFewerThanThirteenExist() {
+        addCreatures(player1, 2);
+        addCreatures(player2, 3);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new BlasphemousEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(creatureCount(player1)).isZero();
+        assertThat(creatureCount(player2)).isZero();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void bothPlayersChooseBeforeAnyCreaturesAreSacrificed() {
+        addCreatures(player1, 14);
+        addCreatures(player2, 14);
+        List<UUID> firstChoices = creatureIds(player1).stream().limit(13).toList();
+        List<UUID> secondChoices = creatureIds(player2).stream().skip(1).toList();
+        UUID firstSurvivor = creatureIds(player1).getLast();
+        UUID secondSurvivor = creatureIds(player2).getFirst();
+        harness.setHand(player1, List.of(new BlasphemousEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, firstChoices);
+
+        assertThat(creatureCount(player1)).isEqualTo(14);
+        assertThat(creatureCount(player2)).isEqualTo(14);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, secondChoices);
+
+        assertThat(creatureIds(player1)).containsExactly(firstSurvivor);
+        assertThat(creatureIds(player2)).containsExactly(secondSurvivor);
+    }
+
+    @Test
+    void landsDoNotCountTowardAlternateCostThreshold() {
+        addCreatures(player1, 6);
+        addCreatures(player2, 6);
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new BlasphemousEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition");
+        harness.assertInHand(player1, "Blasphemous Edict");
+    }
+
     private void addCreatures(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
-            harness.addToBattlefield(player, new GrizzlyBears());
+            harness.addToBattlefield(player, new SavannahLions());
         }
     }
 
     private List<UUID> creatureIds(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
+        return findPermanents(player, "Savannah Lions").stream()
                 .map(Permanent::getId)
                 .toList();
     }
 
     private long creatureCount(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
-                .count();
+        return countPermanents(player, "Savannah Lions");
     }
 }

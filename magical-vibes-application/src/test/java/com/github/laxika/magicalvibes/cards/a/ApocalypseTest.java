@@ -68,6 +68,27 @@ class ApocalypseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exiles an opponent-controlled permanent to its owner's exile, without destroying it")
+    void exilesPermanentToOwnersZone() {
+        JackalPup pup = new JackalPup();
+        pup.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, pup);
+        harness.setHand(player1, List.of(new Apocalypse(), new Shocker()));
+        addCost();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(pup);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Jackal Pup");
+        harness.assertNotInGraveyard(player2, "Jackal Pup");
+        harness.assertInGraveyard(player1, "Shocker");
+        harness.assertInGraveyard(player1, "Apocalypse");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Resolves with an empty hand and empty board")
     void resolvesWithNothingToHit() {
         harness.setHand(player1, List.of(new Apocalypse()));

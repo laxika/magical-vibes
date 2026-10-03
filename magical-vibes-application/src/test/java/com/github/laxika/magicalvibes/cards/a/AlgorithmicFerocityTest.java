@@ -27,8 +27,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AlgorithmicFerocity(), new AirElemental(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -44,8 +43,7 @@ class AlgorithmicFerocityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AlgorithmicFerocity(), new AirElemental()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
 
@@ -55,6 +53,73 @@ class AlgorithmicFerocityTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void countsEachQualifyingCardIncludingManaValueExactlyFour() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AlgorithmicFerocity(), new HillGiant(), new AirElemental(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void countsHandAtResolutionAndIgnoresOpponentsHand() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AlgorithmicFerocity(), new HillGiant()));
+        harness.setHand(player2, List.of(new HillGiant(), new AirElemental()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(opponentCreature.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    void stillGrantsBonusWhenOpponentTargetLeavesBeforeResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AlgorithmicFerocity(), new HillGiant()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(opponentCreature);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void doesNotFightWhenOwnTargetLeavesBeforeResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new AlgorithmicFerocity(), new HillGiant()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponentCreature.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(opponentCreature.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(opponentCreature.getEffectivePower()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test

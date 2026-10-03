@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BilboUnexpectedAdventurer.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({BilboUnexpectedAdventurer.class, Forest.class, GrizzlyBears.class, HillGiant.class, InvasionOfZendikar.class, Pacifism.class})
 class BilboUnexpectedAdventurerTest extends BaseCardTest {
 
     @Test
@@ -83,14 +85,100 @@ class BilboUnexpectedAdventurerTest extends BaseCardTest {
                 .hasMessageContaining("cannot block");
     }
 
+    @Test
+    void powerTwoCreatureCanBlockAndCreatureDamageDoesNotTriggerReturn() {
+        Card legal = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(legal));
+        Permanent bilbo = addCreatureReady(player1, new BilboUnexpectedAdventurer());
+        bilbo.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(bilbo))));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(legal);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(legal.getId()));
+    }
+
+    @Test
+    void removedGraveyardTargetIsNotReturnedOrReplacedByAnotherCard() {
+        Card chosen = new GrizzlyBears();
+        Card other = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(chosen, other));
+        addBilboAttacking();
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        gd.getPlayerExiledCards(player1.getId()).add(chosen);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosen);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(chosen.getId())
+                        || permanent.getCard().getId().equals(other.getId()));
+    }
+
+    @Test
+    void combatDamageToBattleReturnsCardFromControllersGraveyard() {
+        Card legal = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(legal));
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 4);
+        Permanent bilbo = addCreatureReady(player1, new BilboUnexpectedAdventurer());
+        bilbo.setAttacking(true);
+        bilbo.setAttackTarget(battle.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(legal.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(legal.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(legal.getId()));
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
+    }
+
+    @Test
+    void returnedAuraOwnerChoosesWhatItEnchants() {
+        Card aura = new Pacifism();
+        aura.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(aura));
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        addBilboAttacking();
+
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player2, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(aura.getId());
+                    assertThat(permanent.getAttachedTo()).isEqualTo(creature.getId());
+                });
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(aura);
+    }
     private void addBilboAttacking() {
         Permanent bilbo = addCreatureReady(player1, new BilboUnexpectedAdventurer());
         bilbo.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }

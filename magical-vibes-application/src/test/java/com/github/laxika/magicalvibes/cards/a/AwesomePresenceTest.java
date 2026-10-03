@@ -27,9 +27,8 @@ class AwesomePresenceTest extends BaseCardTest {
     }
 
     private void enchant(Permanent creature, Player auraController) {
-        Permanent aura = new Permanent(new AwesomePresence());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new AwesomePresence());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
     }
 
     private int defenderIndex(Permanent permanent) {
@@ -38,6 +37,57 @@ class AwesomePresenceTest extends BaseCardTest {
 
     private int attackerIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
+
+    @Test
+    void castingAuraAttachesItAndTaxesBlocks() {
+        Permanent enchanted = addCreatureReady(player1, new KrovikanHorror());
+        Permanent blocker = addCreatureReady(player2, new KrovikanHorror());
+        harness.setHand(player1, List.of(new AwesomePresence()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Awesome Presence").getAttachedTo()).isEqualTo(enchanted.getId());
+        enchanted.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(defenderIndex(blocker), attackerIndex(enchanted)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay block cost (3 required)");
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void defendingPlayerPaysEvenWhenTheyControlTheAura() {
+        Permanent enchanted = attacking(player1, new KrovikanHorror());
+        enchant(enchanted, player2);
+        Permanent blocker = addCreatureReady(player2, new KrovikanHorror());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(defenderIndex(blocker), attackerIndex(enchanted))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void choosingNoBlockersCostsNothing() {
+        Permanent enchanted = attacking(player1, new KrovikanHorror());
+        enchant(enchanted, player1);
+        Permanent blocker = addCreatureReady(player2, new KrovikanHorror());
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of())).doesNotThrowAnyException();
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     @Test

@@ -62,4 +62,78 @@ class BrawnAmadeusChoTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
     }
+
+    @Test
+    void powerUpCostsOnlyThreeGenericManaOnTheTurnBrawnEnters() {
+        Permanent brawn = harness.enterBattlefieldAndReturn(player1, new BrawnAmadeusCho());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(brawn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void powerUpRequiresFullCostWhenBrawnDidNotEnterThisTurn() {
+        Permanent brawn = addCreatureReady(player1, new BrawnAmadeusCho());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(brawn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void powerUpCountsHandAtResolutionAndIgnoresOpponentsHand() {
+        Permanent brawn = addCreatureReady(player1, new BrawnAmadeusCho());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(brawn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void powerUpWithEmptyHandAddsNoCountersButStillUsesTheActivation() {
+        Permanent brawn = addCreatureReady(player1, new BrawnAmadeusCho());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(brawn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
+    @Test
+    void powerUpCannotBeActivatedAgainWhileItsFirstActivationIsOnTheStack() {
+        addCreatureReady(player1, new BrawnAmadeusCho());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
 }

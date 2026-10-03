@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DawnhartMentor;
+import com.github.laxika.magicalvibes.cards.f.FestivalCrasher;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -13,14 +15,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CandlelitCavalry.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({CandlelitCavalry.class, GrizzlyBears.class, HillGiant.class, DawnhartMentor.class, FestivalCrasher.class})
 class CandlelitCavalryTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void endTurn() {
@@ -70,5 +71,80 @@ class CandlelitCavalryTest extends BaseCardTest {
         endTurn();
 
         assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Coven is checked again when the combat trigger resolves")
+    void doesNotGrantTrampleIfCovenIsLostBeforeResolution() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CandlelitCavalry());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        Permanent crasher = harness.addToBattlefieldAndReturn(player1, new FestivalCrasher());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(crasher);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gaining Coven after combat begins does not create a trigger")
+    void gainingCovenAfterCombatBeginsDoesNotGrantTrample() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CandlelitCavalry());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new FestivalCrasher());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CandlelitCavalry());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        harness.addToBattlefield(player1, new FestivalCrasher());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opposing creatures do not count toward Coven")
+    void doesNotCountOpposingCreatures() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CandlelitCavalry());
+        harness.addToBattlefield(player1, new DawnhartMentor());
+        harness.addToBattlefield(player2, new FestivalCrasher());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Duplicate powers do not prevent Coven and only Cavalry gains trample")
+    void grantsOnlySelfTrampleDespiteDuplicatePowers() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CandlelitCavalry());
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new DawnhartMentor());
+        Permanent crasher = harness.addToBattlefieldAndReturn(player1, new FestivalCrasher());
+        harness.addToBattlefield(player1, new FestivalCrasher());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mentor, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, crasher, Keyword.TRAMPLE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(mentor);
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.TRAMPLE)).isTrue();
     }
 }

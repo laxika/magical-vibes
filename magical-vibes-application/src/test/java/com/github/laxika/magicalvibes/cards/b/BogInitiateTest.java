@@ -50,4 +50,36 @@ class BogInitiateTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Bog Initiate can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        var initiate = harness.addToBattlefieldAndReturn(player1, new BogInitiate());
+        initiate.setTapped(true);
+        initiate.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(initiate.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bog Initiate can repeatedly pay with black mana without increasing the pool")
+    void canPayWithBlackManaWithoutIncreasingPool() {
+        var initiate = harness.addToBattlefieldAndReturn(player1, new BogInitiate());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(initiate.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

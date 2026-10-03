@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -127,6 +126,46 @@ class CorruptEunuchsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve ETB — fizzles
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Corrupt Eunuchs must target itself when it enters an otherwise empty battlefield")
+    void etbTargetsItselfOnEmptyBattlefield() {
+        harness.castFromHand(player1, new CorruptEunuchs(), "{3}{R}");
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Corrupt Eunuchs");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, sourceId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(sourceId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Corrupt Eunuchs");
+        harness.assertInGraveyard(player1, "Corrupt Eunuchs");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB still deals damage after Corrupt Eunuchs leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new CorruptEunuchs()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Shu Foot Soldiers");
+        harness.castCreature(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Corrupt Eunuchs");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Shu Foot Soldiers").getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Corrupt Eunuchs");
+        assertThat(gd.stack).isEmpty();
     }
 }

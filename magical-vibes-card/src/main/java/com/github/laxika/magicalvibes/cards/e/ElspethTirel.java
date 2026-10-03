@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "6")
 @CardRegistration(set = "SLD", collectorNumber = "1585")
+@CardRegistration(set = "ONC", collectorNumber = "64")
 public class ElspethTirel extends Card {
 
     public ElspethTirel() {

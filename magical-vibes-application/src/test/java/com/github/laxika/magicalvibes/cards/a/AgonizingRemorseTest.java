@@ -80,7 +80,75 @@ class AgonizingRemorseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AgonizingRemorse()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+    }
+
+    @Test
+    void canChooseALandFromGraveyardInsteadOfANonlandFromHand() {
+        Card handCard = new GrizzlyBears();
+        Card graveyardLand = new Forest();
+        harness.setHand(player2, List.of(handCard));
+        harness.setGraveyard(player2, List.of(graveyardLand));
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        castAgonizingRemorse();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardLand.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(graveyardLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    void mustExileTheOnlyGraveyardCardEvenWhenItIsALand() {
+        Card graveyardLand = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of(graveyardLand));
+
+        castAgonizingRemorse();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardLand.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(graveyardLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void stillLosesLifeWhenOnlyLandsAreInHandAndGraveyardIsEmpty() {
+        Card handLand = new Forest();
+        harness.setHand(player2, List.of(handLand));
+        harness.setGraveyard(player2, List.of());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        castAgonizingRemorse();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handLand);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void cannotChooseALandFromHandOrDeclineAnAvailableNonland() {
+        Card handLand = new Forest();
+        Card handCard = new GrizzlyBears();
+        harness.setHand(player2, List.of(handLand, handCard));
+        harness.setGraveyard(player2, List.of());
+
+        castAgonizingRemorse();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(handLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handLand);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(handCard);
     }
 }

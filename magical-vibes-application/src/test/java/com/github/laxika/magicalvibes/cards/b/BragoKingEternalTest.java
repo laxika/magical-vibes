@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.cards.n.NullRod;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 
@@ -19,14 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BragoKingEternal.class, Forest.class, GrizzlyBears.class, LayClaim.class, NullRod.class})
+@CardUsed({BragoKingEternal.class, Forest.class, GrizzlyBears.class, LayClaim.class, NullRod.class, SoulWarden.class})
 class BragoKingEternalTest extends BaseCardTest {
 
     @Test
     @DisplayName("Combat damage lets you choose any number of your nonland permanents to flicker")
     void flickersChosenPermanents() {
-        Permanent brago = addReadyCreature(player1, new BragoKingEternal());
-        brago.setAttacking(true);
+        addAttackingBrago();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent nullRod = harness.addToBattlefieldAndReturn(player1, new NullRod());
         harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -56,8 +54,7 @@ class BragoKingEternalTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing no permanents is allowed")
     void mayChooseNoPermanents() {
-        Permanent brago = addReadyCreature(player1, new BragoKingEternal());
-        brago.setAttacking(true);
+        addAttackingBrago();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         resolveCombat();
@@ -67,13 +64,6 @@ class BragoKingEternalTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(bears.getId());
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        GameData gameData = harness.getGameData();
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gameData.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
     @Test
     @DisplayName("Combat damage flickers any number of targeted nonland permanents")
     void flickersSelectedNonlandPermanents() {
@@ -141,6 +131,68 @@ class BragoKingEternalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(brago);
     }
 
+    @Test
+    @CardUsed({BragoKingEternal.class, GrizzlyBears.class, SoulWarden.class})
+    @DisplayName("Creatures returning together see each other's entry regardless of target order")
+    void returningCreaturesEnterSimultaneously() {
+        addAttackingBrago();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent warden = harness.addToBattlefieldAndReturn(player1, new SoulWarden());
+        harness.setLife(player1, 20);
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, warden.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("A returning Aura's owner chooses a legal permanent to enchant")
+    void returningAuraChoosesNewAttachment() {
+        addAttackingBrago();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LayClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Lay Claim");
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, aura.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Lay Claim").getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Brago can target itself and returns as a new nonattacking permanent")
+    void canFlickerItself() {
+        Permanent brago = addAttackingBrago();
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, brago.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Brago, King Eternal");
+        assertThat(returned.getId()).isNotEqualTo(brago.getId());
+        assertThat(returned.isAttacking()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
     private Permanent addAttackingBrago() {
         Permanent brago = harness.addToBattlefieldAndReturn(player1, new BragoKingEternal());
         brago.setSummoningSick(false);
@@ -149,7 +201,6 @@ class BragoKingEternalTest extends BaseCardTest {
     }
 
     private void resolveCombatToTargetChoice() {
-        harness.forceActivePlayer(player1);
         resolveCombat();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }

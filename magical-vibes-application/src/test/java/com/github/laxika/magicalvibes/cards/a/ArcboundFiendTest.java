@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
+import com.github.laxika.magicalvibes.cards.c.ChitteringRats;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.o.Oxidize;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArcboundFiend.class, CrazedGoblin.class, DarksteelGargoyle.class, Oxidize.class})
+@CardUsed({ArcboundFiend.class, CrazedGoblin.class, ChitteringRats.class,
+        DarksteelGargoyle.class, Oxidize.class, Solemnity.class})
 class ArcboundFiendTest extends BaseCardTest {
 
     @Test
@@ -144,6 +147,77 @@ class ArcboundFiendTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(fiend))));
 
         assertThat(gargoyle.isBlocking()).isTrue();
+    }
+
+    @Test
+    void upkeepDoesNotRemoveCounterWhenFiendCannotReceiveIt() {
+        Permanent fiend = addCreatureReady(player1, new ArcboundFiend());
+        fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent goblin = addCreatureReady(player2, new CrazedGoblin());
+        goblin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new Solemnity());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(fiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void upkeepTargetingItselfDoesNotRemoveCounterUnderSolemnity() {
+        Permanent fiend = addCreatureReady(player1, new ArcboundFiend());
+        fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player1, new Solemnity());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, fiend.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(fiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent fiend = addCreatureReady(player1, new ArcboundFiend());
+        fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(fiend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void modularUsesAllCountersPresentAtDeath() {
+        Permanent fiend = addCreatureReady(player1, new ArcboundFiend());
+        fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent gargoyle = addCreatureReady(player1, new DarksteelGargoyle());
+
+        destroyFiend(fiend);
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void fearAllowsBlackNonartifactCreatureToBlock() {
+        Permanent fiend = addCreatureReady(player1, new ArcboundFiend());
+        fiend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent rats = addCreatureReady(player2, new ChitteringRats());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(rats),
+                gd.playerBattlefields.get(player1.getId()).indexOf(fiend))));
+
+        assertThat(rats.isBlocking()).isTrue();
     }
 
     private void destroyFiend(Permanent fiend) {

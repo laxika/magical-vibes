@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +20,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CarnageTyrant.class, Cancel.class, SpiketailHatchling.class, Shock.class,
+        GiantGrowth.class, GrizzlyBears.class})
 class CarnageTyrantTest extends BaseCardTest {
-
-    // ===== Can't be countered =====
 
     @Test
     @DisplayName("Carnage Tyrant cannot be countered by Cancel")
@@ -32,7 +32,7 @@ class CarnageTyrantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.c.Cancel()));
+        harness.setHand(player2, List.of(new Cancel()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
@@ -66,8 +66,6 @@ class CarnageTyrantTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Carnage Tyrant");
     }
 
-    // ===== Hexproof =====
-
     @Test
     @DisplayName("Opponent cannot target Carnage Tyrant with spells")
     void opponentCannotTargetWithSpells() {
@@ -98,14 +96,19 @@ class CarnageTyrantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Carnage Tyrant has hexproof keyword on the battlefield")
-    void hasHexproofKeyword() {
-        Permanent tyrantPerm = addTyrantReady(player1);
+    @DisplayName("Controller's spell resolves on Carnage Tyrant despite hexproof")
+    void controllerSpellResolvesOnTyrant() {
+        Permanent tyrant = addTyrantReady(player1);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThat(gqs.hasKeyword(gd, tyrantPerm, Keyword.HEXPROOF)).isTrue();
+        harness.castInstant(player1, 0, tyrant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tyrant)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, tyrant)).isEqualTo(9);
+        harness.assertInGraveyard(player1, "Giant Growth");
     }
-
-    // ===== Trample =====
 
     @Test
     @DisplayName("Carnage Tyrant deals excess combat damage to defending player via trample")
@@ -115,9 +118,8 @@ class CarnageTyrantTest extends BaseCardTest {
         Permanent tyrantPerm = addTyrantReady(player1);
         tyrantPerm.setAttacking(true);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -137,13 +139,31 @@ class CarnageTyrantTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before damage to the player")
+    void cannotTrampleWithoutAssigningLethalToBlocker() {
+        Permanent tyrant = addTyrantReady(player1);
+        tyrant.setAttacking(true);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                harness.getPermanentId(player2, "Grizzly Bears"), 1,
+                player2.getId(), 6
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Trample");
+        harness.assertLife(player2, 20);
+    }
 
     private Permanent addTyrantReady(Player player) {
-        CarnageTyrant card = new CarnageTyrant();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CarnageTyrant());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

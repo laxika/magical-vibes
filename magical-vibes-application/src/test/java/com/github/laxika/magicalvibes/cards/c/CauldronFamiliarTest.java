@@ -73,4 +73,62 @@ class CauldronFamiliarTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
+
+    @Test
+    void returnsOnlyTheFamiliarWhoseAbilityWasActivated() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        CauldronFamiliar first = new CauldronFamiliar();
+        CauldronFamiliar second = new CauldronFamiliar();
+        harness.setGraveyard(player1, List.of(first, second));
+        createFood();
+
+        harness.activateGraveyardAbility(player1, 1);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertNotOnBattlefield(player1, "Cauldron Familiar");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(second.getId()));
+        assertThat(countPermanents(player1, "Cauldron Familiar")).isEqualTo(1);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void canReturnDuringOpponentsTurn() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(new CauldronFamiliar()));
+        createFood();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cauldron Familiar");
+        harness.assertNotInGraveyard(player1, "Cauldron Familiar");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsFood() {
+        harness.setGraveyard(player2, List.of(new CauldronFamiliar()));
+        createFood();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Cauldron Familiar");
+        harness.assertNotOnBattlefield(player2, "Cauldron Familiar");
+    }
 }

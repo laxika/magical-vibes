@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.SkyEelSchool;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,19 +20,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AcidWebSpider.class, GrizzlyBears.class, LeoninScimitar.class, LoxodonWarhammer.class,
+        Memnite.class, SkyEelSchool.class})
 class AcidWebSpiderTest extends BaseCardTest {
 
     /**
-     * Casts Acid Web Spider and resolves it onto the battlefield, then accepts the may ability
-     * and chooses the target Equipment so the ETB triggered ability is placed on the stack.
+     * Resolves Acid Web Spider, chooses the Equipment target, then resolves its trigger
+     * and accepts the optional destruction.
      */
     private void castAndAcceptMay(UUID equipmentId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, equipmentId);
         harness.passBothPriorities();
@@ -38,10 +41,7 @@ class AcidWebSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Acid Web Spider puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -51,10 +51,7 @@ class AcidWebSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Acid Web Spider on the battlefield")
     void resolvingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Acid Web Spider");
@@ -64,10 +61,7 @@ class AcidWebSpiderTest extends BaseCardTest {
     @DisplayName("Resolving Acid Web Spider triggers may ability prompt when Equipment exists")
     void resolvingTriggersMayPrompt() {
         harness.addToBattlefield(player2, new LeoninScimitar());
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
@@ -81,10 +75,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -120,10 +111,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LeoninScimitar());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
@@ -154,14 +142,9 @@ class AcidWebSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("May prompt does not fire when no Equipment on battlefield")
     void noMayPromptWhenNoEquipment() {
-        // A "you may destroy target Equipment" trigger requires a legal target. With no
-        // Equipment present the ability is never put on the stack (CR 601.2c / 603.3b), so
-        // the controller is never prompted to make the "may" choice.
+        // Without a legal Equipment target, the trigger cannot remain on the stack.
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
         // No may prompt, nothing waiting on the stack, and the Spider is on the battlefield.
@@ -178,10 +161,7 @@ class AcidWebSpiderTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, equipmentId);
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -225,5 +205,31 @@ class AcidWebSpiderTest extends BaseCardTest {
         castAndAcceptMay(equipmentId);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Non-Equipment artifacts do not provide a legal target")
+    void noTargetWhenOnlyNonEquipmentArtifactExists() {
+        harness.addToBattlefield(player2, new Memnite());
+
+        harness.castFromHand(player1, new AcidWebSpider(), "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Acid Web Spider");
+        harness.assertOnBattlefield(player2, "Memnite");
+    }
+
+    @Test
+    @DisplayName("Reach allows Acid Web Spider to block a flying creature")
+    void canBlockFlyingCreature() {
+        Permanent spider = addCreatureReady(player2, new AcidWebSpider());
+        addCreatureReady(player1, new SkyEelSchool());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(spider.isBlocking()).isTrue();
     }
 }

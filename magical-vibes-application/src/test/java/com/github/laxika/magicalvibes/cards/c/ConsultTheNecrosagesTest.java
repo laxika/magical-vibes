@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,7 +51,7 @@ class ConsultTheNecrosagesTest extends BaseCardTest {
     @DisplayName("Discard mode makes the target player discard two cards")
     void discardModeMakesTargetPlayerDiscardTwo() {
         harness.setHand(player1, List.of(new ConsultTheNecrosages()));
-        harness.setHand(player2, new ArrayList<>(List.of(new Island(), new Island(), new Island())));
+        harness.setHand(player2, List.of(new Island(), new Island(), new Island()));
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
@@ -79,6 +78,57 @@ class ConsultTheNecrosagesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, permanentId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Discard mode can target the caster, who chooses the cards")
+    void discardModeCanTargetCaster() {
+        Island keptCard = new Island();
+        GrayscaledGharial firstDiscard = new GrayscaledGharial();
+        Island secondDiscard = new Island();
+        harness.setHand(player1, List.of(new ConsultTheNecrosages(), keptCard, firstDiscard, secondDiscard));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 1, player1.getId());
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard, secondDiscard);
+        harness.assertInGraveyard(player1, "Consult the Necrosages");
+    }
+
+    @Test
+    @DisplayName("Discard mode discards the only card in a one-card hand")
+    void discardModeWithOneCardInHand() {
+        Island discardedCard = new Island();
+        harness.setHand(player1, List.of(new ConsultTheNecrosages()));
+        harness.setHand(player2, List.of(discardedCard));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        harness.assertInGraveyard(player1, "Consult the Necrosages");
+    }
+
+    @Test
+    @DisplayName("Discard mode can target a player with an empty hand")
+    void discardModeWithEmptyHand() {
+        harness.setHand(player1, List.of(new ConsultTheNecrosages()));
+        harness.setHand(player2, List.of());
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Consult the Necrosages");
     }
 
     private void addMana() {

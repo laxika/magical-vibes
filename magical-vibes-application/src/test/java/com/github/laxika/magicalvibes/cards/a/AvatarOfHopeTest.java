@@ -60,8 +60,7 @@ class AvatarOfHopeTest extends BaseCardTest {
         addCreatureReady(player1, new AvatarOfHope());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -109,5 +108,54 @@ class AvatarOfHopeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("assigned too many times");
         assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Avatar of Hope can be cast for two white mana below three life")
+    void canCastWithReductionAtOneLife() {
+        harness.setLife(player1, 1);
+
+        harness.castFromHand(player1, new AvatarOfHope(), "{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Avatar of Hope")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The cost reduction does not remove the white mana requirement")
+    void reductionDoesNotReduceColoredMana() {
+        harness.setLife(player1, 3);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AvatarOfHope(), "{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Avatar of Hope can be cast at full cost above three life")
+    void canCastAtFullCostAboveThreeLife() {
+        harness.setLife(player1, 4);
+
+        harness.castFromHand(player1, new AvatarOfHope(), "{6}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Avatar of Hope")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Avatar of Hope can block multiple flying attackers")
+    void canBlockMultipleFlyingAttackers() {
+        addCreatureReady(player1, new AvatarOfHope());
+        addCreatureReady(player1, new AvatarOfHope());
+        Permanent blocker = addCreatureReady(player2, new AvatarOfHope());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
     }
 }

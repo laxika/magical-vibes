@@ -172,4 +172,94 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, landId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The most recently resolved type change replaces the earlier one")
+    void latestResolvedTypeChangeWins() {
+        harness.addToBattlefield(player1, new BoldwyrIntimidator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MosquitoGuard());
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.WARRIOR);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesDoNotRequireTappingOrHaste() {
+        Permanent boldwyr = harness.addToBattlefieldAndReturn(player1, new BoldwyrIntimidator());
+        boldwyr.setSummoningSick(true);
+        boldwyr.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MosquitoGuard());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.WARRIOR);
+        assertThat(boldwyr.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A type-changing ability resolves after its source leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent boldwyr = harness.addToBattlefieldAndReturn(player1, new BoldwyrIntimidator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MosquitoGuard());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, boldwyr);
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
+        harness.assertInGraveyard(player1, "Boldwyr Intimidator");
+    }
+
+    @Test
+    @DisplayName("The blocking restriction applies when the defender controls Boldwyr")
+    void restrictionAppliesToBothPlayers() {
+        Permanent nonWarrior = addCreatureReady(player1, new MosquitoGuard());
+        addCreatureReady(player2, new BoldwyrIntimidator());
+        Permanent blocker = addCreatureReady(player2, new MosquitoGuard());
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.activateAbility(player2, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, 1, null, nonWarrior.getId());
+        harness.passBothPriorities();
+        nonWarrior.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cowards can't block Warriors");
+    }
+    @Test
+    @DisplayName("Cleanup restores the original types after becoming a Coward")
+    void cleanupRestoresTypesAfterCowardAbility() {
+        harness.addToBattlefield(player1, new BoldwyrIntimidator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MosquitoGuard());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.COWARD);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target))
+                .containsExactlyInAnyOrder(CardSubtype.KITHKIN, CardSubtype.SOLDIER);
+    }
 }

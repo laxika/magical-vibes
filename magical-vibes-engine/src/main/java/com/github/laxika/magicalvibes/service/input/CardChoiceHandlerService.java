@@ -1412,7 +1412,11 @@ public class CardChoiceHandlerService {
                 reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
                         ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
                 copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard, followUp);
-                gameData.stack.add(reflexiveEntry);
+                if (followUp.eachPlayerControllerId() != null) {
+                    effectResolutionService.resolveEffects(gameData, reflexiveEntry);
+                } else {
+                    gameData.stack.add(reflexiveEntry);
+                }
             }
             log.info("Game {} - {} discard-then rider pushed for {}",
                     gameData.id, player.getUsername(), sourceCard.getName());

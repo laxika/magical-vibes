@@ -51,11 +51,10 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
                     continue;
                 }
-                int markedBefore = permanent.getMarkedDamage();
-                damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);
+                int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);
                 // "Each creature dealt damage this way …" (Aggravate): a creature whose damage was
                 // fully prevented or redirected away never took damage, so it isn't affected.
-                if (e.damagedCreaturesMustAttackThisTurn() && permanent.getMarkedDamage() > markedBefore) {
+                if (e.damagedCreaturesMustAttackThisTurn() && damageDealt > 0) {
                     permanent.setMustAttackThisTurn(true);
                 }
             }

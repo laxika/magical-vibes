@@ -51,4 +51,43 @@ class BlossomingWreathTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife + 1);
     }
+
+    @Test
+    @DisplayName("Resolves without gaining life when the graveyard is empty")
+    void gainsNoLifeWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        castWreath();
+
+        harness.assertLife(player1, startingLife);
+        harness.assertInGraveyard(player1, "Blossoming Wreath");
+    }
+
+    @Test
+    @DisplayName("Counts creature cards added to the graveyard before resolution")
+    void countsCreaturesAtResolution() {
+        harness.setGraveyard(player1, List.of(new BenalishInfantry()));
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.castFromHand(player1, new BlossomingWreath(), "{G}");
+        harness.setGraveyard(player1, List.of(new BenalishInfantry(), new BenalishInfantry(), new Abeyance()));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife + 2);
+    }
+
+    @Test
+    @DisplayName("Does not count creature cards removed from the graveyard before resolution")
+    void ignoresCreaturesRemovedBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new BenalishInfantry()));
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+        harness.castFromHand(player1, new BlossomingWreath(), "{G}");
+        harness.setGraveyard(player1, List.of());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife);
+        harness.assertInGraveyard(player1, "Blossoming Wreath");
+    }
 }

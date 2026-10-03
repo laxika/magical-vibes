@@ -399,4 +399,65 @@ class CircleOfProtectionRedTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
+
+    @Test
+    @DisplayName("A departed red source referenced by an ability on the stack can be chosen")
+    void preventsDamageFromDepartedSourceOfStackedAbility() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent cannoneers = addReadyRedDamageSource(player2);
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, cannoneers.getId());
+        harness.assertInGraveyard(player2, "Orcish Cannoneers");
+        harness.assertNotOnBattlefield(player2, "Orcish Cannoneers");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(cannoneers.getId());
+        harness.handlePermanentChosen(player1, cannoneers.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Two activations protect against two separate damage events from the same source")
+    void multipleShieldsAreNotConsumedByOneDamageEvent() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyCircle(player1);
+        Permanent cannoneers = addReadyRedDamageSource(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, cannoneers.getId());
+        }
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.performUntapStep(player2);
+            harness.activateAbility(player2, 0, null, player1.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player1, 20);
+        }
+
+        harness.performUntapStep(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 11);
+    }
 }

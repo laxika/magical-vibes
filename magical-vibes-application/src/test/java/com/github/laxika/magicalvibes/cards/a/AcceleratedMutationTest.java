@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.e.ElvishAberration;
 import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.cards.t.TreetopScout;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -110,5 +112,52 @@ class AcceleratedMutationTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void ignoresPrintedManaValueOfFaceDownPermanents() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new ElvishAberration());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player1, new Stabilizer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TreetopScout());
+        harness.setHand(player1, List.of(new AcceleratedMutation()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void boostRemainsFixedAfterGreatestManaValuePermanentLeaves() {
+        Permanent elvishAberration = harness.addToBattlefieldAndReturn(player1, new ElvishAberration());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TreetopScout());
+        harness.setHand(player1, List.of(new AcceleratedMutation()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(elvishAberration);
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+    }
+
+    @Test
+    void doesNotBoostTargetThatLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new ElvishAberration());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TreetopScout());
+        harness.setHand(player1, List.of(new AcceleratedMutation()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Accelerated Mutation");
     }
 }

@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -82,9 +80,7 @@ class BoneHarvestTest extends BaseCardTest {
                 new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()));
         harness.passBothPriorities();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
@@ -135,4 +131,77 @@ class BoneHarvestTest extends BaseCardTest {
                 .contains(creature.getId());
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
     }
+
+    @Test
+    @DisplayName("If every chosen target leaves the graveyard, the spell does not schedule a draw")
+    void allTargetsGonePreventsDelayedDraw() {
+        Card creature = new IronTuskElephant();
+        Card libraryCard = new DarkRitual();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.castFromHand(player1, new BoneHarvest(), "{2}{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(BoneHarvest.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is returned and the delayed draw still happens")
+    void oneRemainingTargetStillResolves() {
+        Card removedCreature = new IronTuskElephant();
+        Card remainingCreature = new GiantMantis();
+        Card unchosenCreature = new IronTuskElephant();
+        Card libraryCard = new DarkRitual();
+        harness.setGraveyard(player1, List.of(removedCreature, remainingCreature, unchosenCreature));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.castFromHand(player1, new BoneHarvest(), "{2}{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(removedCreature.getId(), remainingCreature.getId()));
+        harness.setGraveyard(player1, List.of(remainingCreature, unchosenCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCreature, libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unchosenCreature);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(remainingCreature);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+
+    @Test
+    @DisplayName("With zero targets the draw waits for a later turn and happens only once")
+    void zeroTargetDrawWaitsForNextTurnAndHappensOnce() {
+        Card firstCard = new DarkRitual();
+        Card secondCard = new GiantMantis();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.castFromHand(player1, new BoneHarvest(), "{2}{B}");
+        harness.passBothPriorities();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(firstCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+    }
+
 }

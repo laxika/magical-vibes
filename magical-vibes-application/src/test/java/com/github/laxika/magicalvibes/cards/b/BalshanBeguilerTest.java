@@ -97,10 +97,58 @@ class BalshanBeguilerTest extends BaseCardTest {
     }
 
     private Permanent addAttackingBeguiler() {
-        Permanent beguiler = harness.addToBattlefieldAndReturn(player1, new BalshanBeguiler());
-        beguiler.setSummoningSick(false);
+        Permanent beguiler = addCreatureReady(player1, new BalshanBeguiler());
         beguiler.setAttacking(true);
         return beguiler;
+    }
+
+    @Test
+    @DisplayName("Choosing the first revealed card preserves the remaining library order")
+    void choosingFirstCardPreservesRemainingLibraryOrder() {
+        Card top = new Forest();
+        Card second = new WoodlandDruid();
+        Card third = new Island();
+        Card fourth = new Forest();
+        harness.setLibrary(player2, List.of(top, second, third, fourth));
+        addAttackingBeguiler();
+
+        resolveCombatAndTrigger();
+
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.params().cards()).containsExactly(top, second);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, third, fourth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger resolves after Beguiler leaves the battlefield")
+    void triggerResolvesWithoutBeguilerOnBattlefield() {
+        Card top = new Forest();
+        Card second = new Island();
+        harness.setLibrary(player2, List.of(top, second));
+        Permanent beguiler = addAttackingBeguiler();
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(beguiler);
+        gd.playerGraveyards.get(player1.getId()).add(beguiler.getCard());
+        resolveAllTriggers();
+
+        PendingInteraction.LibrarySearch choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.params().playerId()).isEqualTo(player1.getId());
+        assertThat(choice.params().cards()).containsExactly(top, second);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void resolveCombatAndTrigger() {

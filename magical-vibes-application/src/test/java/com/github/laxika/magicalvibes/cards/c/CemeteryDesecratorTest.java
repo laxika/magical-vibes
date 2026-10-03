@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -60,7 +61,7 @@ class CemeteryDesecratorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The counter mode removes the chosen number of mixed counters")
+    @DisplayName("The counter mode removes counters equal to the exiled card's mana value")
     void counterModeRemovesManaValueCounters() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
@@ -117,6 +118,117 @@ class CemeteryDesecratorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counter removal cannot stop early while counters remain")
+    void counterRemovalIsMandatory() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.setCounterCount(CounterType.CHARGE, 3);
+        chooseModeAfterExiling(new CemeteryDesecrator(), REMOVE_COUNTERS_MODE);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Done"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Counter removal removes all available counters when there are fewer than X")
+    void removesAllAvailableMixedCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.setCounterCount(CounterType.CHARGE, 1);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        chooseModeAfterExiling(new CemeteryDesecrator(), REMOVE_COUNTERS_MODE);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "charge counters");
+        harness.handleListChoice(player1, "+1/+1 counters");
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty graveyard produces no reflexive ability")
+    void emptyGraveyardsProduceNoFollowUp() {
+        harness.enterBattlefieldAndReturn(player1, new CemeteryDesecrator());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile choice can use the controller's graveyard")
+    void exilesCardFromOwnGraveyard() {
+        Card exiled = new Forest();
+        harness.setGraveyard(player1, List.of(exiled));
+        harness.enterBattlefieldAndReturn(player1, new CemeteryDesecrator());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, REMOVE_COUNTERS_MODE);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Cemetery Desecrator"));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The debuff rejects the controller's own creature")
+    void debuffRequiresOpponentCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new CemeteryDesecrator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CemeteryDesecrator());
+        chooseModeAfterExiling(new Forest(), DEBUFF_MODE);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The debuff expires at the end of the turn")
+    void debuffExpiresAtEndOfTurn() {
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        chooseModeAfterExiling(new GrizzlyBears(), DEBUFF_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A death trigger cannot exile itself when it is the only graveyard card")
+    void deathWithNoOtherGraveyardCardHasNoFollowUp() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CemeteryDesecrator());
+        source.setMarkedDamage(4);
+        harness.forceActivePlayer(player1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cemetery Desecrator");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private void chooseModeAfterExiling(Card exiled, String mode) {

@@ -100,4 +100,57 @@ class BogSerpentTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(index)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("An opponent's Swamp does not prevent the sacrifice trigger")
+    void opponentsSwampDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new BogSerpent()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bog Serpent");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bog Serpent");
+        harness.assertInGraveyard(player1, "Bog Serpent");
+    }
+
+    @Test
+    @DisplayName("Gaining a Swamp after the ability triggers does not stop the sacrifice")
+    void gainingSwampAfterTriggerDoesNotPreventSacrifice() {
+        harness.setHand(player1, List.of(new BogSerpent()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bog Serpent");
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bog Serpent");
+        harness.assertInGraveyard(player1, "Bog Serpent");
+        harness.assertOnBattlefield(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Can attack when Urborg makes the defender's Forest a Swamp")
+    void canAttackWhenUrborgGrantsDefendersLandSwampSubtype() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new UrborgTombOfYawgmoth());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent serpent = addCreatureReady(player1, new BogSerpent());
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        declareAttackers(List.of(index));
+
+        harness.assertLife(player2, 15);
+    }
 }

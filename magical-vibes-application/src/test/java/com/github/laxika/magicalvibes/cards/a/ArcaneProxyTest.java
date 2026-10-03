@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -8,13 +9,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArcaneProxy.class, CounselOfTheSoratami.class, GrizzlyBears.class, Shock.class, Disfigure.class})
 class ArcaneProxyTest extends BaseCardTest {
 
     @Test
@@ -23,7 +27,7 @@ class ArcaneProxyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneProxy()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of());
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
         Permanent proxy = findPermanent(player1, "Arcane Proxy");
@@ -41,7 +45,7 @@ class ArcaneProxyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneProxy()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of());
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction.activeInteraction(
@@ -87,7 +91,7 @@ class ArcaneProxyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneProxy()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of());
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
         harness.passBothPriorities();
@@ -113,5 +117,123 @@ class ArcaneProxyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+    }
+
+    @Test
+    @DisplayName("A legal graveyard target is mandatory even when the copy will not be cast")
+    void cannotDeclineGraveyardTarget() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.setHand(player1, List.of(new ArcaneProxy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not trigger the graveyard ability")
+    void enteringWithoutBeingCastDoesNotTrigger() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+
+        harness.enterBattlefieldAndReturn(player1, new ArcaneProxy());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the controller's graveyard supplies legal targets")
+    void cannotTargetOpponentsGraveyard() {
+        Shock ownShock = new Shock();
+        Shock opposingShock = new Shock();
+        harness.setGraveyard(player1, List.of(ownShock));
+        harness.setGraveyard(player2, List.of(opposingShock));
+        harness.setHand(player1, List.of(new ArcaneProxy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownShock.getId());
+    }
+
+    @Test
+    @DisplayName("A target becomes illegal if the source's power drops below its mana value")
+    void rechecksPowerWhenAbilityResolves() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        harness.setHand(player1, List.of(new ArcaneProxy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+
+        harness.setHand(player2, List.of(new Disfigure()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Arcane Proxy"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(counsel);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The copied instant can choose a target and resolves without paying mana")
+    void castsTargetedCopy() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.setHand(player1, List.of(new ArcaneProxy()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shock);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the source does not stop the ability from using its last known power")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Shock graveyardShock = new Shock();
+        harness.setGraveyard(player1, List.of(graveyardShock));
+        harness.setHand(player1, List.of(new ArcaneProxy()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardShock.getId()));
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Arcane Proxy"));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Arcane Proxy");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(graveyardShock);
+        assertThat(gd.stack).isEmpty();
     }
 }

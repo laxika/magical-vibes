@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AltarOfTheLost.class, ThinkTwice.class, GrizzlyBears.class})
 class AltarOfTheLostTest extends BaseCardTest {
 
     // ===== Enters tapped =====
@@ -38,9 +40,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability prompts for two color choices — choosing same color both times")
     void abilityAddsSameColorTwice() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -54,9 +54,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability prompts for two color choices — choosing different colors")
     void abilityAddsDifferentColors() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -72,9 +70,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback-only mana can pay for flashback spell cost")
     void flashbackManaPayForFlashbackSpell() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         // Activate Altar: choose blue twice, get 2 flashback-only blue
@@ -92,8 +88,7 @@ class AltarOfTheLostTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         // Think Twice draws a card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
@@ -104,9 +99,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Mixed-color flashback-only mana can pay for flashback spell")
     void mixedColorFlashbackManaPaysForFlashbackSpell() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         // Activate Altar: choose blue + red
@@ -124,8 +117,7 @@ class AltarOfTheLostTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
     }
@@ -133,9 +125,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback-only mana is not spent when casting a normal spell from hand")
     void flashbackManaNotUsedForNormalSpell() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         // Activate Altar: choose green twice
@@ -162,9 +152,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot cast flashback spell with only flashback-only mana when not enough")
     void cannotCastFlashbackWithInsufficientFlashbackMana() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         // Activate Altar: choose red twice
@@ -186,9 +174,7 @@ class AltarOfTheLostTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback-only mana drains at step/phase transitions")
     void flashbackManaDrainsAtPhaseTransition() {
-        harness.addToBattlefield(player1, new AltarOfTheLost());
-
-        Permanent altar = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
         altar.untap();
 
         // Activate Altar: choose blue twice
@@ -202,5 +188,69 @@ class AltarOfTheLostTest extends BaseCardTest {
         gd.playerManaPools.get(player1.getId()).drainNonPersistent();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyMana(ManaColor.BLUE)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being cast")
+    void entersTappedWithoutBeingCast() {
+        Permanent altar = harness.enterBattlefieldAndReturn(player1, new AltarOfTheLost());
+
+        assertThat(altar.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana ability taps its source and resolves without using the stack")
+    void manaAbilityRequiresUntappedSourceAndDoesNotUseStack() {
+        Permanent altar = harness.addToBattlefieldAndReturn(player1, new AltarOfTheLost());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(altar.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyManaTotal()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyManaTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Having flashback does not make a spell cast from hand eligible for the restricted mana")
+    void cannotSpendRestrictedManaOnFlashbackCardFromHand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new AltarOfTheLost());
+        harness.setHand(player1, List.of(new ThinkTwice()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyMana(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Restricted mana empties when the engine advances out of the main phase")
+    void restrictedManaDrainsAtActualPhaseTransition() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new AltarOfTheLost());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "BLACK");
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyManaTotal()).isEqualTo(2);
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getFlashbackOnlyManaTotal()).isZero();
     }
 }

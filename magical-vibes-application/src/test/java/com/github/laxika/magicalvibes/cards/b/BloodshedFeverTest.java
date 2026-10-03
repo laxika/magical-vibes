@@ -37,9 +37,8 @@ class BloodshedFeverTest extends BaseCardTest {
     @DisplayName("Enchanted creature must attack each combat if able")
     void enchantedCreatureMustAttackWhenAble() {
         Permanent creature = addCreatureReady(player1, new SickleRipper());
-        Permanent fever = new Permanent(new BloodshedFever());
+        Permanent fever = harness.addToBattlefieldAndReturn(player1, new BloodshedFever());
         fever.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fever);
 
         assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -50,9 +49,8 @@ class BloodshedFeverTest extends BaseCardTest {
     @DisplayName("Summoning-sick enchanted creature is not forced to attack")
     void summoningSickCreatureIsNotForcedToAttack() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SickleRipper());
-        Permanent fever = new Permanent(new BloodshedFever());
+        Permanent fever = harness.addToBattlefieldAndReturn(player1, new BloodshedFever());
         fever.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(fever);
 
         declareAttackers(List.of());
 
@@ -69,5 +67,52 @@ class BloodshedFeverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Tapped enchanted creature is not forced to attack")
+    void tappedCreatureIsNotForcedToAttack() {
+        Permanent creature = addCreatureReady(player1, new SickleRipper());
+        creature.setTapped(true);
+        Permanent fever = harness.addToBattlefieldAndReturn(player1, new BloodshedFever());
+        fever.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted creature must attack on its controller's turn")
+    void opponentsCreatureMustAttack() {
+        Permanent creature = addCreatureReady(player2, new SickleRipper());
+        harness.setHand(player1, List.of(new BloodshedFever()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Bloodshed Fever").getAttachedTo()).isEqualTo(creature.getId());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack requirement ends when Bloodshed Fever leaves the battlefield")
+    void attackRequirementEndsWhenAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new SickleRipper());
+        Permanent fever = harness.addToBattlefieldAndReturn(player1, new BloodshedFever());
+        fever.setAttachedTo(creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(fever);
+        gd.playerGraveyards.get(player1.getId()).add(fever.getCard());
+
+        declareAttackers(List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
     }
 }

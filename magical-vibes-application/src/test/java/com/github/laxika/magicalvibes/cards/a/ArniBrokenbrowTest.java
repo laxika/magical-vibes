@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,42 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ArniBrokenbrow.class, GrizzlyBears.class})
 class ArniBrokenbrowTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Boast sets base power to one when there are no other creatures")
+    void boastWithNoOtherCreatures() {
+        Permanent arni = addCreatureReady(player1, new ArniBrokenbrow());
+        arni.setAttackedThisTurn(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, arni)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, arni)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boast ignores opposing creatures and does not track later power changes")
+    void boastIgnoresOpponentsAndLocksInPower() {
+        Permanent arni = addCreatureReady(player1, new ArniBrokenbrow());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        opponent.setPowerModifier(8);
+        arni.setAttackedThisTurn(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gqs.getEffectivePower(gd, arni)).isEqualTo(3);
+
+        other.setPowerModifier(5);
+        assertThat(gqs.getEffectivePower(gd, arni)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Boast sets Arni's base power to one plus the greatest other creature's actual power")

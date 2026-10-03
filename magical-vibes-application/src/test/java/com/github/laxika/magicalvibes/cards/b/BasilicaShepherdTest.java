@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BasilicaShepherd.class})
 class BasilicaShepherdTest extends BaseCardTest {
 
     private void castAndResolve() {
@@ -20,8 +24,7 @@ class BasilicaShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -58,5 +61,42 @@ class BasilicaShepherdTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Toxic gives poison counters with combat damage without using the stack")
+    void toxicAppliesWithCombatDamage() {
+        castAndResolve();
+
+        Permanent mite = findPermanent(player1, "Mite");
+        mite.setSummoningSick(false);
+        mite.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both Mites give poison counters independently of the damage amount")
+    void bothMitesDealCombatDamage() {
+        castAndResolve();
+
+        List<Permanent> mites = findPermanents(player1, "Mite");
+        mites.forEach(mite -> {
+            mite.setSummoningSick(false);
+            mite.setAttacking(true);
+        });
+        mites.getFirst().setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 }

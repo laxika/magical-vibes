@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CaseyJonesVigilante.class)
+@CardUsed({CaseyJonesVigilante.class})
 class CaseyJonesVigilanteTest extends BaseCardTest {
 
     @Test
@@ -56,9 +55,60 @@ class CaseyJonesVigilanteTest extends BaseCardTest {
     private void castCasey() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new CaseyJonesVigilante()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CaseyJonesVigilante(), "{1}{R}{R}");
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Delayed discard still resolves after Casey leaves the battlefield")
+    void delayedDiscardSurvivesSourceLeaving() {
+        castCasey();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setHand(player1, List.of(new CaseyJonesVigilante(), new CaseyJonesVigilante()));
+        gd.playerGraveyards.get(player1.getId()).clear();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Delayed discard removes exactly three cards without asking for a choice")
+    void delayedDiscardRemovesExactlyThreeCards() {
+        castCasey();
+        var cards = List.of(new CaseyJonesVigilante(), new CaseyJonesVigilante(),
+                new CaseyJonesVigilante(), new CaseyJonesVigilante(), new CaseyJonesVigilante());
+        harness.setHand(player1, List.copyOf(cards));
+        gd.playerGraveyards.get(player1.getId()).clear();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).isSubsetOf(cards);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Delayed discard with an empty hand does nothing")
+    void delayedDiscardWithEmptyHand() {
+        castCasey();
+        harness.setHand(player1, List.of());
+        gd.playerGraveyards.get(player1.getId()).clear();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

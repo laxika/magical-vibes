@@ -156,6 +156,78 @@ class BurningTreeBloodscaleTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Bloodthirst adds only one counter even after multiple damage events")
+    void bloodthirstDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 3);
+        gd.recordDamageToPlayer(player2.getId(), 2);
+        castBloodscale();
+
+        assertThat(findPermanent(player1, "Burning-Tree Bloodscale")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The red blocking restriction overrides the green blocking requirement")
+    void cannotBlockOverridesMustBlock() {
+        Permanent source = addCreatureReady(player1, new BurningTreeBloodscale());
+        Permanent blocker = addCreatureReady(player2, new BurningTreeBloodscale());
+        addGreenAbilityMana();
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+        addRedAbilityMana();
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        source.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Green ability does not force blocking a different attacker when its source is not attacking")
+    void greenAbilityDoesNotRequireBlockingOtherAttackers() {
+        addCreatureReady(player1, new BurningTreeBloodscale());
+        Permanent otherAttacker = addCreatureReady(player1, new BurningTreeBloodscale());
+        Permanent blocker = addCreatureReady(player2, new BurningTreeBloodscale());
+        addGreenAbilityMana();
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        otherAttacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A creature required to block two Bloodscales may block either one")
+    void competingGreenAbilitiesAllowEitherRequiredAttacker() {
+        Permanent first = addCreatureReady(player1, new BurningTreeBloodscale());
+        Permanent second = addCreatureReady(player1, new BurningTreeBloodscale());
+        Permanent blocker = addCreatureReady(player2, new BurningTreeBloodscale());
+        addGreenAbilityMana();
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+        addGreenAbilityMana();
+        harness.activateAbility(player1, 1, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .doesNotThrowAnyException();
+    }
+
     private void castBloodscale() {
         harness.castFromHand(player1, new BurningTreeBloodscale(), "{2}{R}{G}");
         resolveAllTriggers();

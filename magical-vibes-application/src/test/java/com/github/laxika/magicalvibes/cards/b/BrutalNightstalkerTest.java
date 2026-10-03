@@ -66,6 +66,29 @@ class BrutalNightstalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses exactly one card to discard from a larger hand")
+    void opponentChoosesOneCardFromLargerHand() {
+        BearCub retainedCard = new BearCub();
+        BearCub discardedCard = new BearCub();
+        BearCub controllerCard = new BearCub();
+        harness.setHand(player2, List.of(retainedCard, discardedCard));
+        castBrutalNightstalker();
+        harness.setHand(player1, List.of(controllerCard));
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Accepting the may ability does nothing when opponent has an empty hand")
     void acceptingMayDoesNothingWithEmptyHand() {
         harness.setHand(player2, List.of());

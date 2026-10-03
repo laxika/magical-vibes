@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CoalstokeGearhulk.class, GrizzlyBears.class, HolyDay.class, SerraAngel.class})
 class CoalstokeGearhulkTest extends BaseCardTest {
 
     @Test
@@ -48,7 +50,7 @@ class CoalstokeGearhulkTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
-        Permanent returned = findPermanentByCardId(target.getId());
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         assertThat(returned.hasKeyword(Keyword.MENACE)).isTrue();
         assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
@@ -67,15 +69,16 @@ class CoalstokeGearhulkTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(findPermanentByCardId(target.getId())).isNotNull();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getId().equals(target.getId()));
@@ -92,10 +95,62 @@ class CoalstokeGearhulkTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent findPermanentByCardId(UUID cardId) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(cardId))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Exile at the next end step uses the stack and allows responses")
+    void delayedExileAllowsResponses() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        castGearhulk();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(target.getId()));
+    }
+
+    @Test
+    @DisplayName("A target removed from its graveyard before resolution is not returned")
+    void missingTargetIsNotReturned() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        castGearhulk();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Reanimation during an end step waits until the next matching end step")
+    void resolvingDuringEndStepWaitsForNextEndStep() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        castGearhulk();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }

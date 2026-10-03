@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AnimalMagnetism.class, ElvishWarrior.class, Shock.class, Forest.class})
 class AnimalMagnetismTest extends BaseCardTest {
@@ -49,6 +50,43 @@ class AnimalMagnetismTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(spell, firstCreature, nonCreatureOne,
                         nonCreatureTwo, nonCreatureThree);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The opponent must choose exactly one revealed creature and can retry an invalid choice")
+    void opponentMustChooseExactlyOneRevealedCreature() {
+        Card firstCreature = new ElvishWarrior();
+        Card secondCreature = new ElvishWarrior();
+        Card nonCreature = new Shock();
+        Card unrevealedCreature = new ElvishWarrior();
+        Card spell = new AnimalMagnetism();
+        harness.setLibrary(player1, List.of(firstCreature, secondCreature, nonCreature,
+                new Forest(), new Shock(), unrevealedCreature));
+        harness.castFromHand(player1, spell, "{4}{G}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(firstCreature.getId()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(firstCreature.getId(), secondCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(nonCreature.getId()))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(unrevealedCreature.getId()))).isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player2, List.of(firstCreature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard())
+                .containsExactly(firstCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(spell, secondCreature, nonCreature)
+                .hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealedCreature);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

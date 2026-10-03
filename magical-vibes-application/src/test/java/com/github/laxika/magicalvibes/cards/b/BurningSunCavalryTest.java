@@ -87,4 +87,54 @@ class BurningSunCavalryTest extends BaseCardTest {
         assertThat(cavalry.getPowerModifier()).isZero();
         assertThat(cavalry.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Attack boost resolves even after the last Dinosaur leaves")
+    void attackBoostSurvivesLosingLastDinosaur() {
+        Permanent cavalry = addCreatureReady(player1, new BurningSunCavalry());
+        Permanent dinosaur = addCreatureReady(player1, new PygmyAllosaurus());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(dinosaur);
+        gd.playerGraveyards.get(player1.getId()).add(dinosaur.getCard());
+        resolveAllTriggers();
+
+        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
+        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Block boost resolves even after the last Dinosaur leaves")
+    void blockBoostSurvivesLosingLastDinosaur() {
+        Permanent cavalry = addCreatureReady(player1, new BurningSunCavalry());
+        Permanent dinosaur = addCreatureReady(player1, new PygmyAllosaurus());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(dinosaur);
+        gd.playerGraveyards.get(player1.getId()).add(dinosaur.getCard());
+        resolveAllTriggers();
+
+        assertThat(cavalry.getPowerModifier()).isEqualTo(1);
+        assertThat(cavalry.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Blocking without a Dinosaur does not trigger a boost")
+    void blockingWithoutDinosaurDoesNotTrigger() {
+        Permanent cavalry = addCreatureReady(player1, new BurningSunCavalry());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(cavalry.getPowerModifier()).isZero();
+        assertThat(cavalry.getToughnessModifier()).isZero();
+    }
 }

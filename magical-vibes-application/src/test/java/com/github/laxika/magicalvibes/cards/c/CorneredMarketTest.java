@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.h.HickoryWoodlot;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RishadanPort;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CorneredMarket.class, CloudSprite.class, DarkRitual.class, HickoryWoodlot.class,
+@CardUsed({CorneredMarket.class, CloudSprite.class, DarkRitual.class, Disenchant.class, HickoryWoodlot.class,
         Plains.class, RishadanPort.class})
 class CorneredMarketTest extends BaseCardTest {
 
@@ -43,7 +45,7 @@ class CorneredMarketTest extends BaseCardTest {
     @DisplayName("Token names do not create a Cornered Market restriction")
     void ignoresTokenNames() {
         addReadyCorneredMarket(player1);
-        harness.addToBattlefield(player1, tokenNamed("Cloud Sprite"));
+        harness.addToBattlefield(player1, cloudSpriteToken());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -116,11 +118,8 @@ class CorneredMarketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castInstant(player1, 0);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
+        harness.castFromHand(player1, new DarkRitual(), "{B}");
 
         assertThat(gd.stack).hasSize(2);
     }
@@ -180,17 +179,87 @@ class CorneredMarketTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Cornered Market's own name prevents another copy from being cast")
+    void preventsAnotherCorneredMarket() {
+        addReadyCorneredMarket(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new CorneredMarket(), "{2}{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A token with a nonbasic land's name does not prevent playing that land")
+    void ignoresTokenNamesForNonbasicLands() {
+        addReadyCorneredMarket(player1);
+        HickoryWoodlot token = new HickoryWoodlot();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new HickoryWoodlot()));
+
+        harness.playLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Hickory Woodlot");
+    }
+
+    @Test
+    @DisplayName("Removing Cornered Market ends both restrictions")
+    void restrictionsEndWhenMarketLeavesBattlefield() {
+        Permanent market = harness.addToBattlefieldAndReturn(player1, new CorneredMarket());
+        harness.addToBattlefield(player1, new CloudSprite());
+        harness.addToBattlefield(player1, new HickoryWoodlot());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, market.getId());
+        harness.assertNotOnBattlefield(player1, "Cornered Market");
+        harness.setHand(player2, List.of(new HickoryWoodlot()));
+        harness.playLand(player2, 0);
+        harness.assertOnBattlefield(player2, "Hickory Woodlot");
+        harness.castFromHand(player2, new CloudSprite(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, Humble.class})
+    @DisplayName("Losing its abilities ends Cornered Market's nonbasic-land restriction")
+    void allowsMatchingNonbasicLandWhenMarketLosesAbilities() {
+        Permanent market = harness.addToBattlefieldAndReturn(player1, new CorneredMarket());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new HickoryWoodlot());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Humble()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, market.getId());
+        assertThat(gqs.hasLostAllAbilities(gd, market)).isTrue();
+        harness.setHand(player2, List.of(new HickoryWoodlot()));
+        harness.playLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Hickory Woodlot");
+    }
+
     private void addReadyCorneredMarket(Player player) {
         harness.addToBattlefield(player, new CorneredMarket());
     }
 
-    private Card tokenNamed(String name) {
-        Card token = new Card();
-        token.setName(name);
-        token.setType(CardType.CREATURE);
-        token.setColor(CardColor.GREEN);
-        token.setPower(1);
-        token.setToughness(1);
+    private Card cloudSpriteToken() {
+        Card token = new CloudSprite();
         token.setToken(true);
         return token;
     }

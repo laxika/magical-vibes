@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AppealAuthority.class, GrizzlyBears.class, Forest.class})
 class AppealAuthorityTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AppealAuthority()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, own1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, own1.getId());
 
         // X = 2 (own1 + own2); opponent creature ignored
         assertThat(own1.getPowerModifier()).isEqualTo(2);
@@ -45,8 +46,7 @@ class AppealAuthorityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AppealAuthority()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -150,5 +150,129 @@ class AppealAuthorityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, List.of(opp.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
+    }
+
+    @Test
+    void appealCanTargetOpponentCreatureWithNoCreaturesOfYourOwn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void appealCountsCreaturesOnResolutionAndKeepsThatBoost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    void authorityWithAllTargetsGoneDoesNotGrantVigilanceAndStillExiles() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        AppealAuthority card = new AppealAuthority();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castFlashback(player1, 0, List.of(opponent.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        harness.passBothPriorities();
+
+        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void authorityWithOneRemainingTargetStillResolves() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castFlashback(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void authorityCannotTargetMoreThanTwoCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void authorityCannotTargetAnOpponentLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setGraveyard(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void authorityDoesNotGrantVigilanceToCreaturesEnteringLater() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AppealAuthority()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castFlashback(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void appealThenAuthorityUsesBothFacesAndExilesThePhysicalCard() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        AppealAuthority card = new AppealAuthority();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, own.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+
+        harness.castAndResolveFlashback(player1, 0, opponent.getId());
+
+        assertThat(opponent.isTapped()).isTrue();
+        assertThat(own.getPowerModifier()).isEqualTo(1);
+        assertThat(own.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(own.hasKeyword(Keyword.VIGILANCE)).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 }

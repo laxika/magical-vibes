@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IsshinTwoHeavensAsOne;
+import com.github.laxika.magicalvibes.cards.s.ShimmerMyr;
+import com.github.laxika.magicalvibes.cards.s.SnakeUmbra;
+import com.github.laxika.magicalvibes.cards.s.SwiftfootBoots;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AkkiBattleSquad.class, GrizzlyBears.class})
+@CardUsed({AkkiBattleSquad.class, GrizzlyBears.class, ShimmerMyr.class, SnakeUmbra.class,
+        SwiftfootBoots.class, IsshinTwoHeavensAsOne.class})
 class AkkiBattleSquadTest extends BaseCardTest {
 
     @Test
@@ -69,11 +74,166 @@ class AkkiBattleSquadTest extends BaseCardTest {
     }
 
     private void declareAkkiAttackers(List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         gd.combatPhasesThisTurn = 1;
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, attackerIndices);
+        declareAttackers(attackerIndices);
+    }
+
+    @Test
+    @DisplayName("Losing the attacker's last modification does not undo the attack trigger")
+    void losingLastModificationStillCreatesAdditionalCombat() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent home = addCreatureReady(player1, new ShimmerMyr());
+        home.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        home.tap();
+
+        declareAkkiAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(home.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An attacker leaving before resolution does not prevent the additional combat")
+    void removedAttackerStillCreatesAdditionalCombat() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAkkiAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Untapping uses modifications at resolution and affects only your creatures")
+    void untapsCreaturesModifiedAtResolutionOnly() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        attacker.setCounterCount(CounterType.CHARGE, 1);
+        Permanent home = addCreatureReady(player1, new ShimmerMyr());
+        home.tap();
+        Permanent opponent = addCreatureReady(player2, new ShimmerMyr());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        opponent.tap();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new SwiftfootBoots());
+        equipment.setCounterCount(CounterType.CHARGE, 1);
+        equipment.tap();
+
+        declareAkkiAttackers(List.of(1));
+        home.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(home.isTapped()).isFalse();
+        assertThat(opponent.isTapped()).isTrue();
+        assertThat(equipment.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Several modified attackers cause one trigger, including a modified Battle Squad")
+    void multipleModifiedAttackersTriggerOnce() {
+        Permanent squad = addCreatureReady(player1, new AkkiBattleSquad());
+        squad.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAkkiAttackers(List.of(0, 1));
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(squad.isTapped()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Aura you control is a modification")
+    void controlledAuraModifiesAttacker() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SnakeUmbra());
+        aura.setAttachedTo(attacker.getId());
+
+        declareAkkiAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Aura alone is not a modification")
+    void opponentAuraDoesNotModifyAttacker() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new SnakeUmbra());
+        aura.setAttachedTo(attacker.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAkkiAttackers(List.of(1)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
+    @Test
+    @DisplayName("Equipment modifies an attacker regardless of its controller")
+    void opponentEquipmentModifiesAttacker() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new SwiftfootBoots());
+        equipment.setAttachedTo(attacker.getId());
+
+        declareAkkiAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An unmodified attack does not consume the once-per-turn trigger")
+    void unmodifiedAttackDoesNotUseUpTrigger() {
+        addCreatureReady(player1, new AkkiBattleSquad());
+        Permanent attacker = addCreatureReady(player1, new ShimmerMyr());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAkkiAttackers(List.of(1)));
+        assertThat(gd.stack).isEmpty();
+        attacker.untap();
+        attacker.setAttacking(false);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Isshin cannot make an ability limited to once each turn trigger twice")
+    void isshinDoesNotBypassOncePerTurnLimit() {
+        Permanent squad = addCreatureReady(player1, new AkkiBattleSquad());
+        squad.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player1, new IsshinTwoHeavensAsOne());
+
+        declareAkkiAttackers(List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SterlingHound;
+import com.github.laxika.magicalvibes.cards.v.VaultPlunderer;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,21 +19,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BoneyardDesecrator.class, GrizzlyBears.class})
+@CardUsed({BoneyardDesecrator.class, SterlingHound.class, VaultPlunderer.class, Xenograft.class})
 class BoneyardDesecratorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing another creature puts a +1/+1 counter on Boneyard Desecrator")
     void sacrificingAnotherCreaturePutsCounterOnSource() {
         Permanent desecrator = addReadyDesecrator();
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new SterlingHound());
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(desecrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Sterling Hound");
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 
@@ -40,7 +42,7 @@ class BoneyardDesecratorTest extends BaseCardTest {
     @DisplayName("Sacrificing an outlaw also creates a Treasure token")
     void sacrificingAnOutlawCreatesTreasure(CardSubtype outlawSubtype) {
         Permanent desecrator = addReadyDesecrator();
-        GrizzlyBears outlaw = new GrizzlyBears();
+        SterlingHound outlaw = new SterlingHound();
         outlaw.setSubtypes(List.of(outlawSubtype));
         harness.addToBattlefield(player1, outlaw);
         addAbilityMana();
@@ -62,10 +64,75 @@ class BoneyardDesecratorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A creature made into an outlaw by Xenograft creates Treasure when sacrificed")
+    void usesSacrificedCreaturesLastBattlefieldTypes() {
+        Permanent desecrator = addReadyDesecrator();
+        harness.addToBattlefield(player1, new SterlingHound());
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player1, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.ROGUE);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sterling Hound");
+        assertThat(desecrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The sacrifice is paid immediately, while the counter and Treasure wait for resolution")
+    void paysSacrificeBeforeResolvingAbility() {
+        Permanent desecrator = addReadyDesecrator();
+        harness.addToBattlefield(player1, new VaultPlunderer());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Vault Plunderer");
+        harness.assertNotOnBattlefield(player1, "Vault Plunderer");
+        assertThat(desecrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(desecrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while Boneyard Desecrator is tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent desecrator = harness.addToBattlefieldAndReturn(player1, new BoneyardDesecrator());
+        desecrator.setSummoningSick(true);
+        desecrator.setTapped(true);
+        harness.addToBattlefield(player1, new BoneyardDesecrator());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(desecrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Boneyard Desecrator")).containsExactly(desecrator);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opposing creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addReadyDesecrator();
+        harness.addToBattlefield(player2, new VaultPlunderer());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Vault Plunderer");
+    }
+
     private Permanent addReadyDesecrator() {
-        Permanent desecrator = new Permanent(new BoneyardDesecrator());
+        Permanent desecrator = harness.addToBattlefieldAndReturn(player1, new BoneyardDesecrator());
         desecrator.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(desecrator);
         return desecrator;
     }
 

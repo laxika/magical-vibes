@@ -171,6 +171,7 @@ public sealed interface DynamicAmount permits
         Max,
         Min,
         OpponentPoisonCounters,
+        OpponentsWithAtLeastPoisonCounters,
         DefendingPlayerPoisonCounters,
         OpponentsWithCreaturePowerAtLeast,
         OpponentsWithAtLeastTwoMoreLandsThanController,

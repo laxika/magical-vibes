@@ -3,25 +3,21 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CloisteredYouth.class})
 class CloisteredYouthTest extends BaseCardTest {
-
-    // ===== Front face: upkeep transform trigger =====
 
     @Test
     @DisplayName("Transforms when you choose yes at upkeep")
     void transformsWhenChosenAtUpkeep() {
-        harness.addToBattlefield(player1, new CloisteredYouth());
-        Permanent youth = findPermanent(player1, "Cloistered Youth");
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
         harness.handleMayAbilityChosen(player1, true);
 
@@ -34,50 +30,34 @@ class CloisteredYouthTest extends BaseCardTest {
     @Test
     @DisplayName("Does not transform when you choose no at upkeep")
     void doesNotTransformWhenDeclined() {
-        harness.addToBattlefield(player1, new CloisteredYouth());
-        Permanent youth = findPermanent(player1, "Cloistered Youth");
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability → MayEffect prompts
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(youth.isTransformed()).isFalse();
         assertThat(youth.getCard().getName()).isEqualTo("Cloistered Youth");
-        assertThat(gqs.getEffectivePower(gd, youth)).isEqualTo(1);
-        assertThat(gqs.getEffectiveToughness(gd, youth)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Does not trigger on opponent's upkeep")
     void doesNotTriggerOnOpponentUpkeep() {
-        harness.addToBattlefield(player1, new CloisteredYouth());
-        Permanent youth = findPermanent(player1, "Cloistered Youth");
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger for player1
+        advanceToUpkeep(player2);
 
         assertThat(youth.isTransformed()).isFalse();
         assertThat(youth.getCard().getName()).isEqualTo("Cloistered Youth");
     }
 
-    // ===== Back face: Unholy Fiend end step life loss =====
-
     @Test
     @DisplayName("Unholy Fiend causes controller to lose 1 life at end step")
     void unholyFiendLosesLifeAtEndStep() {
-        harness.addToBattlefield(player1, new CloisteredYouth());
-        Permanent youth = findPermanent(player1, "Cloistered Youth");
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
 
         // Transform to Unholy Fiend
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -100,14 +80,10 @@ class CloisteredYouthTest extends BaseCardTest {
     @Test
     @DisplayName("Unholy Fiend does not cause life loss on opponent's end step")
     void unholyFiendNoLifeLossOnOpponentEndStep() {
-        harness.addToBattlefield(player1, new CloisteredYouth());
-        Permanent youth = findPermanent(player1, "Cloistered Youth");
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
 
         // Transform to Unholy Fiend
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -123,6 +99,41 @@ class CloisteredYouthTest extends BaseCardTest {
         // No trigger should fire
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cloistered Youth causes no life loss while it remains on its front face")
+    void frontFaceDoesNotLoseLifeAtEndStep() {
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(youth.isTransformed()).isFalse();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Unholy Fiend stays transformed without an upkeep trigger")
+    void backFaceDoesNotTransformBackAtUpkeep() {
+        Permanent youth = harness.addToBattlefieldAndReturn(player1, new CloisteredYouth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(youth.isTransformed()).isTrue();
+        assertThat(youth.getCard().getName()).isEqualTo("Unholy Fiend");
     }
 
 }

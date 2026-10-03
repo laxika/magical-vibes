@@ -54,4 +54,29 @@ class AvacynsMemorialTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, adeliz, Keyword.INDESTRUCTIBLE)).isFalse();
     }
+    @Test
+    @DisplayName("Legendary permanents entering after Memorial gain indestructible")
+    void protectsLegendaryPermanentsEnteringLater() {
+        harness.addToBattlefield(player1, new AvacynsMemorial());
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new KondasBanner());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, banner, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sacrificing Memorial ends its indestructible grant")
+    void sacrificingMemorialEndsProtection() {
+        Permanent memorial = harness.addToBattlefieldAndReturn(player1, new AvacynsMemorial());
+        Permanent banner = harness.addToBattlefieldAndReturn(player1, new KondasBanner());
+
+        assertThat(gqs.hasKeyword(gd, banner, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, memorial);
+        harness.assertInGraveyard(player1, "Avacyn's Memorial");
+        harness.assertNotOnBattlefield(player1, "Avacyn's Memorial");
+
+        assertThat(gqs.hasKeyword(gd, banner, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
 }

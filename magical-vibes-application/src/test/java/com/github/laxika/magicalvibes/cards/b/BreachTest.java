@@ -32,8 +32,7 @@ class BreachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Breach()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, gorilla.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gorilla.getId());
 
         assertThat(gorilla.getPowerModifier()).isEqualTo(2);
         assertThat(gorilla.getToughnessModifier()).isZero();
@@ -47,8 +46,7 @@ class BreachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Breach()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, gorilla.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gorilla.getId());
 
         assertThat(gorilla.getPowerModifier()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, gorilla, Keyword.FEAR)).isTrue();
@@ -61,8 +59,7 @@ class BreachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Breach()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, gorilla.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gorilla.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -107,8 +104,7 @@ class BreachTest extends BaseCardTest {
         Permanent blackBlocker = addCreatureReady(player2, new BloodVassal());
         Permanent artifactBlocker = addCreatureReady(player2, new Cathodion());
 
-        declareAttackers(List.of(indexOf(player1, attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(indexOf(player2, blackBlocker), indexOf(player1, attacker)),
@@ -116,6 +112,49 @@ class BreachTest extends BaseCardTest {
 
         assertThat(blackBlocker.isBlocking()).isTrue();
         assertThat(artifactBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Breach has no effect when its only target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BloodVassal());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        harness.setHand(player1, List.of(new Breach()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player1, indexOf(player1, target), 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blood Vassal");
+        harness.assertInGraveyard(player1, "Blood Vassal");
+        harness.assertInGraveyard(player1, "Breach");
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Breaches add their power boosts and expire together")
+    void multipleBreachesStackUntilEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        harness.setHand(player1, List.of(new Breach(), new Breach()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isFalse();
     }
 
     private Permanent castBreachOn(Card targetCard) {
@@ -126,8 +165,7 @@ class BreachTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Breach()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         return target;
     }
 

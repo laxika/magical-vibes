@@ -16,6 +16,63 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ConvulsingLicidTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A summoning-sick Licid cannot pay its tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent licid = harness.addToBattlefieldAndReturn(player1, new ConvulsingLicid());
+        Permanent host = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ending the effect requires another red mana payment")
+    void cannotEndEffectWithoutMana() {
+        Permanent licid = addCreatureReady(player1, new ConvulsingLicid());
+        Permanent host = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(bls.canBlock(gd, host)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ending the effect preserves tapping and restores the transformation ability")
+    void canTransformAgainAfterEndingEffectAndUntapping() {
+        Permanent licid = addCreatureReady(player1, new ConvulsingLicid());
+        Permanent firstHost = addCreatureReady(player2, new YouthfulKnight());
+        Permanent secondHost = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, firstHost.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondHost.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        licid.setTapped(false);
+        harness.activateAbility(player1, 0, null, secondHost.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(secondHost.getId());
+        assertThat(bls.canBlock(gd, firstHost)).isTrue();
+        assertThat(bls.canBlock(gd, secondHost)).isFalse();
+    }
+
+    @Test
     @DisplayName("Attached Licid prevents the enchanted creature from blocking")
     void attachedLicidPreventsBlocking() {
         Permanent licid = addCreatureReady(player1, new ConvulsingLicid());

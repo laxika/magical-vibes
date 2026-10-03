@@ -21,7 +21,7 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
 
     private final GameQueryService gameQueryService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final PermanentCounterSupport permanentCounterSupport;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,16 +52,12 @@ public class ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffectHandler
             return;
         }
 
-        List<UUID> creatureTargets = entry.targetsForGroup(exileEffect.creatureTargetGroup());
-        UUID creatureTargetId = creatureTargets.isEmpty() ? entry.getTargetId() : creatureTargets.getFirst();
-        if (creatureTargetId == null) {
-            return;
-        }
-        Permanent targetCreature = gameQueryService.findPermanentById(gameData, creatureTargetId);
-        if (targetCreature == null || !gameQueryService.isCreature(gameData, targetCreature)
-                || !entry.getControllerId().equals(gameData.findControllerOf(targetCreature))) {
-            return;
-        }
-        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, targetCreature, 1);
+        queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
+                        com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 1,
+                                new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
+                                        new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate(),
+                                        new com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate())))));
     }
 }

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.f.FireElemental;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.t.TerrorOfTheFairgrounds;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,14 +13,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ConsulateSurveillance.class, TerrorOfTheFairgrounds.class, MoggFanatic.class})
 class ConsulateSurveillanceTest extends BaseCardTest {
 
     @Test
     void entersWithFourEnergyCounters() {
-        harness.setHand(player1, List.of(new ConsulateSurveillance()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new ConsulateSurveillance(), "{3}{W}");
 
         resolveAllTriggers();
 
@@ -30,7 +28,7 @@ class ConsulateSurveillanceTest extends BaseCardTest {
     @Test
     void paysTwoEnergyOnActivationAndPreventsChosenSourceDamage() {
         addSurveillance();
-        Permanent source = addReadyCreature(player2);
+        Permanent source = addCreatureReady(player2, new TerrorOfTheFairgrounds());
         gd.playerEnergyCounters.put(player1.getId(), 4);
         harness.setLife(player1, 20);
 
@@ -60,11 +58,43 @@ class ConsulateSurveillanceTest extends BaseCardTest {
         return harness.addToBattlefieldAndReturn(player1, new ConsulateSurveillance());
     }
 
-    private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new FireElemental());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void preventsChosenCreatureCombatDamageButNotAnotherCreature() {
+        addSurveillance();
+        Permanent chosen = addCreatureReady(player2, new TerrorOfTheFairgrounds());
+        addCreatureReady(player2, new TerrorOfTheFairgrounds());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+    }
+
+    @Test
+    void canChooseSacrificedSourceWhoseDamageAbilityIsOnStack() {
+        addSurveillance();
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(source.getId());
+        harness.handlePermanentChosen(player1, source.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
 }

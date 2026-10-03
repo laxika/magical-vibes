@@ -67,4 +67,41 @@ class BarbarianRiftcutterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Barbarian Riftcutter");
         harness.assertOnBattlefield(player2, "Forest");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before the land is destroyed")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new BarbarianRiftcutter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Barbarian Riftcutter");
+        harness.assertInGraveyard(player1, "Barbarian Riftcutter");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Riftcutter can destroy its controller's land")
+    void canActivateWhileTappedAndSummoningSickTargetingOwnLand() {
+        Permanent riftcutter = harness.addToBattlefieldAndReturn(player1, new BarbarianRiftcutter());
+        riftcutter.setTapped(true);
+        riftcutter.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Barbarian Riftcutter");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
 }

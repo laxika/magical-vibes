@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BakersbaneDuo;
+import com.github.laxika.magicalvibes.cards.y.YgraEaterOfAll;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CamelliaTheSeedmiser.class, GrizzlyBears.class})
+@CardUsed({CamelliaTheSeedmiser.class, BakersbaneDuo.class, YgraEaterOfAll.class})
 class CamelliaTheSeedmiserTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,6 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, food.getId());
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
@@ -45,7 +46,7 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
         Permanent camellia = harness.addToBattlefieldAndReturn(player1, new CamelliaTheSeedmiser());
         Permanent squirrel = addSquirrel(player1, "Squirrel");
         Permanent opponentSquirrel = addSquirrel(player2, "Opponent Squirrel");
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new BakersbaneDuo(), new BakersbaneDuo(), new BakersbaneDuo()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -67,6 +68,73 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentSquirrel, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    void cannotActivateWithoutFoodOrThreeGraveyardCards() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        harness.setGraveyard(player1, List.of(new BakersbaneDuo(), new BakersbaneDuo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void graveyardForageIsPaidBeforeEitherPlayerCanRespond() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        Permanent squirrel = addSquirrel(player1, "Squirrel");
+        harness.setGraveyard(player1, List.of(new BakersbaneDuo(), new BakersbaneDuo(), new BakersbaneDuo()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(squirrel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(squirrel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void squirrelCreatedByForageGetsCounterFromTheActivatedAbility() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        Permanent food = addFoodToken(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, food.getId());
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SQUIRREL))
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(1));
+    }
+
+    @Test
+    void sacrificingCreatureMadeFoodByYgraCreatesSquirrel() {
+        harness.addToBattlefield(player1, new CamelliaTheSeedmiser());
+        harness.addToBattlefield(player1, new YgraEaterOfAll());
+        Permanent duo = harness.addToBattlefieldAndReturn(player1, new BakersbaneDuo());
+        duo.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(duo);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SQUIRREL))
+                .hasSize(1);
+    }
+
     private Permanent addFoodToken(Player player) {
         Card food = new Card();
         food.setName("Food");
@@ -75,9 +143,8 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
         food.setToken(true);
         food.setSubtypes(List.of(CardSubtype.FOOD));
 
-        Permanent permanent = new Permanent(food);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, food);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -90,9 +157,8 @@ class CamelliaTheSeedmiserTest extends BaseCardTest {
         squirrel.setToken(true);
         squirrel.setSubtypes(List.of(CardSubtype.SQUIRREL));
 
-        Permanent permanent = new Permanent(squirrel);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, squirrel);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

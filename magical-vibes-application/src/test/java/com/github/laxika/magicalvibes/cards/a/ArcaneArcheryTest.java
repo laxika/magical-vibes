@@ -50,8 +50,7 @@ class ArcaneArcheryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArcaneArchery(), first, second));
         harness.addMana(player1, ManaColor.GREEN, 7);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
@@ -80,11 +79,141 @@ class ArcaneArcheryTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The boon persists into a later turn and its counters do not expire")
+    void boonAndGrantedCountersPersistAcrossTurns() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castArcaneArchery(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent empowered = findPermanent(creature);
+        assertThat(empowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.REACH)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, empowered)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, empowered)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, empowered)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, empowered, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, empowered, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature still gives the boon to the caster")
+    void opponentsCreatureDoesNotConsumeBoon() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castArcaneArchery(target);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+        Permanent opponentCreature = gd.playerBattlefields.get(player2.getId()).getLast();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.REACH)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.TRAMPLE)).isZero();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent empowered = findPermanent(creature);
+        assertThat(empowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.REACH)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting a noncreature spell does not consume the boon")
+    void nonCreatureSpellDoesNotConsumeBoon() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castArcaneArchery(target);
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(new FountainOfYouth(), creature));
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent empowered = findPermanent(creature);
+        assertThat(empowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.REACH)).isEqualTo(1);
+        assertThat(empowered.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two boons both apply to the same next creature spell")
+    void multipleBoonsStackOnNextCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        castArcaneArchery(target);
+        castArcaneArchery(target);
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent empowered = findPermanent(first);
+        assertThat(empowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(empowered.getCounterCount(CounterType.REACH)).isEqualTo(2);
+        assertThat(empowered.getCounterCount(CounterType.TRAMPLE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, empowered)).isEqualTo(4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent unempowered = findPermanent(second);
+        assertThat(unempowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(unempowered.getCounterCount(CounterType.REACH)).isZero();
+        assertThat(unempowered.getCounterCount(CounterType.TRAMPLE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the entire spell from resolving, including the boon")
+    void illegalTargetDoesNotGrantBoon() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(new ArcaneArchery(), creature));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent unempowered = findPermanent(creature);
+        assertThat(unempowered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(unempowered.getCounterCount(CounterType.REACH)).isZero();
+        assertThat(unempowered.getCounterCount(CounterType.TRAMPLE)).isZero();
+    }
+
     private void castArcaneArchery(Permanent target) {
         harness.setHand(player1, List.of(new ArcaneArchery()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent findPermanent(GrizzlyBears card) {

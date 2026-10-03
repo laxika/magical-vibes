@@ -97,8 +97,8 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the upkeep ability leaves the target unchanged")
-    void decliningUpkeepAbilityDoesNothing() {
+    @DisplayName("Declining untapping and gaining control still grants haste")
+    void decliningUpkeepAbilityStillGrantsHaste() {
         harness.addToBattlefield(player1, new BringerOfTheRedDawn());
         Permanent target = addCreatureReady(player2, new DrossCrocodile());
         target.tap();
@@ -110,7 +110,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
-        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
@@ -165,8 +165,7 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
     void onlyCreaturesAreLegalTargets() {
         harness.addToBattlefield(player1, new BringerOfTheRedDawn());
         Permanent target = addCreatureReady(player2, new DrossCrocodile());
-        Permanent noncreature = new Permanent(new PentadPrism());
-        gd.playerBattlefields.get(player2.getId()).add(noncreature);
+        Permanent noncreature = harness.addToBattlefieldAndReturn(player2, new PentadPrism());
 
         advanceToUpkeep(player1);
 
@@ -176,5 +175,55 @@ class BringerOfTheRedDawnTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+    }
+
+    @Test
+    @DisplayName("Can be cast for its normal mana cost")
+    void castsForNormalCost() {
+        harness.castFromHand(player1, new BringerOfTheRedDawn(), "{7}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bringer of the Red Dawn");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature can be stolen even after the Bringer leaves")
+    void stealsUntappedCreatureAfterSourceLeaves() {
+        Permanent bringer = harness.addToBattlefieldAndReturn(player1, new BringerOfTheRedDawn());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bringer);
+        gd.playerGraveyards.get(player1.getId()).add(bringer.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Dross Crocodile");
+        harness.assertNotOnBattlefield(player2, "Dross Crocodile");
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Bringer itself is a legal target for its upkeep ability")
+    void canTargetItself() {
+        Permanent bringer = harness.addToBattlefieldAndReturn(player1, new BringerOfTheRedDawn());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(bringer.getId());
+        harness.handlePermanentChosen(player1, bringer.getId());
+        bringer.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bringer.isTapped()).isFalse();
+        assertThat(bringer.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertOnBattlefield(player1, "Bringer of the Red Dawn");
     }
 }

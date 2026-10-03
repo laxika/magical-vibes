@@ -122,6 +122,53 @@ class BarbarianBullyTest extends BaseCardTest {
         assertThat(bully.getToughnessModifier()).isEqualTo(2);
     }
 
+    @Test
+    void activationLimitAppliesBeforeAbilityResolves() {
+        harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
+        BarbarianBully first = new BarbarianBully();
+        SuntailHawk second = new SuntailHawk();
+        harness.setHand(player1, List.of(first, second));
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()).getFirst()).isIn(first, second);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
+    void canActivateOnOpponentsTurnAndActivePlayerChoosesFirst() {
+        Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
+        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        assertThat(bully.getPowerModifier()).isZero();
+        assertThat(bully.getToughnessModifier()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent activateWithHand(BarbarianBully cardInHand) {
         Permanent bully = harness.addToBattlefieldAndReturn(player1, new BarbarianBully());
         harness.setHand(player1, List.of(cardInHand));

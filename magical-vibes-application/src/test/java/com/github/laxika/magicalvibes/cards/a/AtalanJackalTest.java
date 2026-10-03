@@ -86,4 +86,75 @@ class AtalanJackalTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a basic land is available")
+    void canFailToFindAvailableBasicLand() {
+        Permanent jackal = addCreatureReady(player1, new AtalanJackal());
+        jackal.setAttacking(true);
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library finishes without a selection")
+    void emptyLibraryFinishesSearch() {
+        Permanent jackal = addCreatureReady(player1, new AtalanJackal());
+        jackal.setAttacking(true);
+        harness.setLibrary(player1, List.of());
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The other player's Jackal searches its controller's library")
+    void otherControllerSearchesOwnLibrary() {
+        Permanent jackal = addCreatureReady(player2, new AtalanJackal());
+        jackal.setAttacking(true);
+        Forest controllerForest = new Forest();
+        Forest opponentForest = new Forest();
+        harness.setLibrary(player2, List.of(controllerForest));
+        harness.setLibrary(player1, List.of(opponentForest));
+
+        resolveCombat(player2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        Permanent forest = findPermanent(player2, "Forest");
+        assertThat(forest.getCard()).isSameAs(controllerForest);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentForest);
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Trample damage to a player triggers the land search even when blocked")
+    void trampleDamageTriggersSearch() {
+        Permanent jackal = addCreatureReady(player1, new AtalanJackal());
+        jackal.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+    }
 }

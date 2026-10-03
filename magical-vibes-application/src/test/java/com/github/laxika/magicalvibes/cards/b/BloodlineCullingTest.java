@@ -87,6 +87,56 @@ class BloodlineCullingTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("The targeted mode kills a creature with five or less toughness")
+    void targetedModeKillsSmallCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castBloodlineCulling(0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The token mode affects opposing creature tokens")
+    void tokenModeAffectsOpposingTokens() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new YavimayaSapherd()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Saproling");
+        harness.forceActivePlayer(player1);
+
+        castBloodlineCulling(1, null);
+
+        harness.assertNotOnBattlefield(player2, "Saproling");
+        harness.assertOnBattlefield(player2, "Yavimaya Sapherd");
+    }
+
+    @Test
+    @DisplayName("The token mode can resolve with no creatures and does not affect later tokens")
+    void tokenModeDoesNotAffectTokensCreatedAfterResolution() {
+        castBloodlineCulling(1, null);
+        harness.assertInGraveyard(player1, "Bloodline Culling");
+
+        harness.setHand(player1, List.of(new YavimayaSapherd()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent token = findPermanents(player1, "Saproling").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst()
+                .orElseThrow();
+        assertThat(token.getEffectivePower()).isEqualTo(1);
+        assertThat(token.getEffectiveToughness()).isEqualTo(1);
+    }
+
     private void addBloodlineCullingMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -19,7 +19,12 @@ import java.util.List;
  */
 public record PutCardFromOpponentGraveyardOntoBattlefieldEffect(
         boolean tapped, CardPredicate filter, boolean requireManaValueEqualsX,
-        DynamicAmount maxManaValue, boolean upTo) implements CardEffect {
+        DynamicAmount maxManaValue, boolean upTo, boolean checkManaValueOnlyOnResolution) implements CardEffect {
+
+    public PutCardFromOpponentGraveyardOntoBattlefieldEffect(boolean tapped, CardPredicate filter,
+            boolean requireManaValueEqualsX, DynamicAmount maxManaValue, boolean upTo) {
+        this(tapped, filter, requireManaValueEqualsX, maxManaValue, upTo, false);
+    }
 
     public PutCardFromOpponentGraveyardOntoBattlefieldEffect() {
         this(false);

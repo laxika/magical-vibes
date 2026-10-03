@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BatWhisperer.class)
+@CardUsed({BatWhisperer.class, BloodPact.class})
 class BatWhispererTest extends BaseCardTest {
 
     @Test
@@ -44,6 +44,47 @@ class BatWhispererTest extends BaseCardTest {
         castBatWhisperer();
 
         assertThat(countPermanents(player1, "Bat")).isZero();
+    }
+
+    @Test
+    @DisplayName("Creates exactly one Bat after Blood Pact makes an opponent lose life")
+    void createsOneBatAfterResolvedLifeLoss() {
+        harness.setLibrary(player2, List.of(new BatWhisperer(), new BatWhisperer()));
+        harness.setHand(player1, List.of(new BloodPact()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        castBatWhisperer();
+
+        assertThat(countPermanents(player1, "Bat")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Bat")).isZero();
+    }
+
+    @Test
+    @DisplayName("Life loss after entry cannot retroactively trigger the ability")
+    void lifeLossAfterEntryDoesNotCreateBat() {
+        harness.setHand(player1, List.of(new BatWhisperer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        gd.lifeLostThisTurn.put(player2.getId(), 1);
+
+        assertThat(countPermanents(player1, "Bat")).isZero();
+    }
+
+    @Test
+    @DisplayName("Life gain does not undo earlier life loss for the entry condition")
+    void createsBatEvenIfOpponentHasMoreLifeThanAtTurnStart() {
+        gd.lifeLostThisTurn.put(player2.getId(), 5);
+        harness.setLife(player2, 25);
+
+        castBatWhisperer();
+
+        assertThat(countPermanents(player1, "Bat")).isEqualTo(1);
     }
 
     private void castBatWhisperer() {

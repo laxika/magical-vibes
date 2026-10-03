@@ -78,6 +78,54 @@ class ArcMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Each chosen target must be assigned at least one damage")
+    void cannotAssignZeroDamageToSecondTarget() {
+        addReadyArcMage();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlowstoneCrusher());
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(target.getId(), 2, player2.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage assigned to a departed target is not redistributed")
+    void remainingTargetReceivesOnlyAssignedDamage() {
+        addReadyArcMage();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlowstoneCrusher());
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbilityWithDamageAssignments(
+                player1, 0, 0, null, Map.of(target.getId(), 1, player2.getId(), 1));
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Arc Mage can target itself and dies from its own two damage")
+    void canDealLethalDamageToItself() {
+        Permanent mage = addReadyArcMage();
+        harness.setHand(player1, List.of(new FlowstoneCrusher()));
+        addAbilityMana();
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of(mage.getId(), 2));
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arc Mage");
+        harness.assertInGraveyard(player1, "Flowstone Crusher");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mage);
+    }
+
     private Permanent addReadyArcMage() {
         return addCreatureReady(player1, new ArcMage());
     }

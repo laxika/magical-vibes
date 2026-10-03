@@ -72,10 +72,68 @@ class BrotherhoodScribeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, scribe)).isEqualTo(3);
     }
 
+    @Test
+    void doesNotTriggerWhenEnergyIsGainedDuringAnOpponentsTurn() {
+        addReadyScribe();
+        addArtifacts();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsArtifactsDoNotEnableMetalcraft() {
+        addReadyScribe();
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Metalcraft");
+    }
+
+    @Test
+    void losingMetalcraftAfterActivationDoesNotStopEnergyGain() {
+        Permanent scribe = addReadyScribe();
+        addArtifacts();
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, scribe)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, scribe)).isEqualTo(4);
+    }
+
+    @Test
+    void boostIncludesCreaturesPresentAtResolutionButNotLaterArrivalsOrOpponents() {
+        addReadyScribe();
+        addArtifacts();
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent beforeResolution = addCreatureReady(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        Permanent afterResolution = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+    }
+
     private Permanent addReadyScribe() {
-        Permanent scribe = harness.addToBattlefieldAndReturn(player1, new BrotherhoodScribe());
-        scribe.setSummoningSick(false);
-        return scribe;
+        return addCreatureReady(player1, new BrotherhoodScribe());
     }
 
     private void addArtifacts() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M21", collectorNumber = "326")
+@CardRegistration(set = "HBG", collectorNumber = "905")
 public class MysticSkyfish extends Card {
 
     public MysticSkyfish() {

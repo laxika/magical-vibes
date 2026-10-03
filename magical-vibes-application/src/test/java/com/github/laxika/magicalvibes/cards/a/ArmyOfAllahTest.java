@@ -21,8 +21,9 @@ class ArmyOfAllahTest extends BaseCardTest {
     void boostsAllAttackingCreatures() {
         Permanent ownAttacker = addCreatureReady(player1, new GrizzlyBears());
         ownAttacker.setAttacking(true);
-        Permanent opponentAttacker = addCreatureReady(player2, new GrizzlyBears());
-        opponentAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        secondAttacker.setAttacking(true);
+        Permanent opponentNonAttacker = addCreatureReady(player2, new GrizzlyBears());
         Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ArmyOfAllah()));
@@ -34,10 +35,51 @@ class ArmyOfAllahTest extends BaseCardTest {
 
         assertThat(ownAttacker.getEffectivePower()).isEqualTo(4);
         assertThat(ownAttacker.getEffectiveToughness()).isEqualTo(2);
-        assertThat(opponentAttacker.getEffectivePower()).isEqualTo(4);
-        assertThat(opponentAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(secondAttacker.getEffectivePower()).isEqualTo(4);
+        assertThat(secondAttacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponentNonAttacker.getEffectivePower()).isEqualTo(2);
+        assertThat(opponentNonAttacker.getEffectiveToughness()).isEqualTo(2);
         assertThat(nonAttacker.getEffectivePower()).isEqualTo(2);
         assertThat(nonAttacker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The defending player can boost the opponent's attackers")
+    void boostsOpponentsAttackers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new ArmyOfAllah()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.ensurePriority(player2);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(defender.getEffectivePower()).isEqualTo(2);
+        assertThat(defender.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting before attackers are declared does not boost later attackers")
+    void doesNotBoostCreaturesThatAttackAfterResolution() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ArmyOfAllah()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.castAndResolveInstant(player1, 0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Army of Allah");
     }
 
     @Test

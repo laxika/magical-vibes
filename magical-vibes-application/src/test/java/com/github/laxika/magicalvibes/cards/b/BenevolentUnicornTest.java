@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Flare;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.i.IronTuskElephant;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenevolentUnicorn.class, Flare.class, Humility.class, Incinerate.class,
+@CardUsed({BenevolentUnicorn.class, Flare.class, FurnaceOfRath.class, Humility.class, Incinerate.class,
         IronTuskElephant.class, SuqAtaFirewalker.class})
 class BenevolentUnicornTest extends BaseCardTest {
 
@@ -80,8 +81,7 @@ class BenevolentUnicornTest extends BaseCardTest {
     @DisplayName("Activated ability damage is not reduced")
     void doesNotReduceAbilityDamage() {
         harness.addToBattlefield(player1, new BenevolentUnicorn());
-        Permanent firewalker = harness.addToBattlefieldAndReturn(player2, new SuqAtaFirewalker());
-        firewalker.setSummoningSick(false);
+        Permanent firewalker = addCreatureReady(player2, new SuqAtaFirewalker());
         harness.forceActivePlayer(player2);
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(firewalker),
@@ -97,8 +97,8 @@ class BenevolentUnicornTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new IronTuskElephant());
         harness.addToBattlefield(player2, new BenevolentUnicorn());
 
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -121,5 +121,81 @@ class BenevolentUnicornTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Unicorns controlled by different players each reduce spell damage")
+    void multipleUnicornsReduceTheSameDamageEvent() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        harness.addToBattlefield(player2, new BenevolentUnicorn());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Multiple reductions cannot turn damage into life gain")
+    void multipleUnicornsDoNotReduceDamageBelowZero() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        harness.addToBattlefield(player2, new BenevolentUnicorn());
+        harness.setHand(player1, List.of(new Flare()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Unicorn reduces spell damage dealt to itself")
+    void reducesSpellDamageToItself() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new BenevolentUnicorn());
+        harness.setHand(player2, List.of(new Flare()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(unicorn);
+        assertThat(unicorn.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The reduction stops once the Unicorn dies")
+    void doesNotReduceDamageAfterLeavingBattlefield() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new BenevolentUnicorn());
+        harness.setHand(player2, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
+
+        harness.assertNotOnBattlefield(player1, "Benevolent Unicorn");
+        harness.assertInGraveyard(player1, "Benevolent Unicorn");
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses the order of reduction and doubling")
+    void affectedPlayerChoosesReplacementOrder() {
+        harness.addToBattlefield(player1, new BenevolentUnicorn());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player2, 20);
     }
 }

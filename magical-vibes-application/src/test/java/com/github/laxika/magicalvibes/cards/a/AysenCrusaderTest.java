@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.cards.g.GoblinDeathraiders;
 import com.github.laxika.magicalvibes.cards.g.GuanYuSaintedWarrior;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,5 +79,36 @@ class AysenCrusaderTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(soldier);
         assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(2);
+    }
+
+    @Test
+    void countsItselfOnceWhenItGainsBothRelevantTypes() {
+        Permanent crusader = addCreatureReady(player1, new AysenCrusader());
+        crusader.getGrantedSubtypes().addAll(List.of(CardSubtype.SOLDIER, CardSubtype.WARRIOR));
+
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(3);
+    }
+
+    @Test
+    void characteristicDefiningAbilityWorksInHand() {
+        AysenCrusader crusader = new AysenCrusader();
+        harness.setHand(player1, List.of(crusader));
+        addCreatureReady(player1, new BeastWalkers());
+        addCreatureReady(player2, new BeastWalkers());
+
+        assertThat(gqs.getEffectiveCardPower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, crusader)).isEqualTo(3);
+    }
+
+    @Test
+    void characteristicDefiningAbilityWorksInGraveyard() {
+        AysenCrusader crusader = new AysenCrusader();
+        harness.setGraveyard(player1, List.of(crusader));
+        addCreatureReady(player1, new BeastWalkers());
+        addCreatureReady(player1, new BeastWalkers());
+
+        assertThat(gqs.getEffectiveCardPower(gd, crusader)).isEqualTo(4);
+        assertThat(gqs.getEffectiveCardToughness(gd, crusader)).isEqualTo(4);
     }
 }

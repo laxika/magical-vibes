@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
@@ -47,8 +48,7 @@ class ContactOtherPlaneTest extends BaseCardTest {
         Card third = new GrizzlyBears();
         prepare(List.of(first, second, third));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
@@ -64,8 +64,7 @@ class ContactOtherPlaneTest extends BaseCardTest {
         Card fourth = new GrizzlyBears();
         prepare(List.of(first, second, third, fourth));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -87,8 +86,7 @@ class ContactOtherPlaneTest extends BaseCardTest {
         Card fourth = new GrizzlyBears();
         prepare(List.of(first, second, third, fourth));
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -98,6 +96,95 @@ class ContactOtherPlaneTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(third, second, first);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+    }
+
+    @Test
+    @DisplayName("A result of 1 draws two without scrying")
+    void minimumResultDrawsTwoWithoutScrying() {
+        setRoll(1);
+        Card first = new ContactOtherPlane();
+        Card second = new ContactOtherPlane();
+        Card third = new ContactOtherPlane();
+        prepare(List.of(first, second, third));
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("A result of 10 lets scry bottom a card before drawing")
+    void middleRangeStartsAtTenAndDrawsAfterBottoming() {
+        setRoll(10);
+        Card first = new ContactOtherPlane();
+        Card second = new ContactOtherPlane();
+        Card third = new ContactOtherPlane();
+        Card fourth = new ContactOtherPlane();
+        prepare(List.of(first, second, third, fourth));
+
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, first);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A result of 20 can bottom all three cards before drawing three others")
+    void maximumResultCanBottomAllThreeCards() {
+        setRoll(20);
+        Card first = new ContactOtherPlane();
+        Card second = new ContactOtherPlane();
+        Card third = new ContactOtherPlane();
+        Card fourth = new ContactOtherPlane();
+        Card fifth = new ContactOtherPlane();
+        Card sixth = new ContactOtherPlane();
+        prepare(List.of(first, second, third, fourth, fifth, sixth));
+
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second, third);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(fourth, fifth, sixth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Scry 3 sees only the available cards and still attempts all three draws")
+    void maximumResultWithTwoCardsInLibraryLosesOnThirdDraw() {
+        setRoll(20);
+        Card first = new ContactOtherPlane();
+        Card second = new ContactOtherPlane();
+        prepare(List.of(first, second));
+
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 
     private void setRoll(int result) {

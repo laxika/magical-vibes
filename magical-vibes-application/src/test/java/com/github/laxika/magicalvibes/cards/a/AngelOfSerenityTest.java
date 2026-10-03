@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RubblebackRhino;
+import com.github.laxika.magicalvibes.cards.u.UltimatePrice;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({AngelOfSerenity.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Unsummon.class,
+        ArmoryGuard.class, RubblebackRhino.class, UltimatePrice.class})
 class AngelOfSerenityTest extends BaseCardTest {
 
     private AngelOfSerenity castAngel() {
@@ -40,24 +45,20 @@ class AngelOfSerenityTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles chosen creatures from the battlefield and creature cards from graveyards")
     void etbExilesAcrossBothZones() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getCard().getId();
         harness.setGraveyard(player2, List.of(new HillGiant()));
 
-        AngelOfSerenity angel = castAngel();
-        UUID bearsId = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getCard().getId();
+        castAngel();
         UUID giantId = graveyardCardId(player2, "Hill Giant");
 
         harness.handleMultipleCardsChosen(player1, List.of(bearsId, giantId));
-        harness.passBothPriorities(); // resolve the ETB trigger
+        resolveExileTrigger();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Hill Giant");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getName)
                 .contains("Grizzly Bears", "Hill Giant");
-        assertThat(angel).isNotNull();
     }
 
     @Test
@@ -77,22 +78,22 @@ class AngelOfSerenityTest extends BaseCardTest {
     @Test
     @DisplayName("Exiled cards return to their owners' hands when the Angel leaves the battlefield")
     void exiledCardsReturnToOwnersHandsWhenAngelLeaves() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getCard().getId();
         harness.setGraveyard(player2, List.of(new HillGiant()));
 
         castAngel();
-        UUID bearsId = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElseThrow().getCard().getId();
         UUID giantId = graveyardCardId(player2, "Hill Giant");
         harness.handleMultipleCardsChosen(player1, List.of(bearsId, giantId));
-        harness.passBothPriorities();
+        resolveExileTrigger();
 
         // Bounce the Angel — the exiled cards go to their owner's hand, not back where they came from.
         UUID angelPermanentId = harness.getPermanentId(player1, "Angel of Serenity");
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, angelPermanentId);
+        harness.castAndResolveInstant(player2, 0, angelPermanentId);
+
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Hill Giant");
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Grizzly Bears");
@@ -135,5 +136,73 @@ class AngelOfSerenityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, allFour))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void resolveExileTrigger() {
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+    }
+
+    @Test
+    @DisplayName("The controller may decline exile after choosing targets")
+    void mayDeclineExileOnResolution() {
+        ArmoryGuard guard = new ArmoryGuard();
+        harness.addToBattlefield(player2, guard);
+        castAngel();
+        harness.handleMultipleCardsChosen(player1, List.of(guard.getId()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player2, "Armory Guard");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A battlefield target that dies before resolution is not exiled from its graveyard")
+    void dyingBattlefieldTargetBecomesIllegal() {
+        ArmoryGuard dyingGuard = new ArmoryGuard();
+        ArmoryGuard survivingGuard = new ArmoryGuard();
+        UUID dyingPermanentId = harness.addToBattlefieldAndReturn(player2, dyingGuard).getId();
+        harness.addToBattlefield(player2, survivingGuard);
+        castAngel();
+        harness.handleMultipleCardsChosen(player1, List.of(dyingGuard.getId(), survivingGuard.getId()));
+
+
+        harness.setHand(player2, List.of(new UltimatePrice()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, dyingPermanentId);
+        resolveExileTrigger();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(dyingGuard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(survivingGuard).doesNotContain(dyingGuard);
+    }
+
+    @Test
+    @DisplayName("An opposing hexproof creature cannot be targeted")
+    void opposingHexproofCreatureIsNotALegalChoice() {
+        RubblebackRhino rhino = new RubblebackRhino();
+        harness.addToBattlefield(player2, rhino);
+        harness.addToBattlefield(player2, new ArmoryGuard());
+        castAngel();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(rhino.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Hexproof does not prevent targeting creature cards in a graveyard")
+    void hexproofCreatureCardCanBeExiledFromGraveyard() {
+        RubblebackRhino rhino = new RubblebackRhino();
+        harness.setGraveyard(player2, List.of(rhino));
+        castAngel();
+        harness.handleMultipleCardsChosen(player1, List.of(rhino.getId()));
+        resolveExileTrigger();
+
+        harness.assertNotInGraveyard(player2, "Rubbleback Rhino");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(rhino);
     }
 }

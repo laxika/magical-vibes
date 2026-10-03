@@ -64,11 +64,9 @@ class AzusasManyJourneysTest extends BaseCardTest {
     @Test
     void transformedFaceUntapsUpToThreeLandsYouControlWhenBlocked() {
         AzusasManyJourneys front = new AzusasManyJourneys();
-        Permanent seeker = new Permanent(front);
+        Permanent seeker = addCreatureReady(player1, front);
         seeker.setCard(front.getBackFaceCard());
         seeker.setTransformed(true);
-        seeker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(seeker);
 
         List<Permanent> lands = List.of(
                 harness.addToBattlefieldAndReturn(player1, new Forest()),
@@ -94,6 +92,77 @@ class AzusasManyJourneysTest extends BaseCardTest {
         assertThat(lands.get(3).isTapped()).isTrue();
         assertThat(opposingLand.isTapped()).isTrue();
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void transformedCreatureCannotAttackOnTheTurnItReturns() {
+        addSagaWithLore(2);
+
+        advanceToNextChapter();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void transformedFaceCanDeclineToUntapAnyLandsWhenBlocked() {
+        Permanent seeker = addCreatureReady(player1, new LikenessOfTheSeeker());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        addCreatureReady(player2, new GrizzlyBears());
+        seeker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    void transformedFaceCanChooseOnlyOneOfTwoLandsWhenBlocked() {
+        Permanent seeker = addCreatureReady(player1, new LikenessOfTheSeeker());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        first.tap();
+        second.tap();
+        addCreatureReady(player2, new GrizzlyBears());
+        seeker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void enteringTheBattlefieldTriggersTheFirstChapter() {
+        harness.castFromHand(player1, new AzusasManyJourneys(), "{1}{G}");
+
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void chapterIIIReturnsAnOpponentsSagaUnderItsControllersControl() {
+        AzusasManyJourneys card = new AzusasManyJourneys();
+        card.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof LikenessOfTheSeeker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private Permanent addSagaWithLore(int loreCounters) {

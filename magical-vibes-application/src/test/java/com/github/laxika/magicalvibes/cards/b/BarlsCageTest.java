@@ -142,6 +142,59 @@ class BarlsCageTest extends BaseCardTest {
         assertThat(target.getSkipUntapCount()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Repeated activations prevent untapping only during the same next untap step")
+    void repeatedActivationsDoNotExtendDuration() {
+        addReadyCage(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped target consumes the restriction during its next untap step")
+    void restrictionExpiresEvenWhenTargetIsUntapped() {
+        addReadyCage(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+        target.tap();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and other players' untap steps do not consume the restriction")
+    void ownCreatureWaitsForItsControllersUntapStep() {
+        addReadyCage(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private Permanent addReadyCage(Player player) {
         return harness.addToBattlefieldAndReturn(player, new BarlsCage());
     }

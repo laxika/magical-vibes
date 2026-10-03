@@ -73,14 +73,130 @@ class ChronomancerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Chronomancer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Chronomancer"));
+    }
+
+    @Test
+    void sacrificeAndTapArePaidBeforeDrawing() {
+        Permanent source = addReadyChronomancer(player1);
+        Chronomancer sacrificed = new Chronomancer();
+        harness.addToBattlefield(player1, sacrificed);
+        harness.setLibrary(player1, List.of(new Chronomancer()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsArtifact() {
+        addReadyChronomancer(player1);
+        harness.addToBattlefield(player2, new Chronomancer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: another artifact");
+        harness.assertOnBattlefield(player2, "Chronomancer");
+    }
+
+    @Test
+    void cannotSacrificeNonartifactCreature() {
+        addReadyChronomancer(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: another artifact");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void summoningSickChronomancerCannotPayTapCost() {
+        harness.addToBattlefield(player1, new Chronomancer());
+        harness.addToBattlefield(player1, new Chronomancer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void unearthCannotBeActivatedOutsideMainPhase() {
+        harness.setGraveyard(player1, List.of(new Chronomancer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertInGraveyard(player1, "Chronomancer");
+    }
+
+    @Test
+    void unearthedChronomancerCanImmediatelyPayTapCost() {
+        Chronomancer returned = new Chronomancer();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.addToBattlefield(player1, new Chronomancer());
+        harness.setLibrary(player1, List.of(new Chronomancer()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(returned);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+    }
+
+    @Test
+    void sacrificingUnearthedArtifactExilesItAndStillPaysCost() {
+        Permanent source = addReadyChronomancer(player1);
+        Chronomancer returned = new Chronomancer();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.setLibrary(player1, List.of(new Chronomancer()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(returned);
+        harness.assertNotInGraveyard(player1, "Chronomancer");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private Permanent addReadyChronomancer(com.github.laxika.magicalvibes.model.Player player) {

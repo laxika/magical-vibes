@@ -45,12 +45,10 @@ public class MillAndTransformIfTypesEffectHandler implements NormalEffectHandler
             return;
         }
 
-        // Peek before milling so the type check still works if a replacement effect
-        // redirects the card out of the graveyard (Aberrant Researcher ruling).
-        Card milledCard = deck.getFirst();
-        graveyardService.resolveMillPlayer(gameData, controllerId, 1);
-
-        boolean matches = e.cardTypes().stream().anyMatch(milledCard::hasType);
+        List<Card> milledCards = graveyardService.resolveMillPlayerAndReturnAllMilledCards(
+                gameData, controllerId, 1);
+        boolean matches = milledCards.stream()
+                .anyMatch(card -> e.cardTypes().stream().anyMatch(card::hasType));
         if (!matches) {
             return;
         }

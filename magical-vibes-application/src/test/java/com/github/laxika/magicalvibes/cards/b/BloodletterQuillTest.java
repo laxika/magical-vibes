@@ -94,13 +94,69 @@ class BloodletterQuillTest extends BaseCardTest {
     }
 
     @Test
-    void cannotRemoveBloodCounterWhenNoneArePresent() {
-        addQuill();
+    void canActivateCounterRemovalWhenNoneArePresent() {
+        Permanent quill = addQuill();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(quill.getCounterCount(CounterType.BLOOD)).isZero();
+    }
+
+    @Test
+    void bloodCounterIsRemovedOnlyWhenAbilityResolves() {
+        Permanent quill = addQuill();
+        quill.setCounterCount(CounterType.BLOOD, 2);
+        quill.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(quill.getCounterCount(CounterType.BLOOD)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(quill.getCounterCount(CounterType.BLOOD)).isEqualTo(1);
+        assertThat(quill.isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleRemovalActivationsCanBeStackedWithOnlyOneCounter() {
+        Permanent quill = addQuill();
+        quill.setCounterCount(CounterType.BLOOD, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(quill.getCounterCount(CounterType.BLOOD)).isZero();
+    }
+
+    @Test
+    void drawActivationAddsBloodCounterImmediatelyAndIgnoresOtherCounterTypes() {
+        Permanent quill = addQuill();
+        quill.setCounterCount(CounterType.CHARGE, 4);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(quill.getCounterCount(CounterType.BLOOD)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(quill.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     private Permanent addQuill() {

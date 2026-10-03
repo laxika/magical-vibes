@@ -50,6 +50,42 @@ class AzoriusSignetTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Colored mana can pay Azorius Signet's generic activation cost")
+    void canPayActivationCostWithColoredMana() {
+        Permanent signet = addReadySignet();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unaffordable activation leaves Azorius Signet untapped and produces no mana")
+    void unaffordableActivationDoesNotPayCostsOrProduceMana() {
+        Permanent signet = addReadySignet();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(signet.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
     private Permanent addReadySignet() {
         return harness.addToBattlefieldAndReturn(player1, new AzoriusSignet());
     }

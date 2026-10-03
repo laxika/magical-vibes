@@ -1,27 +1,75 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BelligerentBrontodon.class, GoblinPiker.class, GiantSpider.class, GrizzlyBears.class,
+        TurnToFrog.class})
 class BelligerentBrontodonTest extends BaseCardTest {
 
-    // ===== Brontodon itself uses toughness =====
+    @Test
+    @DisplayName("Removing Brontodon's abilities stops the toughness damage effect")
+    void losingSourceAbilityStopsEffect() {
+        Permanent brontodon = addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, brontodon.getId());
+        spider.setAttacking(true);
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A creature that loses its own abilities still uses toughness while Brontodon is present")
+    void losingAffectedCreatureAbilitiesDoesNotStopEffect() {
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+        spider.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, 2);
+        spider.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Combat damage uses modified toughness without subtracting marked damage")
+    void usesCurrentToughnessDespiteMarkedDamage() {
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        spider.setMarkedDamage(3);
+        spider.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
+    }
 
     @Test
     @DisplayName("Brontodon (4/6) deals 6 combat damage (its toughness)")
     void brontodonUsesToughnessForOwnDamage() {
-        Permanent brontodon = addReadyCreature(player1, new BelligerentBrontodon());
+        Permanent brontodon = addCreatureReady(player1, new BelligerentBrontodon());
 
-        assertThat(gqs.getEffectivePower(gd, brontodon)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, brontodon)).isEqualTo(6);
         assertThat(gqs.getEffectiveCombatDamage(gd, brontodon)).isEqualTo(6);
     }
 
@@ -31,7 +79,7 @@ class BelligerentBrontodonTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent brontodon = addReadyCreature(player1, new BelligerentBrontodon());
+        Permanent brontodon = addCreatureReady(player1, new BelligerentBrontodon());
         brontodon.setAttacking(true);
 
         resolveCombat();
@@ -39,27 +87,21 @@ class BelligerentBrontodonTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14); // 20 - 6
     }
 
-    // ===== Other creatures use toughness (toughness > power) =====
-
     @Test
     @DisplayName("Giant Spider (2/4) with Brontodon deals 4 combat damage")
     void creatureWithHigherToughnessUsesToughness() {
-        addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent spider = addReadyCreature(player1, new GiantSpider());
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
         assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(4);
     }
 
-    // ===== Creatures with power > toughness still use toughness =====
-
     @Test
     @DisplayName("Goblin Piker (2/1) with Brontodon deals 1 combat damage (toughness, not power)")
     void creatureWithHigherPowerStillUsesToughness() {
-        addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent piker = addReadyCreature(player1, new GoblinPiker());
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent piker = addCreatureReady(player1, new GoblinPiker());
 
-        assertThat(gqs.getEffectivePower(gd, piker)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, piker)).isEqualTo(1);
         assertThat(gqs.getEffectiveCombatDamage(gd, piker)).isEqualTo(1);
     }
 
@@ -69,8 +111,8 @@ class BelligerentBrontodonTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent piker = addReadyCreature(player1, new GoblinPiker());
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent piker = addCreatureReady(player1, new GoblinPiker());
         piker.setAttacking(true);
 
         resolveCombat();
@@ -78,30 +120,24 @@ class BelligerentBrontodonTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19); // 20 - 1
     }
 
-    // ===== Creatures with equal power/toughness =====
-
     @Test
     @DisplayName("Grizzly Bears (2/2) with Brontodon deals 2 combat damage (unchanged)")
     void creatureWithEqualPowerToughnessUnchanged() {
-        addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectiveCombatDamage(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Opponent's creatures not affected =====
-
     @Test
     @DisplayName("Opponent's creatures are not affected by Brontodon")
     void opponentCreaturesNotAffected() {
-        addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent opponentPiker = addReadyCreature(player2, new GoblinPiker());
+        addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent opponentPiker = addCreatureReady(player2, new GoblinPiker());
 
         // Opponent's Goblin Piker (2/1) still deals 2 (its power)
         assertThat(gqs.getEffectiveCombatDamage(gd, opponentPiker)).isEqualTo(2);
     }
-
-    // ===== Blocking interactions =====
 
     @Test
     @DisplayName("Controlled blocker uses toughness for combat damage")
@@ -110,11 +146,11 @@ class BelligerentBrontodonTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         // Player2 has Brontodon + Goblin Piker as blocker
-        addReadyCreature(player2, new BelligerentBrontodon());
-        Permanent blocker = addReadyCreature(player2, new GoblinPiker());
+        addCreatureReady(player2, new BelligerentBrontodon());
+        Permanent blocker = addCreatureReady(player2, new GoblinPiker());
 
         // Player1 attacks with Grizzly Bears (2/2)
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -128,13 +164,11 @@ class BelligerentBrontodonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    // ===== Effect disappears when Brontodon leaves =====
-
     @Test
     @DisplayName("Effect disappears when Brontodon is removed from battlefield")
     void effectDisappearsWhenBrontodonRemoved() {
-        Permanent brontodon = addReadyCreature(player1, new BelligerentBrontodon());
-        Permanent spider = addReadyCreature(player1, new GiantSpider());
+        Permanent brontodon = addCreatureReady(player1, new BelligerentBrontodon());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
 
         assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(4); // toughness
 
@@ -143,12 +177,4 @@ class BelligerentBrontodonTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCombatDamage(gd, spider)).isEqualTo(2); // back to power
     }
 
-    // ===== Helpers =====
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }

@@ -114,6 +114,87 @@ class CephalidColiseumTest extends BaseCardTest {
                 .hasMessageContaining("cards in your graveyard");
     }
 
+    @Test
+    void thresholdIsNotRecheckedAtResolution() {
+        addReadyColiseum(player1);
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Cephalid Coliseum");
+        harness.assertInGraveyard(player1, "Cephalid Coliseum");
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsGraveyardAndSacrificeCannotSupplyThreshold() {
+        Permanent coliseum = addReadyColiseum(player1);
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setGraveyard(player2, graveyardCards(7));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cards in your graveyard");
+
+        assertThat(coliseum.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Cephalid Coliseum");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedColiseumCannotActivateEitherAbility() {
+        Permanent coliseum = addReadyColiseum(player1);
+        coliseum.setTapped(true);
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Cephalid Coliseum");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void thresholdAbilityRequiresBlueMana() {
+        Permanent coliseum = addReadyColiseum(player1);
+        harness.setGraveyard(player1, graveyardCards(7));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(coliseum.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Cephalid Coliseum");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyColiseum(Player player) {
         return addCreatureReady(player, new CephalidColiseum());
     }

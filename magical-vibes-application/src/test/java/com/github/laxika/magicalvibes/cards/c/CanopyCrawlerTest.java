@@ -121,4 +121,87 @@ class CanopyCrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forestId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void mayDeclineAmplifyWithoutDiscardingBeasts() {
+        CanopyCrawler beast = new CanopyCrawler();
+        harness.setHand(player1, List.of(new CanopyCrawler(), beast));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(findPermanent(player1, "Canopy Crawler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(beast);
+    }
+
+    @Test
+    void countsCountersAtResolutionAndDoesNotRecalculateAfterward() {
+        Permanent crawler = addCreatureReady(player1, new CanopyCrawler());
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        crawler.setCounterCount(CounterType.CHARGE, 5);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    void usesLastKnownCountersWhenSourceLeavesBeforeResolution() {
+        Permanent crawler = addCreatureReady(player1, new CanopyCrawler());
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, crawler));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    void mayTargetItself() {
+        Permanent crawler = addCreatureReady(player1, new CanopyCrawler());
+        crawler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, null, crawler.getId());
+        harness.passBothPriorities();
+
+        assertThat(crawler.getEffectivePower()).isEqualTo(6);
+        assertThat(crawler.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    void noPlusOneCountersMeansNoBoost() {
+        Permanent crawler = addCreatureReady(player1, new CanopyCrawler());
+        crawler.setCounterCount(CounterType.CHARGE, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(crawler.isTapped()).isTrue();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotPayTapCostWhileSummoningSick() {
+        Permanent crawler = harness.addToBattlefieldAndReturn(player1, new CanopyCrawler());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, crawler.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(crawler.isTapped()).isFalse();
+    }
 }

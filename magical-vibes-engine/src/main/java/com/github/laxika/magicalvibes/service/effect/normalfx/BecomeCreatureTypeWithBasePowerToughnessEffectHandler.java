@@ -38,8 +38,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
 
         // Intervening "if": e.g. "If this creature is a Spirit, ...". Granted subtypes count.
         if (e.requiredSubtype() != null
-                && !source.getCard().getSubtypes().contains(e.requiredSubtype())
-                && !source.getGrantedSubtypes().contains(e.requiredSubtype())) {
+                && !gameQueryService.hasEffectiveSubtype(gameData, source, e.requiredSubtype())) {
             return;
         }
 
@@ -61,17 +60,19 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
         }
 
         if (e.replacedSubtype() != null) {
-            Card copy = source.getCard().createRuntimeCopy();
-            ArrayList<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
-            subtypes.removeIf(subtype -> subtype == e.replacedSubtype());
-            if (!subtypes.contains(e.addedSubtype())) {
-                subtypes.add(e.addedSubtype());
+            var subtypes = new java.util.LinkedHashSet<>(gameQueryService.effectiveCreatureSubtypes(gameData, source));
+            subtypes.remove(e.replacedSubtype());
+            subtypes.add(e.addedSubtype());
+            boolean overriding = true;
+            for (CardSubtype subtype : subtypes) {
+                addSubtypeEffect(gameData, entry, source, subtype, overriding);
+                overriding = false;
             }
-            copy.setSubtypes(subtypes);
-            copy.freeze();
-            source.setCard(copy);
-        } else if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
-            source.getGrantedSubtypes().add(e.addedSubtype());
+        } else {
+            if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
+                source.getGrantedSubtypes().add(e.addedSubtype());
+            }
+            addSubtypeEffect(gameData, entry, source, e.addedSubtype(), false);
         }
 
         if (e.grantsProtectionFromOpponents()) {
@@ -90,4 +91,14 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" becomes a " + e.addedSubtype().getDisplayName() + stats + ".").build());
     }
+    private void addSubtypeEffect(GameData gameData, StackEntry entry, Permanent source,
+                                  CardSubtype subtype, boolean overriding) {
+        gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
+                        subtype, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET, overriding),
+                source.getId(), null, null,
+                com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, 0));
+    }
+
 }

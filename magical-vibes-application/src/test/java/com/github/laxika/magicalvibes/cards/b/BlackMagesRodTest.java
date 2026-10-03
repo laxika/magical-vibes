@@ -92,17 +92,89 @@ class BlackMagesRodTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, second)).contains(CardSubtype.WIZARD);
     }
 
+    @Test
+    @DisplayName("An unattached Rod does not trigger on a noncreature spell")
+    void unattachedRodDoesNotTrigger() {
+        addRodReady(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The creature's controller determines whose spells trigger the granted ability")
+    void equipmentControllerDoesNotTriggerOpponentsCreature() {
+        Permanent rod = addRodReady(player1);
+        Permanent creature = addCreatureReady(player2);
+        rod.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A granted trigger still deals damage after its creature dies")
+    void triggerSurvivesCreatureDying() {
+        Permanent rod = addRodReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        rod.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, creature.getId());
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Two Rods grant two independent spell-cast triggers")
+    void multipleRodsTriggerIndependently() {
+        Permanent firstRod = addRodReady(player1);
+        Permanent secondRod = addRodReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        firstRod.setAttachedTo(creature.getId());
+        secondRod.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
     private Permanent addRodReady(Player player) {
-        Permanent permanent = new Permanent(new BlackMagesRod());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new BlackMagesRod());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

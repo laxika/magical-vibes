@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
+import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,13 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({BurningAnger.class, RuneclawBear.class, ElvishMystic.class, DarksteelCitadel.class, TitanicGrowth.class})
 class BurningAngerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Burning Anger attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
         harness.setHand(player1, List.of(new BurningAnger()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -40,13 +42,11 @@ class BurningAngerTest extends BaseCardTest {
     void grantedAbilityDealsPowerDamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        Permanent aura = new Permanent(new BurningAnger());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -58,22 +58,19 @@ class BurningAngerTest extends BaseCardTest {
     @Test
     @DisplayName("Granted ability kills a creature with toughness at most the source's power")
     void grantedAbilityKillsSmallCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        Permanent aura = new Permanent(new BurningAnger());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        Permanent elves = new Permanent(new LlanowarElves());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new ElvishMystic());
         elves.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(elves);
 
         harness.activateAbility(player1, 0, null, elves.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Elvish Mystic");
     }
 
     @Test
@@ -81,15 +78,11 @@ class BurningAngerTest extends BaseCardTest {
     void damageUsesCurrentPower() {
         harness.setLife(player2, 20);
 
-        Permanent elves = new Permanent(new LlanowarElves());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
         elves.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(elves);
 
-        Permanent aura = new Permanent(new BurningAnger());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
         aura.setAttachedTo(elves.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
-
-        assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -100,13 +93,11 @@ class BurningAngerTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the granted ability when Burning Anger leaves the battlefield")
     void abilityLostWhenAuraRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        Permanent aura = new Permanent(new BurningAnger());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -118,15 +109,78 @@ class BurningAngerTest extends BaseCardTest {
     @Test
     @DisplayName("Burning Anger cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new DarksteelCitadel());
         harness.setHand(player1, List.of(new BurningAnger()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Darksteel Citadel");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Damage uses power at resolution after a response boosts the creature")
+    void powerChangesBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        bears.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
+        aura.setAttachedTo(bears.getId());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TitanicGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Removing the Aura does not stop an already activated ability")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        bears.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
+        aura.setAttachedTo(bears.getId());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The creature's controller can activate an ability granted by an opponent's Aura")
+    void opponentControlsEnchantedCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        bears.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
+        aura.setAttachedTo(bears.getId());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the granted ability's tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        bears.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
+        aura.setAttachedTo(bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

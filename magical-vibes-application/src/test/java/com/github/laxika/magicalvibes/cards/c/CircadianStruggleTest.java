@@ -58,6 +58,68 @@ class CircadianStruggleTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void repeatedPermanentColorsCountOnlyOnce() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card first = new AirElemental();
+        Card second = new AirElemental();
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new CircadianStruggle()));
+        addCircadianMana();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void seeksAllAvailableMatchesWhenFewerThanTheColorCount() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AirElemental());
+        Card matching = new AirElemental();
+        Card nonmatching = new Shock();
+        harness.setLibrary(player1, List.of(nonmatching, matching));
+        harness.setHand(player1, List.of(new CircadianStruggle()));
+        addCircadianMana();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matching);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Air Elemental");
+    }
+
+    @Test
+    void ignoresOpponentColorsAndSeeksNothingWhenNoCardsMatch() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+        Card blueCard = new AirElemental();
+        Card redCard = new Shock();
+        harness.setLibrary(player1, List.of(blueCard, redCard));
+        harness.setHand(player1, List.of(new CircadianStruggle()));
+        addCircadianMana();
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(blueCard, redCard);
+    }
+
     private void addCircadianMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 2);

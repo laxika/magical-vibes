@@ -23,8 +23,7 @@ class BogHoodlumsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new BogHoodlums(), "{5}{B}");
-        harness.passBothPriorities(); // resolve creature spell (ETB clash trigger placed)
-        harness.passBothPriorities(); // resolve ETB clash effect
+        resolveAllTriggers();
 
         return findPermanent(player1, "Bog Hoodlums");
     }
@@ -83,6 +82,41 @@ class BogHoodlumsTest extends BaseCardTest {
         assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(hoodlums.getEffectivePower()).isEqualTo(4);
         assertThat(hoodlums.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Revealing a land wins when the opponent reveals no card")
+    void opponentEmptyLibraryStillAllowsWin() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of());
+
+        Permanent hoodlums = castBogHoodlums();
+
+        assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Neither player wins when both libraries are empty")
+    void bothEmptyLibrariesAddNoCounter() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        Permanent hoodlums = castBogHoodlums();
+
+        assertThat(hoodlums.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Clash asks players where to put their revealed cards")
+    void clashOffersLibraryPlacementChoice() {
+        harness.setLibrary(player1, List.of(new PaperfinRascal(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new PaperfinRascal()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new BogHoodlums(), "{5}{B}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
     // ===== Can't block =====

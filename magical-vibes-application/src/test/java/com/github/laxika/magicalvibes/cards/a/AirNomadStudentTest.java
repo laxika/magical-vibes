@@ -60,4 +60,49 @@ class AirNomadStudentTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(student.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("A summoning-sick Student still gets its end-step counter")
+    void putsCounterOnStudentThatEnteredThisTurn() {
+        Permanent student = harness.enterBattlefieldAndReturn(player1, new AirNomadStudent());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(student.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Student checks its own attack history and puts counters only on itself")
+    void checksEachStudentsAttackHistorySeparately() {
+        Permanent firstStudent = addStudent();
+        Permanent secondStudent = addStudent();
+        Permanent attackingStudent = addStudent();
+        attackingStudent.setAttackedThisTurn(true);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firstStudent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondStudent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(attackingStudent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Student entering after the end step begins does not get another Student's counter")
+    void studentEnteringDuringEndStepDoesNotTrigger() {
+        Permanent originalStudent = addStudent();
+        advanceToEndStep(player1);
+
+        Permanent lateStudent = harness.enterBattlefieldAndReturn(player1, new AirNomadStudent());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(originalStudent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(lateStudent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

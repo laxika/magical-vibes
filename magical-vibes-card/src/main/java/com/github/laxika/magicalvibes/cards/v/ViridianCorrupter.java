@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MBS", collectorNumber = "94")
 @CardRegistration(set = "TD2", collectorNumber = "56")
+@CardRegistration(set = "ONC", collectorNumber = "113")
 public class ViridianCorrupter extends Card {
 
     public ViridianCorrupter() {

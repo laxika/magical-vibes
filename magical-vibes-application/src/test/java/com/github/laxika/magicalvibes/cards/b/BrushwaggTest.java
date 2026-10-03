@@ -20,10 +20,9 @@ class BrushwaggTest extends BaseCardTest {
     @DisplayName("When Brushwagg becomes blocked, it gets -2/+2 until end of turn")
     void becomesBlockedGetsBoost() {
         Permanent brushwagg = addCreatureReady(player1, new Brushwagg());
-        brushwagg.setAttacking(true);
         addCreatureReady(player2, new WildElephant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -34,11 +33,10 @@ class BrushwaggTest extends BaseCardTest {
     @Test
     @DisplayName("When Brushwagg blocks, it gets -2/+2 until end of turn")
     void blocksGetsBoost() {
-        Permanent attacker = addCreatureReady(player1, new WildElephant());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new WildElephant());
         Permanent brushwagg = addCreatureReady(player2, new Brushwagg());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -50,9 +48,8 @@ class BrushwaggTest extends BaseCardTest {
     @DisplayName("When Brushwagg is unblocked, it gets no boost")
     void unblockedNoBoost() {
         Permanent brushwagg = addCreatureReady(player1, new Brushwagg());
-        brushwagg.setAttacking(true);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -64,10 +61,9 @@ class BrushwaggTest extends BaseCardTest {
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOff() {
         Permanent brushwagg = addCreatureReady(player1, new Brushwagg());
-        brushwagg.setAttacking(true);
         addCreatureReady(player2, new WildElephant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -83,11 +79,10 @@ class BrushwaggTest extends BaseCardTest {
     @DisplayName("When Brushwagg becomes blocked by multiple creatures, it gets only one boost")
     void becomesBlockedByMultipleCreaturesGetsOneBoost() {
         Permanent brushwagg = addCreatureReady(player1, new Brushwagg());
-        brushwagg.setAttacking(true);
         addCreatureReady(player2, new WildElephant());
         addCreatureReady(player2, new WildElephant());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -95,5 +90,28 @@ class BrushwaggTest extends BaseCardTest {
 
         assertThat(brushwagg.getPowerModifier()).isEqualTo(-2);
         assertThat(brushwagg.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both Brushwaggs get their own boost only after their combat triggers resolve")
+    void opposingBrushwaggsResolveTheirOwnTriggers() {
+        Permanent attacker = addCreatureReady(player1, new Brushwagg());
+        Permanent blocker = addCreatureReady(player2, new Brushwagg());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(-2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+        assertThat(blocker.getPowerModifier()).isEqualTo(-2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
     }
 }

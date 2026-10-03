@@ -4,18 +4,18 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.j.JolraelsCentaur;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.Witchstalker;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AetherFlash.class, GrizzlyBears.class, HillGiant.class, HornedTurtle.class, JolraelsCentaur.class, Witchstalker.class})
+@CardUsed({AetherFlash.class, GrizzlyBears.class, HillGiant.class, HornedTurtle.class,
+        JolraelsCentaur.class, Witchstalker.class, Opalescence.class})
 class AetherFlashTest extends BaseCardTest {
 
     @Test
@@ -51,9 +51,7 @@ class AetherFlashTest extends BaseCardTest {
     void toughCreatureSurvivesWithMarkedDamageUpstreamReview() {
         harness.addToBattlefield(player1, new AetherFlash());
 
-        harness.setHand(player1, List.of(new HornedTurtle())); // 1/4
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HornedTurtle(), "{2}{U}");
 
         harness.passBothPriorities(); // resolve creature spell → trigger
         harness.passBothPriorities(); // resolve trigger → 2 damage marked
@@ -101,13 +99,63 @@ class AetherFlashTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new JolraelsCentaur()));
-        harness.addMana(player2, ManaColor.GREEN, 3);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new JolraelsCentaur(), "{1}{G}{G}");
 
         harness.passBothPriorities(); // resolve creature spell → Aether Flash triggers
         harness.passBothPriorities(); // resolve trigger → 2 damage is dealt despite shroud
 
         harness.assertInGraveyard(player2, "Jolrael's Centaur");
+    }
+
+    @Test
+    @DisplayName("Each Aether Flash deals damage independently to an entering creature")
+    void multipleFlashesDealDamageIndependently() {
+        harness.addToBattlefield(player1, new AetherFlash());
+        harness.addToBattlefield(player2, new AetherFlash());
+
+        harness.castFromHand(player1, new HornedTurtle(), "{2}{U}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Horned Turtle");
+        harness.assertInGraveyard(player1, "Horned Turtle");
+    }
+
+    @Test
+    @DisplayName("Aether Flash entering does not damage creatures already on the battlefield")
+    void enteringFlashDoesNotDamageExistingCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new AetherFlash(), "{2}{R}{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aether Flash");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An Aether Flash entering as a creature triggers for its own entry")
+    void animatedFlashDamagesItselfOnEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+
+        Permanent flash = harness.enterBattlefieldAndReturn(player1, new AetherFlash());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Aether Flash");
+        assertThat(flash.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Existing and entering Aether Flashes both damage an enchantment entering as a creature")
+    void flashesDamageEnchantmentsEnteringAsCreatures() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new AetherFlash());
+
+        harness.enterBattlefieldAndReturn(player2, new AetherFlash());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Aether Flash");
+        harness.assertInGraveyard(player2, "Aether Flash");
+        assertThat(findPermanent(player1, "Aether Flash").getMarkedDamage()).isZero();
     }
 }

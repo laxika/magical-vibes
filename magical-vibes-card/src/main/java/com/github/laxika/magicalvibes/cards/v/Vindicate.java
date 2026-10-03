@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "A25", collectorNumber = "219")
 @CardRegistration(set = "MH2", collectorNumber = "294")
 @CardRegistration(set = "FIC", collectorNumber = "330")
+@CardRegistration(set = "BRC", collectorNumber = "131")
 public class Vindicate extends Card {
 
     public Vindicate() {

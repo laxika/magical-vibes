@@ -1,29 +1,32 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChaosDragon.class, GrizzlyBears.class})
+@CardUsed({ChaosDragon.class, GrizzlyBears.class, ChandraNalaar.class, InvasionOfZendikar.class})
 class ChaosDragonTest extends BaseCardTest {
 
     private RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler effectHandler;
@@ -98,13 +101,81 @@ class ChaosDragonTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(com.github.laxika.magicalvibes.model.Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
         return planeswalker;
+    }
+
+    @Test
+    void tiedHighestRollStillPreventsAttackingTheOpponent() {
+        setD20Rolls(Map.of(player1.getId(), 20, player2.getId(), 20));
+        Permanent dragon = addCreatureReady(player1, new ChaosDragon());
+        Permanent planeswalker = addPlaneswalker(player2);
+
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+
+        assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isFalse();
+        assertThat(als.canAttackDefender(gd, dragon, planeswalker.getId())).isFalse();
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).isEmpty();
+        declareAttackers(List.of());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotRollDiceDuringOpponentsCombat() {
+        setD20Rolls(Map.of());
+        addCreatureReady(player1, new ChaosDragon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("rolls a d20 for Chaos Dragon")).isFalse();
+    }
+
+    @Test
+    void mustAttackWhenThereIsALegalDefender() {
+        setD20Rolls(Map.of(player1.getId(), 20, player2.getId(), 5));
+        addCreatureReady(player1, new ChaosDragon());
+
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void highestOpponentRollDoesNotPreventAttackingABattleTheyControl() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Third player");
+        gd.playerIdToName.put(thirdPlayerId, "Third player");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("third-player"), thirdPlayerId, "Third player");
+        setD20Rolls(Map.of(player1.getId(), 5, player2.getId(), 20, thirdPlayerId, 10));
+        Permanent dragon = addCreatureReady(player1, new ChaosDragon());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(thirdPlayerId);
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+
+        advanceToBeginningOfCombat();
+        resolveAllTriggers();
+
+        assertThat(als.getValidAttackTargetIds(gd, player1.getId())).contains(battle.getId());
+        assertThat(als.canAttackDefender(gd, dragon, battle.getId())).isTrue();
     }
 
     private static final class FixedD20RollService extends D20RollService {

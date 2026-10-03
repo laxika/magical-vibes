@@ -121,4 +121,66 @@ class CatBurglarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         return burglar;
     }
+
+    @Test
+    @DisplayName("Target player chooses exactly one card from a larger hand")
+    void targetPlayerChoosesOneCard() {
+        prepareBurglar();
+        RagingGoblin kept = new RagingGoblin();
+        CatBurglar discarded = new CatBurglar();
+        harness.setHand(player2, List.of(kept, discarded));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept, discarded);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can be activated in the controller's postcombat main phase")
+    void canActivateInPostcombatMainPhase() {
+        prepareBurglar();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player2, List.of(new RagingGoblin()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Cannot be activated during another player's main phase")
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent burglar = prepareBurglar();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(burglar.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent burglar = prepareBurglar();
+        burglar.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(burglar.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
 }

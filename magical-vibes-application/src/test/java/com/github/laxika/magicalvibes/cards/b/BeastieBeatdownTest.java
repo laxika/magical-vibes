@@ -51,20 +51,104 @@ class BeastieBeatdownTest extends BaseCardTest {
     void enforcesTargetRestrictions() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new BeastieBeatdown()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        prepareBeastieBeatdown();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(source.getId(), ownTarget.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castBeastieBeatdown(Permanent source, Permanent target) {
+    @Test
+    void firstTargetMustBeControlledByCaster() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareBeastieBeatdown();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void resolvingSpellDoesNotCountItselfTowardDelirium() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Pacifism()));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castBeastieBeatdown(source, target);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Beastie Beatdown");
+    }
+
+    @Test
+    void checksDeliriumAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareBeastieBeatdown();
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock(), new Pacifism()));
+
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void opponentGraveyardDoesNotEnableDelirium() {
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new Forest(), new Shock(), new Pacifism()));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castBeastieBeatdown(source, target);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void stillAddsCountersWhenOpponentCreatureLeavesBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock(), new Pacifism()));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareBeastieBeatdown();
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void dealsNoDamageWhenControlledCreatureLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        prepareBeastieBeatdown();
+        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    private void prepareBeastieBeatdown() {
         harness.setHand(player1, List.of(new BeastieBeatdown()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
+    }
 
-        harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+    private void castBeastieBeatdown(Permanent source, Permanent target) {
+        prepareBeastieBeatdown();
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
     }
 }

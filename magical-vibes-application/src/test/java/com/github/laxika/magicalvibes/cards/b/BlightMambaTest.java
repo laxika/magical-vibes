@@ -1,63 +1,51 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({BlightMamba.class, CarapaceForger.class})
 class BlightMambaTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Blight Mamba puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new BlightMamba()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlightMamba(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blight Mamba");
     }
 
     @Test
     @DisplayName("Resolving Blight Mamba puts it on the battlefield")
     void resolvingPutsItOnBattlefield() {
-        harness.setHand(player1, List.of(new BlightMamba()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BlightMamba(), "{1}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Blight Mamba");
     }
 
-    // ===== Regeneration ability =====
-
     @Test
     @DisplayName("Activating regeneration ability puts it on the stack")
     void activatingRegenPutsOnStack() {
-        Permanent mamba = addBlightMambaReady(player1);
+        addBlightMambaReady(player1);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Blight Mamba");
     }
 
     @Test
@@ -91,10 +79,9 @@ class BlightMambaTest extends BaseCardTest {
         mamba.setBlocking(true);
         mamba.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -116,10 +103,9 @@ class BlightMambaTest extends BaseCardTest {
         mamba.setBlocking(true);
         mamba.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -130,8 +116,6 @@ class BlightMambaTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Blight Mamba");
         harness.assertInGraveyard(player1, "Blight Mamba");
     }
-
-    // ===== Infect: combat damage to players gives poison counters =====
 
     @Test
     @DisplayName("Unblocked Blight Mamba deals poison counters to defending player")
@@ -150,10 +134,8 @@ class BlightMambaTest extends BaseCardTest {
         // Player should get 1 poison counter (1 power)
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
         // Life should NOT change from infect damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
-
-    // ===== Infect: combat damage to creatures gives -1/-1 counters =====
 
     @Test
     @DisplayName("Blight Mamba deals -1/-1 counters to blocking creature")
@@ -161,11 +143,10 @@ class BlightMambaTest extends BaseCardTest {
         Permanent mamba = addBlightMambaReady(player1);
         mamba.setAttacking(true);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -173,10 +154,10 @@ class BlightMambaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) gets 1 -1/-1 counter from 1-power Blight Mamba
+        // Carapace Forger (2/2) gets 1 -1/-1 counter from 1-power Blight Mamba
         // Should survive as a 1/1
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Carapace Forger");
+        Permanent bears = findPermanent(player2, "Carapace Forger");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
@@ -187,11 +168,10 @@ class BlightMambaTest extends BaseCardTest {
         mamba.setRegenerationShield(1);
         mamba.setAttacking(true);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -201,18 +181,78 @@ class BlightMambaTest extends BaseCardTest {
 
         // Blight Mamba should survive via regeneration
         harness.assertOnBattlefield(player1, "Blight Mamba");
-        // Grizzly Bears should have -1/-1 counters from infect
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        // Carapace Forger should have -1/-1 counters from infect
+        Permanent bears = findPermanent(player2, "Carapace Forger");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent mamba = harness.addToBattlefieldAndReturn(player1, new BlightMamba());
+        mamba.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(mamba.getRegenerationShield()).isEqualTo(1);
+        assertThat(mamba.isTapped()).isTrue();
+    }
+
+    @Test
+    void regenerationRequiresGreenMana() {
+        addBlightMambaReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void regenerationClearsDamageAndRemovesCreatureFromCombat() {
+        Permanent mamba = addBlightMambaReady(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(mamba.isTapped()).isFalse();
+        mamba.setAttacking(true);
+        mamba.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Blight Mamba");
+        assertThat(mamba.isTapped()).isTrue();
+        assertThat(mamba.isAttacking()).isFalse();
+        assertThat(mamba.getMarkedDamage()).isZero();
+        assertThat(mamba.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void regenerationCannotSaveCreatureFromInfectReducingToughnessToZero() {
+        Permanent attacker = addBlightMambaReady(player1);
+        attacker.setAttacking(true);
+        Permanent blocker = addBlightMambaReady(player2);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Blight Mamba");
+        harness.assertInGraveyard(player2, "Blight Mamba");
+        harness.assertNotOnBattlefield(player2, "Blight Mamba");
+    }
 
     private Permanent addBlightMambaReady(Player player) {
-        BlightMamba card = new BlightMamba();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new BlightMamba());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

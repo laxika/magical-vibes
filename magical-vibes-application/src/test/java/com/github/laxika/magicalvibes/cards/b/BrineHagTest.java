@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.g.GiantTurtle;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BrineHag.class)
+@CardUsed({BrineHag.class, GiantTurtle.class, ProdigalSorcerer.class, TormodsCrypt.class})
 class BrineHagTest extends BaseCardTest {
 
     @Test
@@ -35,6 +39,76 @@ class BrineHagTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, damagingCreature)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, damagingCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Changes only base stats, preserving counters on a surviving damage source")
+    void preservesCountersOnDamageSource() {
+        Permanent hag = addCreatureReady(player1, new BrineHag());
+        Permanent turtle = addCreatureReady(player2, new GiantTurtle());
+        turtle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        turtle.setAttacking(true);
+        hag.setBlocking(true);
+        hag.addBlockingTargetId(turtle.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertInGraveyard(player1, "Brine Hag");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, turtle)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, turtle)).isEqualTo(3);
+        assertThat(turtle.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Affects all noncombat damage sources regardless of their controllers")
+    void affectsAllNoncombatDamageSources() {
+        Permanent hag = addCreatureReady(player1, new BrineHag());
+        Permanent friendlySource = addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent opposingSource = addCreatureReady(player2, new ProdigalSorcerer());
+        Permanent unaffected = addCreatureReady(player2, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, 1, null, hag.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, hag.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Brine Hag");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, friendlySource)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, friendlySource)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposingSource)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opposingSource)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Exiling Brine Hag in response does not stop its death trigger")
+    void resolvesAfterHagLeavesGraveyard() {
+        Permanent hag = addCreatureReady(player1, new BrineHag());
+        Permanent turtle = addCreatureReady(player2, new GiantTurtle());
+        harness.addToBattlefield(player2, new TormodsCrypt());
+        turtle.setAttacking(true);
+        hag.setBlocking(true);
+        hag.addBlockingTargetId(turtle.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertInGraveyard(player1, "Brine Hag");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player2, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertNotInGraveyard(player1, "Brine Hag");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(hag.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, turtle)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, turtle)).isEqualTo(2);
     }
 
     private Permanent killBrineHagAfterCombatDamage() {

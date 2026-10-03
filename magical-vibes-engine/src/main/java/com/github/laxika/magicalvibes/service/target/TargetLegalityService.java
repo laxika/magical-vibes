@@ -2561,6 +2561,13 @@ public class TargetLegalityService {
             }
             case ALL_GRAVEYARDS -> { }
         }
+        if (filter.minimumPoisonCounters() != null
+                && !graveyardOwnerId.equals(controllerId)
+                && gameData.playerPoisonCounters.getOrDefault(graveyardOwnerId, 0)
+                < filter.minimumPoisonCounters()) {
+            throw new IllegalStateException("Target opponent must have at least "
+                    + filter.minimumPoisonCounters() + " poison counters");
+        }
         if (filter.predicate() != null
                 && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter.predicate(), card.getId(),
                 gameData, graveyardOwnerId, null, null, xValue)) {

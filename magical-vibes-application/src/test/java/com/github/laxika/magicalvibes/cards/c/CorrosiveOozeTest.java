@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.w.WarlordsAxe;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.s.ShortSword;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,15 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CorrosiveOoze.class, BalothGorger.class, ShortSword.class, LlanowarElves.class})
 class CorrosiveOozeTest extends BaseCardTest {
 
-    // ===== Corrosive Ooze blocks an equipped creature =====
 
     @Test
     @DisplayName("When Corrosive Ooze blocks an equipped creature, a trigger is created")
     void blockingEquippedCreatureCreatesTrigger() {
         Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
         attacker.setAttacking(true);
         Permanent equipment = addEquipment(player1);
         equipment.setAttachedTo(attacker.getId());
@@ -42,8 +45,8 @@ class CorrosiveOozeTest extends BaseCardTest {
     void blockingEquippedCreatureDestroysEquipmentAtEndOfCombat() {
         harness.setLife(player2, 20);
 
-        Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addReadyOoze(player2);
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
         attacker.setAttacking(true);
         Permanent equipment = addEquipment(player1);
         equipment.setAttachedTo(attacker.getId());
@@ -51,21 +54,18 @@ class CorrosiveOozeTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // Resolve the block trigger (marks equipment for destruction at end of combat)
-        harness.passBothPriorities();
-        // Pass through declare blockers priority
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Equipment should be destroyed at end of combat
-        harness.assertNotOnBattlefield(player1, "Warlord's Axe");
-        harness.assertInGraveyard(player1, "Warlord's Axe");
+        harness.assertNotOnBattlefield(player1, "Short Sword");
+        harness.assertInGraveyard(player1, "Short Sword");
     }
 
     @Test
     @DisplayName("When Corrosive Ooze blocks a non-equipped creature, no trigger is created")
     void blockingNonEquippedCreatureNoTrigger() {
         addReadyOoze(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -77,7 +77,6 @@ class CorrosiveOozeTest extends BaseCardTest {
         assertThat(oozeTriggers).isZero();
     }
 
-    // ===== Corrosive Ooze becomes blocked by an equipped creature =====
 
     @Test
     @DisplayName("When Corrosive Ooze becomes blocked by an equipped creature, a trigger is created")
@@ -85,7 +84,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BalothGorger());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(blocker.getId());
 
@@ -107,21 +106,18 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BalothGorger());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(blocker.getId());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // Resolve the becomes-blocked trigger
-        harness.passBothPriorities();
-        // Pass through declare blockers priority
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Equipment should be destroyed at end of combat
-        harness.assertNotOnBattlefield(player2, "Warlord's Axe");
-        harness.assertInGraveyard(player2, "Warlord's Axe");
+        harness.assertNotOnBattlefield(player2, "Short Sword");
+        harness.assertInGraveyard(player2, "Short Sword");
     }
 
     @Test
@@ -130,7 +126,7 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new BalothGorger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -141,7 +137,6 @@ class CorrosiveOozeTest extends BaseCardTest {
         assertThat(oozeTriggers).isZero();
     }
 
-    // ===== Mixed blockers (equipped and non-equipped) =====
 
     @Test
     @DisplayName("When Corrosive Ooze becomes blocked by equipped and non-equipped creatures, trigger only for equipped")
@@ -149,11 +144,11 @@ class CorrosiveOozeTest extends BaseCardTest {
         Permanent ooze = addReadyOoze(player1);
         ooze.setAttacking(true);
 
-        Permanent equippedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equippedBlocker = addCreatureReady(player2, new BalothGorger());
         Permanent equipment = addEquipment(player2);
         equipment.setAttachedTo(equippedBlocker.getId());
 
-        addCreatureReady(player2, new GrizzlyBears()); // non-equipped blocker
+        addCreatureReady(player2, new BalothGorger()); // non-equipped blocker
 
         prepareDeclareBlockers();
         // equippedBlocker is index 0, equipment is index 1, non-equipped creature is index 2
@@ -171,15 +166,14 @@ class CorrosiveOozeTest extends BaseCardTest {
                 .findFirst().get().getTargetId()).isEqualTo(equippedBlocker.getId());
     }
 
-    // ===== Multiple equipment =====
 
     @Test
     @DisplayName("All Equipment attached to the creature is destroyed, not just one")
     void multipleEquipmentAllDestroyed() {
         harness.setLife(player2, 20);
 
-        Permanent ooze = addReadyOoze(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addReadyOoze(player2);
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
         attacker.setAttacking(true);
 
         Permanent equipment1 = addEquipment(player1);
@@ -190,33 +184,80 @@ class CorrosiveOozeTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // Resolve the block trigger
-        harness.passBothPriorities();
-        // Pass through declare blockers priority
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Both equipment should be destroyed
-        long equipmentOnBattlefield = countPermanents(player1, "Warlord's Axe");
+        long equipmentOnBattlefield = countPermanents(player1, "Short Sword");
         assertThat(equipmentOnBattlefield).isZero();
         long equipmentInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .filter(c -> c.getName().equals("Warlord's Axe"))
+                .filter(c -> c.getName().equals("Short Sword"))
                 .count();
         assertThat(equipmentInGraveyard).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    void equipmentDestructionUsesTheStackAtEndOfCombat() {
+        addReadyOoze(player2);
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
+        attacker.setAttacking(true);
+        Permanent equipment = addEquipment(player1);
+        equipment.setAttachedTo(attacker.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Short Sword");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getCard().getName().equals("Corrosive Ooze"));
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Short Sword");
+    }
+
+    @Test
+    void equipmentOnCreatureThatDiesInCombatIsStillDestroyed() {
+        addReadyOoze(player2);
+        Permanent attacker = addCreatureReady(player1, new LlanowarElves());
+        attacker.setAttacking(true);
+        Permanent equipment = addEquipment(player1);
+        equipment.setAttachedTo(attacker.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Corrosive Ooze");
+        harness.assertNotOnBattlefield(player1, "Short Sword");
+        harness.assertInGraveyard(player1, "Short Sword");
+    }
+
+    @Test
+    void eachEquippedBlockerCreatesItsOwnTrigger() {
+        Permanent ooze = addReadyOoze(player1);
+        ooze.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new BalothGorger());
+        addEquipment(player2).setAttachedTo(first.getId());
+        Permanent second = addCreatureReady(player2, new BalothGorger());
+        addEquipment(player2).setAttachedTo(second.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(2, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allMatch(entry -> entry.isNonTargeting());
+        assertThat(gd.stack).extracting(entry -> entry.getTargetId())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+    }
 
     private Permanent addReadyOoze(Player player) {
-        Permanent perm = new Permanent(new CorrosiveOoze());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CorrosiveOoze());
     }
 
     private Permanent addEquipment(Player player) {
-        Permanent perm = new Permanent(new WarlordsAxe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new ShortSword());
     }
 }

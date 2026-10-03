@@ -80,6 +80,49 @@ class BlessingOfTheNephilimTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can enchant and boost an opponent's creature without boosting other creatures")
+    void boostsOpponentsCreatureOnly() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoilingOracle());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        castBlessing(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Blessing of the Nephilim");
+    }
+
+    @Test
+    @DisplayName("Multiple Blessings each grant their own bonus")
+    void multipleBlessingsStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoilingOracle());
+
+        castBlessing(creature);
+        castBlessing(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Blessing does not resolve when its target leaves the battlefield")
+    void doesNotResolveWithMissingTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoilingOracle());
+        harness.setHand(player1, List.of(new BlessingOfTheNephilim()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Blessing of the Nephilim");
+        harness.assertInGraveyard(player1, "Blessing of the Nephilim");
+    }
+
     private void castBlessing(Permanent creature) {
         harness.setHand(player1, List.of(new BlessingOfTheNephilim()));
         harness.addMana(player1, ManaColor.WHITE, 1);

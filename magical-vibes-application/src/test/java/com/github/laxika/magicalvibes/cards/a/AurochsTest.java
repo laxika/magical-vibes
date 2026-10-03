@@ -3,18 +3,21 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.b.BullAurochs;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Aurochs.class, BalduvianBears.class})
+@CardUsed({Aurochs.class, BalduvianBears.class, BullAurochs.class})
 class AurochsTest extends BaseCardTest {
 
     @Test
@@ -82,7 +85,6 @@ class AurochsTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(BullAurochs.class)
     @DisplayName("Counts another creature with the Aurochs type, not only cards named Aurochs")
     void countsAurochsSubtypeFromAnotherCard() {
         Permanent aurochs = addCreatureReady(player1, new Aurochs());
@@ -141,5 +143,54 @@ class AurochsTest extends BaseCardTest {
 
         assertThat(aurochs.getPowerModifier()).isEqualTo(0);
         assertThat(aurochs.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An Aurochs that leaves before resolution is not counted")
+    void countsOtherAttackersAtResolution() {
+        Permanent aurochs = addCreatureReady(player1, new Aurochs());
+        Permanent other = addCreatureReady(player1, new Aurochs());
+
+        declareAttackers(List.of(0, 1));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
+        resolveAllTriggers();
+
+        assertThat(aurochs.getPowerModifier()).isZero();
+        assertThat(aurochs.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A resolved boost stays fixed and excess damage tramples over a blocker")
+    void resolvedBoostRemainsAndTramplesOverBlocker() {
+        harness.setLife(player2, 20);
+        Permanent aurochs = addCreatureReady(player1, new Aurochs());
+        Permanent other = addCreatureReady(player1, new Aurochs());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
+        assertThat(other.getPowerModifier()).isEqualTo(1);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, other));
+        assertThat(aurochs.getPowerModifier()).isEqualTo(1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 1
+        ));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Aurochs");
+        assertThat(aurochs.getToughnessModifier()).isZero();
     }
 }

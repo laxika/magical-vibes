@@ -120,4 +120,40 @@ class BarrowGhoulTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Barrow Ghoul");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Payment exiles only the topmost creature, leaving older creatures in place")
+    void exilesOnlyTopmostCreature() {
+        harness.addToBattlefield(player1, new BarrowGhoul());
+        harness.setGraveyard(player1, List.of(
+                new BarrowGhoul(), new BenalishInfantry(), new GerrardsWisdom()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Barrow Ghoul");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactly("Barrow Ghoul", "Gerrard's Wisdom");
+        assertThat(gd.exiledCards).extracting(e -> e.card().getName())
+                .containsExactly("Benalish Infantry");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature card cannot pay for an empty controller graveyard")
+    void cannotPayWithOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new BarrowGhoul());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new BenalishInfantry()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Barrow Ghoul");
+        harness.assertInGraveyard(player1, "Barrow Ghoul");
+        harness.assertInGraveyard(player2, "Benalish Infantry");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

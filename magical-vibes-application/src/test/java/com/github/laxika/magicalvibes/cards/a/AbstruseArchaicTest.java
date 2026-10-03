@@ -172,6 +172,7 @@ class AbstruseArchaicTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AbstruseArchaic());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
+        harness.addToBattlefield(player1, new AbstruseArchaic());
         harness.activateAbility(player1, 1, null, archaic.getId());
         harness.handlePermanentChosen(player2, opponentCreature.getId());
         harness.activateAbility(player1, 0, null, gd.stack.getLast().getTargetableId());

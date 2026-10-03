@@ -71,4 +71,58 @@ class BoaConstrictorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only its source")
+    void boostWaitsForResolutionAndOnlyAffectsSource() {
+        Permanent constrictor = addCreatureReady(player1, new BoaConstrictor());
+        Permanent other = addCreatureReady(player1, new BoaConstrictor());
+        Permanent opposing = addCreatureReady(player2, new BoaConstrictor());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(constrictor.getPowerModifier()).isZero();
+        assertThat(constrictor.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(constrictor.getPowerModifier()).isEqualTo(3);
+        assertThat(constrictor.getToughnessModifier()).isEqualTo(3);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Untapping allows another activation and the boosts accumulate")
+    void boostsAccumulateAfterUntapping() {
+        Permanent constrictor = addCreatureReady(player1, new BoaConstrictor());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        constrictor.untap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(constrictor.getPowerModifier()).isEqualTo(6);
+        assertThat(constrictor.getToughnessModifier()).isEqualTo(6);
+        assertThat(constrictor.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An ability whose source has left does not boost another Boa Constrictor")
+    void departedSourceDoesNotBoostAnotherConstrictor() {
+        Permanent constrictor = addCreatureReady(player1, new BoaConstrictor());
+        Permanent other = addCreatureReady(player1, new BoaConstrictor());
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(constrictor);
+        gd.playerGraveyards.get(player1.getId()).add(constrictor.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
 }

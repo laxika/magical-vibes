@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CopperlineGorge.class, Memnite.class, Mountain.class})
 class CopperlineGorgeTest extends BaseCardTest {
-
-    // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test
     @DisplayName("Enters untapped when you control zero other lands")
@@ -25,7 +25,7 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isFalse();
@@ -40,7 +40,7 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isFalse();
@@ -56,13 +56,11 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isFalse();
     }
-
-    // ===== Enters the battlefield: tapped (too many lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control three other lands")
@@ -75,7 +73,7 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isTrue();
@@ -92,33 +90,28 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isTrue();
     }
 
-    // ===== Only counts lands, not other permanents =====
-
     @Test
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            Permanent creature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(creature);
+            harness.addToBattlefield(player1, new Memnite());
         }
 
         harness.setHand(player1, List.of(new CopperlineGorge()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isFalse();
     }
-
-    // ===== Only counts your lands, not opponent's =====
 
     @Test
     @DisplayName("Opponent's lands do not count toward the land check")
@@ -131,13 +124,11 @@ class CopperlineGorgeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent gorge = findGorge(player1);
         assertThat(gorge.isTapped()).isFalse();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for red mana produces one red")
@@ -161,18 +152,80 @@ class CopperlineGorgeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Enters untapped without a land play when you control two other lands")
+    void entersUntappedWithoutLandPlayWithTwoOtherLands() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+
+        Permanent gorge = harness.enterBattlefieldAndReturn(player1, new CopperlineGorge());
+
+        assertThat(gorge.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Other tapped nonbasic lands count toward the entry check")
+    void tappedNonbasicLandsCount() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, new CopperlineGorge()).tap();
+        }
+
+        Permanent gorge = harness.enterBattlefieldAndReturn(player1, new CopperlineGorge());
+
+        assertThat(gorge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two other lands plus creatures and opposing lands still allow untapped entry")
+    void unrelatedPermanentsDoNotChangeTwoLandBoundary() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Memnite());
+            addBasicLand(player2);
+        }
+
+        Permanent gorge = harness.enterBattlefieldAndReturn(player1, new CopperlineGorge());
+
+        assertThat(gorge.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters tapped without a land play when you control three other lands")
+    void entersTappedWithoutLandPlayWithThreeOtherLands() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        addBasicLand(player1);
+
+        Permanent gorge = harness.enterBattlefieldAndReturn(player1, new CopperlineGorge());
+
+        assertThat(gorge.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped Gorge can produce mana immediately after entering")
+    void canProduceManaImmediatelyAfterEntering() {
+        harness.setHand(player1, List.of(new CopperlineGorge()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findGorge(player1).isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addGorgeReady(Player player) {
-        Permanent perm = new Permanent(new CopperlineGorge());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new CopperlineGorge());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void addBasicLand(Player player) {
-        Permanent perm = new Permanent(new Mountain());
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findGorge(Player player) {

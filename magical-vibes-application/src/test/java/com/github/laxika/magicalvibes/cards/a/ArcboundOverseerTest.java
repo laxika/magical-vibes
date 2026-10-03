@@ -72,6 +72,44 @@ class ArcboundOverseerTest extends BaseCardTest {
     }
 
     @Test
+    void opponentUpkeepDoesNotPutCountersOnModularCreatures() {
+        Permanent overseer = addCreatureReady(player1, new ArcboundOverseer());
+        overseer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        Permanent bruiser = addCreatureReady(player1, new ArcboundBruiser());
+        bruiser.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(overseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(bruiser.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void modularCanPutAllCountersAtDeathOnOpponentsArtifactCreature() {
+        Permanent overseer = addCreatureReady(player1, new ArcboundOverseer());
+        overseer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        Permanent gargoyle = addCreatureReady(player2, new DarksteelGargoyle());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(overseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+
+        destroyOverseer(overseer);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(gargoyle.getId());
+
+        harness.handlePermanentChosen(player1, gargoyle.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(overseer);
+    }
+
+    @Test
     void modularMayDeclineToPutItsCountersOnTargetArtifactCreature() {
         Permanent overseer = addCreatureReady(player1, new ArcboundOverseer());
         overseer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);

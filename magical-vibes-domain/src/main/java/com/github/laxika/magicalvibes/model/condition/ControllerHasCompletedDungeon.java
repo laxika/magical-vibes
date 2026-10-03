@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The controller has completed at least one dungeon this game. */
-public record ControllerHasCompletedDungeon() implements Condition {
+public record ControllerHasCompletedDungeon(com.github.laxika.magicalvibes.model.Dungeon dungeon) implements Condition {
+
+    public ControllerHasCompletedDungeon() {
+        this(null);
+    }
 
     @Override
     public String conditionName() {

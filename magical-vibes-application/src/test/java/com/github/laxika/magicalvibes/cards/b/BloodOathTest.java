@@ -38,7 +38,8 @@ class BloodOathTest extends BaseCardTest {
                 CardType.LAND.name(), CardType.CREATURE.name(), CardType.ENCHANTMENT.name(),
                 CardType.SORCERY.name(), CardType.INSTANT.name(), CardType.ARTIFACT.name(),
                 CardType.PLANESWALKER.name(), CardType.BATTLE.name(), CardType.KINDRED.name(),
-                CardType.PLANE.name(), CardType.PHENOMENON.name(), CardType.SCHEME.name());
+                CardType.PLANE.name(), CardType.PHENOMENON.name(), CardType.SCHEME.name(),
+                "CONSPIRACY", "DUNGEON", "VANGUARD");
 
         harness.handleListChoice(player1, CardType.CREATURE.name());
 
@@ -83,6 +84,80 @@ class BloodOathTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller chooses a type before the opponent reveals their hand")
+    void choosesTypeBeforeRevealingHand() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BloodOath()));
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        addBloodOathMana();
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.gameLog).noneMatch(log -> log.plainText().contains("reveals their hand"));
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("reveals their hand"));
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Blood Oath");
+    }
+
+    @Test
+    @DisplayName("An empty hand is revealed and causes no damage")
+    void emptyHandDealsNoDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BloodOath()));
+        harness.setHand(player2, List.of());
+        addBloodOathMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleListChoice(player1, CardType.CREATURE.name());
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("reveals their hand. It is empty."));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Blood Oath");
+    }
+
+    @Test
+    @DisplayName("Choosing land counts only lands in the opponent's hand")
+    void countsLandCardsInTargetHand() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BloodOath(), new Forest()));
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new FreshVolunteers(), new Counterspell()));
+        addBloodOathMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleListChoice(player1, CardType.LAND.name());
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Choosing instant counts instant cards rather than creature cards")
+    void countsInstantCardsInTargetHand() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new BloodOath()));
+        harness.setHand(player2, List.of(new Counterspell(), new FreshVolunteers(), new HengeGuardian()));
+        addBloodOathMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleListChoice(player1, CardType.INSTANT.name());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 
     private void addBloodOathMana() {

@@ -23,8 +23,7 @@ class BrushWithDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 20);
@@ -37,8 +36,7 @@ class BrushWithDeathTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertNotInHand(player1, "Brush with Death");
         harness.assertInGraveyard(player1, "Brush with Death");
@@ -69,5 +67,43 @@ class BrushWithDeathTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Brush with Death");
         harness.assertNotInGraveyard(player1, "Brush with Death");
+    }
+
+    @Test
+    @DisplayName("A bought-back Brush with Death can be cast again without buyback")
+    void canRecastWithoutBuyback() {
+        harness.setHand(player1, List.of(new BrushWithDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castSorceryWithBuyback(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        harness.assertInHand(player1, "Brush with Death");
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        harness.assertNotInHand(player1, "Brush with Death");
+        harness.assertInGraveyard(player1, "Brush with Death");
+    }
+
+    @Test
+    @DisplayName("Buyback cannot be paid with only the spell's normal mana cost")
+    void buybackRequiresAdditionalMana() {
+        harness.setHand(player1, List.of(new BrushWithDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithBuyback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Brush with Death");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -49,10 +48,8 @@ class AretopolisTest extends BaseCardTest {
     @Test
     void upkeepAddsScrollCounterThenGainsLifeEqualToTheCount() {
         source.getCounters().put(CounterType.SCROLL, 2);
-        harness.forceStep(TurnStep.UPKEEP);
+        advanceToUpkeep(player1);
 
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
-                .handleUpkeepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(source.getCounters()).containsEntry(CounterType.SCROLL, 3);
@@ -81,7 +78,39 @@ class AretopolisTest extends BaseCardTest {
 
         assertThat(source.getCounters()).containsEntry(CounterType.SCROLL, 10);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 10);
+        assertThat(gd.planechase.faceUp).containsExactly(source);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         assertThat(gd.planechase.faceUp).extracting(object -> object.getCard().getName())
                 .containsExactly("Panopticon");
+    }
+
+    @Test
+    void upkeepOnTheOtherPlayersTurnBenefitsThatPlayer() {
+        source.getCounters().put(CounterType.SCROLL, 2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(source.getCounters()).containsEntry(CounterType.SCROLL, 3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(23);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void pendingChaosUsesTheCounterCountBeforePlaneswalkingAway() {
+        source.getCounters().put(CounterType.SCROLL, 2);
+        int beforeHand = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> planar.planeswalk(gd));
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 3);
     }
 }

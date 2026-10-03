@@ -27,8 +27,7 @@ class BlazingSalvoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -46,8 +45,7 @@ class BlazingSalvoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -61,13 +59,49 @@ class BlazingSalvoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BlazingSalvo()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Ember Beast");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The caster can take 5 damage to spare their own creature")
+    void casterCanTakeDamageForOwnCreature() {
+        Permanent target = addCreatureReady(player1, new EmberBeast());
+        harness.setHand(player1, List.of(new BlazingSalvo()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Ember Beast");
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Blazing Salvo");
+    }
+
+    @Test
+    @DisplayName("The caster can decline and damage their own creature")
+    void casterCanDeclineForOwnCreature() {
+        Permanent target = addCreatureReady(player1, new EmberBeast());
+        harness.setHand(player1, List.of(new BlazingSalvo()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Ember Beast");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Blazing Salvo");
     }
 
     @Test

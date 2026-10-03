@@ -22,8 +22,7 @@ class BarbarianLunaticTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DuskImp());
         harness.addMana(player1, ManaColor.RED, 3);
 
-        Permanent target = findPermanent(player2, "Dusk Imp");
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Dusk Imp"));
 
         harness.assertNotOnBattlefield(player1, "Barbarian Lunatic");
         harness.assertInGraveyard(player1, "Barbarian Lunatic");
@@ -56,6 +55,56 @@ class BarbarianLunaticTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(findPermanent(player1, "Barbarian Lunatic")).isNotNull();
+        harness.assertOnBattlefield(player1, "Barbarian Lunatic");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent lunatic = harness.addToBattlefieldAndReturn(player1, new BarbarianLunatic());
+        lunatic.setSummoningSick(true);
+        lunatic.tap();
+        harness.addToBattlefield(player2, new DuskImp());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Dusk Imp"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Barbarian Lunatic");
+        harness.assertInGraveyard(player2, "Dusk Imp");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without the required red mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new BarbarianLunatic());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new EmberBeast());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Barbarian Lunatic");
+        harness.assertNotInGraveyard(player1, "Barbarian Lunatic");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself but the ability has no legal target after sacrifice")
+    void canTargetItselfBeforeSacrificing() {
+        Permanent lunatic = addCreatureReady(player1, new BarbarianLunatic());
+        Permanent bystander = harness.addToBattlefieldAndReturn(player2, new EmberBeast());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, lunatic.getId());
+
+        harness.assertNotOnBattlefield(player1, "Barbarian Lunatic");
+        harness.assertInGraveyard(player1, "Barbarian Lunatic");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bystander.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Ember Beast");
     }
 }

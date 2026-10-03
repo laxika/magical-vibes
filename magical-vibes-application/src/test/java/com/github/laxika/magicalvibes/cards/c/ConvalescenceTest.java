@@ -58,4 +58,48 @@ class ConvalescenceTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
     }
+
+    @Test
+    @DisplayName("Dropping to 10 life after upkeep begins does not create a trigger")
+    void doesNotTriggerWhenLifeDropsAfterUpkeepBegins() {
+        harness.addToBattlefield(player1, new Convalescence());
+        harness.setLife(player1, 11);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setLife(player1, 10);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Two copies at 10 life gain only 1 life because the second condition fails")
+    void multipleCopiesRecheckThresholdIndependently() {
+        harness.addToBattlefield(player1, new Convalescence());
+        harness.addToBattlefield(player1, new Convalescence());
+        harness.setLife(player1, 10);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("Two copies at 9 life both gain life")
+    void multipleCopiesGainLifeWhileThresholdRemainsMet() {
+        harness.addToBattlefield(player1, new Convalescence());
+        harness.addToBattlefield(player1, new Convalescence());
+        harness.setLife(player1, 9);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+    }
 }

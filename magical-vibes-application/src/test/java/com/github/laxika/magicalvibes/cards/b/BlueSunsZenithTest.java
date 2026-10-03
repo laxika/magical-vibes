@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BlueSunsZenith.class})
 class BlueSunsZenithTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -26,7 +28,6 @@ class BlueSunsZenithTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Blue Sun's Zenith");
         assertThat(entry.getXValue()).isEqualTo(3);
     }
 
@@ -105,5 +106,57 @@ class BlueSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X=0 with an empty library still shuffles the spell without attempting a draw")
+    void zeroWithEmptyLibraryStillShuffles() {
+        BlueSunsZenith spell = new BlueSunsZenith();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
+        assertThat(gd.winnerPlayerId).isNull();
+        harness.assertNotInGraveyard(player1, "Blue Sun's Zenith");
+    }
+
+    @Test
+    @DisplayName("The target draws before the resolving spell enters its owner's library")
+    void drawsBeforeShufflingSpell() {
+        BlueSunsZenith spell = new BlueSunsZenith();
+        BlueSunsZenith libraryCard = new BlueSunsZenith();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(spell);
+        harness.assertNotInGraveyard(player1, "Blue Sun's Zenith");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shuffling the spell into an empty library does not undo a failed draw")
+    void emptyLibraryDrawStillLosesAfterShuffle() {
+        BlueSunsZenith spell = new BlueSunsZenith();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 }

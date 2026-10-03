@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AzoriusCharm;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
+import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChromeMox.class, FangrenHunter.class, Bonesplitter.class, Mountain.class, AzoriusCharm.class})
+@CardUsed({ChromeMox.class, FangrenHunter.class, Bonesplitter.class, Mountain.class,
+        AzoriusCharm.class, Ghostfire.class, Shatter.class})
 class ChromeMoxTest extends BaseCardTest {
 
     @Test
@@ -133,6 +136,66 @@ class ChromeMoxTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The imprint trigger can exile a card after Chrome Mox is destroyed")
+    void imprintTriggerResolvesAfterSourceIsDestroyed() {
+        FangrenHunter eligibleCard = new FangrenHunter();
+        harness.setHand(player1, List.of(new ChromeMox(), eligibleCard));
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent mox = gd.playerBattlefields.get(player1.getId()).get(0);
+        harness.castAndResolveInstant(player2, 0, mox.getId());
+        harness.assertInGraveyard(player1, "Chrome Mox");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(eligibleCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(eligibleCard);
+    }
+
+    @Test
+    @DisplayName("A colorless nonartifact card can be imprinted but produces no mana")
+    void colorlessImprintProducesNoMana() {
+        Ghostfire eligibleCard = new Ghostfire();
+        harness.setHand(player1, List.of(new ChromeMox(), eligibleCard));
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(eligibleCard);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(0).isTapped()).isTrue();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Mana production stops when the imprinted card leaves exile")
+    void imprintedCardLeavingExileProducesNoMana() {
+        FangrenHunter imprintedCard = new FangrenHunter();
+        Permanent mox = addMoxWithImprint(imprintedCard);
+        harness.inMutationScope(() -> {
+            assertThat(gd.removeFromExile(imprintedCard.getId())).isTrue();
+            gd.addCardToHand(player1.getId(), imprintedCard);
+        });
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mox.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

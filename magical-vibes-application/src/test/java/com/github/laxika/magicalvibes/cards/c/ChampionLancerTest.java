@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ChampionLancer.class, CrawWurm.class, ProdigalPyromancer.class, Shock.class})
 class ChampionLancerTest extends BaseCardTest {
 
     @Test
@@ -24,18 +24,14 @@ class ChampionLancerTest extends BaseCardTest {
         lancer.setBlocking(true);
         lancer.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new CrawWurm());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         harness.assertOnBattlefield(player1, "Champion Lancer");
         assertThat(lancer.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
@@ -60,9 +56,25 @@ class ChampionLancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, lancerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, lancerId);
 
         assertThat(lancer.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creature damage is still prevented after its source leaves the battlefield")
+    void creatureDamageIsPreventedAfterSourceLeavesBattlefield() {
+        Permanent lancer = addCreatureReady(player2, new ChampionLancer());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, lancer.getId());
+        harness.castAndResolveInstant(player1, 0, pyromancer.getId());
+        harness.assertInGraveyard(player1, "Prodigal Pyromancer");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Champion Lancer");
+        assertThat(lancer.getMarkedDamage()).isZero();
     }
 }

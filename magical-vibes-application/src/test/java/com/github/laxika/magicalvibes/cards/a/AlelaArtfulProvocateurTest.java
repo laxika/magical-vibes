@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,8 +54,7 @@ class AlelaArtfulProvocateurTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Faerie");
         assertThat(token.getCard().isToken()).isTrue();
@@ -67,8 +68,7 @@ class AlelaArtfulProvocateurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
 
@@ -78,5 +78,55 @@ class AlelaArtfulProvocateurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+    }
+
+    @Test
+    void tokenResolvesBeforeArtifactAndReceivesBoost() {
+        harness.addToBattlefield(player1, new AlelaArtfulProvocateur());
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Faerie");
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Spellbook")).isZero();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.FAERIE);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Spellbook")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsArtifactSpellDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new AlelaArtfulProvocateur());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Spellbook()));
+
+        harness.castArtifact(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Faerie")).isZero();
+        assertThat(countPermanents(player2, "Faerie")).isZero();
+        assertThat(countPermanents(player2, "Spellbook")).isEqualTo(1);
+    }
+
+    @Test
+    void eachArtifactCastCreatesAnotherToken() {
+        harness.addToBattlefield(player1, new AlelaArtfulProvocateur());
+        harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Faerie")).isEqualTo(2);
     }
 }

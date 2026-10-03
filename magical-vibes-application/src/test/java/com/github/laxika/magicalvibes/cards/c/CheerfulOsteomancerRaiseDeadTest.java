@@ -25,6 +25,7 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         Permanent osteomancer = castCheerfulOsteomancer();
 
         assertThat(osteomancer.isPrepared()).isTrue();
+        assertThat(gd.stack).isEmpty();
         UUID copyId = osteomancer.getPreparedSpellCardId();
         assertThat(copyId).isNotNull();
         assertThat(gd.findExiledCard(copyId)).isNotNull();
@@ -141,10 +142,48 @@ class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).doesNotContainKey(copyId);
     }
 
+    @Test
+    @DisplayName("Casting the prepared spell unprepares the creature before the spell resolves")
+    void unpreparesAtCastingEvenIfTargetLaterLeaves() {
+        Permanent osteomancer = castCheerfulOsteomancer();
+        Card creature = new CheerfulOsteomancerRaiseDead();
+        harness.setGraveyard(player1, List.of(creature));
+        UUID copyId = osteomancer.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castFromExile(player1, copyId, creature.getId());
+
+        assertThat(osteomancer.isPrepared()).isFalse();
+        assertThat(osteomancer.getPreparedSpellCardId()).isNull();
+        gd.playerGraveyards.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Cheerful Osteomancer");
+        harness.assertNotInGraveyard(player1, "Raise Dead");
+        assertThat(osteomancer.isPrepared()).isFalse();
+        assertThat(gd.findExiledCard(copyId)).isNull();
+    }
+
+    @Test
+    @DisplayName("A prepared spell requires its mana cost and failed casting leaves the creature prepared")
+    void cannotCastPreparedSpellWithoutMana() {
+        Permanent osteomancer = castCheerfulOsteomancer();
+        Card creature = new CheerfulOsteomancerRaiseDead();
+        harness.setGraveyard(player1, List.of(creature));
+        UUID copyId = osteomancer.getPreparedSpellCardId();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(osteomancer.isPrepared()).isTrue();
+        assertThat(osteomancer.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.findExiledCard(copyId)).isNotNull();
+        harness.assertInGraveyard(player1, "Cheerful Osteomancer");
+    }
+
     private Permanent castCheerfulOsteomancer() {
         harness.castFromHand(player1, new CheerfulOsteomancerRaiseDead(), "{3}{B}");
         harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
 
         return findPermanent(player1, "Cheerful Osteomancer");
     }

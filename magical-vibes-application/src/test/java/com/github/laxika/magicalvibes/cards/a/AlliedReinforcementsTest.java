@@ -21,8 +21,7 @@ class AlliedReinforcementsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -39,5 +38,21 @@ class AlliedReinforcementsTest extends BaseCardTest {
             assertThat(token.getEffectivePower()).isEqualTo(2);
             assertThat(token.getEffectiveToughness()).isEqualTo(2);
         });
+    }
+
+    @Test
+    void createsTokensNamedKnightAllyToken() {
+        harness.setHand(player1, List.of(new AlliedReinforcements()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().getName()).isEqualTo("Knight Ally Token");
+                });
     }
 }

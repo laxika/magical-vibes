@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.Annex;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CinderMarsh.class)
+@CardUsed({CinderMarsh.class, Annex.class})
 class CinderMarshTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,47 @@ class CinderMarshTest extends BaseCardTest {
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
+        assertThat(marsh.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colorless mana allows the land to untap at its controller's next untap step")
+    void colorlessManaUntapsNormally() {
+        Permanent marsh = addReadyMarsh(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.performUntapStep(player1);
+
+        assertThat(marsh.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Red mana skips only the activating player's next untap step")
+    void redManaSkipsOnlyOneUntap() {
+        Permanent marsh = addReadyMarsh(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.performUntapStep(player2);
+        assertThat(marsh.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(marsh.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(marsh.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A new controller can untap the land before the activating player's next untap step")
+    void changingControllerDoesNotRestrictNewControllersUntap() {
+        Permanent marsh = addReadyMarsh(player2);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.setHand(player1, List.of(new Annex()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, marsh.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(marsh);
+
+        harness.performUntapStep(player1);
+
         assertThat(marsh.isTapped()).isFalse();
     }
 

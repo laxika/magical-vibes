@@ -36,8 +36,19 @@ class ArmoredGriffinTest extends BaseCardTest {
         addCreatureReady(player1, new ArmoredGriffin());
         Permanent blocker = addCreatureReady(player2, new ArmoredGriffin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Armored Griffin can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new BearCub());
+        Permanent blocker = addCreatureReady(player2, new ArmoredGriffin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();

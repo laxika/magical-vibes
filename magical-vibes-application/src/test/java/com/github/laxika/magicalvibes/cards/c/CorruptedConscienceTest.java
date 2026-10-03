@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OgreResister;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CorruptedConscience.class, Demystify.class, FountainOfYouth.class, GrizzlyBears.class,
+        OgreResister.class})
 class CorruptedConscienceTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -194,8 +199,7 @@ class CorruptedConscienceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraPerm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraPerm.getId());
 
         // Creature should return to player2's battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -216,16 +220,79 @@ class CorruptedConscienceTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature permanent with Corrupted Conscience")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new CorruptedConscience()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Enchanting your own creature grants infect without changing control or readiness")
+    void enchantingOwnCreatureDoesNotResetReadiness() {
+        Permanent creature = addCreatureReady(player1, new OgreResister());
+        harness.setHand(player1, List.of(new CorruptedConscience()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.isSummoningSick()).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Infect leaves counters rather than marked damage on a surviving blocker")
+    void infectCountersRemainOnSurvivingBlocker() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new OgreResister());
+        harness.setHand(player1, List.of(new CorruptedConscience()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        creature.setSummoningSick(false);
+        creature.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(creature));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Corrupted Conscience");
+    }
+
+    @Test
+    @DisplayName("Destroying the newer control Aura restores the older Aura's control and infect")
+    void removingNewerAuraRestoresOlderControlEffect() {
+        Permanent creature = addCreatureReady(player2, new OgreResister());
+        harness.setHand(player1, List.of(new CorruptedConscience()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent olderAura = findPermanent(player1, "Corrupted Conscience");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new CorruptedConscience()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castEnchantment(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent newerAura = findPermanent(player2, "Corrupted Conscience");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, newerAura.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, olderAura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature, newerAura);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INFECT)).isTrue();
+        assertThat(olderAura.getAttachedTo()).isEqualTo(creature.getId());
+    }
 }

@@ -29,8 +29,7 @@ class AquaticIncursionTest extends BaseCardTest {
         addAquaticIncursionMana(player1);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())
@@ -72,6 +71,66 @@ class AquaticIncursionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, incursion), null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability can target an opponent's Merfolk")
+    void canTargetOpponentsMerfolk() {
+        Permanent incursion = harness.addToBattlefieldAndReturn(player1, new AquaticIncursion());
+        Permanent merfolk = addCreatureReady(player2, new CoralMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, merfolk.getId());
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller can make a newly created hexproof Merfolk token unblockable")
+    void canTargetOwnNewHexproofToken() {
+        harness.setHand(player1, List.of(new AquaticIncursion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        Permanent incursion = findPermanent(player1, "Aquatic Incursion");
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, incursion), null, tokens.getFirst().getId());
+        harness.passBothPriorities();
+
+        assertThat(tokens.getFirst().isCantBeBlocked()).isTrue();
+        assertThat(tokens.get(1).isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot target the hexproof Merfolk tokens")
+    void cannotTargetOpponentsHexproofToken() {
+        harness.setHand(player1, List.of(new AquaticIncursion()));
+        addAquaticIncursionMana(player1);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .findFirst().orElseThrow();
+        Permanent opposingIncursion = harness.addToBattlefieldAndReturn(player2, new AquaticIncursion());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player2, battlefieldIndex(player2, opposingIncursion), null, token.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

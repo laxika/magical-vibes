@@ -30,8 +30,7 @@ class BrainspoilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, gharial.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, gharial.getId());
 
         harness.assertNotOnBattlefield(player2, "Grayscaled Gharial");
         harness.assertInGraveyard(player2, "Grayscaled Gharial");
@@ -171,5 +170,61 @@ class BrainspoilTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.assertInGraveyard(player1, "Brainspoil");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmutePaysManaAndDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new Brainspoil()));
+        MoonlightBargain matchingCard = new MoonlightBargain();
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Brainspoil");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertInHand(player1, "Moonlight Bargain");
+    }
+
+    @Test
+    void transmuteCanFailToFindEvenWhenAMatchingCardExists() {
+        harness.setHand(player1, List.of(new Brainspoil()));
+        MoonlightBargain matchingCard = new MoonlightBargain();
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Brainspoil");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void transmuteCannotBeActivatedDuringAnOpponentsMainPhase() {
+        Brainspoil brainspoil = new Brainspoil();
+        harness.setHand(player1, List.of(brainspoil));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(brainspoil);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.assertNotInGraveyard(player1, "Brainspoil");
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ArmoredScrapgorger.class, GrizzlyBears.class})
 class ArmoredScrapgorgerTest extends BaseCardTest {
 
     @Test
@@ -112,6 +114,68 @@ class ArmoredScrapgorgerTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card.getId().equals(bears.getId()));
         assertThat(scrapgorger.getCounterCount(CounterType.OIL)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Empty graveyards prevent the tap trigger but not mana production")
+    void emptyGraveyardsDoNotAddOilCounters() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredScrapgorger());
+        source.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(source.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The tap trigger can exile your own card and puts oil only on its source")
+    void ownGraveyardTargetAddsOilOnlyToTappedCopy() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new ArmoredScrapgorger());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredScrapgorger());
+        source.setSummoningSick(false);
+        Card target = new ArmoredScrapgorger();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(source.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.OIL)).isZero();
+    }
+
+    @Test
+    @DisplayName("Resolving the third oil counter enables the boost, which disappears below three")
+    void thirdOilCounterEnablesBoostAndRemovingCountersDisablesIt() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredScrapgorger());
+        source.setSummoningSick(false);
+        source.setCounterCount(CounterType.OIL, 2);
+        Card target = new ArmoredScrapgorger();
+        harness.setGraveyard(player2, List.of(target));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        assertThat(gqs.getEffectivePower(gd, source)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.OIL)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        source.setCounterCount(CounterType.OIL, 4);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        source.setCounterCount(CounterType.OIL, 2);
+        assertThat(gqs.getEffectivePower(gd, source)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
     }
 
     private void tap(Permanent permanent) {

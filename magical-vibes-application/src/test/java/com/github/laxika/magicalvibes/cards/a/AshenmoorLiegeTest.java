@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AshenmoorLiege.class, AshenmoorGouger.class, BlackKnight.class, HillGiant.class,
+        GrizzlyBears.class, Shock.class, ElaborateFirecannon.class})
 class AshenmoorLiegeTest extends BaseCardTest {
 
     @Test
@@ -94,9 +97,7 @@ class AshenmoorLiegeTest extends BaseCardTest {
         UUID liegeId = harness.getPermanentId(player1, "Ashenmoor Liege");
         int lifeBefore = gd.getLife(player2.getId());
 
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        harness.addToBattlefield(player2, new ElaborateFirecannon());
 
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.activateAbility(player2, 0, null, liegeId);
@@ -127,5 +128,71 @@ class AshenmoorLiegeTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Black and red creatures receive both boosts")
+    void multicoloredCreatureReceivesBothBoosts() {
+        harness.addToBattlefield(player1, new AshenmoorLiege());
+        Permanent gouger = harness.addToBattlefieldAndReturn(player1, new AshenmoorGouger());
+
+        assertThat(gqs.getEffectivePower(gd, gouger)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, gouger)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Opponent's black and red creatures receive neither boost")
+    void doesNotBoostOpponentCreatures() {
+        harness.addToBattlefield(player1, new AshenmoorLiege());
+        Permanent gouger = harness.addToBattlefieldAndReturn(player2, new AshenmoorGouger());
+
+        assertThat(gqs.getEffectivePower(gd, gouger)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gouger)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Two Lieges boost each other and their boosts stack")
+    void multipleLiegesStack() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AshenmoorLiege());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AshenmoorLiege());
+        Permanent gouger = harness.addToBattlefieldAndReturn(player1, new AshenmoorGouger());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, gouger)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, gouger)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Targeting another creature does not trigger the Liege")
+    void targetingAnotherCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AshenmoorLiege());
+        Permanent gouger = harness.addToBattlefieldAndReturn(player1, new AshenmoorGouger());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, gouger.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Controller's own activated ability does not trigger the Liege")
+    void ownAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AshenmoorLiege());
+        harness.addToBattlefield(player1, new ElaborateFirecannon());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null,
+                harness.getPermanentId(player1, "Ashenmoor Liege"));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CloudreachCavalry.class, AvenEnvoy.class})
@@ -71,5 +73,43 @@ class CloudreachCavalryTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Birds grant the bonus only once, and a tapped remaining Bird still qualifies")
+    void multipleBirdsDoNotStackAndTappedBirdCounts() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CloudreachCavalry());
+        Permanent firstBird = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        Permanent secondBird = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        secondBird.setTapped(true);
+
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstBird);
+
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Bird cards in hand, graveyard, and exile do not qualify; a Bird entering grants the bonus immediately")
+    void onlyBattlefieldBirdsCount() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new CloudreachCavalry());
+        harness.setHand(player1, List.of(new AvenEnvoy()));
+        harness.setGraveyard(player1, List.of(new AvenEnvoy()));
+        harness.setExile(player1, List.of(new AvenEnvoy()));
+
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.FLYING)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new AvenEnvoy());
+
+        assertThat(gqs.getEffectivePower(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cavalry)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.FLYING)).isTrue();
     }
 }

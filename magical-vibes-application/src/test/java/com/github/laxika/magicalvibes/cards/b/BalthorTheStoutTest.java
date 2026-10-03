@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CabalSurgeon;
+import com.github.laxika.magicalvibes.cards.p.PardicCollaborator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,14 +13,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalthorTheStout.class, CabalSurgeon.class})
+@CardUsed({BalthorTheStout.class, CabalSurgeon.class, PardicCollaborator.class})
 class BalthorTheStoutTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Barbarian creatures get +1/+1")
     void boostsOtherBarbarians() {
         addCreatureReady(player1, new BalthorTheStout());
-        Permanent barbarian = addCreatureReady(player1, new BalthorTheStout());
+        Permanent barbarian = addCreatureReady(player1, new PardicCollaborator());
 
         assertThat(gqs.getEffectivePower(gd, barbarian)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, barbarian)).isEqualTo(3);
@@ -61,7 +62,6 @@ class BalthorTheStoutTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, barbarian)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, barbarian)).isEqualTo(3);
@@ -87,5 +87,45 @@ class BalthorTheStoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonBarbarian.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Balthor can activate repeatedly and the boosts stack")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent balthor = harness.addToBattlefieldAndReturn(player1, new BalthorTheStout());
+        balthor.setSummoningSick(true);
+        balthor.setTapped(true);
+        Permanent barbarian = addCreatureReady(player1, new PardicCollaborator());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, barbarian.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, barbarian.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, barbarian)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, barbarian)).isEqualTo(3);
+        assertThat(balthor.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, barbarian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, barbarian)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An activated boost resolves after Balthor leaves the battlefield")
+    void activatedBoostResolvesAfterSourceLeaves() {
+        Permanent balthor = addCreatureReady(player1, new BalthorTheStout());
+        Permanent barbarian = addCreatureReady(player1, new PardicCollaborator());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, barbarian.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(balthor);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, barbarian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, barbarian)).isEqualTo(2);
     }
 }

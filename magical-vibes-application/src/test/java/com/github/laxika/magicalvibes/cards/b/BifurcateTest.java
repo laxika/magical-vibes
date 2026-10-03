@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.h.HickoryWoodlot;
+import com.github.laxika.magicalvibes.cards.o.OmnipresentImpostor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Bifurcate.class, FreshVolunteers.class, HickoryWoodlot.class})
+@CardUsed({Bifurcate.class, FreshVolunteers.class, HickoryWoodlot.class, OmnipresentImpostor.class})
 class BifurcateTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class BifurcateTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Bifurcate()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -52,8 +52,7 @@ class BifurcateTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Bifurcate()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
         harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanents(player1, "Fresh Volunteers")).hasSize(1);
@@ -72,8 +71,7 @@ class BifurcateTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Bifurcate()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanents(player1, "Fresh Volunteers")).hasSize(1);
@@ -110,5 +108,65 @@ class BifurcateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, token.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(findPermanents(player1, "Bear Token")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can fail to find even when a matching permanent is available")
+    void canFailToFindMatchingPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        FreshVolunteers matchingCard = new FreshVolunteers();
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.setHand(player1, List.of(new Bifurcate()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Fresh Volunteers")).containsExactly(target);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Bifurcate");
+    }
+
+    @Test
+    @DisplayName("Does not search when its target has left the battlefield")
+    void doesNotSearchWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        FreshVolunteers matchingCard = new FreshVolunteers();
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.setHand(player1, List.of(new Bifurcate()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Fresh Volunteers")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Bifurcate");
+    }
+
+    @Test
+    @DisplayName("Searches for a permanent sharing any of a target's multiple names")
+    void searchesUsingAllNamesOfTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new OmnipresentImpostor());
+        FreshVolunteers matchingCard = new FreshVolunteers();
+        HickoryWoodlot matchingLand = new HickoryWoodlot();
+        Bifurcate nonpermanentCard = new Bifurcate();
+        harness.setLibrary(player1, List.of(matchingCard, matchingLand, nonpermanentCard));
+        harness.setHand(player1, List.of(new Bifurcate()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(matchingCard, matchingLand);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(matchingLand, nonpermanentCard);
     }
 }

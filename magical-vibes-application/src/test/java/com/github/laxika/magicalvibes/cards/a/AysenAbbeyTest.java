@@ -91,4 +91,63 @@ class AysenAbbeyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost of producing white mana")
+    void whiteAbilityAcceptsColoredPayment() {
+        var abbey = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
+        harness.addMana(player1, ManaColor.RED, 1);
+        GameData gd = harness.getGameData();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(abbey.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Producing green spends both colored mana used to pay its generic cost")
+    void greenAbilitySpendsTwoColoredManaAndTaps() {
+        var abbey = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
+        harness.addMana(player1, ManaColor.RED, 2);
+        GameData gd = harness.getGameData();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(abbey.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("One available mana cannot pay the two-mana ability or consume its costs")
+    void twoManaAbilityCannotUseItsOwnOutputToPay() {
+        var abbey = harness.addToBattlefieldAndReturn(player1, new AysenAbbey());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        GameData gd = harness.getGameData();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(abbey.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(abbey.isTapped()).isTrue();
+    }
 }

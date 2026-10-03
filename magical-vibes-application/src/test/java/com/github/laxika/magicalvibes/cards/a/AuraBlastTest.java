@@ -27,8 +27,7 @@ class AuraBlastTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Cloud Cover");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Cloud Cover");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -47,5 +46,54 @@ class AuraBlastTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("enchantment");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's enchantment and draw a card")
+    void destroysOwnEnchantmentAndDrawsCard() {
+        var target = harness.addToBattlefieldAndReturn(player1, new CloudCover());
+        harness.setHand(player1, List.of(new AuraBlast()));
+        harness.setLibrary(player1, List.of(new QuirionExplorer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Cloud Cover");
+        harness.assertInGraveyard(player1, "Cloud Cover");
+        harness.assertInGraveyard(player1, "Aura Blast");
+        harness.assertInHand(player1, "Quirion Explorer");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw when its only target leaves before resolution")
+    void doesNotDrawWhenTargetLeavesBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new CloudCover());
+        harness.setHand(player1, List.of(new AuraBlast()));
+        harness.setHand(player2, List.of(new AuraBlast()));
+        harness.setLibrary(player1, List.of(new QuirionExplorer()));
+        harness.setLibrary(player2, List.of(new QuirionExplorer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Cloud Cover");
+        harness.assertInHand(player2, "Quirion Explorer");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Aura Blast");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

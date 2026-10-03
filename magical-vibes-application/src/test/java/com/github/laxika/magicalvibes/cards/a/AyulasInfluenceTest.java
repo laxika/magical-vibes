@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,25 +16,23 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AyulasInfluence.class, Forest.class, GrizzlyBears.class})
+@CardUsed({AyulasInfluence.class, SnowCoveredForest.class, AyulaQueenAmongBears.class})
 class AyulasInfluenceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discarding a land creates a 2/2 green Bear token")
     void discardingLandCreatesBearToken() {
         addInfluenceReady();
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new SnowCoveredForest()));
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Forest");
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
+        Permanent token = findPermanent(player1, "Bear");
+        assertThat(token.getCard().isToken()).isTrue();
         assertThat(token.getCard().getName()).isEqualTo("Bear");
         assertThat(token.getEffectivePower()).isEqualTo(2);
         assertThat(token.getEffectiveToughness()).isEqualTo(2);
@@ -47,7 +44,7 @@ class AyulasInfluenceTest extends BaseCardTest {
     @DisplayName("Only land cards can pay the discard cost")
     void onlyLandCardsCanPayDiscardCost() {
         addInfluenceReady();
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setHand(player1, List.of(new AyulaQueenAmongBears(), new SnowCoveredForest()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -60,10 +57,64 @@ class AyulasInfluenceTest extends BaseCardTest {
     @DisplayName("The ability cannot be activated without a land card in hand")
     void cannotActivateWithoutLandCard() {
         addInfluenceReady();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AyulaQueenAmongBears()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The land is discarded before the Bear is created on resolution")
+    void discardIsPaidBeforeResolution() {
+        addInfluenceReady();
+        harness.setHand(player1, List.of(new SnowCoveredForest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
+        harness.assertNotInHand(player1, "Snow-Covered Forest");
+        assertThat(countPermanents(player1, "Bear")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Bear").getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each activation can discard another land without tapping the enchantment")
+    void canActivateRepeatedly() {
+        addInfluenceReady();
+        harness.setHand(player1, List.of(new SnowCoveredForest(), new SnowCoveredForest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(findPermanent(player1, "Ayula's Influence").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during the opponent's upkeep")
+    void canActivateDuringOpponentsTurn() {
+        addInfluenceReady();
+        harness.setHand(player1, List.of(new SnowCoveredForest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Bear")).isZero();
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
     }
 
     private void addInfluenceReady() {

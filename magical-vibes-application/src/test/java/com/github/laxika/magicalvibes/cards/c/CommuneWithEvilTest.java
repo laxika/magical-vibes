@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CommuneWithEvil.class, GrizzlyBears.class, Plains.class, Shock.class})
 class CommuneWithEvilTest extends BaseCardTest {
@@ -48,5 +49,68 @@ class CommuneWithEvilTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void putsTheOnlyLibraryCardIntoHandAndGainsLife() {
+        Card onlyCard = new Plains();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new CommuneWithEvil(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(onlyCard.getId()));
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void choosesOneFromAShortLibraryAndPutsTheOtherIntoGraveyard() {
+        Card chosen = new Plains();
+        Card other = new CommuneWithEvil();
+        harness.setLibrary(player1, List.of(chosen, other));
+
+        harness.castFromHand(player1, new CommuneWithEvil(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void requiresOneCardAndLeavesCardsBelowTheTopFourInOrder() {
+        Card first = new Plains();
+        Card second = new CommuneWithEvil();
+        Card third = new Plains();
+        Card chosen = new Plains();
+        Card fifth = new CommuneWithEvil();
+        Card sixth = new Plains();
+        harness.setLibrary(player1, List.of(first, second, third, chosen, fifth, sixth));
+
+        harness.castFromHand(player1, new CommuneWithEvil(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), chosen.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fifth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third)
+                .doesNotContain(chosen, fifth, sixth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, sixth);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 }

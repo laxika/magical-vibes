@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,10 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Conservator.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({Conservator.class, GrizzlyBears.class, LightningBolt.class, ProdigalSorcerer.class})
 class ConservatorTest extends BaseCardTest {
 
     @Test
@@ -116,5 +116,60 @@ class ConservatorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void retainsUnusedPreventionAfterOneDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Conservator());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        addCreatureReady(player2, new ProdigalSorcerer());
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void multipleConservatorsProvideCumulativePrevention() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Conservator());
+        harness.addToBattlefield(player1, new Conservator());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 20);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void damageToOpponentDoesNotConsumeControllerShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Conservator());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+        harness.assertLife(player2, 17);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 19);
     }
 }

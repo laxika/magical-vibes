@@ -75,10 +75,62 @@ class AuntieOolCursewretchTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void drawsWhenCountersKillCreatureYouControl() {
+        harness.addToBattlefield(player1, new AuntieOolCursewretch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Skinrender());
+        harness.setLibrary(player1, List.of(new Skinrender()));
+        harness.setHand(player1, List.of(new Skinrender()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Skinrender");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentLosesLifeWhenCountersKillTheirCreature() {
+        harness.addToBattlefield(player1, new AuntieOolCursewretch());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Skinrender());
+        harness.setHand(player1, List.of(new Skinrender()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Skinrender");
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void wardCountersSpellWhenOpponentDeclinesToBlight() {
+        Permanent auntie = harness.addToBattlefieldAndReturn(player1, new AuntieOolCursewretch());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Skinrender());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, auntie.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player2, 20);
     }
 }

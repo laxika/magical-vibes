@@ -72,6 +72,42 @@ class AttunementTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Attunement", "Forest", "Island", "Mountain");
     }
 
+    @Test
+    void returnsToOwnerButControllerDrawsAndDiscardsAsManyAsPossible() {
+        Attunement attunement = new Attunement();
+        attunement.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, attunement);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Plains()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Attunement");
+        harness.assertInHand(player2, "Attunement");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Island", "Mountain");
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Island", "Mountain");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Plains", "Attunement");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int firstNonAttunementCardIndex() {
         List<Card> hand = gd.playerHands.get(player1.getId());
         for (int i = 0; i < hand.size(); i++) {

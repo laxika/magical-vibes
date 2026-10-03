@@ -75,4 +75,61 @@ class BearscapeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Graveyard cards and mana are paid before the Bear is created")
+    void paysCostsBeforeResolution() {
+        AvenFisher firstCard = new AvenFisher();
+        CarefulStudy secondCard = new CarefulStudy();
+        harness.addToBattlefield(player1, new Bearscape());
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(countPermanents(player1, "Bear")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bear")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Bear")).isZero();
+    }
+
+    @Test
+    @DisplayName("Cards in the opponent's graveyard cannot pay the activation cost")
+    void cannotUseOpponentsGraveyard() {
+        AvenFisher ownCard = new AvenFisher();
+        CarefulStudy opposingCard = new CarefulStudy();
+        CoffinPurge otherOpposingCard = new CoffinPurge();
+        harness.addToBattlefield(player1, new Bearscape());
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard, otherOpposingCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCard, otherOpposingCard);
+        assertThat(countPermanents(player1, "Bear")).isZero();
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the required green mana")
+    void requiresGreenMana() {
+        AvenFisher firstCard = new AvenFisher();
+        CarefulStudy secondCard = new CarefulStudy();
+        harness.addToBattlefield(player1, new Bearscape());
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(countPermanents(player1, "Bear")).isZero();
+    }
 }

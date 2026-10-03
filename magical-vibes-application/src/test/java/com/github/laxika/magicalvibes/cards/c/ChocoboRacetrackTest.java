@@ -41,9 +41,7 @@ class ChocoboRacetrackTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent bird = findBird(player1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.playLand(player1, 0);
@@ -53,9 +51,7 @@ class ChocoboRacetrackTest extends BaseCardTest {
         assertThat(bird.getEffectivePower()).isEqualTo(3);
         assertThat(bird.getEffectiveToughness()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(bird.getEffectivePower()).isEqualTo(2);
         assertThat(bird.getEffectiveToughness()).isEqualTo(2);
@@ -73,6 +69,60 @@ class ChocoboRacetrackTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getSubtypes().contains(CardSubtype.BIRD));
+    }
+
+    @Test
+    void successiveLandEntriesBoostOnlyBirdsAlreadyOnTheBattlefield() {
+        harness.addToBattlefield(player1, new ChocoboRacetrack());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        Permanent firstBird = findBird(player1);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(2)
+                .extracting(Permanent::getEffectivePower).containsExactlyInAnyOrder(3, 2);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(firstBird.getEffectivePower()).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(3)
+                .extracting(Permanent::getEffectivePower).containsExactlyInAnyOrder(4, 3, 2);
+    }
+
+    @Test
+    void birdAbilityPersistsWithoutRacetrackAndIgnoresOpponentLands() {
+        Permanent racetrack = harness.addToBattlefieldAndReturn(player1, new ChocoboRacetrack());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        Permanent bird = findBird(player1);
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bird.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(racetrack);
+        gd.playerGraveyards.get(player1.getId()).add(racetrack.getCard());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(bird.getEffectivePower()).isEqualTo(3);
+        assertThat(bird.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
     }
 
     private Permanent findBird(Player player) {

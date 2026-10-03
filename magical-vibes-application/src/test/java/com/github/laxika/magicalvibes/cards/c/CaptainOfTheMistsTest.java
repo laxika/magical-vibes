@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
+import com.github.laxika.magicalvibes.cards.n.NettleSwine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CaptainOfTheMists.class, MoorlandInquisitor.class, NettleSwine.class})
 class CaptainOfTheMistsTest extends BaseCardTest {
 
     @Test
@@ -22,11 +25,10 @@ class CaptainOfTheMistsTest extends BaseCardTest {
         Permanent captain = addReadyCaptain(player1);
         captain.tap();
 
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new MoorlandInquisitor()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve the creature spell (triggers Captain)
-        harness.passBothPriorities(); // resolve Captain's untap trigger
+        resolveAllTriggers();
 
         assertThat(captain.isTapped()).isFalse();
     }
@@ -37,8 +39,8 @@ class CaptainOfTheMistsTest extends BaseCardTest {
         Permanent captain = addReadyCaptain(player1);
         captain.tap();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new NettleSwine()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve the creature spell
 
@@ -55,8 +57,8 @@ class CaptainOfTheMistsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new EliteVanguard()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new MoorlandInquisitor()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // resolve the creature spell
 
@@ -67,7 +69,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
     @DisplayName("Ability taps an untapped target permanent")
     void abilityTapsUntappedPermanent() {
         addReadyCaptain(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new NettleSwine());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -80,7 +82,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
     @DisplayName("Ability untaps a tapped target permanent")
     void abilityUntapsTappedPermanent() {
         addReadyCaptain(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new NettleSwine());
         target.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -94,7 +96,7 @@ class CaptainOfTheMistsTest extends BaseCardTest {
     @DisplayName("Activating the ability taps the Captain, and a Human entering untaps it again")
     void humanEnterUntapsAfterActivation() {
         Permanent captain = addReadyCaptain(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new NettleSwine());
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -103,20 +105,77 @@ class CaptainOfTheMistsTest extends BaseCardTest {
         assertThat(captain.isTapped()).isTrue();
         assertThat(target.isTapped()).isTrue();
 
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new MoorlandInquisitor()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve the creature spell
-        harness.passBothPriorities(); // resolve Captain's untap trigger
+        resolveAllTriggers();
 
         assertThat(captain.isTapped()).isFalse();
         assertThat(target.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("May decline tapping an untapped target")
+    void mayLeaveUntappedTargetUnchanged() {
+        Permanent captain = addReadyCaptain(player1);
+        Permanent target = addCreatureReady(player2, new NettleSwine());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(captain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May decline untapping a tapped target")
+    void mayLeaveTappedTargetUnchanged() {
+        addReadyCaptain(player1);
+        Permanent target = addCreatureReady(player2, new NettleSwine());
+        target.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target itself and untap after paying its tap cost")
+    void canUntapItself() {
+        Permanent captain = addReadyCaptain(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, captain.getId());
+        assertThat(captain.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(captain.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own entry")
+    void doesNotTriggerForItself() {
+        harness.setHand(player1, List.of(new CaptainOfTheMists()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyCaptain(Player player) {
-        Permanent permanent = new Permanent(new CaptainOfTheMists());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new CaptainOfTheMists());
     }
 }

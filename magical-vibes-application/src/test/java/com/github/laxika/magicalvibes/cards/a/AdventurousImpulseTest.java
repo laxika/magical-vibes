@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AdventurousImpulse.class, LlanowarElves.class, Plains.class, Divination.class})
 class AdventurousImpulseTest extends BaseCardTest {
 
     
@@ -44,14 +46,13 @@ class AdventurousImpulseTest extends BaseCardTest {
     void resolvesOfferingCreaturesAndLands() {
         setupTopCards(List.of(
                 new LlanowarElves(),
-                new Shock(),
+                new Divination(),
                 new Plains()
         ));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -66,18 +67,17 @@ class AdventurousImpulseTest extends BaseCardTest {
     @DisplayName("Choosing a creature puts it into hand then orders rest on bottom")
     void choosingCreatureThenOrderingBottom() {
         LlanowarElves elves = new LlanowarElves();
-        Shock shock = new Shock();
+        Divination divination = new Divination();
         Plains plains = new Plains();
-        setupTopCards(List.of(elves, shock, plains));
+        setupTopCards(List.of(elves, divination, plains));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose Llanowar Elves
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -88,18 +88,17 @@ class AdventurousImpulseTest extends BaseCardTest {
     @DisplayName("Choosing a land puts it into hand then orders rest on bottom")
     void choosingLandThenOrderingBottom() {
         LlanowarElves elves = new LlanowarElves();
-        Shock shock = new Shock();
+        Divination divination = new Divination();
         Plains plains = new Plains();
-        setupTopCards(List.of(elves, shock, plains));
+        setupTopCards(List.of(elves, divination, plains));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose Plains (index 1 since only Llanowar Elves and Plains are offered)
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         harness.assertInHand(player1, "Plains");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -111,18 +110,17 @@ class AdventurousImpulseTest extends BaseCardTest {
     void mayChooseNoCard() {
         setupTopCards(List.of(
                 new LlanowarElves(),
-                new Shock(),
+                new Divination(),
                 new Plains()
         ));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -133,15 +131,14 @@ class AdventurousImpulseTest extends BaseCardTest {
     @DisplayName("If top three has no creature or land cards, directly reorder them to bottom")
     void noMatchingCardsDirectlyReordersBottom() {
         setupTopCards(List.of(
-                new Shock(),
-                new Shock(),
-                new Shock()
+                new Divination(),
+                new Divination(),
+                new Divination()
         ));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -157,8 +154,7 @@ class AdventurousImpulseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -170,18 +166,17 @@ class AdventurousImpulseTest extends BaseCardTest {
     void goesToGraveyardAfterResolving() {
         setupTopCards(List.of(
                 new LlanowarElves(),
-                new Shock(),
+                new Divination(),
                 new Plains()
         ));
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
 
         harness.assertInGraveyard(player1, "Adventurous Impulse");
@@ -198,8 +193,7 @@ class AdventurousImpulseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AdventurousImpulse()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -208,9 +202,49 @@ class AdventurousImpulseTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Llanowar Elves", "Plains");
     }
 
+    @Test
+    void chosenCardIsRevealedAndRestGoesBelowUnseenCardsInChosenOrder() {
+        LlanowarElves elves = new LlanowarElves();
+        Divination divination = new Divination();
+        Plains plains = new Plains();
+        LlanowarElves unseen = new LlanowarElves();
+        harness.setLibrary(player1, List.of(elves, divination, plains, unseen));
+        harness.setHand(player1, List.of(new AdventurousImpulse()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+        GameData gd = harness.getGameData();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elves);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unseen, plains, divination);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals") && log.contains("Llanowar Elves"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Adventurous Impulse");
+    }
+
+    @Test
+    void mayDeclineOnlyCardInLibrary() {
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+        harness.setHand(player1, List.of(new AdventurousImpulse()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Adventurous Impulse");
+    }
+
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 }
+

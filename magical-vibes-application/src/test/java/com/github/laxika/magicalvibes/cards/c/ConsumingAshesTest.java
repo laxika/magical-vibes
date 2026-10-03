@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RooftopAssassin;
+import com.github.laxika.magicalvibes.cards.v.VaultPlunderer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsumingAshes.class, AirElemental.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ConsumingAshes.class, AirElemental.class, Forest.class, GrizzlyBears.class,
+        RooftopAssassin.class, VaultPlunderer.class})
 class ConsumingAshesTest extends BaseCardTest {
 
     @Test
@@ -67,11 +70,100 @@ class ConsumingAshesTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private void castConsumingAshes(Permanent target) {
+    @Test
+    void manaValueThreeAllowsKeepingBothCardsInEitherOrder() {
+        Permanent target = addCreatureReady(player2, new VaultPlunderer());
+        Card first = new Forest();
+        Card second = new ConsumingAshes();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castConsumingAshes(target);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    void manaValueFourDoesNotSurveilEvenWithCardsInLibrary() {
+        Permanent target = addCreatureReady(player2, new RooftopAssassin());
+        Card first = new Forest();
+        Card second = new ConsumingAshes();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castConsumingAshes(target);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void canExileOwnCreatureAndPutBothSurveilledCardsInGraveyard() {
+        Permanent target = addCreatureReady(player1, new VaultPlunderer());
+        Card first = new Forest();
+        Card second = new ConsumingAshes();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castConsumingAshes(target);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void surveilsAvailableCardWhenLibraryHasOnlyOneCard() {
+        Permanent target = addCreatureReady(player2, new VaultPlunderer());
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castConsumingAshes(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotSurveilWhenTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new VaultPlunderer());
+        Card first = new Forest();
+        Card second = new ConsumingAshes();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of());
         harness.setHand(player1, List.of(new ConsumingAshes()));
         addManaForConsumingAshes();
         harness.castInstant(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new ConsumingAshes()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        harness.assertInGraveyard(player1, "Consuming Ashes");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castConsumingAshes(Permanent target) {
+        harness.setHand(player1, List.of(new ConsumingAshes()));
+        addManaForConsumingAshes();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addManaForConsumingAshes() {

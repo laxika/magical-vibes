@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -48,8 +49,9 @@ class AkromasWillTest extends BaseCardTest {
 
     @Test
     void commanderAllowsBothModes() {
-        addToCommandZone(player1, new EdgarMarkov());
-        addCreatureReady(player1, new EdgarMarkov());
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player1.getId(), commander);
+        addCreatureReady(player1, commander);
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         castMode(new int[]{0, 1});
 
@@ -73,6 +75,82 @@ class AkromasWillTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void controllingAnOpponentsCommanderAllowsBothModes() {
+        EdgarMarkov commander = new EdgarMarkov();
+        gd.makeCommander(player2.getId(), commander);
+        Permanent controlledCommander = addCreatureReady(player1, commander);
+
+        castMode(new int[]{0, 1});
+
+        assertThat(gqs.hasKeyword(gd, controlledCommander, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, controlledCommander, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, controlledCommander, CardColor.BLUE)).isTrue();
+    }
+
+    @Test
+    void aNoncommanderWithTheSameNameDoesNotAllowBothModes() {
+        addToCommandZone(player1, new EdgarMarkov());
+        addCreatureReady(player1, new EdgarMarkov());
+        harness.setHand(player1, List.of(new AkromasWill()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void secondModeDoesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        castMode(new int[]{1});
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        for (CardColor color : CardColor.values()) {
+            assertThat(gqs.hasProtectionFrom(gd, original, color)).isTrue();
+            assertThat(gqs.hasProtectionFrom(gd, laterCreature, color)).isFalse();
+        }
+    }
+
+    @Test
+    void firstModeDoesNotAffectCreaturesEnteringAfterResolution() {
+        castMode(new int[]{0});
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DOUBLE_STRIKE)) {
+            assertThat(gqs.hasKeyword(gd, laterCreature, keyword)).isFalse();
+        }
+    }
+
+    @Test
+    void secondModeExpiresAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castMode(new int[]{1});
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+        for (CardColor color : CardColor.values()) {
+            assertThat(gqs.hasProtectionFrom(gd, creature, color)).isFalse();
+        }
+    }
+
+    @Test
+    void firstModeExpiresAtEndOfTurn() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castMode(new int[]{0});
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DOUBLE_STRIKE)) {
+            assertThat(gqs.hasKeyword(gd, creature, keyword)).isFalse();
+        }
+    }
+
     private void castMode(int[] modes) {
         harness.setHand(player1, List.of(new AkromasWill()));
         addMana();
@@ -86,6 +164,7 @@ class AkromasWillTest extends BaseCardTest {
     }
 
     private void addToCommandZone(Player player, Card card) {
+        gd.makeCommander(player.getId(), card);
         gd.playerCommandZones.get(player.getId()).add(card);
     }
 }

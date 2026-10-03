@@ -71,6 +71,40 @@ class CavernCrawlerTest extends BaseCardTest {
     }
 
     @Test
+    void thirdActivationPutsCrawlerIntoGraveyardForZeroToughness() {
+        addCrawlerReady(player1);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Cavern Crawler");
+        harness.assertInGraveyard(player1, "Cavern Crawler");
+    }
+
+    @Test
+    void activatedAbilityCanBeUsedWhileTappedAndOnlyBoostsItsSource() {
+        Permanent crawler = addCrawlerReady(player1);
+        Permanent otherCrawler = addCrawlerReady(player1);
+        Permanent opposingCrawler = addCrawlerReady(player2);
+        crawler.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crawler.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCrawler)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, otherCrawler)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposingCrawler)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, opposingCrawler)).isEqualTo(3);
+    }
+
+    @Test
     void activatedAbilityExpiresAtEndOfTurn() {
         Permanent crawler = addCrawlerReady(player1);
         harness.addMana(player1, ManaColor.RED, 1);

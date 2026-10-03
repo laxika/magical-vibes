@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -52,8 +51,7 @@ class AntagonizeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -69,10 +67,43 @@ class AntagonizeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void canBoostOpponentsCreatureWithoutBoostingOtherCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAntagonize(target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(4);
+        assertThat(target.getToughnessModifier()).isEqualTo(3);
+        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(ownCreature.getToughnessModifier()).isZero();
+        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(otherCreature.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void multipleCastsStackAndBothExpireAtCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAntagonize(bear.getId());
+        castAntagonize(bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(8);
+        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+    }
+
     private void castAntagonize(UUID targetId) {
         harness.setHand(player1, List.of(new Antagonize()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

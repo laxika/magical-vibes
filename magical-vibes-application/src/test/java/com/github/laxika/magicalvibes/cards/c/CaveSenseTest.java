@@ -106,4 +106,54 @@ class CaveSenseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void onlyEnchantedCreatureGetsEffects() {
+        Permanent enchanted = addCreatureReady(player1, new DartingMerfolk());
+        Permanent other = addCreatureReady(player1, new DartingMerfolk());
+        Permanent opponent = addCreatureReady(player2, new DartingMerfolk());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CaveSense());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.MOUNTAINWALK)).isTrue();
+        for (Permanent unaffected : List.of(other, opponent)) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.MOUNTAINWALK)).isFalse();
+        }
+    }
+
+    @Test
+    void attackersMountainDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new DartingMerfolk());
+        attacker.setAttacking(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CaveSense());
+        aura.setAttachedTo(attacker.getId());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new DartingMerfolk());
+
+        assertThat(bls.getBlockingIllegalityReason(
+                gd, blocker, attacker, gd.playerBattlefields.get(player2.getId()))).isEmpty();
+    }
+
+    @Test
+    void multipleAurasStackBoostAndRemovingOnePreservesOtherEffects() {
+        Permanent creature = addCreatureReady(player1, new DartingMerfolk());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CaveSense());
+        first.setAttachedTo(creature.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CaveSense());
+        second.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MOUNTAINWALK)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MOUNTAINWALK)).isTrue();
+    }
 }

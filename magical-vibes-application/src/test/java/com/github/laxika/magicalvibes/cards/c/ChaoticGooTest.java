@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ChaoticGoo.class)
+@CardUsed({ChaoticGoo.class})
 class ChaoticGooTest extends BaseCardTest {
 
     @Test
@@ -34,8 +34,8 @@ class ChaoticGooTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep trigger prompts the controller and does nothing when declined")
     void decliningLeavesCountersUnchanged() {
-        harness.addToBattlefield(player1, new ChaoticGoo());
-        findPermanent(player1, "Chaotic Goo").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefieldAndReturn(player1, new ChaoticGoo())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -51,8 +51,8 @@ class ChaoticGooTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting flips a coin: a win adds a counter, a loss removes one")
     void acceptingFlipsCoin() {
-        harness.addToBattlefield(player1, new ChaoticGoo());
-        findPermanent(player1, "Chaotic Goo").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefieldAndReturn(player1, new ChaoticGoo())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -65,8 +65,8 @@ class ChaoticGooTest extends BaseCardTest {
     @Test
     @DisplayName("Losing the last counter leaves a 0/0 that dies to state-based actions")
     void losingLastCounterKillsIt() {
-        harness.addToBattlefield(player1, new ChaoticGoo());
-        findPermanent(player1, "Chaotic Goo").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefieldAndReturn(player1, new ChaoticGoo())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -84,8 +84,8 @@ class ChaoticGooTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep ability triggers only during its controller's upkeep")
     void doesNotTriggerDuringOpponentsUpkeep() {
-        harness.addToBattlefield(player1, new ChaoticGoo());
-        findPermanent(player1, "Chaotic Goo").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefieldAndReturn(player1, new ChaoticGoo())
+                .setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player2);
 
@@ -93,5 +93,33 @@ class ChaoticGooTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanent(player1, "Chaotic Goo")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Two Goos have independent upkeep choices and only the accepted source changes")
+    void multipleGoosResolveIndependently() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ChaoticGoo());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ChaoticGoo());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(List.of(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE),
+                second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)))
+                .contains(3)
+                .satisfies(counts -> assertThat(counts.stream().mapToInt(Integer::intValue).sum()).isIn(5, 7));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

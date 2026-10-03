@@ -94,4 +94,49 @@ class BelltowerSphinxTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Lethal damage still mills the full damage amount after the Sphinx dies")
+    void lethalDamageStillMillsFullAmount() {
+        harness.addToBattlefield(player2, new BelltowerSphinx());
+        harness.setHand(player1, List.of(new Char(), new Char()));
+        harness.setLibrary(player1, library(10));
+        harness.setLibrary(player2, library(5));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        UUID sphinxId = harness.getPermanentId(player2, "Belltower Sphinx");
+        harness.castAndResolveInstant(player1, 0, sphinxId);
+        resolveAllTriggers();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+
+        harness.castAndResolveInstant(player1, 0, sphinxId);
+        harness.assertInGraveyard(player2, "Belltower Sphinx");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Forest")).hasSize(8);
+    }
+
+    @Test
+    @DisplayName("A library smaller than the damage amount mills all remaining cards")
+    void millsOnlyAvailableCards() {
+        harness.addToBattlefield(player2, new BelltowerSphinx());
+        harness.setHand(player1, List.of(new Char()));
+        harness.setLibrary(player1, library(2));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Belltower Sphinx"));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Forest")).hasSize(2);
+        harness.assertOnBattlefield(player2, "Belltower Sphinx");
+    }
 }

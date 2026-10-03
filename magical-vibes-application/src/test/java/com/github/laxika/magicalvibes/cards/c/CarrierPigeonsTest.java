@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CarrierPigeons.class)
+@CardUsed({CarrierPigeons.class})
 class CarrierPigeonsTest extends BaseCardTest {
 
     @Test
@@ -41,8 +42,7 @@ class CarrierPigeonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -58,5 +58,65 @@ class CarrierPigeonsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw survives the source dying before its entry trigger resolves")
+    void drawSurvivesSourceLeaving() {
+        harness.forceActivePlayer(player1);
+        Permanent pigeons = harness.enterBattlefieldAndReturn(player1, new CarrierPigeons());
+        assertThat(gd.stack).hasSize(1);
+
+        pigeons.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Carrier Pigeons");
+        resolveAllTriggers();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    @Test
+    @DisplayName("Each copy schedules its own draw and the draws do not repeat")
+    void multipleCopiesDrawOnlyOnce() {
+        harness.forceActivePlayer(player1);
+        harness.enterBattlefieldAndReturn(player1, new CarrierPigeons());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new CarrierPigeons());
+        resolveAllTriggers();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("An additional upkeep this turn does not draw, but the controller's next turn does")
+    void waitsForNextTurnEvenWhenControllerTakesConsecutiveTurns() {
+        harness.forceActivePlayer(player1);
+        harness.enterBattlefieldAndReturn(player1, new CarrierPigeons());
+        resolveAllTriggers();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+
+        gd.turnNumber++;
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }

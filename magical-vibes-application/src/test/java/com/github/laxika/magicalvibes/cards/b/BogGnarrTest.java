@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GaeasSkyfolk;
 import com.github.laxika.magicalvibes.cards.m.MournfulZombie;
+import com.github.laxika.magicalvibes.cards.p.PutridWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BogGnarr.class, MournfulZombie.class, GaeasSkyfolk.class})
+@CardUsed({BogGnarr.class, MournfulZombie.class, GaeasSkyfolk.class, PutridWarrior.class})
 class BogGnarrTest extends BaseCardTest {
 
     @Test
@@ -45,8 +46,7 @@ class BogGnarrTest extends BaseCardTest {
         Permanent gnarr = addGnarr();
 
         castBlackSpell(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         castBlackSpell(player1);
         harness.passBothPriorities();
 
@@ -63,12 +63,48 @@ class BogGnarrTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gnarr.getPowerModifier()).isEqualTo(2);
 
+        resolveAllTriggers();
+
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gnarr.getPowerModifier()).isZero();
         assertThat(gnarr.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A multicolored black spell triggers exactly once")
+    void multicoloredBlackSpellTriggersOnce() {
+        Permanent gnarr = addGnarr();
+
+        harness.castFromHand(player1, new PutridWarrior(), "{W}{B}");
+
+        assertThat(gnarr.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Bog Gnarr triggers independently for an opponent's black spell")
+    void eachGnarrTriggersIndependently() {
+        Permanent first = addGnarr();
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BogGnarr());
+
+        castBlackSpell(player2);
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
     }
 
     private Permanent addGnarr() {

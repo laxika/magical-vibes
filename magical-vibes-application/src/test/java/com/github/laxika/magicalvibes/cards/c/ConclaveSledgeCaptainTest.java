@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,8 +18,7 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
     @Test
     @DisplayName("Three backup abilities each put a counter on another creature and grant the combat trigger")
     void backupTriggersSeparately() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castSledgeCaptain();
 
         resolveBackupTarget(bears);
@@ -49,10 +47,97 @@ class ConclaveSledgeCaptainTest extends BaseCardTest {
         assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
+    @Test
+    void backupGrantsTrampleToAnotherCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castSledgeCaptain();
+
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void selfBackupDoesNotMultiplyPrintedCombatDamageAbility() {
+        Permanent captain = castSledgeCaptain();
+        resolveBackupTarget(captain);
+        resolveBackupTarget(captain);
+        resolveBackupTarget(captain);
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        captain.setSummoningSick(false);
+        captain.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 13);
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    void backupTargetsCanBeSplitBetweenSourceAndOpponentsCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent captain = castSledgeCaptain();
+        resolveBackupTarget(captain);
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+
+        assertThat(captain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        bears.setAttacking(true);
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    void grantedCombatDamageAbilitiesExpireButCountersRemain() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castSledgeCaptain();
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.TRAMPLE)).isFalse();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        bears.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 15);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void backupStillGrantsCombatDamageAbilityAfterSourceDies() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent captain = castSledgeCaptain();
+        harness.handlePermanentChosen(player1, bears.getId());
+        captain.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Conclave Sledge-Captain");
+        harness.passBothPriorities();
+        resolveBackupTarget(bears);
+        resolveBackupTarget(bears);
+
+        bears.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(18);
+    }
+
     private Permanent castSledgeCaptain() {
-        harness.setHand(player1, List.of(new ConclaveSledgeCaptain()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ConclaveSledgeCaptain(), "{5}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Conclave Sledge-Captain");
     }

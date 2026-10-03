@@ -87,4 +87,58 @@ class BottledCloisterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Returns cards accumulated across consecutive opponent upkeeps")
+    void returnsCardsFromConsecutiveOpponentUpkeeps() {
+        Permanent cloister = harness.addToBattlefieldAndReturn(player1, new BottledCloister());
+        Card firstCard = new BorosRecruit();
+        Card secondCard = new BorosRecruit();
+        Card drawnCard = new BorosRecruit();
+        harness.setHand(player1, List.of(firstCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(secondCard));
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(cloister.getId()))
+                .containsExactlyInAnyOrder(firstCard, secondCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstCard, secondCard, drawnCard);
+        assertThat(gd.getCardsExiledByPermanent(cloister.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Uses the second player's hand and upkeep when they control Cloister")
+    void worksForSecondPlayerController() {
+        Permanent cloister = harness.addToBattlefieldAndReturn(player2, new BottledCloister());
+        Card exiledCard = new BorosRecruit();
+        Card opponentCard = new BorosRecruit();
+        Card drawnCard = new BorosRecruit();
+        harness.setHand(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(opponentCard));
+        harness.setLibrary(player2, List.of(drawnCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.getCardsExiledByPermanent(cloister.getId())).containsExactly(exiledCard);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(exiledCard, drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.getCardsExiledByPermanent(cloister.getId())).isEmpty();
+    }
 }

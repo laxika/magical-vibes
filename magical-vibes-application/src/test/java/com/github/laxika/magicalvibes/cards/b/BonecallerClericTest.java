@@ -90,6 +90,116 @@ class BonecallerClericTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
     }
 
+    @Test
+    void canActivateWhileTappedAndSummoningSickInPostcombatMain() {
+        harness.addToBattlefieldAndReturn(player1, new BonecallerCleric()).setTapped(true);
+        BonecallerCleric target = new BonecallerCleric();
+        harness.setGraveyard(player1, List.of(target));
+        addManaForAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(target.getId());
+                    assertThat(permanent.isTapped()).isFalse();
+                });
+        harness.assertInGraveyard(player1, "Bonecaller Cleric");
+    }
+
+    @Test
+    void cannotTargetOpponentsCreature() {
+        addCreatureReady(player1, new BonecallerCleric());
+        BonecallerCleric target = new BonecallerCleric();
+        harness.setGraveyard(player2, List.of(target));
+        addManaForAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Bonecaller Cleric");
+        harness.assertInGraveyard(player2, "Bonecaller Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void cannotTargetItselfBeforePayingSacrificeCost() {
+        BonecallerCleric source = new BonecallerCleric();
+        addCreatureReady(player1, source);
+        addManaForAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Bonecaller Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        addCreatureReady(player1, new BonecallerCleric());
+        BonecallerCleric target = new BonecallerCleric();
+        harness.setGraveyard(player1, List.of(target));
+        addManaForAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Bonecaller Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        addCreatureReady(player1, new BonecallerCleric());
+        BonecallerCleric target = new BonecallerCleric();
+        harness.setGraveyard(player1, List.of(target));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new HolyDay(), "{W}");
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Bonecaller Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotReturnAnotherCardWhenTargetLeavesGraveyard() {
+        addCreatureReady(player1, new BonecallerCleric());
+        BonecallerCleric target = new BonecallerCleric();
+        BonecallerCleric other = new BonecallerCleric();
+        harness.setGraveyard(player1, List.of(target, other));
+        addManaForAbility();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.setExile(player1, List.of(target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Bonecaller Cleric");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private void addManaForAbility() {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);

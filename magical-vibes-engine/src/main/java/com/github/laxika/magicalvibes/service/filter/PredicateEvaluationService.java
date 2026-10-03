@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPutIntoHandThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSurveilledThisTurnPredicate;
@@ -643,7 +644,10 @@ public class PredicateEvaluationService {
             }
             case CardHasExactlyTwoColorsPredicate ignored ->
                     card.getColors().size() == 2;
-            case CardIdSetPredicate p -> p.cardIds().contains(card.getId());
+            case CardIdSetPredicate p -> p.cardIds().contains(card.getId())
+                    && (p.graveyardVersions().isEmpty() || (gameData != null
+                    && p.graveyardVersions().getOrDefault(card.getId(), -1L)
+                    == gameData.graveyardEntryVersion(card.getId())));
             case CardHasExactlyNColorsPredicate p ->
                     (gameData != null
                             ? gameQueryService.getEffectiveCardColors(gameData, card).size()
@@ -710,7 +714,7 @@ public class PredicateEvaluationService {
                             || card.getSupertypes().contains(CardSupertype.LEGENDARY)
                             || card.getSubtypes().contains(CardSubtype.SAGA);
             case CardSupertypePredicate p ->
-                    card.getSupertypes().contains(p.supertype());
+                    gameQueryService.cardHasSupertype(card, p.supertype(), gameData, cardOwnerId);
             case CardManaValueGreaterThanControllerHandSizePredicate ignored ->
                     gameData != null && cardOwnerId != null
                             && card.getManaValue() > gameData.playerHands
@@ -940,12 +944,31 @@ public class PredicateEvaluationService {
                                         ? graveyardCard.getOwnerId() : cardOwnerId));
                 yield sharesWithControlledCreature || sharesWithGraveyardCreature;
             }
-            case CardSharesCreatureTypeWithLibraryCreaturePredicate ignored -> {
+            case CardSharesCreatureTypeWithLibraryCreaturePredicate p -> {
                 if (gameData == null || cardOwnerId == null
                         || !gameQueryService.cardHasType(card, CardType.CREATURE, gameData, cardOwnerId)) {
                     yield false;
                 }
                 UUID cardOwner = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
+                if (p.mostPrevalentOnly()) {
+                    java.util.Map<CardSubtype, Integer> counts = new java.util.EnumMap<>(CardSubtype.class);
+                    for (Card libraryCard : gameData.playerDecks.getOrDefault(cardOwnerId, List.of())) {
+                        if (!gameQueryService.cardHasType(libraryCard, CardType.CREATURE, gameData, cardOwnerId)) {
+                            continue;
+                        }
+                        for (CardSubtype subtype : CardSubtype.values()) {
+                            if (gameQueryService.isCreatureSubtype(subtype)
+                                    && (gameQueryService.cardHasSubtype(libraryCard, subtype, gameData, cardOwnerId)
+                                    || libraryCard.hasKeyword(Keyword.CHANGELING))) {
+                                counts.merge(subtype, 1, Integer::sum);
+                            }
+                        }
+                    }
+                    int greatestCount = counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+                    yield counts.entrySet().stream().anyMatch(type -> type.getValue() == greatestCount
+                            && (gameQueryService.cardHasSubtype(card, type.getKey(), gameData, cardOwner)
+                            || card.hasKeyword(Keyword.CHANGELING)));
+                }
                 yield gameData.playerDecks.getOrDefault(cardOwnerId, List.of()).stream()
                         .filter(libraryCard -> gameQueryService.cardHasType(
                                 libraryCard, CardType.CREATURE, gameData,
@@ -989,6 +1012,10 @@ public class PredicateEvaluationService {
             case CardPutIntoHandThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null
                             && gameData.cardsPutIntoHandThisTurn
+                            .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
+            case CardPutIntoGraveyardFromBattlefieldThisTurnPredicate ignored ->
+                    gameData != null && cardOwnerId != null && card != null
+                            && gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                             .getOrDefault(cardOwnerId, Set.of()).contains(card.getId());
             case CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate ignored ->
                     gameData != null && cardOwnerId != null && card != null
@@ -1126,6 +1153,9 @@ public class PredicateEvaluationService {
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
                 if (layered != null) {
                     yield matchesPermanentPredicate(layered, permanent, hasSubtypePredicate, filterContext);
+                }
+                if (gameData != null && !GameQueryService.isStaticEvaluationActive()) {
+                    yield gameQueryService.hasEffectiveSubtype(gameData, permanent, hasSubtypePredicate.subtype());
                 }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
                 if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {

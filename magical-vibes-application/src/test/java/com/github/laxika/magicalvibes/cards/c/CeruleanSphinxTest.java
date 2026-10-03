@@ -63,4 +63,38 @@ class CeruleanSphinxTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Sphinx can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new CeruleanSphinx());
+        sphinx.setTapped(true);
+        sphinx.setSummoningSick(true);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sphinx);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(sphinx.getCard());
+    }
+
+    @Test
+    @DisplayName("Repeated activations do not duplicate the Sphinx after it leaves the battlefield")
+    void repeatedActivationsDoNotDuplicateCard() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new CeruleanSphinx());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sphinx);
+        assertThat(gd.playerDecks.get(player1.getId())).containsOnlyOnce(sphinx.getCard());
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsOnlyOnce(sphinx.getCard());
+    }
 }

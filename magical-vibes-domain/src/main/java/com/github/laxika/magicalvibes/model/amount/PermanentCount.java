@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * itself is never counted even when it matches.
  */
 public record PermanentCount(PermanentPredicate filter, CountScope scope,
-                             boolean excludeSource) implements DynamicAmount {
+                             boolean excludeSource, boolean declaredAttackersOnly) implements DynamicAmount {
+
+    public PermanentCount(PermanentPredicate filter, CountScope scope, boolean excludeSource) {
+        this(filter, scope, excludeSource, false);
+    }
 
     public PermanentCount(PermanentPredicate filter, CountScope scope) {
         this(filter, scope, false);

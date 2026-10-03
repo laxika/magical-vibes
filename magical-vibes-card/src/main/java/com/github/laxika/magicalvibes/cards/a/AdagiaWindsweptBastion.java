@@ -6,8 +6,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -23,6 +27,8 @@ import java.util.Set;
 public class AdagiaWindsweptBastion extends Card {
 
     public AdagiaWindsweptBastion() {
+        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

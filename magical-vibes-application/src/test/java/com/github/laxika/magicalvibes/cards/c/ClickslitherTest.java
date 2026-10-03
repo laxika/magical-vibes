@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AvenEnvoy;
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.g.GoblinGoon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Clickslither.class, GoblinGoon.class, AvenEnvoy.class})
+@CardUsed({Clickslither.class, GoblinGoon.class, AvenEnvoy.class, BoggartShenanigans.class})
 class ClickslitherTest extends BaseCardTest {
 
     @Test
@@ -51,8 +52,8 @@ class ClickslitherTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The sacrifice cost only accepts Goblin creatures")
-    void sacrificeCostOnlyAcceptsGoblinCreatures() {
+    @DisplayName("A non-Goblin creature cannot pay the sacrifice cost")
+    void nonGoblinCreatureCannotPaySacrificeCost() {
         addCreatureReady(player1, new Clickslither());
         harness.addToBattlefield(player1, new AvenEnvoy());
 
@@ -90,6 +91,45 @@ class ClickslitherTest extends BaseCardTest {
                 .doesNotContain(firstGoblin, secondGoblin);
         assertThat(clickslither.getEffectivePower()).isEqualTo(7);
         assertThat(clickslither.getEffectiveToughness()).isEqualTo(7);
+        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A noncreature Goblin permanent can pay the sacrifice cost")
+    void noncreatureGoblinCanPaySacrificeCost() {
+        Permanent clickslither = addCreatureReady(player1, new Clickslither());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(clickslither).doesNotContain(goblin);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
+        assertThat(clickslither.getEffectivePower()).isEqualTo(5);
+        assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
+        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and the boost waits for resolution")
+    void sacrificeIsPaidBeforeAbilityResolves() {
+        Permanent clickslither = harness.addToBattlefieldAndReturn(player1, new Clickslither());
+        clickslither.setTapped(true);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinGoon());
+        goblin.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(goblin);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(goblin.getCard());
+        assertThat(clickslither.getEffectivePower()).isEqualTo(3);
+        assertThat(clickslither.getEffectiveToughness()).isEqualTo(3);
+        assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(clickslither.getEffectivePower()).isEqualTo(5);
+        assertThat(clickslither.getEffectiveToughness()).isEqualTo(5);
         assertThat(clickslither.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 }

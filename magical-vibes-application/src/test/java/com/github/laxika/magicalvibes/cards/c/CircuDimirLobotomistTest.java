@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
 import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
 import com.github.laxika.magicalvibes.cards.l.Lignify;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.cards.r.RoofstalkerWight;
 import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CircuDimirLobotomist.class, DimirInfiltrator.class, ElvesOfDeepShadow.class,
-        Lignify.class, RoofstalkerWight.class, SnappingDrake.class})
+        Lignify.class, LastGasp.class, RoofstalkerWight.class, SnappingDrake.class})
 class CircuDimirLobotomistTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,116 @@ class CircuDimirLobotomistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Elves of Deep Shadow");
+    }
+
+    @Test
+    @DisplayName("A green spell does not trigger Circu despite its black color identity")
+    void greenSpellDoesNotTrigger() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        SnappingDrake topCard = new SnappingDrake();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setHand(player1, List.of(new ElvesOfDeepShadow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elves of Deep Shadow");
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's blue and black spell does not trigger Circu")
+    void opponentSpellDoesNotTrigger() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        SnappingDrake topCard = new SnappingDrake();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DimirInfiltrator()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dimir Infiltrator");
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Circu can target an empty library and the trigger does nothing")
+    void emptyLibraryDoesNotPreventSpellResolving() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Snapping Drake");
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A pending Circu trigger still exiles a card after Circu dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        ElvesOfDeepShadow topCard = new ElvesOfDeepShadow();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castAndResolveInstant(player2, 0, circu.getId());
+        harness.assertNotOnBattlefield(player1, "Circu, Dimir Lobotomist");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Snapping Drake");
+    }
+
+    @Test
+    @DisplayName("Circu's casting restriction ends when Circu dies but the card stays exiled")
+    void restrictionEndsWhenSourceDies() {
+        Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
+        ElvesOfDeepShadow exiledCard = new ElvesOfDeepShadow();
+        harness.setLibrary(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(new SnappingDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.getCardsExiledByPermanent(circu.getId())).containsExactly(exiledCard);
+
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, circu.getId());
+        harness.assertNotOnBattlefield(player1, "Circu, Dimir Lobotomist");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ElvesOfDeepShadow()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elves of Deep Shadow");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledCard);
     }
 }

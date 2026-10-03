@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ChargingStrifeknight.class, GrizzlyBears.class, Mountain.class, Forest.class})
 class ChargingStrifeknightTest extends BaseCardTest {
 
     
@@ -71,7 +72,7 @@ class ChargingStrifeknightTest extends BaseCardTest {
     void resolvingDrawsACard() {
         addReadyStrifeknight(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -88,7 +89,7 @@ class ChargingStrifeknightTest extends BaseCardTest {
     void canDiscardLandAsCost() {
         addReadyStrifeknight(player1);
         harness.setHand(player1, List.of(new Mountain()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -112,9 +113,7 @@ class ChargingStrifeknightTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate tap ability the turn it enters the battlefield (Haste)")
     void canActivateWithSummoningSicknessDueToHaste() {
-        ChargingStrifeknight card = new ChargingStrifeknight();
-        Permanent strifeknight = new Permanent(card);
-        gd.playerBattlefields.get(player1.getId()).add(strifeknight);
+        harness.addToBattlefield(player1, new ChargingStrifeknight());
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
@@ -135,15 +134,34 @@ class ChargingStrifeknightTest extends BaseCardTest {
     }
 
     private Permanent addReadyStrifeknight(Player player) {
-        ChargingStrifeknight card = new ChargingStrifeknight();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChargingStrifeknight());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Ability draws for its controller even after its source leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        Permanent strifeknight = addReadyStrifeknight(player2);
+        harness.setHand(player2, List.of(new Mountain()));
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player2, List.of(drawnCard, new Mountain()));
+        List<?> opponentHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(strifeknight.isTapped()).isTrue();
+        gd.playerBattlefields.get(player2.getId()).remove(strifeknight);
+        gd.playerGraveyards.get(player2.getId()).add(strifeknight.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEqualTo(opponentHand);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

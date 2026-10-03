@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.d.Duress;
+import com.github.laxika.magicalvibes.cards.r.RumblingBaloth;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,116 +15,161 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CorpseHauler.class, RumblingBaloth.class, CanyonMinotaur.class, Duress.class})
 class CorpseHaulerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Sacrifice cost is paid on activation")
     void sacrificeIsPaidOnActivation() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        addAbilityMana(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        RumblingBaloth target = new RumblingBaloth();
+        prepareAbility(List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Corpse Hauler");
         harness.assertInGraveyard(player1, "Corpse Hauler");
+        harness.assertInGraveyard(player1, "Rumbling Baloth");
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
     }
 
     @Test
-    @DisplayName("Returns a creature card from graveyard to hand")
     void returnsCreatureToHand() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        addAbilityMana(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        RumblingBaloth target = new RumblingBaloth();
+        prepareAbility(List.of(target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Rumbling Baloth");
+        harness.assertNotInGraveyard(player1, "Rumbling Baloth");
+        harness.assertInGraveyard(player1, "Corpse Hauler");
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Chooses a specific creature when several are in the graveyard")
-    void choosesSpecificCreature() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HillGiant()));
-        addAbilityMana(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    void returnsOnlyTheCreatureTargetedOnActivation() {
+        RumblingBaloth other = new RumblingBaloth();
+        CanyonMinotaur target = new CanyonMinotaur();
+        prepareAbility(List.of(other, target));
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 1);
 
-        harness.assertInHand(player1, "Hill Giant");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Canyon Minotaur");
+        harness.assertInGraveyard(player1, "Rumbling Baloth");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Corpse Hauler itself is not a legal choice — the ability returns another creature card")
-    void cannotReturnItself() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        addAbilityMana(player1);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    void cannotTargetItselfToPayItsOwnSacrificeCost() {
+        prepareAbility(List.of(new RumblingBaloth()));
+        var sourceId = harness.getPermanentId(player1, "Corpse Hauler");
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-
-        // Index 1 is the sacrificed Corpse Hauler — excluded by "another"
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 1))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sourceId))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
-    @DisplayName("Resolves with no effect when the sacrificed Corpse Hauler is the only creature card")
-    void noEffectWhenOnlySelfInGraveyard() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of());
-        addAbilityMana(player1);
+    void cannotActivateWithoutACreatureCardAlreadyInGraveyard() {
+        prepareAbility(List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+        harness.assertNotInGraveyard(player1, "Corpse Hauler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotOmitTargetWhenCreatureIsAvailable() {
+        prepareAbility(List.of(new RumblingBaloth()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutMana() {
+        RumblingBaloth target = new RumblingBaloth();
+        harness.addToBattlefield(player1, new CorpseHauler());
+        harness.setGraveyard(player1, List.of(target));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.activateAbility(player1, 0, null, null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+    }
+
+    @Test
+    void cannotTargetNoncreatureCard() {
+        Duress target = new Duress();
+        prepareAbility(List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+    }
+
+    @Test
+    void cannotTargetOpponentsCreatureCard() {
+        RumblingBaloth target = new RumblingBaloth();
+        prepareAbility(List.of(new CanyonMinotaur()));
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Corpse Hauler");
+    }
+
+    @Test
+    void doesNotChooseAnotherCreatureWhenTargetLeavesGraveyard() {
+        RumblingBaloth target = new RumblingBaloth();
+        CanyonMinotaur other = new CanyonMinotaur();
+        prepareAbility(List.of(target, other));
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        gd.playerHands.get(player1.getId()).add(target);
+
         harness.passBothPriorities();
 
+        harness.assertInGraveyard(player1, "Canyon Minotaur");
+        harness.assertNotInHand(player1, "Canyon Minotaur");
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canActivateOnOpponentsTurnWhileSummoningSick() {
+        RumblingBaloth target = new RumblingBaloth();
+        prepareAbility(List.of(target));
+        gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Rumbling Baloth");
         harness.assertInGraveyard(player1, "Corpse Hauler");
     }
 
-    @Test
-    @DisplayName("Cannot activate without enough mana")
-    void cannotActivateWithoutMana() {
-        addHaulerToBattlefield(player1);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+    private void prepareAbility(List<Card> graveyard) {
+        harness.addToBattlefield(player1, new CorpseHauler());
+        harness.setGraveyard(player1, graveyard);
+        addAbilityMana(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
     }
 
     private void addAbilityMana(Player player) {
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.COLORLESS, 2);
-    }
-
-    private Permanent addHaulerToBattlefield(Player player) {
-        Permanent hauler = new Permanent(new CorpseHauler());
-        hauler.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(hauler);
-        return hauler;
     }
 }

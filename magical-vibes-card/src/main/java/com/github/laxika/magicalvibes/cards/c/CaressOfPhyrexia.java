@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "NPH", collectorNumber = "53")
+@CardRegistration(set = "ONC", collectorNumber = "92")
 public class CaressOfPhyrexia extends Card {
 
     public CaressOfPhyrexia() {

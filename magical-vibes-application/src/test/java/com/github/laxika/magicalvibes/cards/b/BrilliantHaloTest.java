@@ -21,8 +21,7 @@ class BrilliantHaloTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Brilliant Halo attaches it and boosts the enchanted creature")
     void resolvingAttachesAndBoostsCreature() {
-        Permanent swine = new Permanent(new ArgothianSwine());
-        gd.playerBattlefields.get(player1.getId()).add(swine);
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
         harness.setHand(player1, List.of(new BrilliantHalo()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -41,9 +40,8 @@ class BrilliantHaloTest extends BaseCardTest {
         Permanent swine = harness.addToBattlefieldAndReturn(player2, new ArgothianSwine());
         BrilliantHalo haloCard = new BrilliantHalo();
         haloCard.setOwnerId(player1.getId());
-        Permanent aura = new Permanent(haloCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, haloCard);
         aura.setAttachedTo(swine.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         assertThat(gd.stack).hasSize(1);
@@ -83,5 +81,45 @@ class BrilliantHaloTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Brilliant Halo");
         harness.assertNotInHand(player1, "Brilliant Halo");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Brilliant Halo returns after its enchanted creature leaves the battlefield")
+    void returnsAfterEnchantedCreatureLeaves() {
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+        harness.setHand(player1, List.of(new BrilliantHalo()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, swine.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, swine));
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Brilliant Halo");
+        harness.assertNotInHand(player1, "Brilliant Halo");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Brilliant Halo");
+        harness.assertNotInGraveyard(player1, "Brilliant Halo");
+        harness.assertInGraveyard(player1, "Argothian Swine");
+    }
+
+    @Test
+    @DisplayName("The return trigger leaves other copies of Brilliant Halo in the graveyard")
+    void returnsOnlyTheTriggeringCopy() {
+        BrilliantHalo otherHalo = new BrilliantHalo();
+        harness.setGraveyard(player1, List.of(otherHalo));
+        Permanent swine = harness.addToBattlefieldAndReturn(player1, new ArgothianSwine());
+        BrilliantHalo triggeringHalo = new BrilliantHalo();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, triggeringHalo);
+        aura.setAttachedTo(swine.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(triggeringHalo).doesNotContain(otherHalo);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherHalo).doesNotContain(triggeringHalo);
+        assertThat(gqs.getEffectivePower(gd, swine)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swine)).isEqualTo(3);
     }
 }

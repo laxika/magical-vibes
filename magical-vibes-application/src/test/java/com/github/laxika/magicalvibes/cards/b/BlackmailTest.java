@@ -119,6 +119,64 @@ class BlackmailTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Out-of-order reveal choices allow discarding a land while unrevealed cards stay in hand")
+    void discardsLandFromOutOfOrderRevealedSubset() {
+        Card forest = new Forest();
+        Card glorySeeker = new GlorySeeker();
+        Card elvishWarrior = new ElvishWarrior();
+        Card grizzlyBears = new GrizzlyBears();
+        harness.setHand(player2, List.of(glorySeeker, elvishWarrior, grizzlyBears, forest));
+        harness.setHand(player1, List.of(new Blackmail()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 3);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 3))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 2);
+
+        assertThat(activeChoice().revealedCardIds())
+                .containsExactly(forest.getId(), glorySeeker.getId(), grizzlyBears.getId());
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not your turn to choose");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactly(glorySeeker, elvishWarrior, grizzlyBears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Blackmail");
+    }
+
+    @Test
+    @DisplayName("Exactly three cards are all revealed without a reveal choice")
+    void exactlyThreeCardsAreAllRevealed() {
+        Card forest = new Forest();
+        Card glorySeeker = new GlorySeeker();
+        Card grizzlyBears = new GrizzlyBears();
+        harness.setHand(player2, List.of(forest, glorySeeker, grizzlyBears));
+        harness.setHand(player1, List.of(new Blackmail()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(activeChoice().revealStage()).isFalse();
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(activeChoice().revealedCardIds())
+                .containsExactly(forest.getId(), glorySeeker.getId(), grizzlyBears.getId());
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(grizzlyBears);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(forest, glorySeeker);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Controller cannot choose during the reveal stage")
     void controllerCannotChooseDuringRevealStage() {
         harness.setHand(player2, new ArrayList<>(List.of(

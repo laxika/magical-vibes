@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FlickerOfFate;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CitizensArrest.class, ChandraNalaar.class, Forest.class, FountainOfYouth.class,
+@CardUsed({CitizensArrest.class, ChandraNalaar.class, FlickerOfFate.class, Forest.class, FountainOfYouth.class,
         GrizzlyBears.class, Naturalize.class})
 class CitizensArrestTest extends BaseCardTest {
 
@@ -53,9 +54,8 @@ class CitizensArrestTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles target planeswalker an opponent controls")
     void etbExilesOpponentPlaneswalker() {
-        Permanent chandra = new Permanent(new ChandraNalaar());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, 6);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(chandra);
 
         castAndResolve(chandra.getId());
 
@@ -79,8 +79,7 @@ class CitizensArrestTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID arrestId = harness.getPermanentId(player1, "Citizen's Arrest");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, arrestId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, arrestId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -118,5 +117,73 @@ class CitizensArrestTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bearsId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Target stays on the battlefield if Citizen's Arrest leaves before its trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        setUpCast();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        UUID arrestId = harness.getPermanentId(player1, "Citizen's Arrest");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, arrestId);
+        harness.assertInGraveyard(player1, "Citizen's Arrest");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Citizen's Arrest can resolve without any legal target for its trigger")
+    void resolvesWithoutLegalTargets() {
+        setUpCast();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Citizen's Arrest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a planeswalker the caster controls")
+    void cannotTargetOwnPlaneswalker() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        setUpCast();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, chandra.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returning Citizen's Arrest is a new source and cannot exile the original trigger's target")
+    void blinkedSourceDoesNotExileOriginalTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        setUpCast();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        UUID originalArrestId = harness.getPermanentId(player1, "Citizen's Arrest");
+        harness.setHand(player1, List.of(new FlickerOfFate()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, originalArrestId);
+        harness.handlePermanentChosen(player1, chandra.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentId(player1, "Citizen's Arrest")).isNotEqualTo(originalArrestId);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears).doesNotContain(chandra);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Chandra Nalaar"))
+                .noneMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 }

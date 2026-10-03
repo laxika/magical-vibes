@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.DeadlyDispute;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArcaneHeist.class, Shock.class, GrizzlyBears.class})
+@CardUsed({ArcaneHeist.class, Shock.class, GrizzlyBears.class, DeadlyDispute.class, Terror.class,
+        CounselOfTheSoratami.class})
 class ArcaneHeistTest extends BaseCardTest {
 
     @Test
@@ -29,8 +33,7 @@ class ArcaneHeistTest extends BaseCardTest {
         harness.setHand(player1, List.of(heist));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, shock.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -57,8 +60,7 @@ class ArcaneHeistTest extends BaseCardTest {
         harness.setHand(player1, List.of(heist));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, firstShock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, firstShock.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, firstTarget.getId());
         harness.passBothPriorities();
@@ -100,5 +102,99 @@ class ArcaneHeistTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Declining the stolen spell still allows cipher encoding")
+    void decliningCastStillAllowsEncoding() {
+        Shock shock = new Shock();
+        ArcaneHeist heist = new ArcaneHeist();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(shock));
+        harness.setHand(player1, List.of(heist));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, shock.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId).contains(heist.getId());
+        harness.assertNotInGraveyard(player1, "Arcane Heist");
+    }
+
+    @Test
+    @DisplayName("An illegal graveyard target prevents cipher encoding")
+    void removedTargetPreventsEncoding() {
+        Shock shock = new Shock();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(shock));
+        harness.setHand(player1, List.of(new ArcaneHeist()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, shock.getId());
+        harness.setGraveyard(player2, List.of());
+        gd.addToExile(player2.getId(), shock);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Arcane Heist");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell that cannot be cast for lack of targets stays in the graveyard")
+    void uncastableSpellStaysInGraveyard() {
+        Terror terror = new Terror();
+        harness.setGraveyard(player2, List.of(terror));
+        harness.setHand(player1, List.of(new ArcaneHeist()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, terror.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Terror");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Waiving the mana cost does not waive mandatory sacrifice costs")
+    void cannotCastWithoutPayingMandatorySacrifice() {
+        DeadlyDispute dispute = new DeadlyDispute();
+        harness.setGraveyard(player2, List.of(dispute));
+        harness.setHand(player1, List.of(new ArcaneHeist()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, dispute.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Deadly Dispute");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(dispute.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casts a nontargeted sorcery for free under the Heist controller's control")
+    void castsOpponentsSorceryForFree() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        Shock firstDraw = new Shock();
+        Shock secondDraw = new Shock();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setGraveyard(player2, List.of(counsel));
+        harness.setHand(player1, List.of(new ArcaneHeist()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, counsel.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(firstDraw.getId(), secondDraw.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getId).contains(counsel.getId());
+        harness.assertNotInGraveyard(player2, "Counsel of the Soratami");
+        harness.assertInGraveyard(player1, "Arcane Heist");
     }
 }

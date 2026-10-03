@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CavePeople.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({CavePeople.class, GrizzlyBears.class, HowlingMine.class, Mountain.class})
 class CavePeopleTest extends BaseCardTest {
 
     @Test
@@ -140,7 +140,6 @@ class CavePeopleTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Mountain.class)
     @DisplayName("Mountainwalk prevents blocking while the defending player controls a Mountain")
     void mountainwalkPreventsBlockingAgainstMountain() {
         addCreatureReady(player1, new CavePeople());
@@ -172,10 +171,53 @@ class CavePeopleTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MOUNTAINWALK)).isTrue();
 
-        declareAttackers(List.of(1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cave People can grant mountainwalk to itself using generic mana and two red mana")
+    void canTargetItselfWithMixedMana() {
+        Permanent cavePeople = addCreatureReady(player1, new CavePeople());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, cavePeople.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavePeople, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(cavePeople.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Three mana with only one red cannot pay the ability cost")
+    void cannotActivateWithoutTwoRedMana() {
+        Permanent cavePeople = addCreatureReady(player1, new CavePeople());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(cavePeople.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activation of the tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent cavePeople = harness.addToBattlefieldAndReturn(player1, new CavePeople());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(cavePeople.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

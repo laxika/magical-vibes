@@ -33,8 +33,7 @@ class CoralAtollTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when controller has no untapped Island")
     void autoSacrificesWithoutUntappedIsland() {
-        harness.addToBattlefield(player1, new Island());
-        findPermanent(player1, "Island").tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         harness.addToBattlefield(player1, new Plains());
         playAndResolveEtb();
 
@@ -57,8 +56,7 @@ class CoralAtollTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Coral Atoll");
         harness.assertNotOnBattlefield(player1, "Island");
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Island"))).isTrue();
+        harness.assertInHand(player1, "Island");
     }
 
     @Test
@@ -86,7 +84,7 @@ class CoralAtollTest extends BaseCardTest {
     void returnsControlledIslandToOwnersHand() {
         Island island = new Island();
         island.setOwnerId(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(island));
+        harness.addToBattlefield(player1, island);
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
@@ -121,6 +119,53 @@ class CoralAtollTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped Island cannot pay the entry cost")
+    void opponentsIslandCannotPayEntryCost() {
+        harness.addToBattlefield(player2, new Island());
+
+        playAndResolveEtb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Coral Atoll");
+        harness.assertInGraveyard(player1, "Coral Atoll");
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertNotInHand(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Tapping the only Island before the entry trigger resolves prevents returning it")
+    void islandTappedInResponseCannotPayEntryCost() {
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new CoralAtoll()));
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Coral Atoll");
+        harness.assertInGraveyard(player1, "Coral Atoll");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Only the untapped Island is returned when another Island is tapped")
+    void returnsOnlyEligibleIsland() {
+        Permanent tappedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        tappedIsland.tap();
+        Permanent untappedIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Coral Atoll");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tappedIsland).doesNotContain(untappedIsland);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(untappedIsland.getCard());
     }
 
     private void playAndResolveEtb() {

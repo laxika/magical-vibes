@@ -134,6 +134,71 @@ class ConjurersBaubleTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
     }
 
+    @Test
+    @DisplayName("Draws the returned card when the library starts empty")
+    void drawsReturnedCardFromInitiallyEmptyLibrary() {
+        Permanent bauble = addBauble();
+        Card target = new DrossCrocodile();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(bauble), 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bauble.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than one graveyard target")
+    void rejectsMultipleGraveyardTargets() {
+        Permanent bauble = addBauble();
+        Card first = new DrossCrocodile();
+        Card second = new MyrServitor();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(bauble), 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bauble);
+        assertThat(bauble.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target the Bauble that will be sacrificed to pay the cost")
+    void cannotTargetItselfBeforePayingSacrificeCost() {
+        Permanent bauble = addBauble();
+        harness.setGraveyard(player1, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(bauble), 0, List.of(bauble.getCard().getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bauble);
+        assertThat(bauble.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Bauble cannot pay its tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent bauble = addBauble();
+        bauble.tap();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(bauble), 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bauble);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addBauble() {
         return harness.addToBattlefieldAndReturn(player1, new ConjurersBauble());
     }

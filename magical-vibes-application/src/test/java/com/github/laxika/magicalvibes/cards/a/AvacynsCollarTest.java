@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +20,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({AvacynsCollar.class, Deathmark.class, EliteVanguard.class, GrizzlyBears.class, Xenograft.class})
 class AvacynsCollarTest extends BaseCardTest {
 
-    // ===== Static boost =====
 
     @Test
     @DisplayName("Equipped creature gets +1/+0")
@@ -52,7 +55,6 @@ class AvacynsCollarTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 
-    // ===== Death trigger — Human =====
 
     @Test
     @DisplayName("Creates 1/1 white Spirit token with flying when equipped Human dies")
@@ -72,7 +74,6 @@ class AvacynsCollarTest extends BaseCardTest {
                         && p.getCard().getToughness() == 1);
     }
 
-    // ===== Death trigger — Non-Human =====
 
     @Test
     @DisplayName("Does NOT create token when equipped non-Human creature dies")
@@ -81,14 +82,12 @@ class AvacynsCollarTest extends BaseCardTest {
         Permanent collar = addCollarReady(player1);
         collar.setAttachedTo(creature.getId());
 
-        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         killCreature(creature);
 
         // No spirit token — battlefield should only have the collar remaining
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
-    // ===== Death trigger — not equipped =====
 
     @Test
     @DisplayName("No token when unequipped Human creature dies")
@@ -101,7 +100,6 @@ class AvacynsCollarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Spirit");
     }
 
-    // ===== Equipment persists =====
 
     @Test
     @DisplayName("Equipment stays on battlefield after equipped creature dies")
@@ -116,27 +114,79 @@ class AvacynsCollarTest extends BaseCardTest {
         assertThat(collar.getAttachedTo()).isNull();
     }
 
-    // ===== Helpers =====
 
     private Permanent addCollarReady(Player player) {
-        Permanent perm = new Permanent(new AvacynsCollar());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AvacynsCollar());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addHumanCreature(Player player) {
-        Permanent perm = new Permanent(new EliteVanguard());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new EliteVanguard());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addNonHumanCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    void equipAttachesAndMovesBonusesForTwoMana() {
+        Permanent collar = addCollarReady(player1);
+        Permanent human = addHumanCreature(player1);
+        Permanent bear = addNonHumanCreature(player1);
+        collar.setAttachedTo(human.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(collar.getAttachedTo()).isEqualTo(bear.getId());
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void collarControllerReceivesTokenForOpponentsHuman() {
+        Permanent human = addHumanCreature(player2);
+        Permanent collar = addCollarReady(player1);
+        collar.setAttachedTo(human.getId());
+
+        killCreature(human);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(token.getCard().getColor())
+                            .isEqualTo(CardColor.WHITE);
+                    assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+                });
+        harness.assertNotOnBattlefield(player2, "Spirit");
+    }
+
+    @Test
+    void creatureMadeHumanByXenograftCreatesTokenWhenItDies() {
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player1, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.HUMAN);
+        Permanent bear = addNonHumanCreature(player1);
+        Permanent collar = addCollarReady(player1);
+        collar.setAttachedTo(bear.getId());
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.HUMAN)).isTrue();
+
+        killCreature(bear);
+
+        harness.assertOnBattlefield(player1, "Spirit");
     }
 
     private void killCreature(Permanent creature) {

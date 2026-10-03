@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "38")
 @CardRegistration(set = "C21", collectorNumber = "18")
+@CardRegistration(set = "BRC", collectorNumber = "73")
 public class LosheelClockworkScholar extends Card {
 
     public LosheelClockworkScholar() {

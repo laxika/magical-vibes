@@ -146,7 +146,59 @@ class BloodshotTraineeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Fomori Nomad");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        setupTraineeWithPower(4);
+        findPermanent(player1, "Bloodshot Trainee").setTapped(true);
+        UUID targetId = harness.getPermanentId(player2, "Fomori Nomad");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupTraineeWithPower(4);
+        findPermanent(player1, "Bloodshot Trainee").setSummoningSick(true);
+        UUID targetId = harness.getPermanentId(player2, "Fomori Nomad");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its controller")
+    void canTargetOwnCreature() {
+        setupTraineeWithPower(4);
+        Permanent target = addCreatureReady(player1, new FomoriNomad());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fomori Nomad");
+        harness.assertOnBattlefield(player2, "Fomori Nomad");
+    }
+
+    @Test
+    @DisplayName("Still deals damage after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        setupTraineeWithPower(4);
+        Permanent trainee = findPermanent(player1, "Bloodshot Trainee");
+        UUID targetId = harness.getPermanentId(player2, "Fomori Nomad");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        gd.playerBattlefields.get(player1.getId()).remove(trainee);
+        gd.playerGraveyards.get(player1.getId()).add(trainee.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fomori Nomad");
+    }
 
     private void setupTraineeWithPower(int desiredPower) {
         setupTraineeWithCreatureTarget(desiredPower, new FomoriNomad());

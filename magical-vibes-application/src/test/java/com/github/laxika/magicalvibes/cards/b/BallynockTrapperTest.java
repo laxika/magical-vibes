@@ -149,4 +149,47 @@ class BallynockTrapperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void tapAbilityCanTargetYourOwnCreature() {
+        Permanent trapper = addCreatureReady(player1, new BallynockTrapper());
+        Permanent target = addCreatureReady(player1, new DuskdaleWurm());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void summoningSickTrapperCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new BallynockTrapper());
+        Permanent target = addCreatureReady(player2, new DuskdaleWurm());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void untappingAllowsAnotherActivationInTheSameTurn() {
+        Permanent trapper = addCreatureReady(player1, new BallynockTrapper());
+        Permanent firstTarget = addCreatureReady(player2, new DuskdaleWurm());
+        Permanent secondTarget = addCreatureReady(player2, new DuskdaleWurm());
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new BallynockTrapper(), "{3}{W}");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(trapper.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.isTapped()).isTrue();
+        assertThat(secondTarget.isTapped()).isTrue();
+        assertThat(trapper.isTapped()).isTrue();
+    }
 }

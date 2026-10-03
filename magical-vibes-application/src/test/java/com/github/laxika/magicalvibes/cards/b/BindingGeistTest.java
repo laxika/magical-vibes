@@ -104,10 +104,75 @@ class BindingGeistTest extends BaseCardTest {
         assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(cardId);
     }
 
+    @Test
+    @DisplayName("The attack trigger cannot target a creature its controller controls")
+    void attackTriggerRejectsOwnCreature() {
+        Permanent geist = addCreatureReady(player1, new BindingGeist());
+        Permanent opponent = addCreatureReady(player2, new BindingGeist());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, geist.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves even if Binding Geist leaves the battlefield")
+    void attackTriggerSurvivesSourceRemoval() {
+        Permanent geist = addCreatureReady(player1, new BindingGeist());
+        Permanent opponent = addCreatureReady(player2, new BindingGeist());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, opponent.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, geist));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Binding Geist");
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A disturbed Aura is exiled if its target disappears before resolution")
+    void disturbWithMissingTargetIsExiled() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BindingGeist());
+        prepareDisturbCast();
+        UUID cardId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.castFlashback(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(cardId);
+    }
+
+    @Test
+    @DisplayName("Spectral Binding can enchant an opponent's creature and is exiled when it dies")
+    void auraIsExiledWhenEnchantedCreatureDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BindingGeist());
+        Permanent aura = castWithDisturb(target.getId());
+        UUID cardId = aura.getOriginalCard().getId();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Binding Geist");
+        assertThat(gd.exiledCards.stream().map(exiled -> exiled.card().getId())).contains(cardId);
+    }
+
     private Permanent castWithDisturb(UUID targetId) {
         prepareDisturbCast();
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isTransformed)
                 .findFirst()

@@ -62,6 +62,60 @@ class CarefulConsiderationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("During the caster's main phase, the opponent targeted draws four and discards two")
+    void mainPhaseCastTargetingOpponentDiscardsTwo() {
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new CarefulConsideration()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting during an opponent's main phase still discards three")
+    void opponentsMainPhaseCastDiscardsThree() {
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.setHand(player1, List.of(new CarefulConsideration()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("The announced target player draws and discards")
     void targetPlayerDrawsAndDiscards() {
         harness.setLibrary(player1, List.of());

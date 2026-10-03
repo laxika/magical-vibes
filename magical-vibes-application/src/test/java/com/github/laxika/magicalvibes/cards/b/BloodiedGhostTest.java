@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({BloodiedGhost.class})
 class BloodiedGhostTest extends BaseCardTest {
 
     @Test
@@ -23,16 +24,22 @@ class BloodiedGhostTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ghost = findGhost(player1);
+        Permanent ghost = findPermanent(player1, "Bloodied Ghost");
         assertThat(ghost).isNotNull();
         assertThat(ghost.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(ghost.getEffectivePower()).isEqualTo(2);
         assertThat(ghost.getEffectiveToughness()).isEqualTo(2);
     }
 
-    private Permanent findGhost(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Bloodied Ghost"))
-                .findFirst().orElse(null);
+    @Test
+    @DisplayName("Enters with its counter without being cast and without a counter trigger on the stack")
+    void entersWithCounterWithoutBeingCast() {
+        Permanent ghost = harness.enterBattlefieldAndReturn(player2, new BloodiedGhost());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ghost);
+        assertThat(ghost.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(ghost.getEffectivePower()).isEqualTo(2);
+        assertThat(ghost.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }

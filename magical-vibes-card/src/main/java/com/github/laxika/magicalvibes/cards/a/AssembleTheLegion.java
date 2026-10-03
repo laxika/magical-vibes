@@ -25,6 +25,7 @@ import java.util.Set;
 @CardRegistration(set = "PIP", collectorNumber = "738")
 @CardRegistration(set = "PIP", collectorNumber = "1002")
 @CardRegistration(set = "NCC", collectorNumber = "327")
+@CardRegistration(set = "ONC", collectorNumber = "115")
 public class AssembleTheLegion extends Card {
 
     public AssembleTheLegion() {

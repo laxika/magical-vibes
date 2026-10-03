@@ -44,7 +44,7 @@ class AscendingAvenTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new AscendingAven());
+        addCreatureReady(player2, new AscendingAven());
 
         prepareDeclareBlockers();
 
@@ -81,5 +81,55 @@ class AscendingAvenTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void faceDownMorphCannotBlockFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new AscendingAven());
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new AscendingAven());
+        blocker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void turningFaceUpRestoresBlockingRestriction() {
+        Permanent attacker = addCreatureReady(player1, new AscendingAven());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        attacker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new AscendingAven());
+        blocker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player2, 0);
+
+        assertThat(blocker.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only block creatures with flying");
+    }
+
+    @Test
+    void morphCostRequiresBlueMana() {
+        Permanent aven = harness.addToBattlefieldAndReturn(player1, new AscendingAven());
+        aven.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(aven.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

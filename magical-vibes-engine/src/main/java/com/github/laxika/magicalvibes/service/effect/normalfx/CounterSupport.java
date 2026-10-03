@@ -420,7 +420,9 @@ public class CounterSupport {
     }
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {
-        if (target == null || isAbility(target)) return;
+        if (target == null) return;
+        triggerCollectionService.completeDungeonRoomIfReady(gameData, target);
+        if (isAbility(target)) return;
         triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null

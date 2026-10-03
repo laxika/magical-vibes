@@ -123,6 +123,57 @@ class ArcaneSpyglassTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void firstAbilityPaysCostsBeforeDrawingAndAddingCounter() {
+        Permanent spyglass = addReadySpyglass();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new DarksteelCitadel());
+        DarksteelIngot drawnCard = new DarksteelIngot();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(spyglass.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        harness.assertInGraveyard(player1, "Darksteel Citadel");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(spyglass.getCounterCount(CounterType.CHARGE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(spyglass.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void secondAbilityCanBeActivatedRepeatedlyWhileTappedAndPaysCountersImmediately() {
+        Permanent spyglass = addReadySpyglass();
+        spyglass.tap();
+        spyglass.setCounterCount(CounterType.CHARGE, 6);
+        DarksteelIngot firstCard = new DarksteelIngot();
+        DarksteelIngot secondCard = new DarksteelIngot();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(spyglass.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(spyglass.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(spyglass.isTapped()).isTrue();
+    }
+
     private Permanent addReadySpyglass() {
         return addCreatureReady(player1, new ArcaneSpyglass());
     }

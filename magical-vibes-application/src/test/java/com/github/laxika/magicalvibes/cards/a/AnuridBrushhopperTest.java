@@ -49,6 +49,7 @@ class AnuridBrushhopperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Anurid Brushhopper");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -84,6 +85,7 @@ class AnuridBrushhopperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Anurid Brushhopper");
 
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Anurid Brushhopper");
         harness.assertNotOnBattlefield(player2, "Anurid Brushhopper");
@@ -102,16 +104,70 @@ class AnuridBrushhopperTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        advanceToEndStepForJudReview();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
         harness.assertOnBattlefield(player2, "Anurid Brushhopper");
     }
 
-    private void advanceToEndStepForJudReview() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_STEP);
+    @Test
+    @DisplayName("The two cards are discarded as a cost before the exile ability resolves")
+    void discardsArePaidBeforeResolution() {
+        addCreatureReady(player1, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new IronshellBeetle(), new GiantWarthog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Anurid Brushhopper");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Ironshell Beetle");
+        harness.assertInGraveyard(player1, "Giant Warthog");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+    }
+
+    @Test
+    @DisplayName("The delayed return uses the stack and permits responses")
+    void delayedReturnUsesStack() {
+        addCreatureReady(player1, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Anurid Brushhopper");
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits for the following turn's end step")
+    void activationDuringEndStepWaitsForNextTurn() {
+        addCreatureReady(player1, new AnuridBrushhopper());
+        harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog()));
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Anurid Brushhopper");
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Anurid Brushhopper");
+        assertThat(findPermanent(player1, "Anurid Brushhopper").isTapped()).isFalse();
     }
 }

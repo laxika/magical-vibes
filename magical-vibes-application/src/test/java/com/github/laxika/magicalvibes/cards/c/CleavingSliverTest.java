@@ -52,4 +52,44 @@ class CleavingSliverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponentSliver)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, opponentSliver)).isEqualTo(baseToughness);
     }
+
+    @Test
+    void multipleCopiesStackTheirBonuses() {
+        Permanent first = addCreatureReady(player1, new CleavingSliver());
+        Permanent second = addCreatureReady(player1, new CleavingSliver());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void bonusEndsWhenItsSourceDies() {
+        Permanent source = addCreatureReady(player1, new CleavingSliver());
+        Permanent survivor = addCreatureReady(player1, new CleavingSliver());
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(6);
+
+        source.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source).contains(survivor);
+        harness.assertInGraveyard(player1, "Cleaving Sliver");
+        assertThat(gqs.getEffectivePower(gd, survivor)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, survivor)).isEqualTo(2);
+    }
+
+    @Test
+    void bonusBeginsOnlyAfterSpellResolves() {
+        Permanent existing = addCreatureReady(player1, new CleavingSliver());
+
+        harness.castFromHand(player1, new CleavingSliver(), "{3}{R}");
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cleaving Sliver")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
+    }
 }

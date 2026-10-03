@@ -25,11 +25,8 @@ class CommandeerTest extends BaseCardTest {
     @DisplayName("Gains control of a noncreature permanent spell")
     void gainsControlOfNoncreaturePermanentSpell() {
         LeoninScimitar scimitar = new LeoninScimitar();
-        harness.setHand(player1, List.of(scimitar));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
         harness.setHand(player2, List.of(new Commandeer(), new Counterspell(), new Boomerang()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, scimitar, "{1}");
         harness.passPriority(player1);
         harness.castInstantWithAlternateExileFromHand(player2, 0, scimitar.getId(), List.of(1, 2));
         harness.passBothPriorities();
@@ -100,11 +97,8 @@ class CommandeerTest extends BaseCardTest {
     @DisplayName("Alternate cost requires two blue cards")
     void alternateCostRequiresBlueCards() {
         LeoninScimitar scimitar = new LeoninScimitar();
-        harness.setHand(player1, List.of(scimitar));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
         harness.setHand(player2, List.of(new Commandeer(), new GrizzlyBears(), new Counterspell()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, scimitar, "{1}");
         harness.passPriority(player1);
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
@@ -127,5 +121,88 @@ class CommandeerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
                 player2, 0, bears.getId(), List.of(1, 2)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can pay the normal mana cost without exiling cards")
+    void canPayNormalManaCost() {
+        LeoninScimitar scimitar = new LeoninScimitar();
+        harness.castFromHand(player1, scimitar, "{1}");
+        harness.setHand(player2, List.of(new Commandeer()));
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, scimitar.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertInGraveyard(player2, "Commandeer");
+    }
+
+    @Test
+    @DisplayName("Cannot exile Commandeer itself to pay its alternate cost")
+    void cannotExileItselfForAlternateCost() {
+        LeoninScimitar scimitar = new LeoninScimitar();
+        harness.castFromHand(player1, scimitar, "{1}");
+        harness.setHand(player2, List.of(new Commandeer(), new Counterspell()));
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player2, 0, scimitar.getId(), List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot exile the same blue card twice")
+    void cannotExileSameCardTwice() {
+        LeoninScimitar scimitar = new LeoninScimitar();
+        harness.castFromHand(player1, scimitar, "{1}");
+        harness.setHand(player2, List.of(new Commandeer(), new Counterspell(), new Boomerang()));
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player2, 0, scimitar.getId(), List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can retarget a stolen counterspell to the resolving Commandeer")
+    void canRetargetCounterspellToResolvingCommandeer() {
+        LeoninScimitar scimitar = new LeoninScimitar();
+        var scimitarPermanent = harness.addToBattlefieldAndReturn(player1, scimitar);
+        Boomerang boomerang = new Boomerang();
+        Commandeer commandeer = new Commandeer();
+        Counterspell counterspell = new Counterspell();
+        harness.setHand(player1, List.of(boomerang, commandeer));
+        harness.setHand(player2, List.of(counterspell));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, scimitarPermanent.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, boomerang.getId());
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, counterspell.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).contains(commandeer.getId());
+        harness.handlePermanentChosen(player1, commandeer.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertInGraveyard(player1, "Commandeer");
+        harness.assertInGraveyard(player2, "Counterspell");
     }
 }

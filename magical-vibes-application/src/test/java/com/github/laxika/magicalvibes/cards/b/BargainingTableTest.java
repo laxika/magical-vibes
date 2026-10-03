@@ -67,6 +67,72 @@ class BargainingTableTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
     }
 
+    @Test
+    @DisplayName("The controller's hand size does not increase the activation cost")
+    void ignoresControllerHandSize() {
+        addTable();
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Changing the opponent's hand after activation does not change the paid cost")
+    void handSizeChangesAfterActivationDoNotChangeCost() {
+        addTable();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped table cannot activate even when the mana cost is zero")
+    void tappedTableCannotActivate() {
+        Permanent table = addTable();
+        table.tap();
+        harness.setHand(player2, List.of());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature table can activate its tap ability")
+    void newlyEnteredTableCanActivate() {
+        Permanent table = harness.addToBattlefieldAndReturn(player1, new BargainingTable());
+        table.setSummoningSick(true);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(table.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addTable() {
         Permanent table = harness.addToBattlefieldAndReturn(player1, new BargainingTable());
         table.setSummoningSick(false);

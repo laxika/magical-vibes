@@ -18,6 +18,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -86,7 +88,9 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         }
 
         List<Card> basicLands = deck.stream()
-                .filter(card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))
+                .filter(card -> card.hasType(CardType.LAND)
+                        && gameQueryService.cardHasSupertype(
+                        card, CardSupertype.BASIC, gameData, targetPlayerId))
                 .toList();
 
         if (basicLands.isEmpty()) {

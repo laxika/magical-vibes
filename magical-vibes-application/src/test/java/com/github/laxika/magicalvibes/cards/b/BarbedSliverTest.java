@@ -42,7 +42,6 @@ class BarbedSliverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, barbedSliver)).isEqualTo(basePower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, barbedSliver)).isEqualTo(basePower);
@@ -84,5 +83,65 @@ class BarbedSliverTest extends BaseCardTest {
         Permanent nonSliver = addCreatureReady(player1, new CanyonWildcat());
 
         assertThat(gs.getEffectiveActivatedAbilities(gd, nonSliver)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated activations boost only the activating Sliver's power")
+    void repeatedActivationsStackOnActivatingSliver() {
+        Permanent barbedSliver = addCreatureReady(player1, new BarbedSliver());
+        Permanent otherSliver = addCreatureReady(player1, new MetallicSliver());
+        int basePower = gqs.getEffectivePower(gd, otherSliver);
+        int baseToughness = gqs.getEffectiveToughness(gd, otherSliver);
+        int barbedPower = gqs.getEffectivePower(gd, barbedSliver);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, otherSliver)).isEqualTo(baseToughness);
+        assertThat(gqs.getEffectivePower(gd, barbedSliver)).isEqualTo(barbedPower);
+    }
+
+    @Test
+    @DisplayName("A tapped Sliver with summoning sickness can activate the ability")
+    void tappedSummoningSickSliverCanActivate() {
+        addCreatureReady(player1, new BarbedSliver());
+        Permanent otherSliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+        otherSliver.setSummoningSick(true);
+        otherSliver.setTapped(true);
+        int basePower = gqs.getEffectivePower(gd, otherSliver);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(basePower + 1);
+        assertThat(otherSliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after the granting Sliver leaves")
+    void activatedAbilityResolvesAfterGrantingSourceLeaves() {
+        Permanent barbedSliver = addCreatureReady(player1, new BarbedSliver());
+        Permanent otherSliver = addCreatureReady(player1, new MetallicSliver());
+        int basePower = gqs.getEffectivePower(gd, otherSliver);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(barbedSliver);
+        harness.passBothPriorities();
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, otherSliver)).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(basePower + 1);
     }
 }

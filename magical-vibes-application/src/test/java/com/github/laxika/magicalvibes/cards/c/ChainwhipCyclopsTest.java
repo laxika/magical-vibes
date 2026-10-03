@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -75,13 +74,74 @@ class ChainwhipCyclopsTest extends BaseCardTest {
     @DisplayName("Ability cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
         addReadyCyclops(player1);
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.addMana(player1, ManaColor.RED, 4);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fountainId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, fountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void tappedSummoningSickCyclopsCanTargetItself() {
+        Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new ChainwhipCyclops());
+        cyclops.setSummoningSick(true);
+        cyclops.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, cyclops.getId());
+        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(cyclops.isCantBlockThisTurn()).isTrue();
+        assertThat(cyclops.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityRequiresRedMana() {
+        Permanent cyclops = addReadyCyclops(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, cyclops.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void abilityCanBeRepeatedWithoutTappingAndOnlyAffectsChosenCreatures() {
+        Permanent cyclops = addReadyCyclops(player1);
+        Permanent first = addCreatureReady(player2, new ChainwhipCyclops());
+        Permanent second = addCreatureReady(player2, new ChainwhipCyclops());
+        Permanent untouched = addCreatureReady(player2, new ChainwhipCyclops());
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isCantBlockThisTurn()).isTrue();
+        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(untouched.isCantBlockThisTurn()).isFalse();
+        assertThat(cyclops.isCantBlockThisTurn()).isFalse();
+        assertThat(cyclops.isTapped()).isFalse();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent cyclops = addReadyCyclops(player1);
+        Permanent target = addCreatureReady(player2, new ChainwhipCyclops());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(cyclops);
+        gd.playerGraveyards.get(player1.getId()).add(cyclops.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
     }
 
     private Permanent addReadyCyclops(Player player) {

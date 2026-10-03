@@ -113,4 +113,68 @@ class BullwhipTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(target.isMustAttackThisTurn()).isFalse();
     }
+
+    @Test
+    @DisplayName("Tapped creatures are damaged but do not have to attack")
+    void tappedTargetDoesNotHaveToAttack() {
+        harness.addToBattlefield(player1, new Bullwhip());
+        Permanent target = addCreatureReady(player2, new SpinedWurm());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.isTapped()).isTrue();
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The attack requirement does not override summoning sickness")
+    void summoningSickTargetDoesNotHaveToAttack() {
+        harness.addToBattlefield(player1, new Bullwhip());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        target.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys the target before it can attack")
+    void lethalDamageDestroysTarget() {
+        harness.addToBattlefield(player1, new Bullwhip());
+        Permanent target = addCreatureReady(player2, new SpinedWurm());
+        target.setMarkedDamage(3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Spined Wurm");
+        harness.assertInGraveyard(player2, "Spined Wurm");
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after Bullwhip leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent bullwhip = harness.addToBattlefieldAndReturn(player1, new Bullwhip());
+        Permanent target = addCreatureReady(player2, new SpinedWurm());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bullwhip);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
 }

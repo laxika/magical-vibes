@@ -3,16 +3,15 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ApothecaryGeist.class, ChapelGeist.class, GrizzlyBears.class})
 class ApothecaryGeistTest extends BaseCardTest {
 
     @Test
@@ -89,10 +88,53 @@ class ApothecaryGeistTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("controls another matching permanent ability does nothing"));
     }
 
+    @Test
+    @DisplayName("ETB still gains life when its source leaves but another Spirit remains")
+    void gainsLifeAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new ApothecaryGeist());
+        var otherSpiritId = harness.getPermanentId(player1, "Apothecary Geist");
+        castApothecaryGeist();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> !p.getId().equals(otherSpiritId));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB gains life if a different Spirit satisfies the condition at resolution")
+    void gainsLifeWithReplacementSpirit() {
+        harness.addToBattlefield(player1, new ApothecaryGeist());
+        var otherSpiritId = harness.getPermanentId(player1, "Apothecary Geist");
+        castApothecaryGeist();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(otherSpiritId));
+        harness.addToBattlefield(player1, new ApothecaryGeist());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Multiple other Spirits still result in only 3 life gained")
+    void gainsLifeOnlyOnceWithMultipleSpirits() {
+        harness.addToBattlefield(player1, new ApothecaryGeist());
+        harness.addToBattlefield(player1, new ApothecaryGeist());
+        castApothecaryGeist();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+    }
+
     private void castApothecaryGeist() {
-        harness.setHand(player1, List.of(new ApothecaryGeist()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ApothecaryGeist(), "{3}{W}");
     }
 }

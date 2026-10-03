@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AkkiLavarunner;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TokTokVolcanoBorn.class, AkkiLavarunner.class, AvatarOfMight.class,
-        GrizzlyBears.class, LightningBolt.class, RagingGoblin.class})
+        GrizzlyBears.class, LightningBolt.class, RagingGoblin.class, Humble.class})
 class TokTokVolcanoBornTest extends BaseCardTest {
 
     /** Puts a flipped Akki Lavarunner (i.e. Tok-Tok) onto {@code player}'s battlefield. */
@@ -128,11 +129,51 @@ class TokTokVolcanoBornTest extends BaseCardTest {
         Permanent tokTok = addTokTok(player1);
         addCreatureReady(player2, new RagingGoblin());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
         assertThat(tokTok.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The bonus also applies to damage dealt to Tok-Tok's controller")
+    void redSpellDealsOneMoreToController() {
+        addTokTok(player1);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Tok-Tok's own combat damage receives its red-source bonus")
+    void ownCombatDamageGetsBonus() {
+        addTokTok(player1);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities disables the damage bonus")
+    void losingAbilitiesDisablesDamageBonus() {
+        Permanent tokTok = addTokTok(player1);
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, tokTok.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 }

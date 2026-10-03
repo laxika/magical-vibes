@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CallDamageControl.class, Forest.class, GrizzlyBears.class, LeoninScimitar.class, Pacifism.class})
+@CardUsed({CallDamageControl.class, Forest.class, GrizzlyBears.class, LeoninScimitar.class,
+        Ornithopter.class, Pacifism.class})
 class CallDamageControlTest extends BaseCardTest {
 
     @Test
@@ -89,11 +91,114 @@ class CallDamageControlTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CallDamageControl()));
         addManaForSpell();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.assertInGraveyard(player1, "Call Damage Control");
+    }
+
+    @Test
+    void returnsCreatureAndEnchantment() {
+        Card creature = new GrizzlyBears();
+        Card enchantment = new Pacifism();
+        harness.setGraveyard(player1, List.of(creature, enchantment));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), enchantment.getId()));
         harness.passBothPriorities();
 
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Pacifism");
+    }
+
+    @Test
+    void allowsArtifactCreatureAndAnotherCreatureUnderDifferentModes() {
+        Card artifactCreature = new Ornithopter();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(artifactCreature, creature));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(artifactCreature.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Ornithopter");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void allowsSameArtifactCreatureAsTargetOfBothModes() {
+        Card artifactCreature = new Ornithopter();
+        harness.setGraveyard(player1, List.of(artifactCreature));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(artifactCreature.getId(), artifactCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifactCreature);
+        harness.assertInGraveyard(player1, "Call Damage Control");
+    }
+
+    @Test
+    void allowsZeroTargetsEvenWhenEligibleCardsExist() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Call Damage Control");
+    }
+
+    @Test
+    void excludesOpponentCardsAndSorceriesFromTargetChoices() {
+        Card creature = new GrizzlyBears();
+        Card sorcery = new CallDamageControl();
+        Card opposingArtifact = new LeoninScimitar();
+        harness.setGraveyard(player1, List.of(creature, sorcery));
+        harness.setGraveyard(player2, List.of(opposingArtifact));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sorcery);
+    }
+
+    @Test
+    void returnsRemainingTargetWhenAnotherTargetLeavesGraveyard() {
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(creature, land));
+        harness.setHand(player1, List.of(new CallDamageControl()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        harness.setGraveyard(player1, List.of(land));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Call Damage Control");
     }
 

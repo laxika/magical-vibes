@@ -76,4 +76,61 @@ class CovetedJewelTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(jewel);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(jewel);
     }
+
+    @Test
+    @DisplayName("A partially blocked attack transfers the Jewel")
+    void partiallyBlockedAttackTransfersJewel() {
+        Permanent jewel = harness.addToBattlefieldAndReturn(player2, new CovetedJewel());
+        jewel.tap();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jewel);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(jewel);
+        assertThat(jewel.isTapped()).isFalse();
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jewel), null, null);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(jewel.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Jewel triggers once even when several attackers are unblocked")
+    void eachJewelTriggersOnce() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new CovetedJewel());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new CovetedJewel());
+        first.tap();
+        second.tap();
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
 }

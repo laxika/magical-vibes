@@ -99,6 +99,43 @@ class CageOfHandsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returning Cage of Hands leaves the creature on the battlefield and free to attack")
+    void returningAuraRemovesAttackRestriction() {
+        Permanent creature = addCreatureReady(player1, new LanternKami());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CageOfHands());
+        aura.setAttachedTo(creature.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Cage of Hands");
+        harness.assertNotOnBattlefield(player1, "Cage of Hands");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated Cage of Hands ability does not return the Aura from the graveyard")
+    void activationDoesNothingIfAuraLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new LanternKami());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new CageOfHands());
+        aura.setAttachedTo(creature.getId());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cage of Hands");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aura.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
     @DisplayName("Cage of Hands goes to its owner's graveyard if its target leaves before resolution")
     void fizzlesIfTargetLeavesBeforeResolution() {
         Permanent creature = addCreatureReady(player2, new LanternKami());
