@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
+import com.github.laxika.magicalvibes.cards.s.SunspireGriffin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Cremate.class, RazorfootGriffin.class})
+@CardUsed({Cremate.class, SunspireGriffin.class})
 class CremateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles target card from an opponent's graveyard and draws a card")
     void exilesCardAndDraws() {
-        Card griffin = new RazorfootGriffin();
+        Card griffin = new SunspireGriffin();
         harness.setGraveyard(player2, List.of(griffin));
         harness.setHand(player1, List.of(new Cremate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -29,16 +29,16 @@ class CremateTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, griffin.getId());
 
         GameData gd = harness.getGameData();
-        harness.assertNotInGraveyard(player2, "Razorfoot Griffin");
+        harness.assertNotInGraveyard(player2, "Sunspire Griffin");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Razorfoot Griffin"));
+                .anyMatch(c -> c.getName().equals("Sunspire Griffin"));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     @Test
     @DisplayName("Can exile a card from own graveyard")
     void exilesFromOwnGraveyard() {
-        Card griffin = new RazorfootGriffin();
+        Card griffin = new SunspireGriffin();
         harness.setGraveyard(player1, List.of(griffin));
         harness.setHand(player1, List.of(new Cremate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -47,7 +47,7 @@ class CremateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Razorfoot Griffin"));
+                .anyMatch(c -> c.getName().equals("Sunspire Griffin"));
     }
 
     @Test
@@ -69,7 +69,7 @@ class CremateTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles and does not draw if the target leaves before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
-        Card griffin = new RazorfootGriffin();
+        Card griffin = new SunspireGriffin();
         harness.setGraveyard(player2, List.of(griffin));
         harness.setHand(player1, List.of(new Cremate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -82,6 +82,30 @@ class CremateTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getId().equals(griffin.getId()));
+    }
+
+    @Test
+    @DisplayName("A responding Cremate removes the target so the original does not draw")
+    void respondingCremateMakesOriginalTargetIllegal() {
+        Card target = new SunspireGriffin();
+        Card untouched = new Cremate();
+        Card drawn = new SunspireGriffin();
+        Card remaining = new Cremate();
+        harness.setGraveyard(player2, List.of(target, untouched));
+        harness.setLibrary(player1, List.of(drawn, remaining));
+        harness.setHand(player1, List.of(new Cremate(), new Cremate()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
     @Test

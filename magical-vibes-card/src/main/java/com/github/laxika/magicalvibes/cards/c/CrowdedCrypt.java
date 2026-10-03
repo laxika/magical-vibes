@@ -24,6 +24,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MIC", collectorNumber = "17")
 @CardRegistration(set = "MIC", collectorNumber = "55")
+@CardRegistration(set = "DRC", collectorNumber = "88")
 public class CrowdedCrypt extends Card {
 
     public CrowdedCrypt() {

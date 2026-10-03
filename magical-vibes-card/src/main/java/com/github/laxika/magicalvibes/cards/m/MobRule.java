@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "109")
+@CardRegistration(set = "VOC", collectorNumber = "147")
 public class MobRule extends Card {
 
     public MobRule() {

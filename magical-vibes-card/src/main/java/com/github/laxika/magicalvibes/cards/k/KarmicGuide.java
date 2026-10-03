@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "C13", collectorNumber = "14")
 @CardRegistration(set = "MH2", collectorNumber = "263")
 @CardRegistration(set = "AFC", collectorNumber = "68")
+@CardRegistration(set = "VOC", collectorNumber = "90")
 public class KarmicGuide extends Card {
 
     public KarmicGuide() {

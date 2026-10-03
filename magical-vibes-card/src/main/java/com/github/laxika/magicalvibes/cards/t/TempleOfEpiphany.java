@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "M20", collectorNumber = "253")
 @CardRegistration(set = "JOU", collectorNumber = "164")
 @CardRegistration(set = "M21", collectorNumber = "252")
+@CardRegistration(set = "M21", collectorNumber = "387")
 @CardRegistration(set = "DDU", collectorNumber = "72")
 @CardRegistration(set = "WHO", collectorNumber = "316")
 @CardRegistration(set = "WHO", collectorNumber = "526")
@@ -27,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "412")
 @CardRegistration(set = "C21", collectorNumber = "322")
 @CardRegistration(set = "BLC", collectorNumber = "340")
+@CardRegistration(set = "DRC", collectorNumber = "177")
 @CardRegistration(set = "BRC", collectorNumber = "207")
 public class TempleOfEpiphany extends Card {
 

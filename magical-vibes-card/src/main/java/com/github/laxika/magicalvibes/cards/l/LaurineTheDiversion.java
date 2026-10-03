@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "OTC", collectorNumber = "172")
+@CardRegistration(set = "VOC", collectorNumber = "25")
+@CardRegistration(set = "VOC", collectorNumber = "63")
 public class LaurineTheDiversion extends Card {
 
     private static final String PARTNER_NAME = "Kamber, the Plunderer";

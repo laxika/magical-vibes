@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "KLD", collectorNumber = "41")
 @CardRegistration(set = "KLR", collectorNumber = "45")
 @CardRegistration(set = "M3C", collectorNumber = "178")
+@CardRegistration(set = "DRC", collectorNumber = "73")
 public class ConfiscationCoup extends Card {
 
     public ConfiscationCoup() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDam
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
+import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
@@ -115,6 +116,7 @@ public class TurnCleanupService {
         gameData.restoreBombardmentCards();
         resetEndOfTurnModifiers(gameData);
         expireControlAtEndOfNextTurn(gameData);
+        expirePhasingRestrictionsAtEndOfNextTurn(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.skipCombatPhaseExpirationsThisTurn.forEach((playerId, count) ->
                 gameData.skipNextCombatPhaseCount.computeIfPresent(playerId,
@@ -139,6 +141,17 @@ public class TurnCleanupService {
         for (ExpireControlAtEndOfNextTurn expiration : expirations) {
             gameData.expireFloatingEffects(effect -> expiration.controlEffectId().equals(effect.id()));
         }
+    }
+
+    /** Releases Teferi's mass phase-out restriction after the controller's next turn ends. */
+    private void expirePhasingRestrictionsAtEndOfNextTurn(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            return;
+        }
+        gameData.drainDelayedActions(PhasedOutUntilEndOfNextTurn.class,
+                action -> activePlayerId.equals(action.controllerId())
+                        && gameData.turnNumber > action.registeredTurnNumber());
     }
 
     /**

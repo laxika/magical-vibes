@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "104")
+@CardRegistration(set = "M21", collectorNumber = "357")
 public class HoodedBlightfang extends Card {
 
     public HoodedBlightfang() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "45")
+@CardRegistration(set = "M21", collectorNumber = "348")
 public class BarrinTolarianArchmage extends Card {
 
     public BarrinTolarianArchmage() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "138")
+@CardRegistration(set = "M21", collectorNumber = "304")
 public class ChandrasPyreling extends Card {
 
     public ChandrasPyreling() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "208")
 @CardRegistration(set = "AKR", collectorNumber = "267")
+@CardRegistration(set = "DRC", collectorNumber = "121")
 public class WaywardServant extends Card {
 
     public WaywardServant() {

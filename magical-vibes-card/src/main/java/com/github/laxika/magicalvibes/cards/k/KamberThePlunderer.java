@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForN
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "OTC", collectorNumber = "137")
+@CardRegistration(set = "VOC", collectorNumber = "19")
+@CardRegistration(set = "VOC", collectorNumber = "57")
 public class KamberThePlunderer extends Card {
 
     private static final String PARTNER_NAME = "Laurine, the Diversion";

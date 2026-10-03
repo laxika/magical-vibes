@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 
 @CardRegistration(set = "MKC", collectorNumber = "105")
+@CardRegistration(set = "VOC", collectorNumber = "12")
+@CardRegistration(set = "VOC", collectorNumber = "50")
 public class EtherealInvestigator extends Card {
 
     public EtherealInvestigator() {

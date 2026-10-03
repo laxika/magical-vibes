@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1904")
 @CardRegistration(set = "BLC", collectorNumber = "279")
 @CardRegistration(set = "M3C", collectorNumber = "299")
+@CardRegistration(set = "DRC", collectorNumber = "132")
 public class MaskwoodNexus extends Card {
 
     public MaskwoodNexus() {

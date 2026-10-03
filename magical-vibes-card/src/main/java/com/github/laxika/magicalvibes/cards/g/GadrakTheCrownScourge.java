@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "146")
+@CardRegistration(set = "M21", collectorNumber = "367")
 @CardRegistration(set = "TDC", collectorNumber = "214")
 public class GadrakTheCrownScourge extends Card {
 

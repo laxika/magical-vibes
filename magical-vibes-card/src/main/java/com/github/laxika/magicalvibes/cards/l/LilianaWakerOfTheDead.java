@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "108")
+@CardRegistration(set = "M21", collectorNumber = "282")
+@CardRegistration(set = "M21", collectorNumber = "297")
 public class LilianaWakerOfTheDead extends Card {
 
     private static final String EMBLEM_TEXT =

@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrimsonRoc.class, BayFalcon.class, FemerefScouts.class})
+@CardUsed({CrimsonRoc.class, BayFalcon.class, FemerefScouts.class, HighGround.class})
 class CrimsonRocTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class CrimsonRocTest extends BaseCardTest {
         addCreatureReady(player1, new FemerefScouts());
         Permanent roc = addCreatureReady(player2, new CrimsonRoc());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -41,8 +40,7 @@ class CrimsonRocTest extends BaseCardTest {
         addCreatureReady(player1, new BayFalcon());
         Permanent roc = addCreatureReady(player2, new CrimsonRoc());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -56,8 +54,7 @@ class CrimsonRocTest extends BaseCardTest {
         Permanent roc = addCreatureReady(player1, new CrimsonRoc());
         addCreatureReady(player2, new FemerefScouts()).getGrantedKeywords().add(Keyword.REACH);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -74,8 +71,7 @@ class CrimsonRocTest extends BaseCardTest {
         addCreatureReady(player1, new FemerefScouts());
         Permanent roc = addCreatureReady(player2, new CrimsonRoc());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(1, 0),
                 new BlockerAssignment(1, 1)));
@@ -92,8 +88,7 @@ class CrimsonRocTest extends BaseCardTest {
         addCreatureReady(player1, new FemerefScouts());
         Permanent roc = addCreatureReady(player2, new CrimsonRoc());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -115,13 +110,49 @@ class CrimsonRocTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new FemerefScouts());
         Permanent roc = addCreatureReady(player2, new CrimsonRoc());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         attacker.getGrantedKeywords().add(Keyword.FLYING);
         harness.passBothPriorities();
 
         assertThat(roc.getPowerModifier()).isEqualTo(1);
+        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Blocking a flyer and a nonflyer triggers only for the nonflyer")
+    @CardUsed(HighGround.class)
+    void mixedAttackersGiveOnlyOneBoost() {
+        harness.addToBattlefield(player2, new HighGround());
+        addCreatureReady(player1, new BayFalcon());
+        addCreatureReady(player1, new FemerefScouts());
+        Permanent roc = addCreatureReady(player2, new CrimsonRoc());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)));
+        resolveAllTriggers();
+
+        assertThat(roc.getPowerModifier()).isEqualTo(1);
+        assertThat(roc.getToughnessModifier()).isZero();
+        assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("The boost resolves even if the blocked attacker leaves the battlefield")
+    void attackerLeavingDoesNotStopBoost() {
+        Permanent attacker = addCreatureReady(player1, new FemerefScouts());
+        Permanent roc = addCreatureReady(player2, new CrimsonRoc());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        resolveAllTriggers();
+
+        assertThat(roc.getPowerModifier()).isEqualTo(1);
+        assertThat(roc.getToughnessModifier()).isZero();
         assertThat(roc.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
     }
 }

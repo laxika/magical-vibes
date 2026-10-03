@@ -65,4 +65,53 @@ class CrenellatedWallTest extends BaseCardTest {
 
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Crenellated Wall can target itself and boosts only on resolution")
+    void canBoostItself() {
+        Permanent wall = addCreatureReady(player1, new CrenellatedWall());
+
+        harness.activateAbility(player1, 0, null, wall.getId());
+
+        assertThat(wall.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Boosts from two Walls accumulate and both expire at cleanup")
+    void boostsAccumulate() {
+        addCreatureReady(player1, new CrenellatedWall());
+        addCreatureReady(player1, new CrenellatedWall());
+        Permanent target = addCreatureReady(player2, new CrenellatedWall());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A Wall with summoning sickness cannot pay its tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new CrenellatedWall());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wall.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(wall.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }

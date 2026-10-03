@@ -624,15 +624,29 @@ public class TriggerCollectionService {
         }
 
         UUID settingPlayerId = schemeEntry.getControllerId();
+        int schemesSet = 1;
+        Integer pendingReplacements = gameData.pendingNextSchemeSetInMotionReplacements.get(settingPlayerId);
+        if (pendingReplacements != null) {
+            if (pendingReplacements <= 1) {
+                gameData.pendingNextSchemeSetInMotionReplacements.remove(settingPlayerId);
+            } else {
+                gameData.pendingNextSchemeSetInMotionReplacements.put(settingPlayerId,
+                        pendingReplacements - 1);
+            }
+            schemesSet = 3;
+        }
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(settingPlayerId);
         if (battlefield == null) {
             return;
         }
 
-        TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
-        for (Permanent permanent : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, permanent, settingPlayerId,
-                    EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+        for (int schemeIndex = 0; schemeIndex < schemesSet; schemeIndex++) {
+            TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                dispatchSlot(gameData, permanent, settingPlayerId,
+                        EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
+            }
         }
     }
 
@@ -8431,6 +8445,9 @@ public class TriggerCollectionService {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
+                CardEffect authoredEffect = resolved;
+                resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (resolved == null) continue;
                 resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, ownerId, activatedPermanent, resolved);
                 if (resolved == null) continue;
@@ -8446,7 +8463,11 @@ public class TriggerCollectionService {
                         perm.getId());
                 // "That player" is the opponent who activated the ability — set by the event, not chosen.
                 trigger.setNonTargeting(true);
+                if (authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                    trigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                }
                 gameData.enqueueTrigger(trigger);
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent non-mana ability activation ({})",
                         gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());

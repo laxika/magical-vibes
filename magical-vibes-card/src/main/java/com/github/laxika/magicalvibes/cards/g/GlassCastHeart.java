@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LCC", collectorNumber = "199")
+@CardRegistration(set = "VOC", collectorNumber = "18")
+@CardRegistration(set = "VOC", collectorNumber = "56")
 public class GlassCastHeart extends Card {
 
     public GlassCastHeart() {

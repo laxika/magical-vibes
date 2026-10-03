@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawExceptFirstDrawStepDrawEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "76")
+@CardRegistration(set = "M21", collectorNumber = "294")
 @CardRegistration(set = "SLD", collectorNumber = "1721")
 @CardRegistration(set = "SLD", collectorNumber = "2214")
 @CardRegistration(set = "MKC", collectorNumber = "119")

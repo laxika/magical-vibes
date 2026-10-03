@@ -44,7 +44,6 @@ class CripplingFatigueTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
@@ -81,6 +80,64 @@ class CripplingFatigueTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Normal casting puts the card in the graveyard for flashback, which can kill the same creature")
+    void normalCastThenFlashbackKillsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setHand(player1, List.of(new CripplingFatigue()));
+        addNormalMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Crippling Fatigue");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        addFlashbackMana();
+
+        harness.castAndResolveFlashback(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Sengir Vampire");
+        harness.assertInGraveyard(player2, "Sengir Vampire");
+        harness.assertNotInGraveyard(player1, "Crippling Fatigue");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Crippling Fatigue"));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be cast with less than 3 life")
+    void cannotFlashbackWithInsufficientLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setGraveyard(player1, List.of(new CripplingFatigue()));
+        harness.setLife(player1, 2);
+        addFlashbackMana();
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot pay flashback life cost");
+
+        harness.assertInGraveyard(player1, "Crippling Fatigue");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Flashback requires mana as well as life")
+    void cannotFlashbackWithInsufficientMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.setGraveyard(player1, List.of(new CripplingFatigue()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertInGraveyard(player1, "Crippling Fatigue");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
     }
 
     private void addNormalMana() {

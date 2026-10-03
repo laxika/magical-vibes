@@ -614,6 +614,14 @@ public class DestructionSupport {
                                                   List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
                                                   com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices,
                                                   boolean recordSacrificedCount) {
+        beginNextForcedSacrificeFromQueue(gameData, choosers, accumulatedSacrificeIds, simultaneousFlow,
+                afterSacrifices, recordSacrificedCount, false);
+    }
+
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds, boolean simultaneousFlow,
+                                                  com.github.laxika.magicalvibes.model.LibrarySearchFollowUp afterSacrifices,
+                                                  boolean recordSacrificedCount, boolean recordSacrificedPower) {
         if (choosers.isEmpty()) {
             return;
         }
@@ -624,7 +632,7 @@ public class DestructionSupport {
                 next.count(),
                 new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
                         List.copyOf(accumulatedSacrificeIds), simultaneousFlow, recordSacrificedCount,
-                        afterSacrifices),
+                        recordSacrificedPower, afterSacrifices),
                 "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
@@ -1002,6 +1010,11 @@ public class DestructionSupport {
                 gameData, controllerId, token);
         int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
                 gameData, controllerId, token);
+        int additionalThopterTokenCount = TokenCreationReplacementSupport.additionalThopterTokenCount(
+                gameData, controllerId, token, tokenCount);
+        CreateTokenEffect additionalThopterToken = additionalThopterTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalThopterToken(token)
+                : null;
         CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
                 ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
                         gameData, controllerId, token)
@@ -1033,6 +1046,9 @@ public class DestructionSupport {
         }
         for (int i = 0; i < additionalSoldierTokenCount; i++) {
             tokenBlueprints.add(additionalSoldier);
+        }
+        for (int i = 0; i < additionalThopterTokenCount; i++) {
+            tokenBlueprints.add(additionalThopterToken);
         }
         for (int i = 0; i < additionalFoodTokenCount; i++) {
             tokenBlueprints.add(additionalFoodToken);

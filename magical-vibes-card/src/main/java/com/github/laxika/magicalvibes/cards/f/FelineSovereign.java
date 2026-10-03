@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "180")
+@CardRegistration(set = "M21", collectorNumber = "374")
 public class FelineSovereign extends Card {
 
     public FelineSovereign() {

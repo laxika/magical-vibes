@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
+@CardRegistration(set = "DRC", collectorNumber = "125")
 @CardRegistration(set = "SLD", collectorNumber = "203")
 @CardRegistration(set = "SLD", collectorNumber = "315")
 @CardRegistration(set = "CMM", collectorNumber = "377")
@@ -33,6 +34,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "301")
 @CardRegistration(set = "DMC", collectorNumber = "181")
 @CardRegistration(set = "MIC", collectorNumber = "159")
+@CardRegistration(set = "VOC", collectorNumber = "163")
 @CardRegistration(set = "BRC", collectorNumber = "135")
 @CardRegistration(set = "ONC", collectorNumber = "128")
 public class CommandersSphere extends Card {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "240")
+@CardRegistration(set = "M21", collectorNumber = "384")
 public class SparkhunterMasticore extends Card {
 
     public SparkhunterMasticore() {

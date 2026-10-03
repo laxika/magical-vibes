@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "MH2", collectorNumber = "203")
+@CardRegistration(set = "DRC", collectorNumber = "117")
 public class LazotepChancellor extends Card {
 
     public LazotepChancellor() {

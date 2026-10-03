@@ -139,6 +139,9 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         EnumSet<Keyword> keywords = sourceCard.getKeywords() == null
                                 ? EnumSet.noneOf(Keyword.class)
                                 : EnumSet.copyOf(sourceCard.getKeywords());
+                        if (e.excludedKeywords() != null) {
+                            keywords.removeAll(e.excludedKeywords());
+                        }
                         if (e.grantHaste()) {
                             keywords.add(Keyword.HASTE);
                         }
@@ -150,6 +153,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
                             if (e.excludedEffectType() != null
                                     && reg.effect().getClass() == e.excludedEffectType()) {
+                                continue;
+                            }
+                            if (e.additionalExcludedEffectTypes() != null
+                                    && e.additionalExcludedEffectTypes().contains(reg.effect().getClass())) {
                                 continue;
                             }
                             tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
@@ -217,6 +224,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     if (e.exileAtEndStep()) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(
                                 tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                    }
+                    if (e.exileAtEndOfCombat()) {
+                        gameData.queueDelayedAction(new DelayedPermanentAction(
+                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
                     }
 
                     if (e.removeLegendary()) {

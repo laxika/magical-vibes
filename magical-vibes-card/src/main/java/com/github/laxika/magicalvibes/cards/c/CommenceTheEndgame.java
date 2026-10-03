@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "45")
+@CardRegistration(set = "DRC", collectorNumber = "38")
 public class CommenceTheEndgame extends Card {
 
     public CommenceTheEndgame() {

@@ -19,6 +19,7 @@ import java.util.List;
  */
 @CardRegistration(set = "AKH", collectorNumber = "212")
 @CardRegistration(set = "AKR", collectorNumber = "118")
+@CardRegistration(set = "DRC", collectorNumber = "96")
 public class NeverReturn extends Card {
 
     public NeverReturn() {

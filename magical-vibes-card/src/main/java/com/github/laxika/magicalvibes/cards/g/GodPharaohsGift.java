@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOwnCreatureFromGraveyard
 
 @CardRegistration(set = "HOU", collectorNumber = "161")
 @CardRegistration(set = "AKR", collectorNumber = "272")
+@CardRegistration(set = "DRC", collectorNumber = "131")
 public class GodPharaohsGift extends Card {
 
     public GodPharaohsGift() {

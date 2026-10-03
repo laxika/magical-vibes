@@ -45,4 +45,24 @@ class CravenKnightTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Craven Knight can attack and be blocked while another Craven Knight cannot block")
+    void canAttackAndBeBlockedWithoutPreventingOtherCreaturesFromBlocking() {
+        Permanent attacker = addCreatureReady(player1, new CravenKnight());
+        Permanent defendingKnight = addCreatureReady(player2, new CravenKnight());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(defendingKnight.isBlocking()).isFalse();
+    }
 }

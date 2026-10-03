@@ -139,4 +139,75 @@ class CranialPlatingTest extends BaseCardTest {
         assertThat(plating.getAttachedTo()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Black ability moves the equipment and its bonus to another creature")
+    void blackAbilityMovesEquipmentToAnotherCreature() {
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new CranialPlating());
+        Permanent first = addCreatureReady(player1, new DrossCrocodile());
+        Permanent second = addCreatureReady(player1, new DrossCrocodile());
+        plating.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        assertThat(plating.getAttachedTo()).isEqualTo(first.getId());
+        harness.passBothPriorities();
+
+        assertThat(plating.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("An illegal target does not detach Cranial Plating from its current creature")
+    void targetChangingControllerLeavesExistingAttachmentIntact() {
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new CranialPlating());
+        Permanent first = addCreatureReady(player1, new DrossCrocodile());
+        Permanent target = addCreatureReady(player1, new DrossCrocodile());
+        plating.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(plating.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attaching to the same creature does not give the equipment a new timestamp")
+    void attachingToCurrentCreatureDoesNothing() {
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new CranialPlating());
+        Permanent creature = addCreatureReady(player1, new DrossCrocodile());
+        plating.setAttachedTo(creature.getId());
+        plating.setTimestamp(gd.nextTimestamp());
+        long originalTimestamp = plating.getTimestamp();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(plating.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(plating.getTimestamp()).isEqualTo(originalTimestamp);
+    }
+
+    @Test
+    @DisplayName("Black ability cannot attach equipment that has left the battlefield")
+    void blackAbilityDoesNothingIfEquipmentLeaves() {
+        Permanent plating = harness.addToBattlefieldAndReturn(player1, new CranialPlating());
+        Permanent creature = addCreatureReady(player1, new DrossCrocodile());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(plating);
+        harness.passBothPriorities();
+
+        assertThat(plating.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
 }
