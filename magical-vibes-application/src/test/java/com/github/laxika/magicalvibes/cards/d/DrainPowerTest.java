@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AdarkarWastes;
 import com.github.laxika.magicalvibes.cards.c.CabalCoffers;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -20,7 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DrainPower.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({DrainPower.class, Forest.class, GrizzlyBears.class, Island.class,
+        CityOfBrass.class, CabalCoffers.class, Swamp.class, AdarkarWastes.class})
 class DrainPowerTest extends BaseCardTest {
 
     @Test
@@ -55,11 +57,10 @@ class DrainPowerTest extends BaseCardTest {
     @Test
     @DisplayName("Returns land mana to the controller when targeting themself")
     void returnsLandManaWhenTargetingSelf() {
-        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         cast(player1.getId());
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(forest.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
@@ -67,11 +68,9 @@ class DrainPowerTest extends BaseCardTest {
     @Test
     @DisplayName("Already-tapped lands and non-lands produce nothing")
     void ignoresTappedAndNonLands() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         forest.tap();
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getLast();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         cast();
 
@@ -120,6 +119,57 @@ class DrainPowerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).allMatch(Permanent::isTapped);
     }
 
+    @Test
+    @DisplayName("The target chooses which mana ability to activate on a land with multiple abilities")
+    void letsTargetChooseLandManaAbility() {
+        harness.addToBattlefield(player2, new AdarkarWastes());
+
+        cast();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Spell-only mana retains its restriction when added to a nonempty pool")
+    void preservesSpellRestrictionWhenControllerAlreadyHasMana() {
+        harness.addMana(player2, ManaColor.RED, 2);
+        gd.playerManaPools.get(player2.getId()).addSpellOnlyMana(ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        cast();
+
+        ManaPool controllerPool = gd.playerManaPools.get(player1.getId());
+        assertThat(controllerPool.getSpellOnlyMana(ManaColor.RED)).isEqualTo(2);
+        assertThat(controllerPool.get(ManaColor.RED)).isEqualTo(2);
+        assertThat(controllerPool.get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Transferred mana retains its basic-land source")
+    void preservesBasicLandSource() {
+        harness.addToBattlefield(player2, new Forest());
+
+        cast();
+
+        ManaPool controllerPool = gd.playerManaPools.get(player1.getId());
+        assertThat(controllerPool.get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(controllerPool.getBasicLandMana(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The target's chosen City of Brass color is transferred to the caster")
+    void transfersChosenLandManaColor() {
+        harness.addToBattlefield(player2, new CityOfBrass());
+
+        cast();
+        harness.handleListChoice(player2, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
     private void cast() {
         cast(player2.getId());
     }
@@ -127,7 +177,6 @@ class DrainPowerTest extends BaseCardTest {
     private void cast(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new DrainPower()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 }
