@@ -31,13 +31,33 @@ class BorealGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("A snow land produces snow mana")
     void snowLandProducesSnowMana() {
-        Permanent plains = new Permanent(new SnowCoveredPlains());
-        plains.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(plains);
+        addCreatureReady(player1, new SnowCoveredPlains());
 
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowMana(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Snow land mana pays for a tapped, summoning-sick Griffin's ability")
+    void snowLandPaysForAbilityWithoutTapOrSummoningRestriction() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new BorealGriffin());
+        griffin.setSummoningSick(true);
+        griffin.setTapped(true);
+        Permanent otherGriffin = addCreatureReady(player1, new BorealGriffin());
+        harness.addToBattlefield(player1, new SnowCoveredPlains());
+        harness.tapPermanent(player1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherGriffin, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(griffin.isTapped()).isTrue();
     }
 
     @Test
