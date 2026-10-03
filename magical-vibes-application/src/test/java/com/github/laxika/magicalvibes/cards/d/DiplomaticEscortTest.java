@@ -112,4 +112,39 @@ class DiplomaticEscortTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot target a creature spell with no targets")
+    void cannotTargetUntargetedCreatureSpell() {
+        addCreatureReady(player1, new DiplomaticEscort());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        DartingMerfolk merfolk = new DartingMerfolk();
+        harness.setHand(player2, List.of(merfolk));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0);
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, merfolk.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target an activated ability that targets only a player")
+    void cannotTargetAbilityTargetingOnlyPlayer() {
+        addCreatureReady(player1, new DiplomaticEscort());
+        addCreatureReady(player2, new StingingBarrier());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passPriority(player2);
+
+        UUID abilityId = harness.getGameData().stack.getLast().getCard().getId();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
