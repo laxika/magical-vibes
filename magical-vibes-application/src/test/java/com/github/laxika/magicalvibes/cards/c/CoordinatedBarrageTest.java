@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoordinatedBarrage.class, AirElemental.class, ChangelingSentinel.class, FurnaceOfRath.class,
+@CardUsed({CoordinatedBarrage.class, AirElemental.class, ChangelingSentinel.class, CloakAndDagger.class, FurnaceOfRath.class,
         GrizzlyBears.class, HillGiant.class})
 class CoordinatedBarrageTest extends BaseCardTest {
 
@@ -46,8 +46,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new AirElemental());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "BEAR");
 
         GameData gd = harness.getGameData();
@@ -63,8 +62,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new AirElemental());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "BEAR");
 
         // One Bear -> 1 damage, doubled to 2 by Furnace of Rath.
@@ -82,8 +80,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new HillGiant());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "BEAR");
 
         harness.assertNotOnBattlefield(player1, "Hill Giant");
@@ -97,8 +94,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new AirElemental());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "GOBLIN");
 
         GameData gd = harness.getGameData();
@@ -113,8 +109,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new AirElemental());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "BEAR");
 
         assertThat(target.getMarkedDamage()).isZero();
@@ -127,8 +122,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         Permanent target = setupAttackerAndSpell(new AirElemental());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleListChoice(player2, "GOBLIN");
 
         GameData gd = harness.getGameData();
@@ -139,14 +133,7 @@ class CoordinatedBarrageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a player — the damage is declared at a creature, not at any target")
     void cannotTargetAPlayer() {
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
-
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new CoordinatedBarrage()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
+        setupAttackerAndSpell(new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -183,10 +170,50 @@ class CoordinatedBarrageTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new CoordinatedBarrage()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castInstant(player2, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
         harness.handleListChoice(player2, "ELEMENTAL");
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts noncreature kindred permanents of the chosen type")
+    void countsKindredEquipment() {
+        harness.addToBattlefield(player2, new CloakAndDagger());
+        Permanent target = setupAttackerAndSpell(new AirElemental());
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.handleListChoice(player2, "ROGUE");
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts matching permanents when the spell resolves")
+    void countsPermanentsAtResolution() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = setupAttackerAndSpell(new AirElemental());
+
+        harness.castInstant(player2, 0, target.getId());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "BEAR");
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not resolve if its target is no longer attacking or blocking")
+    void targetLeavingCombatPreventsResolution() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = setupAttackerAndSpell(new AirElemental());
+
+        harness.castInstant(player2, 0, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Coordinated Barrage");
     }
 }
