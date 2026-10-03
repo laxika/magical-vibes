@@ -99,6 +99,61 @@ class DefilingTearsTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    @DisplayName("The opponent controlling the target can activate its granted ability")
+    void opponentCanUseGrantedRegeneration() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+
+        cast(target);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new ScorchingLava()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated toughness reductions kill the creature despite a regeneration shield")
+    void zeroToughnessCannotBeRegenerated() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YavimayaBarbarian());
+
+        cast(target);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        cast(target);
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Yavimaya Barbarian");
+    }
+
+    @Test
+    @DisplayName("Defiling Tears does not resolve when its only target dies in response")
+    void removedTargetMakesSpellFizzle() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        harness.setHand(player1, List.of(new DefilingTears(), new ScorchingLava()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player2, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Defiling Tears");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new DefilingTears()));
         harness.addMana(player1, ManaColor.BLACK, 1);
