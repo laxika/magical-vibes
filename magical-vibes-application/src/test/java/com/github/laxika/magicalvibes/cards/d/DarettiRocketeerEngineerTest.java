@@ -95,6 +95,110 @@ class DarettiRocketeerEngineerTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(sacrifice.getId()));
     }
 
+    @Test
+    @DisplayName("Opponent artifacts do not contribute to Daretti's power")
+    void powerIsZeroWithoutControlledArtifacts() {
+        Permanent daretti = addReadyDaretti();
+        harness.addToBattlefield(player2, new MyrBattlesphere());
+
+        assertThat(gqs.getEffectivePower(gd, daretti)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, daretti)).isEqualTo(5);
+        harness.addToBattlefield(player1, new Spellbook());
+        assertThat(gqs.getEffectivePower(gd, daretti)).isZero();
+    }
+
+    @Test
+    @DisplayName("Attacking targets an artifact and returns it after sacrificing")
+    void attackingReturnsChosenArtifact() {
+        addReadyDaretti();
+        Spellbook returnTarget = new Spellbook();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setGraveyard(player1, List.of(returnTarget));
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(returnTarget.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(returnTarget.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(sacrifice.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(returnTarget.getId()));
+    }
+
+    @Test
+    @DisplayName("Without a controlled artifact the chosen card stays in the graveyard")
+    void cannotReturnArtifactWithoutSacrifice() {
+        Spellbook returnTarget = new Spellbook();
+        harness.setGraveyard(player1, List.of(returnTarget));
+        harness.addToBattlefield(player2, new Spellbook());
+        castDaretti();
+
+        harness.handleMultipleCardsChosen(player1, List.of(returnTarget.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Without an artifact in its controller's graveyard the entry trigger has no target")
+    void noLegalTargetDoesNotOfferSacrifice() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new Spellbook()));
+        harness.addToBattlefield(player1, new Spellbook());
+
+        castDaretti();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard prevents the optional sacrifice")
+    void missingTargetPreventsSacrifice() {
+        Spellbook returnTarget = new Spellbook();
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setGraveyard(player1, List.of(returnTarget));
+        castDaretti();
+        harness.handleMultipleCardsChosen(player1, List.of(returnTarget.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(returnTarget));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(sacrifice.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(returnTarget.getId()));
+    }
+
+    @Test
+    @DisplayName("Daretti's power-defining ability also works in hand and graveyard")
+    void powerIsDefinedOutsideBattlefield() {
+        DarettiRocketeerEngineer inHand = new DarettiRocketeerEngineer();
+        DarettiRocketeerEngineer inGraveyard = new DarettiRocketeerEngineer();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isZero();
+        harness.addToBattlefield(player1, new MyrBattlesphere());
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(7);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(7);
+    }
+
     private Permanent addReadyDaretti() {
         Permanent daretti = harness.addToBattlefieldAndReturn(player1, new DarettiRocketeerEngineer());
         daretti.setSummoningSick(false);
@@ -102,10 +206,7 @@ class DarettiRocketeerEngineerTest extends BaseCardTest {
     }
 
     private void castDaretti() {
-        harness.setHand(player1, List.of(new DarettiRocketeerEngineer()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DarettiRocketeerEngineer(), "{4}{R}");
         harness.passBothPriorities();
     }
 }
