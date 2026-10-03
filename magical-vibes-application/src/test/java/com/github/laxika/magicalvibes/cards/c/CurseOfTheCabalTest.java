@@ -36,8 +36,7 @@ class CurseOfTheCabalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 9);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -97,6 +96,119 @@ class CurseOfTheCabalTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+    }
+
+    @Test
+    void ownerMaySacrificeDuringOwnUpkeep() {
+        CurseOfTheCabal card = suspendCard();
+        addCreatureReady(player1, new DurkwoodBaloth());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+    }
+
+    @Test
+    void decliningOwnUpkeepSacrificeStillRemovesTimeCounter() {
+        CurseOfTheCabal card = suspendCard();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+    }
+
+    @Test
+    void upkeepTriggerDoesNothingWhenCardIsNoLongerSuspended() {
+        CurseOfTheCabal card = suspendCard();
+        Permanent permanent = addCreatureReady(player2, new DurkwoodBaloth());
+        advanceToUpkeep(player2);
+        gd.exiledCardTimeCounters.remove(card.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(permanent);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void targetWithOnePermanentSacrificesNothing() {
+        Permanent permanent = addCreatureReady(player2, new DurkwoodBaloth());
+        harness.setHand(player1, List.of(new CurseOfTheCabal()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(permanent);
+    }
+
+    @Test
+    void mayTargetSelfAndCountsPermanentsAtResolution() {
+        Permanent first = addCreatureReady(player1, new DurkwoodBaloth());
+        harness.setHand(player1, List.of(new CurseOfTheCabal()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.castSorcery(player1, 0, player1.getId());
+        Permanent second = addCreatureReady(player1, new DurkwoodBaloth());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void decliningLastCounterCastLeavesCardExiledAndStopsUpkeepAbility() {
+        CurseOfTheCabal card = suspendCard();
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void lastCounterCastTriggerWaitsForAnotherPriorityRound() {
+        CurseOfTheCabal card = suspendCard();
+        for (int i = 0; i < 2; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
     private CurseOfTheCabal suspendCard() {
