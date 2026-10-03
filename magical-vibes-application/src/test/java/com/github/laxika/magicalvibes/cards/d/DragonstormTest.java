@@ -109,6 +109,52 @@ class DragonstormTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A Dragon may be left in the library even when one can be found")
+    void mayDeclineAvailableDragon() {
+        Card dragon = new DragonWhelp();
+        harness.setLibrary(player1, List.of(dragon));
+        castDragonstorm();
+        resolveAllTriggers();
+
+        harness.handleCardChosen(player1, -1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dragon);
+        harness.assertNotOnBattlefield(player1, "Dragon Whelp");
+        harness.assertInGraveyard(player1, "Dragonstorm");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm does not count spells cast after Dragonstorm")
+    void stormCountIsFixedWhenCast() {
+        gd.recordSpellCast(player2.getId(), new FlyingMen());
+        castDragonstorm();
+        gd.recordSpellCast(player2.getId(), new FlyingMen());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Storm copies and the original resolve normally with an empty library")
+    void stormResolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        gd.recordSpellCast(player1.getId(), new FlyingMen());
+        castDragonstorm();
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Dragonstorm");
+    }
+
     private void castDragonstorm() {
         harness.castFromHand(player1, new Dragonstorm(), "{8}{R}");
     }
