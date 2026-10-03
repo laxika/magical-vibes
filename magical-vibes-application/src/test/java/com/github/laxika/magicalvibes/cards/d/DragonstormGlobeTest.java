@@ -66,6 +66,32 @@ class DragonstormGlobeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Globes each add an entry counter, including a tapped Globe")
+    void multipleGlobesAddCountersWhileTapped() {
+        Permanent firstGlobe = harness.addToBattlefieldAndReturn(player1, new DragonstormGlobe());
+        harness.addToBattlefield(player1, new DragonstormGlobe());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        assertThat(firstGlobe.isTapped()).isTrue();
+
+        Permanent dragon = harness.enterBattlefieldAndReturn(player1, new DragonWhelp());
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Globe entering does not add counters to Dragons already on the battlefield")
+    void existingDragonDoesNotGetCounter() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+
+        harness.enterBattlefieldAndReturn(player1, new DragonstormGlobe());
+
+        assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Taps for one mana of any color")
     void tapsForAnyColor() {
         Permanent globe = harness.addToBattlefieldAndReturn(player1, new DragonstormGlobe());
