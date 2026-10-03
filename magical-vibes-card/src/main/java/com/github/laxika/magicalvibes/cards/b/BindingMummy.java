@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "6")
 @CardRegistration(set = "AKR", collectorNumber = "7")
+@CardRegistration(set = "DRC", collectorNumber = "63")
 public class BindingMummy extends Card {
 
     public BindingMummy() {

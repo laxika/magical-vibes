@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "35")
+@CardRegistration(set = "DRC", collectorNumber = "67")
 public class TimelessDragon extends Card {
 
     public TimelessDragon() {

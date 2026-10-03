@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "16")
+@CardRegistration(set = "DRC", collectorNumber = "66")
 public class GodEternalOketra extends Card {
 
     public GodEternalOketra() {
