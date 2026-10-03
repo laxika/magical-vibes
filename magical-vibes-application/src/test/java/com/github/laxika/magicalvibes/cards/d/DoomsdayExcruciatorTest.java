@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoomsdayExcruciator.class, BeaconOfUnrest.class, Forest.class, GrizzlyBears.class})
+@CardUsed({DoomsdayExcruciator.class, BeaconOfUnrest.class, Forest.class, GrizzlyBears.class, Murder.class})
 class DoomsdayExcruciatorTest extends BaseCardTest {
 
     @Test
@@ -72,8 +73,7 @@ class DoomsdayExcruciatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(beacon));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, target.getName());
@@ -97,6 +97,70 @@ class DoomsdayExcruciatorTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the other player's library from being exiled")
+    void emptyLibraryDoesNotPreventOtherPlayerExiling() {
+        List<Card> exiled = cards(1);
+        List<Card> bottom = cards(6);
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, concatenate(exiled, bottom));
+        harness.setHand(player1, List.of(new DoomsdayExcruciator()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(bottom);
+        assertFaceDownExile(player1, List.of());
+        assertFaceDownExile(player2, exiled);
+    }
+
+    @Test
+    @DisplayName("The draw ability does not trigger during an opponent's upkeep")
+    void doesNotDrawAtOpponentUpkeep() {
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addToBattlefield(player1, new DoomsdayExcruciator());
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("The cast entry trigger still exiles libraries after its source leaves")
+    void entryTriggerResolvesAfterSourceLeaves() {
+        List<Card> player1Exiled = cards(2);
+        List<Card> player1Bottom = cards(6);
+        List<Card> player2Exiled = cards(1);
+        List<Card> player2Bottom = cards(6);
+        harness.setLibrary(player1, concatenate(player1Exiled, player1Bottom));
+        harness.setLibrary(player2, concatenate(player2Exiled, player2Bottom));
+        DoomsdayExcruciator source = new DoomsdayExcruciator();
+        harness.setHand(player1, List.of(source));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0,
+                findPermanent(player1, source.getName()).getId());
+        harness.assertNotOnBattlefield(player1, source.getName());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(player1Bottom);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(player2Bottom);
+        assertFaceDownExile(player1, player1Exiled);
+        assertFaceDownExile(player2, player2Exiled);
     }
 
     private List<Card> cards(int count) {
