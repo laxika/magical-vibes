@@ -38,7 +38,8 @@ class MistsOfLRienTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .contains(sameManaValueLand.getId())
-                .doesNotContain(target.getId(), differentManaValue.getId());
+                .contains(differentManaValue.getId())
+                .doesNotContain(target.getId(), sameManaValue.getId());
     }
 
     @Test

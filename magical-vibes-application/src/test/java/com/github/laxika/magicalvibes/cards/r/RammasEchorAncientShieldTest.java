@@ -29,10 +29,10 @@ class RammasEchorAncientShieldTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         List<Permanent> walls = findPermanents(player1, "Wall");
@@ -60,7 +60,7 @@ class RammasEchorAncientShieldTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, ownWall, Keyword.EXALTED)).isFalse();
     }

@@ -55,7 +55,7 @@ class RohirrimChargersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof LothlorienBlade);
         assertThat(gd.playerDecks.get(player1.getId()))
-                .extracting(Card::getName)
-                .containsExactly("Forest", "Lothlorien Blade");
+                .extracting(Card::getClass)
+                .containsExactly(Forest.class, LothlorienBlade.class);
     }
 }

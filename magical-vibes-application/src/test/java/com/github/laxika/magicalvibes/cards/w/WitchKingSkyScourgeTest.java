@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LordOfTheNazgL;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,18 +15,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WitchKingSkyScourge.class, WraithViciousVigilante.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({WitchKingSkyScourge.class, LordOfTheNazgL.class, GrizzlyBears.class, Mountain.class})
 class WitchKingSkyScourgeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles cards equal to the total power of attacking Wraiths")
     void exilesCardsEqualToAttackingWraithsPower() {
         Permanent witchKing = addCreatureReady(player1, new WitchKingSkyScourge());
-        Permanent wraith = addCreatureReady(player1, new WraithViciousVigilante());
+        Permanent wraith = addCreatureReady(player1, new LordOfTheNazgL());
         addCreatureReady(player1, new GrizzlyBears());
 
+        int attackingWraithPower = gqs.getEffectivePower(gd, witchKing) + gqs.getEffectivePower(gd, wraith);
         List<Card> library = new ArrayList<>();
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < attackingWraithPower + 2; i++) {
             library.add(new Mountain());
         }
         harness.setLibrary(player1, library);
@@ -35,7 +37,10 @@ class WitchKingSkyScourgeTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(wraith)));
         resolveAllTriggers();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyElementsOf(library.subList(0, attackingWraithPower));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyElementsOf(library.subList(attackingWraithPower, library.size()));
         assertThat(gd.exilePlayPermissions).containsEntry(library.getFirst().getId(), player1.getId());
     }
 }

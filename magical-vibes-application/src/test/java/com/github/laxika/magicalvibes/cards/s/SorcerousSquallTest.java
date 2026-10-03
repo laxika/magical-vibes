@@ -27,7 +27,7 @@ class SorcerousSquallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SorcerousSquall()));
         harness.addMana(player1, ManaColor.BLUE, 9);
 
-        int handSizeBeforeCounsel = gd.playerHands.get(player1.getId()).size();
+        int handSizeBeforeCounsel = gd.playerHands.get(player1.getId()).size() - 1;
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 

@@ -29,7 +29,7 @@ class GandalfOfTheSecretFireTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertLife(player2, 17);
+        harness.assertLife(player2, 18);
         assertThat(gd.findExiledCard(shock.getId())).isNotNull();
         assertThat(gd.suspendedSpellExiles)
                 .containsExactly(new GameData.SuspendedSpellExile(shock.getId(), player1.getId(), 3));

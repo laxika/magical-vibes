@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 /**
  * Target opponent mills {@code count} cards, then the controller may cast an instant or sorcery
@@ -11,7 +12,8 @@ public record MillTargetPlayerAndMayCastSpellFromGraveyardEffect(int count) impl
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.player());
+        return TargetSpec.harmful(TargetPredicates.players(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT)));
     }
 
     @Override

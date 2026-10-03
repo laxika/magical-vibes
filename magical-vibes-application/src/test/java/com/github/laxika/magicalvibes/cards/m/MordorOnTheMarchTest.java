@@ -28,7 +28,7 @@ class MordorOnTheMarchTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Grizzly Bears");
         assertThat(token.getCard().isToken()).isTrue();

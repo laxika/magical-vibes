@@ -1767,9 +1767,15 @@ public class CombatAttackService {
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
                                 gameData.id, perm.getCard().getName());
                     } else if (needsTarget) {
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
-                                null, attackerIndices.size()));
+                        if (perm.getCard().getSpellTargets().size() > 1) {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    perm.getCard(), playerId, filteredEffects, perm.getId(),
+                                    List.of(), 0, 0, List.of(), attackerIndices.size()));
+                        } else {
+                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                    perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
+                                    null, attackerIndices.size()));
+                        }
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
