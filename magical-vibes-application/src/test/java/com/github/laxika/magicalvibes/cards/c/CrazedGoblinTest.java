@@ -38,8 +38,7 @@ class CrazedGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Crazed Goblin does not need to attack while summoning sick")
     void doesNotHaveToAttackWithSummoningSickness() {
-        Permanent goblin = new Permanent(new CrazedGoblin());
-        gd.playerBattlefields.get(player1.getId()).add(goblin);
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new CrazedGoblin());
 
         declareAttackers(List.of());
 
@@ -55,5 +54,47 @@ class CrazedGoblinTest extends BaseCardTest {
         declareAttackers(List.of());
 
         assertThat(goblin.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Every able Crazed Goblin must attack, not just one")
+    void everyAbleGoblinMustAttack() {
+        addCreatureReady(player1, new CrazedGoblin());
+        addCreatureReady(player1, new CrazedGoblin());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        declareAttackers(List.of(0, 1));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An untapped Crazed Goblin must attack again in another combat")
+    void mustAttackAgainInAnotherCombat() {
+        Permanent goblin = addCreatureReady(player1, new CrazedGoblin());
+        declareAttackers(List.of(0));
+        goblin.untap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's Crazed Goblin does not require the active player to attack")
+    void opponentsGoblinDoesNotForceActivePlayerToAttack() {
+        Permanent goblin = addCreatureReady(player2, new CrazedGoblin());
+
+        declareAttackers(List.of());
+
+        assertThat(goblin.isAttacking()).isFalse();
+        harness.assertLife(player1, 20);
     }
 }
