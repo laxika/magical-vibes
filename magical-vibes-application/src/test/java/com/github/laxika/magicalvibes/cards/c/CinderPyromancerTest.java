@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DuergarHedgeMage;
 import com.github.laxika.magicalvibes.cards.f.FangSkulkin;
 import com.github.laxika.magicalvibes.cards.f.FlameJab;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,10 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CinderPyromancer.class, FlameJab.class, FangSkulkin.class})
+@CardUsed({CinderPyromancer.class, FlameJab.class, FangSkulkin.class, ChandraNalaar.class, DuergarHedgeMage.class})
 class CinderPyromancerTest extends BaseCardTest {
-
-    // ===== Activated ability: {T}: deal 1 damage to target player =====
 
     @Test
     @DisplayName("Tap ability deals 1 damage to target player")
@@ -35,7 +34,6 @@ class CinderPyromancerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tap ability deals 1 damage to a planeswalker")
-    @CardUsed({ChandraNalaar.class})
     void tapAbilityDealsDamageToPlaneswalker() {
         addReadyPyromancer(player1);
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
@@ -58,8 +56,6 @@ class CinderPyromancerTest extends BaseCardTest {
                 () -> harness.activateAbility(player1, 0, null, player2.getId())
         ).isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Red spell cast trigger: may untap =====
 
     @Test
     @DisplayName("Casting a red spell lets you untap this creature")
@@ -123,7 +119,79 @@ class CinderPyromancerTest extends BaseCardTest {
         assertThat(pyromancer.isTapped()).isTrue();
     }
 
-    // ===== Helper =====
+    @Test
+    @DisplayName("Hybrid red spell paid entirely with white mana triggers the untap")
+    void hybridRedSpellPaidWithWhiteTriggersUntap() {
+        Permanent pyromancer = addReadyPyromancer(player1);
+        pyromancer.tap();
+        harness.setHand(player1, List.of(new DuergarHedgeMage()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(pyromancer.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Duergar Hedge-Mage");
+    }
+
+    @Test
+    @DisplayName("The red spell trigger untaps only its source")
+    void untapDoesNotUntapOtherPermanents() {
+        Permanent pyromancer = addReadyPyromancer(player1);
+        Permanent other = addCreatureReady(player1, new FangSkulkin());
+        pyromancer.tap();
+        other.tap();
+        harness.setHand(player1, List.of(new FlameJab()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(pyromancer.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Pyromancer cannot activate its tap ability")
+    void summoningSicknessPreventsTapAbility() {
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new CinderPyromancer());
+        pyromancer.setSummoningSick(true);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.activateAbility(player1, 0, null, player2.getId())
+        ).isInstanceOf(IllegalStateException.class);
+
+        assertThat(pyromancer.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tap ability can target its controller")
+    void tapAbilityCanDamageController() {
+        addReadyPyromancer(player1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tap ability cannot target a creature")
+    void tapAbilityRejectsCreatureTarget() {
+        Permanent pyromancer = addReadyPyromancer(player1);
+        Permanent creature = addCreatureReady(player2, new FangSkulkin());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> harness.activateAbility(player1, 0, null, creature.getId())
+        ).isInstanceOf(IllegalStateException.class);
+
+        assertThat(pyromancer.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Fang Skulkin");
+    }
 
     private Permanent addReadyPyromancer(Player player) {
         return addCreatureReady(player, new CinderPyromancer());
