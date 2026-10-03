@@ -1,27 +1,21 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DireFleetRavager.class})
 class DireFleetRavagerTest extends BaseCardTest {
-
-    // ===== ETB trigger behavior =====
 
     @Test
     @DisplayName("Each player loses a third of their life rounded up on ETB")
     void eachPlayerLosesThirdOfLife() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new DireFleetRavager()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
         harness.passBothPriorities(); // resolve creature spell (puts ETB on stack)
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -35,10 +29,7 @@ class DireFleetRavagerTest extends BaseCardTest {
     void roundsUpCorrectly() {
         harness.setLife(player1, 10);
         harness.setLife(player2, 7);
-        harness.setHand(player1, List.of(new DireFleetRavager()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -53,10 +44,7 @@ class DireFleetRavagerTest extends BaseCardTest {
     void exactlyDivisibleByThree() {
         harness.setLife(player1, 9);
         harness.setLife(player2, 12);
-        harness.setHand(player1, List.of(new DireFleetRavager()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -71,10 +59,7 @@ class DireFleetRavagerTest extends BaseCardTest {
     void worksWithLowLife() {
         harness.setLife(player1, 1);
         harness.setLife(player2, 2);
-        harness.setHand(player1, List.of(new DireFleetRavager()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -82,5 +67,49 @@ class DireFleetRavagerTest extends BaseCardTest {
         // ceil(2/3) = 1, player2: 2 - 1 = 1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Life loss happens on trigger resolution using the current life totals")
+    void usesLifeTotalsAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dire Fleet Ravager");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 11);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 7);
+    }
+
+    @Test
+    @DisplayName("A second Ravager calculates life loss from the reduced totals")
+    void repeatedEntriesRecalculateLifeLoss() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 13);
+
+        harness.castFromHand(player1, new DireFleetRavager(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 8);
+        harness.assertLife(player2, 8);
     }
 }
