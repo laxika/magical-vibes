@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KavaronMemorialWorld;
 import com.github.laxika.magicalvibes.cards.s.SusurSecundiVoidAltar;
 import com.github.laxika.magicalvibes.cards.u.UthrosTitanicGodcore;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,16 +29,11 @@ class BroodAstronomerTest extends BaseCardTest {
     @DisplayName("ETB may sacrifice a land to draft one of three Planets and put it tapped")
     void draftsPlanetAfterSacrificingLand() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.setHand(player1, List.of(new BroodAstronomer()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, forest.getId());
-        harness.passBothPriorities();
 
         PendingInteraction.ColorChoice interaction =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -47,15 +41,20 @@ class BroodAstronomerTest extends BaseCardTest {
         assertThat(interaction.context()).isInstanceOf(ChoiceContext.ChooseModeChoice.class);
         ChoiceContext.ChooseModeChoice context = (ChoiceContext.ChooseModeChoice) interaction.context();
         assertThat(context.effect().options()).hasSize(3);
+        assertThat(context.effect().options().stream().map(option -> option.label()).toList())
+                .doesNotHaveDuplicates()
+                .allMatch(List.of("Adagia, Windswept Bastion", "Evendo, Waking Haven",
+                        "Kavaron, Memorial World", "Susur Secundi, Void Altar",
+                        "Uthros, Titanic Godcore")::contains);
         String chosenName = context.effect().options().getFirst().label();
 
         harness.handleListChoice(player1, chosenName);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Forest"));
+        harness.assertInGraveyard(player1, "Forest");
         Permanent chosen = findPermanent(player1, chosenName);
-        assertThat(chosen.getCard().hasType(CardType.LAND)).isTrue();
         assertThat(chosen.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertNotInHand(player1, chosenName);
     }
 
     @Test
@@ -69,13 +68,87 @@ class BroodAstronomerTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.GREEN.name());
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
-        harness.addToBattlefield(player1, new EvendoWakingHaven());
-        Permanent planet = findPermanent(player1, "Evendo, Waking Haven");
+        Permanent planet = harness.addToBattlefieldAndReturn(player1, new EvendoWakingHaven());
         planet.setCounterCount(CounterType.CHARGE, 12);
         astronomer.untap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Declining the sacrifice keeps the land and does not draft a Planet")
+    void decliningSacrificeDoesNotDraft() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No land to sacrifice means no Planet is drafted")
+    void noLandDoesNotDraft() {
+        harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eleven counters produce one mana and more than twelve produce three")
+    void manaThresholdUsesAtLeastTwelveCounters() {
+        Permanent astronomer = harness.addToBattlefieldAndReturn(player1, new BroodAstronomer());
+        astronomer.setSummoningSick(false);
+        Permanent planet = harness.addToBattlefieldAndReturn(player1, new EvendoWakingHaven());
+        planet.setCounterCount(CounterType.CHARGE, 11);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(astronomer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+
+        astronomer.untap();
+        planet.setCounterCount(CounterType.CHARGE, 13);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(astronomer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters must be on one Planet controlled by the mana ability's controller")
+    void otherCountersDoNotMeetManaCondition() {
+        Permanent astronomer = harness.addToBattlefieldAndReturn(player1, new BroodAstronomer());
+        astronomer.setSummoningSick(false);
+        Permanent firstPlanet = harness.addToBattlefieldAndReturn(player1, new EvendoWakingHaven());
+        Permanent secondPlanet = harness.addToBattlefieldAndReturn(player1, new AdagiaWindsweptBastion());
+        Permanent opposingPlanet = harness.addToBattlefieldAndReturn(player2, new UthrosTitanicGodcore());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        firstPlanet.setCounterCount(CounterType.CHARGE, 6);
+        secondPlanet.setCounterCount(CounterType.CHARGE, 6);
+        opposingPlanet.setCounterCount(CounterType.CHARGE, 12);
+        forest.setCounterCount(CounterType.CHARGE, 12);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }
