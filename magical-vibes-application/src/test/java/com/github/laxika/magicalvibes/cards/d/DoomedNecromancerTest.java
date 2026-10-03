@@ -294,5 +294,63 @@ class DoomedNecromancerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Cannot target the source that will be sacrificed to pay the cost")
+    void cannotTargetItselfBeforeSacrifice() {
+        DoomedNecromancer source = new DoomedNecromancer();
+        Permanent permanent = addCreatureReady(player1, source);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
+        harness.assertNotInGraveyard(player1, "Doomed Necromancer");
+        assertThat(permanent.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can return another Doomed Necromancer while the sacrificed source stays in the graveyard")
+    void returnsAnotherNecromancerRatherThanSacrificedSource() {
+        DoomedNecromancer source = new DoomedNecromancer();
+        DoomedNecromancer target = new DoomedNecromancer();
+        addCreatureReady(player1, source);
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Doomed Necromancer");
+        assertThat(returned.getCard().getId()).isEqualTo(target.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with more than one graveyard target")
+    void cannotChooseMultipleGraveyardTargets() {
+        Permanent source = addCreatureReady(player1, new DoomedNecromancer());
+        GrizzlyBears bears = new GrizzlyBears();
+        AngelOfMercy angel = new AngelOfMercy();
+        harness.setGraveyard(player1, List.of(bears, angel));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(bears.getId(), angel.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Doomed Necromancer");
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears, angel);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
 
