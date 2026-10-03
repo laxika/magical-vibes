@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonclawStrike.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({DragonclawStrike.class, GrizzlyBears.class, HillGiant.class, Unsummon.class})
 class DragonclawStrikeTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,7 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId));
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getEffectivePower()).isEqualTo(4);
@@ -45,8 +46,7 @@ class DragonclawStrikeTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, giantId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
@@ -63,11 +63,8 @@ class DragonclawStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(bearId));
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId));
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getEffectivePower()).isEqualTo(2);
@@ -101,5 +98,77 @@ class DragonclawStrikeTest extends BaseCardTest {
                 List.of(battlefield.get(0).getId(), battlefield.get(1).getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("Still doubles the controlled creature when the fight target leaves")
+    void doublesWhenFightTargetLeaves() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DragonclawStrike()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearId, giantId));
+        harness.castAndResolveInstant(player2, 0, giantId);
+        harness.passBothPriorities();
+
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertInHand(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Dragonclaw Strike");
+    }
+
+    @Test
+    @DisplayName("Does not double or damage the opponent's creature when the first target leaves")
+    void noFightWhenControlledTargetLeaves() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DragonclawStrike()));
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearId, giantId));
+        harness.castAndResolveInstant(player2, 0, bearId);
+        harness.passBothPriorities();
+
+        Permanent giant = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(giant.getEffectivePower()).isEqualTo(3);
+        assertThat(giant.getEffectiveToughness()).isEqualTo(3);
+        assertThat(giant.getMarkedDamage()).isZero();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dragonclaw Strike");
+    }
+
+    @Test
+    @DisplayName("Doubles current power and toughness including counters, without doubling the counters")
+    void doublesCurrentStatsWithCounters() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new DragonclawStrike()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(bear.getId()));
+
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        assertThat(bear.getEffectivePower()).isEqualTo(7);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(7);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
