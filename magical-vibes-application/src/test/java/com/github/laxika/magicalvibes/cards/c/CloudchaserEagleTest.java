@@ -22,16 +22,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CloudchaserEagle.class, Propaganda.class, ArmoredPegasus.class})
 class CloudchaserEagleTest extends BaseCardTest {
 
-    // ===== ETB destroy target enchantment =====
-
     @Test
     @DisplayName("Resolving enters battlefield and puts ETB destroy on the stack")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.addToBattlefield(player2, new Propaganda());
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new Propaganda());
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Propaganda");
+        UUID targetId = enchantment.getId();
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -46,11 +44,11 @@ class CloudchaserEagleTest extends BaseCardTest {
     @Test
     @DisplayName("ETB resolves and destroys the target enchantment")
     void etbDestroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new Propaganda());
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new Propaganda());
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Propaganda");
+        UUID targetId = enchantment.getId();
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -80,11 +78,11 @@ class CloudchaserEagleTest extends BaseCardTest {
     @Test
     @DisplayName("Can choose its controller's enchantment after entering without a cast-time target")
     void canChooseOwnEnchantmentAtTriggerTime() {
-        harness.addToBattlefield(player1, new Propaganda());
+        var enchantment = harness.addToBattlefieldAndReturn(player1, new Propaganda());
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player1, "Propaganda");
+        UUID targetId = enchantment.getId();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -96,25 +94,21 @@ class CloudchaserEagleTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Propaganda");
     }
 
-    // ===== Target restrictions =====
-
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        harness.addToBattlefield(player2, new ArmoredPegasus());
+        var creature = harness.addToBattlefieldAndReturn(player2, new ArmoredPegasus());
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID creatureId = harness.getPermanentId(player2, "Armored Pegasus");
+        UUID creatureId = creature.getId();
         assertThatThrownBy(() -> harness.castCreature(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== No target scenarios =====
-
     @Test
-    @DisplayName("ETB does not trigger when no enchantment exists")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB ability is not put on the stack when no legal target exists")
+    void etbIsNotPutOnStackWithoutTarget() {
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -126,16 +120,14 @@ class CloudchaserEagleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("ETB fizzles if target enchantment is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new Propaganda());
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new Propaganda());
         harness.setHand(player1, List.of(new CloudchaserEagle()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Propaganda");
+        UUID targetId = enchantment.getId();
         harness.castCreature(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -145,5 +137,24 @@ class CloudchaserEagleTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB destroys its target even after the Eagle leaves the battlefield")
+    void etbResolvesAfterSourceLeavesBattlefield() {
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new Propaganda());
+        harness.setHand(player1, List.of(new CloudchaserEagle()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, enchantment.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Cloudchaser Eagle");
+        harness.assertNotOnBattlefield(player2, "Propaganda");
+        harness.assertInGraveyard(player2, "Propaganda");
+        assertThat(gd.stack).isEmpty();
     }
 }
