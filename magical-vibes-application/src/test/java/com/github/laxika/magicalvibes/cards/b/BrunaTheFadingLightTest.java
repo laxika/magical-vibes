@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrunaTheFadingLight.class, GiselaTheBrokenBlade.class, BriselaVoiceOfNightmares.class,
+@CardUsed({BrunaTheFadingLight.class, GiselaTheBrokenBlade.class,
         GrizzlyBears.class, YouthfulKnight.class})
 class BrunaTheFadingLightTest extends BaseCardTest {
 
@@ -69,11 +70,64 @@ class BrunaTheFadingLightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 7);
 
         harness.castCreature(player1, 0);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(human.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Bruna, the Fading Light");
         harness.assertInGraveyard(player1, "Youthful Knight");
+    }
+
+    @Test
+    void castRequiresTargetEvenWhenReturnMayBeDeclined() {
+        harness.setGraveyard(player1, List.of(new YouthfulKnight()));
+        harness.setHand(player1, List.of(new BrunaTheFadingLight()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void enteringWithoutCastingDoesNotReturnCreature() {
+        harness.setGraveyard(player1, List.of(new YouthfulKnight()));
+
+        harness.enterBattlefieldAndReturn(player1, new BrunaTheFadingLight());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Bruna, the Fading Light");
+        harness.assertInGraveyard(player1, "Youthful Knight");
+    }
+
+    @Test
+    void castCannotReturnCreatureFromOpponentsGraveyard() {
+        harness.setGraveyard(player2, List.of(new GiselaTheBrokenBlade()));
+        harness.setHand(player1, List.of(new BrunaTheFadingLight()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Bruna, the Fading Light");
+        harness.assertNotOnBattlefield(player1, "Gisela, the Broken Blade");
+        harness.assertInGraveyard(player2, "Gisela, the Broken Blade");
+    }
+
+    @Test
+    void attackingDoesNotTapBruna() {
+        var bruna = addCreatureReady(player1, new BrunaTheFadingLight());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(bruna.isTapped()).isFalse();
+        harness.assertLife(player2, 15);
     }
 
     @Test
