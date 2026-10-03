@@ -104,4 +104,70 @@ class DiamondKaleidoscopeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot create a Prism without paying all three mana")
+    void cannotCreatePrismWithInsufficientMana() {
+        Permanent kaleidoscope = harness.addToBattlefieldAndReturn(player1, new DiamondKaleidoscope());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(kaleidoscope.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Prism");
+    }
+
+    @Test
+    @DisplayName("A tapped Kaleidoscope cannot create another Prism")
+    void cannotCreateAnotherPrismWhileTapped() {
+        harness.addToBattlefield(player1, new DiamondKaleidoscope());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanents(player1, "Prism")).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Prism can be sacrificed through a different Kaleidoscope")
+    void sacrificesTappedPrismCreatedByAnotherKaleidoscope() {
+        harness.addToBattlefield(player1, new DiamondKaleidoscope());
+        Permanent otherKaleidoscope = harness.addToBattlefieldAndReturn(player1, new DiamondKaleidoscope());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent prism = findPermanent(player1, "Prism");
+        prism.setTapped(true);
+        otherKaleidoscope.setTapped(true);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Prism");
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Prism cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsPrism() {
+        harness.addToBattlefield(player1, new DiamondKaleidoscope());
+        harness.addToBattlefield(player2, new DiamondKaleidoscope());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Prism");
+        assertThat(gd.stack).isEmpty();
+    }
 }
