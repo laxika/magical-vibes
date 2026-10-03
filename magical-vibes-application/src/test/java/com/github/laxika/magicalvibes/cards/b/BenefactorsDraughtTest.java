@@ -20,8 +20,8 @@ class BenefactorsDraughtTest extends BaseCardTest {
     void untapsAllCreaturesAndDrawsACard() {
         Permanent ownCreature = addReady(player1);
         Permanent opponentCreature = addReady(player2);
-        ownCreature.setTapped(true);
-        opponentCreature.setTapped(true);
+        ownCreature.tap();
+        opponentCreature.tap();
 
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         castBenefactorsDraught();
