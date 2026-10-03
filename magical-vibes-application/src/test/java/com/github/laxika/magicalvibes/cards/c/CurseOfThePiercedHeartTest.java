@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GarrukRelentless;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CurseOfThePiercedHeart.class, GarrukRelentless.class})
 class CurseOfThePiercedHeartTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Can cast Curse of the Pierced Heart targeting a player")
@@ -41,8 +44,6 @@ class CurseOfThePiercedHeartTest extends BaseCardTest {
                         && p.getAttachedTo().equals(player2.getId()));
     }
 
-    // ===== Upkeep trigger deals damage =====
-
     @Test
     @DisplayName("Enchanted player takes 1 damage at their upkeep")
     void enchantedPlayerTakes1DamageAtUpkeep() {
@@ -55,21 +56,18 @@ class CurseOfThePiercedHeartTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
-    // ===== Trigger timing =====
-
     @Test
     @DisplayName("Trigger does NOT fire during curse controller's upkeep")
     void triggerDoesNotFireDuringCurseControllerUpkeep() {
         placeCurseOnPlayer(player1, player2);
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
-
-    // ===== Multiple triggers =====
 
     @Test
     @DisplayName("Two curses deal 2 total damage at enchanted player's upkeep")
@@ -84,8 +82,6 @@ class CurseOfThePiercedHeartTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
-
-    // ===== Removal =====
 
     @Test
     @DisplayName("No damage trigger after curse is removed")
@@ -102,12 +98,56 @@ class CurseOfThePiercedHeartTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Helpers =====
-
     private Permanent placeCurseOnPlayer(Player controller, Player enchantedPlayer) {
-        Permanent cursePerm = new Permanent(new CurseOfThePiercedHeart());
+        Permanent cursePerm = harness.addToBattlefieldAndReturn(controller, new CurseOfThePiercedHeart());
         cursePerm.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(cursePerm);
         return cursePerm;
+    }
+
+    @Test
+    @DisplayName("The controller can choose a planeswalker controlled by the enchanted player")
+    void canDamageEnchantedPlayersPlaneswalker() {
+        placeCurseOnPlayer(player1, player2);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukRelentless());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(planeswalker.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A curse enchanting its controller damages that player at their upkeep")
+    void canEnchantItsController() {
+        placeCurseOnPlayer(player1, player1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Removing the curse after its upkeep trigger does not stop the damage")
+    void triggerResolvesAfterCurseLeavesBattlefield() {
+        Permanent curse = placeCurseOnPlayer(player1, player2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(curse);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 }
