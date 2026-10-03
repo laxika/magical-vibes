@@ -28,6 +28,34 @@ class DosansOldestChantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the controller gains life and draws exactly the top card on resolution")
+    void onlyControllerBenefitsAndDrawsExactlyOneCard() {
+        ArabaMothrider topCard = new ArabaMothrider();
+        ArabaMothrider nextCard = new ArabaMothrider();
+        ArabaMothrider opponentCard = new ArabaMothrider();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 13);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        harness.castFromHand(player1, new DosansOldestChant(), "{4}{G}");
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 13);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        harness.assertInGraveyard(player1, "Dosan's Oldest Chant");
+    }
+
+    @Test
     @DisplayName("Drawing from an empty library causes the controller to lose")
     void drawingFromEmptyLibraryCausesLoss() {
         harness.setLibrary(player1, List.of());
