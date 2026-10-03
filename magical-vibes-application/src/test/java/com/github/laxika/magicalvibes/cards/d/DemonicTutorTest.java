@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -35,8 +34,7 @@ class DemonicTutorTest extends BaseCardTest {
         assertThat(search.params().reveals()).isFalse();
 
         int chosenIndex = search.params().cards().indexOf(chosenCard);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(chosenIndex));
+        harness.handleCardChosen(player1, chosenIndex);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(chosenCard.getId()));
@@ -57,18 +55,40 @@ class DemonicTutorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        assertThatThrownBy(() -> harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(-1)))
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot fail to find");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(chosenCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(tutor.getId()));
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void canFindAnotherTutorWithoutRevealingItOrChangingOpponentsLibrary() {
+        DemonicTutor tutor = new DemonicTutor();
+        DemonicTutor chosenCard = new DemonicTutor();
+        Card remainingCard = new GrizzlyBears();
+        Card opponentsCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(remainingCard, chosenCard));
+        harness.setLibrary(player2, List.of(opponentsCard));
+        harness.castFromHand(player1, tutor, "{1}{B}");
+
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        harness.handleCardChosen(player1, search.params().cards().indexOf(chosenCard));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosenCard).doesNotContain(tutor);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(tutor).doesNotContain(chosenCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gameLogContains("reveals")).isFalse();
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
