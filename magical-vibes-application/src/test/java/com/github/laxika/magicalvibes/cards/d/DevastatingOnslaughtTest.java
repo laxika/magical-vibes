@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DevastatingOnslaught.class, Forest.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({DevastatingOnslaught.class, Forest.class, GrizzlyBears.class, MindStone.class, Clone.class})
 class DevastatingOnslaughtTest extends BaseCardTest {
 
     @Test
@@ -43,8 +44,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
                         new DelayedPermanentAction(tokens.get(0).getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
                         new DelayedPermanentAction(tokens.get(1).getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -78,5 +78,78 @@ class DevastatingOnslaughtTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or creature");
+    }
+
+    @Test
+    @DisplayName("X zero creates no tokens")
+    void zeroCreatesNoTokens() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevastatingOnslaught()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's creature")
+    void cannotTargetOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevastatingOnslaught()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("End-step sacrifice waits for its delayed trigger to resolve")
+    void sacrificeUsesTheStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevastatingOnslaught()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+    }
+
+    @Test
+    @DisplayName("Copying a token does not copy the haste granted by Onslaught")
+    void grantedHasteIsNotCopiable() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DevastatingOnslaught()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(target.getId())
+                        && !permanent.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(clone.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(clone);
     }
 }
