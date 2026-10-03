@@ -105,4 +105,48 @@ class DromosaurTest extends BaseCardTest {
         assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
         assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
     }
+
+    @Test
+    @DisplayName("Multiple blockers cause only one boost, after the trigger resolves")
+    void multipleBlockersCauseOneBoost() {
+        Permanent dromosaur = addCreatureReady(player1, new Dromosaur());
+        dromosaur.setAttacking(true);
+        addCreatureReady(player2, new GorillaWarrior());
+        addCreatureReady(player2, new GorillaWarrior());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(dromosaur.getPowerModifier()).isZero();
+        assertThat(dromosaur.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dromosaur);
+        assertThat(dromosaur.getPowerModifier()).isEqualTo(2);
+        assertThat(dromosaur.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Attacking and blocking Dromosaurs each receive their own boost")
+    void bothDromosaursTriggerIndependently() {
+        Permanent attacker = addCreatureReady(player1, new Dromosaur());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Dromosaur());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(-2);
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(-2);
+    }
 }
