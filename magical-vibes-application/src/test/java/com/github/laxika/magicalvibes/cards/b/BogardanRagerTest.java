@@ -107,15 +107,49 @@ class BogardanRagerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not create an ETB trigger when no creature can be targeted")
-    void doesNotTriggerWithoutLegalTarget() {
+    @DisplayName("Can target itself when no other creature is on the battlefield")
+    void canTargetItselfWithoutOtherCreatures() {
         harness.addToBattlefield(player2, new Forest());
         harness.castFromHand(player1, new BogardanRager(), "{5}{R}");
 
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Bogardan Rager");
+        Permanent rager = findPermanent(player1, "Bogardan Rager");
+        harness.handlePermanentChosen(player1, rager.getId());
+        harness.passBothPriorities();
+
+        assertThat(rager.getEffectivePower()).isEqualTo(7);
+        assertThat(rager.getEffectiveToughness()).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chooses the ETB target after entering rather than requiring a cast target")
+    void choosesTargetAfterEntering() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        harness.castFromHand(player1, new BogardanRager(), "{5}{R}");
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ETB boost still resolves after Bogardan Rager leaves the battlefield")
+    void boostResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        castBogardanRager(target.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Bogardan Rager"));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(6);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castBogardanRager(UUID targetId) {
