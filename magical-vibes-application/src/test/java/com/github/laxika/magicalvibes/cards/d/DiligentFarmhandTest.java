@@ -122,6 +122,54 @@ class DiligentFarmhandTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Farmhand is sacrificed as a cost before the search resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        activateAbility();
+
+        harness.assertNotOnBattlefield(player1, "Diligent Farmhand");
+        harness.assertInGraveyard(player1, "Diligent Farmhand");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A tapped Farmhand can activate its search ability")
+    void tappedFarmhandCanActivate() {
+        var farmhand = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
+        farmhand.setTapped(true);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Diligent Farmhand");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching a library without basic lands completes without a choice")
+    void searchWithoutBasicLandsCompletes() {
+        harness.addToBattlefield(player1, new DiligentFarmhand());
+        harness.setLibrary(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Diligent Farmhand");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateAbility() {
         harness.addToBattlefield(player1, new DiligentFarmhand());
         harness.addMana(player1, ManaColor.GREEN, 2);
