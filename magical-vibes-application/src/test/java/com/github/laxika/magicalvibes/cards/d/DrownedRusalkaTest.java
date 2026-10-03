@@ -72,4 +72,53 @@ class DrownedRusalkaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(rusalka.getCard());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
+
+    @Test
+    @DisplayName("Chooses the discard before drawing and pays the sacrifice before resolution")
+    void choosesDiscardBeforeDrawing() {
+        Permanent rusalka = addCreatureReady(player1, new DrownedRusalka());
+        DrownedRusalka kept = new DrownedRusalka();
+        DrownedRusalka discarded = new DrownedRusalka();
+        DrownedRusalka drawn = new DrownedRusalka();
+        harness.setHand(player1, List.of(kept, discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rusalka);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rusalka.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rusalka.getCard(), discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new DrownedRusalka());
+        rusalka.setSummoningSick(true);
+        rusalka.setTapped(true);
+        DrownedRusalka drawn = new DrownedRusalka();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rusalka);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rusalka.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
 }
