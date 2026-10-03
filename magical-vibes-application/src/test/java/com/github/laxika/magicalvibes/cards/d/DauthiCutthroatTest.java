@@ -54,4 +54,72 @@ class DauthiCutthroatTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Soltari Visionary");
     }
+
+    @Test
+    void canDestroyItself() {
+        Permanent source = addCreatureReady(player1, new DauthiCutthroat());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dauthi Cutthroat");
+        harness.assertInGraveyard(player1, "Dauthi Cutthroat");
+    }
+
+    @Test
+    void cannotActivateWithoutBlackMana() {
+        Permanent source = addCreatureReady(player1, new DauthiCutthroat());
+        Permanent target = addCreatureReady(player2, new SoltariVisionary());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Soltari Visionary");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new DauthiCutthroat());
+        Permanent target = addCreatureReady(player2, new SoltariVisionary());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Soltari Visionary");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent source = addCreatureReady(player1, new DauthiCutthroat());
+        source.tap();
+        Permanent target = addCreatureReady(player2, new SoltariVisionary());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Soltari Visionary");
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new DauthiCutthroat());
+        Permanent target = addCreatureReady(player2, new SoltariVisionary());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Soltari Visionary");
+    }
 }
