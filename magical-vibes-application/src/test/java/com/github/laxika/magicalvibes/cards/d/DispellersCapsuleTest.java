@@ -13,15 +13,16 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DispellersCapsule.class, GloriousAnthem.class, GrizzlyBears.class, Island.class,
+        LeoninScimitar.class, Ornithopter.class})
 class DispellersCapsuleTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating ability sacrifices Dispeller's Capsule and puts ability on the stack")
@@ -43,8 +44,6 @@ class DispellersCapsuleTest extends BaseCardTest {
         assertThat(entry.getCard().getName()).isEqualTo("Dispeller's Capsule");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Resolving ability destroys target artifact")
@@ -88,8 +87,6 @@ class DispellersCapsuleTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ornithopter");
     }
 
-    // ===== Mana requirements =====
-
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutEnoughMana() {
@@ -111,8 +108,6 @@ class DispellersCapsuleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Tap cost =====
-
     @Test
     @DisplayName("Cannot activate if Dispeller's Capsule is already tapped")
     void cannotActivateWhenTapped() {
@@ -124,8 +119,6 @@ class DispellersCapsuleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Target filter =====
 
     @Test
     @DisplayName("Cannot target creature")
@@ -149,8 +142,6 @@ class DispellersCapsuleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
@@ -170,7 +161,48 @@ class DispellersCapsuleTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A noncreature Capsule can activate the turn it enters")
+    void canActivateTheTurnItEnters() {
+        harness.addToBattlefield(player1, new DispellersCapsule());
+        Permanent target = addReadyArtifact(player2);
+        addCapsuleMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dispeller's Capsule");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the Capsule's controller")
+    void canDestroyOwnArtifact() {
+        addReadyCapsule(player1);
+        Permanent target = addReadyArtifact(player1);
+        addCapsuleMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Can target itself, then sacrifice it as the cost")
+    void canTargetItself() {
+        Permanent capsule = addReadyCapsule(player1);
+        addCapsuleMana(player1);
+
+        harness.activateAbility(player1, 0, null, capsule.getId());
+
+        harness.assertInGraveyard(player1, "Dispeller's Capsule");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
 
     private void addCapsuleMana(Player player) {
         harness.addMana(player, ManaColor.WHITE, 1);
@@ -178,40 +210,22 @@ class DispellersCapsuleTest extends BaseCardTest {
     }
 
     private Permanent addReadyCapsule(Player player) {
-        DispellersCapsule card = new DispellersCapsule();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DispellersCapsule());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new LeoninScimitar());
     }
 
     private Permanent addReadyArtifactCreature(Player player) {
-        Ornithopter card = new Ornithopter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Ornithopter());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }
