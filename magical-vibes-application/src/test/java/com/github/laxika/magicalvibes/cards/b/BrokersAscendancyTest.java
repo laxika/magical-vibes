@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.e.ElspethResplendent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VenomConnoisseur;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrokersAscendancy.class, ChandraNalaar.class, GrizzlyBears.class})
+@CardUsed({BrokersAscendancy.class, ChandraNalaar.class, GrizzlyBears.class,
+        ElspethResplendent.class, VenomConnoisseur.class})
 class BrokersAscendancyTest extends BaseCardTest {
 
     @Test
@@ -36,10 +39,66 @@ class BrokersAscendancyTest extends BaseCardTest {
         assertThat(ascendancy.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new BrokersAscendancy());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new VenomConnoisseur());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ElspethResplendent());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        advanceToEndStep(player2);
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
+
+    @Test
+    void addsCountersToEveryCreatureIncludingExistingCounters() {
+        harness.addToBattlefield(player1, new BrokersAscendancy());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new VenomConnoisseur());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new VenomConnoisseur());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void addsLoyaltyWhenThereAreNoCreatures() {
+        harness.addToBattlefield(player1, new BrokersAscendancy());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ElspethResplendent());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(planeswalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void resolvesAfterSourceLeavesAndIncludesCreaturesAddedBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new BrokersAscendancy());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new VenomConnoisseur());
+
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
