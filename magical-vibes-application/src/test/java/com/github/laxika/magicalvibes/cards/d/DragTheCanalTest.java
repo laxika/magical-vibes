@@ -61,11 +61,49 @@ class DragTheCanalTest extends BaseCardTest {
         assertThat(detective.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    void checksOpponentsCreatureDeathAfterCastingAndInvestigatesWithEmptyLibrary() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new DragTheCanal(), "{U}{B}");
+
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Detective")).hasSize(1);
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int clueIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Clue"));
+        harness.activateAbility(player1, clueIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    void creatureCardAlreadyInGraveyardDoesNotEnableBonus() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        castDragTheCanal();
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Detective")).hasSize(1);
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
     private void castDragTheCanal() {
-        harness.setHand(player1, List.of(new DragTheCanal()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DragTheCanal(), "{U}{B}");
         harness.passBothPriorities();
     }
 }
