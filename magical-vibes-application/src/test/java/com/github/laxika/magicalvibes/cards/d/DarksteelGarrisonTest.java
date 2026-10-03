@@ -76,10 +76,9 @@ class DarksteelGarrisonTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping the fortified land gives a target creature +1/+1")
     void tappingFortifiedLandBoostsTargetCreature() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent land = addCreatureReady(player1, new DryadArbor());
         Permanent garrison = harness.addToBattlefieldAndReturn(player1, new DarksteelGarrison());
         garrison.setAttachedTo(land.getId());
-        land.setSummoningSick(false);
         Permanent creature = addCreatureReady(player1, new NessianCourser());
 
         harness.tapPermanent(player1, indexOf(player1, land));
@@ -103,6 +102,45 @@ class DarksteelGarrisonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(garrison);
         assertThat(garrison.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Moving the Garrison transfers indestructible to the new fortified land")
+    void movingGarrisonTransfersIndestructible() {
+        Permanent oldLand = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent newLand = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new DarksteelGarrison());
+        garrison.setAttachedTo(oldLand.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase(player1);
+
+        harness.activateAbility(player1, indexOf(player1, garrison), null, newLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(garrison.getAttachedTo()).isEqualTo(newLand.getId());
+        assertThat(gqs.hasKeyword(gd, oldLand, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, newLand, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, garrison, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The tap trigger can boost an opponent's creature and survives its source leaving")
+    void tapTriggerCanTargetOpponentAndSurvivesSourceLeaving() {
+        Permanent land = addCreatureReady(player1, new DryadArbor());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new DarksteelGarrison());
+        garrison.setAttachedTo(land.getId());
+        Permanent creature = addCreatureReady(player2, new NessianCourser());
+
+        harness.tapPermanent(player1, indexOf(player1, land));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(garrison);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private void prepareMainPhase(Player activePlayer) {
