@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DjerusResolve.class, GrizzlyBears.class, Mountain.class, Shock.class})
 class DjerusResolveTest extends BaseCardTest {
 
     @Test
@@ -37,8 +41,7 @@ class DjerusResolveTest extends BaseCardTest {
         shock(creature);
 
         // Shock (2 damage) to a protected 2/2 — it survives.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(creature.getId()));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -49,8 +52,8 @@ class DjerusResolveTest extends BaseCardTest {
 
         castResolve(creature);
 
-        // Simulate end-of-turn cleanup clearing the one-turn prevention shield.
-        gd.creaturesWithAllDamagePrevented.clear();
+        harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         shock(creature);
 
@@ -84,19 +87,103 @@ class DjerusResolveTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Prevention applies to multiple damage events on an already untapped creature")
+    void preventsRepeatedDamageToUntappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castResolve(creature);
+        shock(creature);
+        shock(creature);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can untap and protect an opponent's creature")
+    void protectsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+
+        castResolve(creature);
+        shock(creature);
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Protects only the targeted creature")
+    void doesNotProtectOtherCreatures() {
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castResolve(protectedCreature);
+        shock(otherCreature);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cycling requires the full two mana and does not discard when payment fails")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new DjerusResolve()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Djeru's Resolve");
+        harness.assertNotInGraveyard(player1, "Djeru's Resolve");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevents incoming combat damage while the protected creature still deals damage")
+    void preventsCombatDamageOnlyToTarget() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        castResolve(attacker);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost before the draw resolves")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new DjerusResolve()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Djeru's Resolve");
+        harness.assertNotInHand(player1, "Djeru's Resolve");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
 
     private void castResolve(Permanent target) {
         harness.setHand(player1, List.of(new DjerusResolve()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void shock(Permanent target) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
