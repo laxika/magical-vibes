@@ -10,7 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChitinousCloak.class, GrizzlyBears.class})
 class ChitinousCloakTest extends BaseCardTest {
@@ -59,14 +63,78 @@ class ChitinousCloakTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, secondCreature, Keyword.MENACE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Equip attaches an unattached cloak for three generic mana")
+    void equipAttachesCloak() {
+        Permanent cloak = addCloakReady(player1);
+        Permanent creature = addCreatureReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        assertThat(cloak.getAttachedTo()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(cloak.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        addCloakReady(player1);
+        Permanent creature = addCreatureReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    @DisplayName("An equip target leaving does not detach the cloak from its previous creature")
+    void failedReEquipKeepsPreviousAttachment() {
+        Permanent cloak = addCloakReady(player1);
+        Permanent firstCreature = addCreatureReady(player1);
+        Permanent secondCreature = addCreatureReady(player1);
+        cloak.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(secondCreature);
+        gd.playerGraveyards.get(player1.getId()).add(secondCreature.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(cloak.getAttachedTo()).isEqualTo(firstCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, firstCreature, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted menace requires at least two blockers")
+    void menaceRequiresTwoBlockers() {
+        Permanent creature = addCreatureReady(player1);
+        Permanent cloak = addCloakReady(player1);
+        cloak.setAttachedTo(creature.getId());
+        addCreatureReady(player2);
+        addCreatureReady(player2);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, Map.of(0, 0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked except by two or more creatures");
+        gs.declareBlockers(gd, player2, Map.of(0, 0, 1, 0));
+    }
+
     private Permanent addCreatureReady(Player player) {
         return addCreatureReady(player, new GrizzlyBears());
     }
 
     private Permanent addCloakReady(Player player) {
-        Permanent perm = new Permanent(new ChitinousCloak());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ChitinousCloak());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
