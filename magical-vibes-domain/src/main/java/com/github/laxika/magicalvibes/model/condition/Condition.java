@@ -42,6 +42,7 @@ public sealed interface Condition permits
         AnyPlayerControlsPermanentCountAtMost,
         AnyPlayerControlsNoPermanent,
         AnyPlayerDiscardedCardThisTurn,
+        AnyPlayerDealtCombatDamageBySubtypeThisTurn,
         AnyOf,
         AtLeastPlayersLostGame,
         AttachedPermanentControllerControlsNoOther,

@@ -8367,6 +8367,9 @@ public class TriggerCollectionService {
                 if (isPreCollectedActivationEffect(effect, preCollectedEffects)) continue;
                 CardEffect resolved = effect.resolveForActivatedAbility(ability);
                 if (resolved == null) continue;
+                CardEffect authoredEffect = resolved;
+                resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, resolved);
+                if (resolved == null) continue;
                 resolved = resolveTriggeringPermanentConditional(
                         gameData, perm, ownerId, activatedPermanent, resolved);
                 if (resolved == null) continue;
@@ -8382,7 +8385,11 @@ public class TriggerCollectionService {
                         perm.getId());
                 // "That player" is the opponent who activated the ability — set by the event, not chosen.
                 trigger.setNonTargeting(true);
+                if (authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
+                    trigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                }
                 gameData.enqueueTrigger(trigger);
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, perm, authoredEffect);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} triggers on opponent non-mana ability activation ({})",
                         gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());

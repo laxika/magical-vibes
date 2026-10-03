@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyar
 @CardRegistration(set = "SLD", collectorNumber = "1981")
 @CardRegistration(set = "FIC", collectorNumber = "279")
 @CardRegistration(set = "MOC", collectorNumber = "258")
+@CardRegistration(set = "DRC", collectorNumber = "45")
 public class MurderousRider extends Card {
 
     public MurderousRider() {

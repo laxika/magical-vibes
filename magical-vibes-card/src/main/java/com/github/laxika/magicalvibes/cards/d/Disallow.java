@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 
 @CardRegistration(set = "AER", collectorNumber = "31")
 @CardRegistration(set = "KLR", collectorNumber = "46")
+@CardRegistration(set = "DRC", collectorNumber = "74")
 public class Disallow extends Card {
 
     public Disallow() {

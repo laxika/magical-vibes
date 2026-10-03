@@ -6231,8 +6231,8 @@ public class StepTriggerService {
                                 null,
                                 perm.getId()
                         );
+                        entry.setSourcePermanentSnapshot(new Permanent(perm));
                         if (effect instanceof DamageDealingEffect) {
-                            entry.setSourcePermanentSnapshot(new Permanent(perm));
                             if (perm.isAttached()) {
                                 UUID enchantedPermanentControllerId =
                                         gameQueryService.findPermanentController(gameData, perm.getAttachedTo());

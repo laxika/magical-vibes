@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "KLD", collectorNumber = "145")
 @CardRegistration(set = "KLR", collectorNumber = "154")
+@CardRegistration(set = "DRC", collectorNumber = "109")
 public class AttuneWithAether extends Card {
 
     public AttuneWithAether() {

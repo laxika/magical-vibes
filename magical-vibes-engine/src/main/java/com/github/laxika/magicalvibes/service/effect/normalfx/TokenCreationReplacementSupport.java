@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEf
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddMutagenTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSoldierTokenToCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.AddThopterTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.AddTreasureToFoodTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSquirrelTokenToTokenCreationEffect;
@@ -95,6 +96,24 @@ public final class TokenCreationReplacementSupport {
             return 0;
         }
         return additionalMapTokenCount(gameData, controllerId);
+    }
+
+    static int additionalThopterTokenCount(GameData gameData, UUID controllerId,
+                                           CreateTokenEffect token, int amount) {
+        if (amount <= 0 || !isArtifactToken(token)) {
+            return 0;
+        }
+        return countActiveStaticEffects(gameData, controllerId,
+                AddThopterTokenToArtifactTokenCreationEffect.class);
+    }
+
+    static CreateTokenEffect additionalThopterToken(CreateTokenEffect original) {
+        return withEventModifiers(thopterToken(), original);
+    }
+
+    private static CreateTokenEffect thopterToken() {
+        return new CreateTokenEffect("Thopter", 1, 1, null,
+                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT));
     }
 
     static int additionalMapTokenCount(GameData gameData, UUID controllerId,

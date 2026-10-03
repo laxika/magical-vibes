@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.BlightCost;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeXValueModifierEffect;
@@ -11869,7 +11870,9 @@ public class SpellCastingService {
                     castingCostService.findAffordableAlternativeCostSelection(
                             gameData, playerId, card, pool, additionalCost, sourceZone);
             if (alternativeCost != null) {
-                if (alternativeCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost) {
+                if (alternativeCost.nonManaCost() instanceof AlternativeSpellCost nonManaCost
+                        && nonManaCost.kind()
+                        == AlternativeSpellCost.Kind.PAY_LIFE_EQUAL_TO_SPELL_MANA_VALUE) {
                     ManaCost additionalCostMana = additionalCostsMana.isEmpty()
                             ? null
                             : castingCostService.applyColoredManaCostReductions(
@@ -11885,6 +11888,32 @@ public class SpellCastingService {
                     }
                     lifeSupport.applyLifePayment(gameData, playerId, card.getManaValue(),
                             card.getName());
+                    castingCostService.consumeAlternativeCost(alternativeCost, gameData);
+                    return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+                }
+                if (alternativeCost.nonManaCost() instanceof AlternativeSpellCost nonManaCost
+                        && nonManaCost.kind() == AlternativeSpellCost.Kind.PAY_ENERGY) {
+                    ManaCost additionalCostMana = additionalCostsMana.isEmpty()
+                            ? null
+                            : castingCostService.applyColoredManaCostReductions(
+                                    gameData, playerId, card, new ManaCost(additionalCostsMana));
+                    if (additionalCostMana != null
+                            && !additionalCostMana.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay additional spell costs");
+                    }
+                    if (additionalCostMana != null) {
+                        additionalCostMana.payWithAdditionalGenericCost(pool, 0, additionalCost);
+                    } else if (!canPayAdditionalGenericCost(pool, additionalCost)) {
+                        throw new IllegalStateException("Not enough mana to pay additional spell costs");
+                    }
+                    int currentEnergy = gameData.playerEnergyCounters.getOrDefault(playerId, 0);
+                    if (currentEnergy < nonManaCost.amount()) {
+                        throw new IllegalStateException("Not enough energy to pay alternative spell cost");
+                    }
+                    gameData.setPlayerEnergyCounters(playerId, currentEnergy - nonManaCost.amount());
+                    gameLogService.append(gameData, GameLog.text(gameData.playerIdToName
+                            .getOrDefault(playerId, "Player") + " pays " + nonManaCost.amount()
+                            + " energy counter(s) to cast " + card.getName() + "."));
                     castingCostService.consumeAlternativeCost(alternativeCost, gameData);
                     return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
                 }

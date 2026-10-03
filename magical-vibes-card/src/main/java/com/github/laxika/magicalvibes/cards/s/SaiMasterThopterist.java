@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "CMM", collectorNumber = "118")
 @CardRegistration(set = "CMM", collectorNumber = "494")
 @CardRegistration(set = "NEC", collectorNumber = "97")
+@CardRegistration(set = "DRC", collectorNumber = "82")
 public class SaiMasterThopterist extends Card {
 
     public SaiMasterThopterist() {

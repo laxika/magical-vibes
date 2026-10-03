@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "GNT", collectorNumber = "33")
 @CardRegistration(set = "GN3", collectorNumber = "55")
 @CardRegistration(set = "MIC", collectorNumber = "124")
+@CardRegistration(set = "DRC", collectorNumber = "95")
 public class LordOfTheAccursed extends Card {
 
     public LordOfTheAccursed() {

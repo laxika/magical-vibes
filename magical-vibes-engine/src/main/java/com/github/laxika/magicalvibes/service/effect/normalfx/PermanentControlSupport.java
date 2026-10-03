@@ -116,6 +116,10 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
+        int additionalThopterTokenCount = applyAdditionalReplacements
+                ? TokenCreationReplacementSupport.additionalThopterTokenCount(
+                        gameData, controllerId, token, amount)
+                : 0;
         int additionalMutagenTokenCount = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
                 : 0;
@@ -163,8 +167,8 @@ public class PermanentControlSupport {
             additionalSoldierTokenCount = 0;
         }
         List<CreateTokenEffect> tokenBlueprints = new ArrayList<>(
-                (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
-                        + additionalMapTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
+                        (academyManufactorTokenBlueprints.isEmpty() ? totalAmount : academyManufactorTokenBlueprints.size())
+                        + additionalMapTokenCount + additionalThopterTokenCount + additionalFrogTokenCount + additionalSquirrelTokenCount
                         + additionalMutagenTokenCount + additionalTreasureTokenCount + additionalFoodTokenCount
                         + additionalSoldierTokenCount);
         if (academyManufactorTokenBlueprints.isEmpty()) {
@@ -188,6 +192,12 @@ public class PermanentControlSupport {
         }
         for (int i = 0; i < additionalMapTokenCount; i++) {
             tokenBlueprints.add(TokenCreationReplacementSupport.additionalMapToken(token));
+        }
+        CreateTokenEffect additionalThopterToken = additionalThopterTokenCount > 0
+                ? TokenCreationReplacementSupport.additionalThopterToken(token)
+                : null;
+        for (int i = 0; i < additionalThopterTokenCount; i++) {
+            tokenBlueprints.add(additionalThopterToken);
         }
         if (additionalFrogTokenCount > 0) {
             tokenBlueprints.add(additionalFrog);
