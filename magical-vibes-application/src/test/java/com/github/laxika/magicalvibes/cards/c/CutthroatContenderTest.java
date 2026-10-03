@@ -51,9 +51,7 @@ class CutthroatContenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, contender)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, contender)).isEqualTo(1);
@@ -68,22 +66,74 @@ class CutthroatContenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("Life is paid and the activation limit applies before the ability resolves")
+    void costAndLimitApplyWhileAbilityIsOnStack() {
+        Permanent contender = addReadyContender(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gqs.getEffectivePower(gd, contender)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, contender)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick contender can activate its ability")
+    void tappedSummoningSickContenderCanActivate() {
+        Permanent contender = harness.addToBattlefieldAndReturn(player1, new CutthroatContender());
+        contender.setSummoningSick(true);
+        contender.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gqs.getEffectivePower(gd, contender)).isEqualTo(2);
+        assertThat(contender.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each contender has its own activation limit and boosts only itself")
+    void activationLimitIsPerPermanent() {
+        Permanent first = addReadyContender(player1);
+        Permanent second = addReadyContender(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
     private Permanent addReadyContender(Player player) {
-        Permanent permanent = new Permanent(new CutthroatContender());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new CutthroatContender());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
