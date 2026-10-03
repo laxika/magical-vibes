@@ -93,4 +93,38 @@ class CounselOfTheSoratamiTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
+
+    @Test
+    @DisplayName("Draws exactly two cards for the controller without affecting the opponent")
+    void drawsExactlyTwoForControllerOnly() {
+        CounselOfTheSoratami firstDraw = new CounselOfTheSoratami();
+        CounselOfTheSoratami secondDraw = new CounselOfTheSoratami();
+        CounselOfTheSoratami remainingCard = new CounselOfTheSoratami();
+        CounselOfTheSoratami opponentCard = new CounselOfTheSoratami();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setHand(player2, List.of());
+
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Drawing from an empty library loses the game")
+    void drawingFromEmptyLibraryLosesGame() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
 }

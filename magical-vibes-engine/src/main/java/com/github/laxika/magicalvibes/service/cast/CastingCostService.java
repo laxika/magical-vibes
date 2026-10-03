@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.FreePowerUpEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -2009,10 +2010,20 @@ public class CastingCostService {
                         && (!altCost.oncePerTurn() || !gameData.freeCastPermanentUsedThisTurn.contains(perm.getId()))
                         && manaValueCapSatisfied(gameData, playerId, perm, card, altCost)
                         && matchesAlternativeCostPredicate(gameData, playerId, card, altCost.filter())) {
-                    if (altCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
+                    if (altCost.nonManaCost() instanceof AlternativeSpellCost alternativeSpellCost
+                            && alternativeSpellCost.kind()
+                            == AlternativeSpellCost.Kind.PAY_LIFE_EQUAL_TO_SPELL_MANA_VALUE
                             && gameData.getLife(playerId) >= card.getManaValue()
                             && gameQueryService.canPlayerLifeChange(gameData, playerId)
                             && gameQueryService.canPayLifeOrSacrificeCreaturesForCosts(gameData)
+                            && canPayAdditionalManaCost(pool, additionalCost)) {
+                        return new AlternativeCostSelection(null, altCost.castsWithWarp(),
+                                altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());
+                    }
+                    if (altCost.nonManaCost() instanceof AlternativeSpellCost alternativeSpellCost
+                            && alternativeSpellCost.kind() == AlternativeSpellCost.Kind.PAY_ENERGY
+                            && gameData.playerEnergyCounters.getOrDefault(playerId, 0)
+                            >= alternativeSpellCost.amount()
                             && canPayAdditionalManaCost(pool, additionalCost)) {
                         return new AlternativeCostSelection(null, altCost.castsWithWarp(),
                                 altCost.nonManaCost(), perm.getId(), altCost.oncePerTurn());

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NaturalAffinity;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.s.SpectersWail;
 import com.github.laxika.magicalvibes.cards.s.StingingBarrier;
 import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Cowardice.class, Confiscate.class, GrizzlyBears.class, Naturalize.class, Forest.class, NaturalAffinity.class, SamiteHealer.class, Shock.class, DartingMerfolk.class, SpectersWail.class, StingingBarrier.class, Vendetta.class})
+@CardUsed({Cowardice.class, Confiscate.class, GrizzlyBears.class, Naturalize.class, Forest.class, NaturalAffinity.class, SamiteHealer.class, Shock.class, Nekrataal.class})
 class CowardiceTest extends BaseCardTest {
 
     @Test
@@ -101,6 +101,7 @@ class CowardiceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving an ability trigger returns the creature and stops the ability")
+    @CardUsed({DartingMerfolk.class, StingingBarrier.class})
     void resolvingAbilityTriggerReturnsCreatureToOwnersHand() {
         harness.addToBattlefield(player1, new Cowardice());
         harness.addToBattlefield(player1, new DartingMerfolk());
@@ -173,8 +174,7 @@ class CowardiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NaturalAffinity()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
 
@@ -247,6 +247,7 @@ class CowardiceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Triggers when an opponent's creature becomes the target")
+    @CardUsed({DartingMerfolk.class, Vendetta.class})
     void triggersForOpponentCreature() {
         harness.addToBattlefield(player1, new Cowardice());
         harness.addToBattlefield(player2, new DartingMerfolk());
@@ -267,6 +268,7 @@ class CowardiceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a controlled creature to its owner's hand")
+    @CardUsed({DartingMerfolk.class, Vendetta.class})
     void returnsControlledCreatureToOwnersHand() {
         Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DartingMerfolk());
         gd.playerBattlefields.get(player1.getId()).remove(merfolk);
@@ -281,11 +283,93 @@ class CowardiceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Vendetta()));
         harness.addMana(player2, ManaColor.BLACK, 1);
 
-        harness.castInstant(player2, 0, merfolk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
 
         harness.assertNotOnBattlefield(player2, "Darting Merfolk");
         harness.assertInHand(player1, "Darting Merfolk");
         harness.assertNotInHand(player2, "Darting Merfolk");
+    }
+
+    @Test
+    @DisplayName("An Aura spell targeting a creature triggers Cowardice before it attaches")
+    void auraSpellReturnsCreatureBeforeAttaching() {
+        harness.addToBattlefield(player1, new Cowardice());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Confiscate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Confiscate");
+        harness.assertNotOnBattlefield(player1, "Confiscate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A targeted triggered ability triggers Cowardice")
+    void triggersOnTargetedTriggeredAbility() {
+        harness.addToBattlefield(player1, new Cowardice());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Nekrataal()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Nekrataal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A non-targeting ability affecting a creature does not trigger Cowardice")
+    @CardUsed({DartingMerfolk.class})
+    void doesNotTriggerOnNonTargetingAbility() {
+        harness.addToBattlefield(player1, new Cowardice());
+        harness.addToBattlefield(player1, new DartingMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Darting Merfolk");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cowardice's trigger resolves even if Cowardice is destroyed in response")
+    void triggerSurvivesSourceRemoval() {
+        Permanent cowardice = harness.addToBattlefieldAndReturn(player1, new Cowardice());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Naturalize()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, cowardice.getId());
+
+        harness.assertInGraveyard(player1, "Cowardice");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }

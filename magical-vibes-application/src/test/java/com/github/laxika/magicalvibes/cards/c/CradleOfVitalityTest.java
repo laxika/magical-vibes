@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.d.DeftDuelist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WhitesunsPassage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,19 +20,20 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({CradleOfVitality.class, AngelOfMercy.class, GrizzlyBears.class,
+        WhitesunsPassage.class, DeftDuelist.class})
 class CradleOfVitalityTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {1}{W} puts +1/+1 counters equal to life gained on target creature")
     void payPutsCountersEqualToLifeGained() {
         harness.addToBattlefield(player1, new CradleOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         // Angel of Mercy: {4}{W} to cast + {1}{W} for Cradle's payment.
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 7);
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
         UUID bearsId = bears.getId();
 
         harness.castCreature(player1, 0);
@@ -49,12 +53,10 @@ class CradleOfVitalityTest extends BaseCardTest {
     @DisplayName("Declining the payment places no counters")
     void declineNoCounters() {
         harness.addToBattlefield(player1, new CradleOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 7);
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -73,12 +75,10 @@ class CradleOfVitalityTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana places no counters")
     void cannotPayNoCounters() {
         harness.addToBattlefield(player1, new CradleOfVitality());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5); // only enough for Angel, not the {1}{W}
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -98,15 +98,14 @@ class CradleOfVitalityTest extends BaseCardTest {
     void noCreatureTargetSkips() {
         harness.addToBattlefield(player1, new CradleOfVitality());
 
-        // Whitesun's Passage is a sorcery that gains 5 life; no creature enters the battlefield.
+        // Whitesun's Passage gains 5 life without adding a creature to the battlefield.
         harness.setHand(player1, List.of(new WhitesunsPassage()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.setLife(player1, 20);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
@@ -155,5 +154,59 @@ class CradleOfVitalityTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures with shroud are excluded from the target choice")
+    void excludesShroudFromTargets() {
+        harness.addToBattlefield(player1, new CradleOfVitality());
+        Permanent duelist = harness.addToBattlefieldAndReturn(player1, new DeftDuelist());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).doesNotContain(duelist.getId());
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Angel of Mercy"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("The trigger is removed when every creature has shroud")
+    void onlyShroudCreaturesLeavesNoTargetPrompt() {
+        harness.addToBattlefield(player1, new CradleOfVitality());
+        harness.addToBattlefield(player1, new DeftDuelist());
+        harness.setHand(player1, List.of(new WhitesunsPassage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 25);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A five-life event puts five counters on the chosen creature")
+    void fiveLifeGainPlacesFiveCounters() {
+        harness.addToBattlefield(player1, new CradleOfVitality());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WhitesunsPassage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
     }
 }

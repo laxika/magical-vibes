@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "ZNR", collectorNumber = "75")
+@CardRegistration(set = "HBG", collectorNumber = "911")
 public class RuinCrab extends Card {
 
     public RuinCrab() {

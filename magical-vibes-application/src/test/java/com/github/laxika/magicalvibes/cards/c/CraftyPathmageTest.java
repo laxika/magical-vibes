@@ -21,6 +21,71 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CraftyPathmageTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can target itself")
+    void canTargetItself() {
+        Permanent pathmage = addCreatureReady(player1, new CraftyPathmage());
+
+        harness.activateAbility(player1, 0, null, pathmage.getId());
+        harness.passBothPriorities();
+
+        assertThat(pathmage.isTapped()).isTrue();
+        assertThat(pathmage.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent pathmage = harness.addToBattlefieldAndReturn(player1, new CraftyPathmage());
+        pathmage.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pathmage.isTapped()).isFalse();
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent pathmage = addCreatureReady(player1, new CraftyPathmage());
+        pathmage.setTapped(true);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Growing after resolution does not allow the creature to be blocked")
+    void targetRemainsUnblockableAfterGrowing() {
+        addCreatureReady(player1, new CraftyPathmage());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new CrawWurm());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(target.isCantBeBlocked()).isTrue();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Makes an opponent's 2/2 creature unblockable until end of turn")
     void makesOpponentPowerTwoCreatureUnblockableUntilEndOfTurn() {
         Permanent pathmage = addCreatureReady(player1, new CraftyPathmage());

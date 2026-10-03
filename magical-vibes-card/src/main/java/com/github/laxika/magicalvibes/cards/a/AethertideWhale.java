@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "AER", collectorNumber = "27")
 @CardRegistration(set = "M3C", collectorNumber = "175")
+@CardRegistration(set = "DRC", collectorNumber = "69")
 public class AethertideWhale extends Card {
 
     public AethertideWhale() {

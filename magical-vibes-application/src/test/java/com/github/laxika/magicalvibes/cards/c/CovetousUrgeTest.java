@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RovingKeep;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CovetousUrge.class, Divination.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({CovetousUrge.class, Divination.class, GrizzlyBears.class, RovingKeep.class, Swamp.class})
 class CovetousUrgeTest extends BaseCardTest {
 
     @Test
@@ -54,7 +55,7 @@ class CovetousUrgeTest extends BaseCardTest {
         assertThat(gd.exilePlayAnyManaTypeWhileExiled).contains(exiledCard.getId());
 
         harness.addMana(player1, ManaColor.GREEN, 3);
-        gs.playCardFromExile(gd, player1, exiledCard.getId(), null, null);
+        harness.castFromExile(player1, exiledCard.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Divination");
@@ -71,10 +72,49 @@ class CovetousUrgeTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    void choosesFromHandAndCastsThePermanentUnderYourControl() {
+        Card chosen = new RovingKeep();
+        Card land = new Swamp();
+        harness.setHand(player2, List.of(chosen, land));
+
+        castCovetousUrge();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .hasMessageContaining("exactly one");
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castFromExile(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Roving Keep");
+        harness.assertNotOnBattlefield(player2, "Roving Keep");
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.exilePlayAnyManaTypeWhileExiled).doesNotContain(chosen.getId());
+    }
+
+    @Test
+    void resolvesWithoutAChoiceWhenBothZonesContainOnlyLands() {
+        Card handLand = new Swamp();
+        Card graveyardLand = new Swamp();
+        harness.setHand(player2, List.of(handLand));
+        harness.setGraveyard(player2, List.of(graveyardLand));
+
+        castCovetousUrge();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardLand);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Covetous Urge");
+    }
+
     private void castCovetousUrge() {
         harness.setHand(player1, List.of(new CovetousUrge()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

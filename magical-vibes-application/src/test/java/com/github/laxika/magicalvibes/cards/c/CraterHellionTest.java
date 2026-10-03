@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,9 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CraterHellion.class, GorillaWarrior.class, ShivanHellkite.class})
+@CardUsed({CraterHellion.class, GorillaWarrior.class, ShivanHellkite.class, Stifle.class})
 class CraterHellionTest extends BaseCardTest {
 
     @Test
@@ -62,6 +65,62 @@ class CraterHellionTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Crater Hellion");
+    }
+
+    @Test
+    @DisplayName("The entry trigger damages another Crater Hellion but not its source")
+    void etbDamagesAnotherCraterHellion() {
+        harness.addToBattlefield(player2, new CraterHellion());
+
+        castAndResolveCraterHellion();
+
+        assertThat(findPermanent(player2, "Crater Hellion").getMarkedDamage()).isEqualTo(4);
+        assertThat(findPermanent(player1, "Crater Hellion").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Echo waits for its controller's upkeep")
+    void echoDoesNotTriggerDuringOpponentsUpkeep() {
+        castAndResolveCraterHellion();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Crater Hellion");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Crater Hellion");
+    }
+
+    @Test
+    @CardUsed({CraterHellion.class, GorillaWarrior.class, Stifle.class})
+    @DisplayName("Countering the damage entry trigger does not remove echo")
+    void counteringEntryTriggerDoesNotRemoveEcho() {
+        harness.addToBattlefield(player2, new GorillaWarrior());
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new CraterHellion(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gorilla Warrior");
+        harness.assertOnBattlefield(player1, "Crater Hellion");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Crater Hellion");
+        harness.assertInGraveyard(player1, "Crater Hellion");
     }
 
     private void castAndResolveCraterHellion() {

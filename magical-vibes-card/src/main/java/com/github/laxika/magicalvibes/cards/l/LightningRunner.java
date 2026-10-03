@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "AER", collectorNumber = "90")
 @CardRegistration(set = "M3C", collectorNumber = "215")
+@CardRegistration(set = "DRC", collectorNumber = "103")
 public class LightningRunner extends Card {
 
     public LightningRunner() {
