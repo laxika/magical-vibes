@@ -73,8 +73,7 @@ class ClockworkSwarmTest extends BaseCardTest {
         Permanent swarm = addCreatureReady(player2, new ClockworkSwarm());
         swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
@@ -169,6 +168,10 @@ class ClockworkSwarmTest extends BaseCardTest {
     }
 
     private void activateUpkeepAbility(int x) {
+        activateUpkeepAbility(x, 2);
+    }
+
+    private void activateUpkeepAbility(int x, Integer countersToAdd) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
@@ -176,6 +179,69 @@ class ClockworkSwarmTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, x, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "2");
+        if (countersToAdd != null) {
+            harness.handleListChoice(player1, countersToAdd.toString());
+        }
+    }
+
+    @Test
+    @DisplayName("May choose fewer counters than X")
+    void mayChooseFewerCountersThanX() {
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
+        swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        activateUpkeepAbility(3, 1);
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(2);
+        assertThat(swarm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May choose zero counters after paying for a positive X")
+    void mayChooseZeroCounters() {
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
+        swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        activateUpkeepAbility(3, 0);
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        assertThat(swarm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability at the cap adds no counters but still taps the creature")
+    void abilityAtCapAddsNoCounters() {
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
+        swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 4);
+
+        activateUpkeepAbility(3, null);
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(4);
+        assertThat(swarm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May activate with X equal to zero")
+    void mayActivateWithZeroX() {
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
+        swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ZERO, 1);
+
+        activateUpkeepAbility(0, null);
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isEqualTo(1);
+        assertThat(swarm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attacking with no counters leaves the creature on the battlefield")
+    void attackingWithNoCountersDoesNotRemoveCreature() {
+        Permanent swarm = addCreatureReady(player1, new ClockworkSwarm());
+
+        declareAttackers(player1, List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(swarm.getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO)).isZero();
+        harness.assertOnBattlefield(player1, "Clockwork Swarm");
     }
 }
