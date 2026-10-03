@@ -22,8 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({DragonsClaw.class, RagingGoblin.class, GrizzlyBears.class, Shock.class, WoollyThoctar.class})
 class DragonsClawTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Dragon's Claw puts it on the stack as an artifact spell")
     void castingPutsItOnStack() {
@@ -49,8 +47,6 @@ class DragonsClawTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Dragon's Claw");
     }
 
-    // ===== Triggered ability: controller casts red spell =====
-
     @Test
     @DisplayName("Controller casts red spell, accepts may ability, gains 1 life")
     void controllerCastsRedSpellAndAccepts() {
@@ -59,18 +55,13 @@ class DragonsClawTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
+        harness.passBothPriorities();
+
         // Player1 should be prompted for may ability
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard() instanceof DragonsClaw);
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
@@ -82,6 +73,10 @@ class DragonsClawTest extends BaseCardTest {
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
+
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard() instanceof DragonsClaw);
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -97,8 +92,6 @@ class DragonsClawTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Triggered ability: opponent casts red spell =====
-
     @Test
     @DisplayName("Opponent casts red spell, controller accepts may ability, gains 1 life")
     void opponentCastsRedSpellControllerAccepts() {
@@ -111,6 +104,8 @@ class DragonsClawTest extends BaseCardTest {
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player2, new RagingGoblin(), "{R}");
+
+        harness.passBothPriorities();
 
         // Player1 (controller of Dragon's Claw) should be prompted
         GameData gd = harness.getGameData();
@@ -133,7 +128,7 @@ class DragonsClawTest extends BaseCardTest {
 
         int lifeBefore = harness.getGameData().playerLifeTotals.get(player1.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -153,6 +148,8 @@ class DragonsClawTest extends BaseCardTest {
 
         harness.castFromHand(player1, new WoollyThoctar(), "{R}{G}{W}");
 
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -161,8 +158,6 @@ class DragonsClawTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore + 1);
     }
-
-    // ===== Non-red spell does NOT trigger =====
 
     @Test
     @DisplayName("Non-red spell does not trigger Dragon's Claw")
@@ -178,8 +173,6 @@ class DragonsClawTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Multiple claws =====
-
     @Test
     @DisplayName("Multiple Dragon's Claws each trigger independently")
     void multipleClawsTriggerIndependently() {
@@ -189,25 +182,22 @@ class DragonsClawTest extends BaseCardTest {
 
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
 
-        // First claw prompt
-        harness.handleMayAbilityChosen(player1, true);
-        // Second claw prompt
-        harness.handleMayAbilityChosen(player1, true);
-
         GameData gd = harness.getGameData();
-        // Two triggered abilities on the stack (plus the creature spell)
         long triggeredCount = gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count();
         assertThat(triggeredCount).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         // Resolve all
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
-
-    // ===== No trigger when not on battlefield =====
 
     @Test
     @DisplayName("Dragon's Claw does not trigger when not on the battlefield")
@@ -222,6 +212,25 @@ class DragonsClawTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("The life-gain choice is offered only when the trigger resolves")
+    void lifeGainChoiceWaitsForResolution() {
+        harness.addToBattlefield(player1, new DragonsClaw());
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Raging Goblin");
     }
 }
 
