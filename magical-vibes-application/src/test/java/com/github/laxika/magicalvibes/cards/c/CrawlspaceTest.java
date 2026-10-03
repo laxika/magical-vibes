@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Crawlspace.class, GiantCockroach.class})
+@CardUsed({Crawlspace.class, GiantCockroach.class, NarsetParterOfVeils.class})
 class CrawlspaceTest extends BaseCardTest {
 
     @Test
@@ -49,7 +47,7 @@ class CrawlspaceTest extends BaseCardTest {
     @DisplayName("Does not limit creatures attacking the controller's planeswalker")
     void doesNotLimitAttacksAgainstPlaneswalker() {
         harness.addToBattlefield(player2, new Crawlspace());
-        Permanent planeswalker = addPlaneswalker(player2, 4);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
         addCreatureReady(player1, new GiantCockroach());
         addCreatureReady(player1, new GiantCockroach());
         addCreatureReady(player1, new GiantCockroach());
@@ -74,6 +72,61 @@ class CrawlspaceTest extends BaseCardTest {
                 .doesNotThrowAnyException();
     }
 
+    @Test
+    @DisplayName("Two creatures can attack the controller while another attacks their planeswalker")
+    void allowsMixedAttacksWithinPlayerLimit() {
+        harness.addToBattlefield(player2, new Crawlspace());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+
+        assertThatCode(() -> declareAttackersAtTargets(player1, List.of(0, 1, 2),
+                Map.of(0, player2.getId(), 1, player2.getId(), 2, planeswalker.getId())))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Attacking a planeswalker does not permit a third creature to attack the controller")
+    void rejectsMixedAttacksExceedingPlayerLimit() {
+        harness.addToBattlefield(player2, new Crawlspace());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+
+        assertThatThrownBy(() -> declareAttackersAtTargets(player1, List.of(0, 1, 2, 3),
+                Map.of(0, player2.getId(), 1, player2.getId(), 2, player2.getId(),
+                        3, planeswalker.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No more than 2 creatures can attack");
+    }
+
+    @Test
+    @DisplayName("Multiple Crawlspaces still allow two attackers")
+    void multipleCopiesDoNotReduceLimit() {
+        harness.addToBattlefield(player2, new Crawlspace());
+        harness.addToBattlefield(player2, new Crawlspace());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0, 1))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The attack limit ends when Crawlspace leaves the battlefield")
+    void removalEndsAttackLimit() {
+        Permanent crawlspace = harness.addToBattlefieldAndReturn(player2, new Crawlspace());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+        addCreatureReady(player1, new GiantCockroach());
+        gd.playerBattlefields.get(player2.getId()).remove(crawlspace);
+        gd.playerGraveyards.get(player2.getId()).add(crawlspace.getCard());
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0, 1, 2))).doesNotThrowAnyException();
+    }
+
     private void declareAttackersAtTargets(Player player, List<Integer> attackerIndices,
                                            Map<Integer, UUID> attackTargets) {
         harness.forceActivePlayer(player);
@@ -83,14 +136,4 @@ class CrawlspaceTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }
