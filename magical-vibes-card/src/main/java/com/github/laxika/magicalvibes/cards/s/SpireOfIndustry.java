@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "821")
 @CardRegistration(set = "PIP", collectorNumber = "1039")
 @CardRegistration(set = "NEC", collectorNumber = "178")
+@CardRegistration(set = "FIC", collectorNumber = "426")
 public class SpireOfIndustry extends Card {
 
     public SpireOfIndustry() {

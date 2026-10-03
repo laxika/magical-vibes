@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "SHM", collectorNumber = "271")
 @CardRegistration(set = "EXP", collectorNumber = "29")
 @CardRegistration(set = "2XM", collectorNumber = "317")
+@CardRegistration(set = "FIC", collectorNumber = "392")
 public class FireLitThicket extends Card {
 
     public FireLitThicket() {

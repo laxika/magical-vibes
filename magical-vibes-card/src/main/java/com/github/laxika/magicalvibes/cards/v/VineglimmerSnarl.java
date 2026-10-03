@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "LTC", collectorNumber = "343")
 @CardRegistration(set = "SOC", collectorNumber = "420")
 @CardRegistration(set = "DSC", collectorNumber = "323")
+@CardRegistration(set = "FIC", collectorNumber = "440")
 public class VineglimmerSnarl extends Card {
 
     public VineglimmerSnarl() {

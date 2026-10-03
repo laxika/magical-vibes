@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "257")
 @CardRegistration(set = "SOC", collectorNumber = "409")
+@CardRegistration(set = "FIC", collectorNumber = "431")
 public class SunlitMarsh extends Card {
 
     public SunlitMarsh() {

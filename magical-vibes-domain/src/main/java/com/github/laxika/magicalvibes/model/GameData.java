@@ -1415,6 +1415,9 @@ public class GameData {
     /** Comeuppance: prevent opponent-source damage to a player and their planeswalkers this turn. */
     public final List<ComeuppanceDamagePreventionShield> comeuppanceDamagePreventionShields =
             Collections.synchronizedList(new ArrayList<>());
+    /** Judgment of Alexander: prevent opponent-source damage to a player and retaliate against creature sources. */
+    public final List<JudgmentOfAlexanderDamagePreventionShield> judgmentOfAlexanderDamagePreventionShields =
+            Collections.synchronizedList(new ArrayList<>());
     public final List<ChannelHarmShield> channelHarmShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<DamageRedirectShield> pendingRedirectDamage = Collections.synchronizedList(new ArrayList<>());
@@ -6884,6 +6887,7 @@ public class GameData {
         copy.allyCreatureEntersTriggerWatchers.addAll(this.allyCreatureEntersTriggerWatchers);
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.comeuppanceDamagePreventionShields.addAll(this.comeuppanceDamagePreventionShields);
+        copy.judgmentOfAlexanderDamagePreventionShields.addAll(this.judgmentOfAlexanderDamagePreventionShields);
         copy.channelHarmShields.addAll(this.channelHarmShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
         copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);

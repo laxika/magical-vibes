@@ -1576,6 +1576,9 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applyComeuppancePrevention(
                     gameData, playerId, rawDamage, source, sourcePermanent,
                     sourceControllerId, false);
+            rawDamage = damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                    gameData, playerId, rawDamage, source, sourcePermanent,
+                    sourceControllerId, false);
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
@@ -1910,7 +1913,19 @@ public class DamageSupport {
                     " deals " + damage + " damage to " + targetName + "."));
 
             // Apply prevention shields on the redirect target (they may also have shields)
-            int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
+            Permanent sourcePermanent = redirect.sourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, redirect.sourcePermanentId());
+            UUID sourceControllerId = redirect.sourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentController(gameData, redirect.sourcePermanentId());
+            int redirectEffective = damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                    gameData, targetId, damage, redirect.sourceCard(), sourcePermanent,
+                    sourceControllerId, false);
+            if (redirectEffective > 0) {
+                redirectEffective = damagePreventionService.applyPlayerPreventionShield(
+                        gameData, targetId, redirectEffective);
+            }
             // Recursively process any redirects triggered by the target's shields
             processPendingRedirectDamage(gameData);
             redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
@@ -1923,9 +1938,6 @@ public class DamageSupport {
                     gameData.playerLifeTotals.put(targetId,
                             gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
                 }
-                Permanent sourcePermanent = redirect.sourcePermanentId() == null
-                        ? null
-                        : gameQueryService.findPermanentById(gameData, redirect.sourcePermanentId());
                 boolean artifactSource = sourcePermanent != null
                         ? gameQueryService.isArtifact(gameData, sourcePermanent)
                         : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);

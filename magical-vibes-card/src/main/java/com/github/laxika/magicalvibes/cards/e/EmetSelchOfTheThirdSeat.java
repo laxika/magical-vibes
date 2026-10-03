@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "FIC", collectorNumber = "81")
 @CardRegistration(set = "FIC", collectorNumber = "170")
+@CardRegistration(set = "FIC", collectorNumber = "473")
 public class EmetSelchOfTheThirdSeat extends Card {
 
     public EmetSelchOfTheThirdSeat() {

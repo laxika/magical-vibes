@@ -33,6 +33,7 @@ import java.util.Set;
 @CardRegistration(set = "LTC", collectorNumber = "315")
 @CardRegistration(set = "TDC", collectorNumber = "367")
 @CardRegistration(set = "BLC", collectorNumber = "307")
+@CardRegistration(set = "FIC", collectorNumber = "400")
 public class GlacialFortress extends Card {
 
     public GlacialFortress() {

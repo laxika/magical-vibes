@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 
 @CardRegistration(set = "FIC", collectorNumber = "87")
 @CardRegistration(set = "FIC", collectorNumber = "177")
+@CardRegistration(set = "FIC", collectorNumber = "475")
 public class LockeTreasureHunter extends Card {
 
     public LockeTreasureHunter() {

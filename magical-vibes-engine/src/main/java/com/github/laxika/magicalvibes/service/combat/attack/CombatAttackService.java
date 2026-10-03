@@ -85,6 +85,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
@@ -2481,6 +2482,18 @@ public class CombatAttackService {
                 Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional) {
+                        if (conditional.condition()
+                                instanceof PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber) {
+                            for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
+                                if (hasMatchingAttackerForTarget(gameData, battlefield, attackerIndices,
+                                        resolvedTargets, attackedOpponentId, perm)) {
+                                    effectsByAttackedOpponent
+                                            .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
+                                            .add(conditional.wrapped());
+                                }
+                            }
+                            continue;
+                        }
                         if (conditional.condition() instanceof PlayerAttacksOneOfYourOpponents) {
                             for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
                                 effectsByAttackedOpponent
@@ -2867,6 +2880,7 @@ public class CombatAttackService {
                     source.getId());
             playerAttackTrigger.setTargetId(attackingPlayerId);
             playerAttackTrigger.setAttackedTargetId(attackedTargetId);
+            playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(source));
             playerAttackTrigger.setNonTargeting(true);
             gameData.stack.add(playerAttackTrigger);
             gameLogService.append(gameData,
@@ -3738,5 +3752,17 @@ public class CombatAttackService {
                 .filter(gameData.playerIds::contains)
                 .filter(targetId -> !controllerId.equals(targetId))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private boolean hasMatchingAttackerForTarget(GameData gameData, List<Permanent> battlefield,
+                                                  List<Integer> attackerIndices,
+                                                  Map<Integer, UUID> resolvedTargets,
+                                                  UUID attackedTargetId, Permanent source) {
+        int chosenNumber = source.getChosenNumber();
+        return attackerIndices.stream()
+                .filter(index -> attackedTargetId.equals(resolvedTargets.get(index)))
+                .map(battlefield::get)
+                .anyMatch(attacker -> gameQueryService.getEffectivePower(gameData, attacker) == chosenNumber
+                        || gameQueryService.getEffectiveToughness(gameData, attacker) == chosenNumber);
     }
 }

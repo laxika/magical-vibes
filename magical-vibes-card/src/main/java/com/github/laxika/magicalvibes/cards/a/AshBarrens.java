@@ -28,6 +28,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "248")
 @CardRegistration(set = "C20", collectorNumber = "255")
 @CardRegistration(set = "C19", collectorNumber = "227")
+@CardRegistration(set = "FIC", collectorNumber = "374")
 public class AshBarrens extends Card {
 
     public AshBarrens() {

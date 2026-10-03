@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.JudgmentOfAlexanderDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -1121,6 +1122,12 @@ public class DamagePreventionService {
     private int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage,
                                             boolean combatDamage, Permanent damageSource) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return damage;
+        if (combatDamage && damageSource != null) {
+            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
+            damage = applyJudgmentOfAlexanderPrevention(gameData, playerId, damage,
+                    damageSource.getCard(), damageSource, sourceControllerId, true);
+            if (damage <= 0) return 0;
+        }
         if (combatDamage) {
             CombatDamagePreventionTokenShield tokenShield =
                     gameData.combatDamagePreventionTokenShields.get(playerId);
@@ -2417,6 +2424,36 @@ public class DamagePreventionService {
             }
             gameLogService.append(gameData, GameLog.cardThen(shield.sourceCard(),
                     " prevents " + damage + " damage to its controller or a planeswalker they control."));
+            return 0;
+        }
+        return damage;
+    }
+
+    /** Applies Judgment of Alexander's creature-source prevention and queues its retaliation trigger. */
+    public int applyJudgmentOfAlexanderPrevention(GameData gameData, UUID protectedPlayerId, int damage,
+                                                   Card sourceCard, Permanent sourcePermanent,
+                                                   UUID sourceControllerId, boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
+                || damage <= 0 || protectedPlayerId == null || sourceControllerId == null
+                || sourceControllerId.equals(protectedPlayerId)
+                || gameData.judgmentOfAlexanderDamagePreventionShields.isEmpty()) {
+            return damage;
+        }
+
+        boolean creatureSource = sourcePermanent != null
+                ? gameQueryService.isCreature(gameData, sourcePermanent)
+                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
+        if (!creatureSource) return damage;
+
+        for (JudgmentOfAlexanderDamagePreventionShield shield
+                : gameData.judgmentOfAlexanderDamagePreventionShields) {
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+
+            gameLogService.append(gameData, GameLog.cardThen(shield.sourceCard(),
+                    " prevents " + damage + " damage to " + gameData.playerIdToName.get(protectedPlayerId) + "."));
+            triggerCollectionService.checkCommanderDamagePreventedTriggers(
+                    gameData, protectedPlayerId, sourcePermanent == null ? null : sourcePermanent.getId(),
+                    shield.sourceCard());
             return 0;
         }
         return damage;
