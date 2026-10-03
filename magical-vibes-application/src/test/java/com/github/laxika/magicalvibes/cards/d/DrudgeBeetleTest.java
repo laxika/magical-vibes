@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrudgeBeetle.class, GrizzlyBears.class, Mountain.class})
 class DrudgeBeetleTest extends BaseCardTest {
 
     private void readyScavenge() {
@@ -86,5 +88,96 @@ class DrudgeBeetleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void scavengeExilesSourceBeforeCountersArePlaced() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        readyScavenge();
+        var source = gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        harness.assertNotInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+    }
+
+    @Test
+    void scavengeRequiresGreenMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        harness.setGraveyard(player1, List.of(new DrudgeBeetle()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scavengeRequiresSixManaTotal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        harness.setGraveyard(player1, List.of(new DrudgeBeetle()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scavengeCannotActivateDuringCombat() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        readyScavenge();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Drudge Beetle");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scavengeCannotActivateWithAnAbilityOnTheStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        readyScavenge();
+        harness.setGraveyard(player1, List.of(new DrudgeBeetle(), new DrudgeBeetle()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void scavengeCanActivateInPostcombatMainPhase() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
+        readyScavenge();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
