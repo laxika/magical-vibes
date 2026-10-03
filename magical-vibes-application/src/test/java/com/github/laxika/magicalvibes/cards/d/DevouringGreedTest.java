@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DevouringGreed.class, KamiOfOldStone.class, HumbleBudoka.class})
+@CardUsed({DevouringGreed.class, KamiOfOldStone.class, HumbleBudoka.class, PlatinumEmperion.class})
 class DevouringGreedTest extends BaseCardTest {
 
     private void addMana() {
@@ -65,8 +66,7 @@ class DevouringGreedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DevouringGreed()));
         addMana();
 
-        harness.castSorceryWithSacrifices(player1, 0, player2.getId(), List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
@@ -146,5 +146,42 @@ class DevouringGreedTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Spirits are sacrificed while casting, before any life changes")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new KamiOfOldStone());
+        harness.setHand(player1, List.of(new DevouringGreed()));
+        addMana();
+
+        harness.castSorceryWithSacrifices(player1, 0, player2.getId(), List.of(spirit.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Kami of Old Stone");
+        harness.assertInGraveyard(player1, "Kami of Old Stone");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @CardUsed({DevouringGreed.class, KamiOfOldStone.class, PlatinumEmperion.class})
+    @DisplayName("No life is gained when the target cannot lose life")
+    void gainsNoLifeWhenTargetLifeTotalCannotChange() {
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new KamiOfOldStone());
+        harness.setHand(player1, List.of(new DevouringGreed()));
+        addMana();
+
+        harness.castSorceryWithSacrifices(player1, 0, player2.getId(), List.of(spirit.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Kami of Old Stone");
     }
 }
