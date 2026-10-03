@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SternScolding;
+import com.github.laxika.magicalvibes.cards.t.TheGaffer;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -18,7 +20,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DelightedHalfling.class, GrizzlyBears.class})
+@CardUsed({DelightedHalfling.class, GrizzlyBears.class, SternScolding.class, TheGaffer.class})
 class DelightedHalflingTest extends BaseCardTest {
 
     private ManaPool pool() {
@@ -62,7 +64,7 @@ class DelightedHalflingTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(pool().getLegendarySpellOnlyMana(ManaColor.GREEN)).isZero();
     }
 
@@ -79,5 +81,61 @@ class DelightedHalflingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(pool().getLegendarySpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void legendarySpellPaidWithColoredHalflingManaCannotBeCountered() {
+        assertLegendarySpellSurvivesCounterspell("WHITE", false);
+    }
+
+    @Test
+    void legendarySpellPaidWithHalflingManaForGenericCostCannotBeCountered() {
+        assertLegendarySpellSurvivesCounterspell("GREEN", true);
+    }
+
+    private void assertLegendarySpellSurvivesCounterspell(String color, boolean paysGenericCost) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addCreatureReady(player1, new DelightedHalfling());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, color);
+        harness.addMana(player1, ManaColor.COLORLESS, paysGenericCost ? 1 : 2);
+        if (paysGenericCost) {
+            harness.addMana(player1, ManaColor.WHITE, 1);
+        }
+        TheGaffer gaffer = new TheGaffer();
+        harness.setHand(player1, List.of(gaffer));
+        harness.setHand(player2, List.of(new SternScolding()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        assertThat(pool().getLegendarySpellOnlyMana(ManaColor.valueOf(color))).isZero();
+        harness.castInstant(player2, 0, gaffer.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "The Gaffer");
+        harness.assertNotInGraveyard(player1, "The Gaffer");
+        harness.assertInGraveyard(player2, "Stern Scolding");
+    }
+
+    @Test
+    void colorlessHalflingManaDoesNotPreventCounteringLegendarySpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addCreatureReady(player1, new DelightedHalfling());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        TheGaffer gaffer = new TheGaffer();
+        harness.setHand(player1, List.of(gaffer));
+        harness.setHand(player2, List.of(new SternScolding()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player2, 0, gaffer.getId());
+
+        harness.assertInGraveyard(player1, "The Gaffer");
+        harness.assertNotOnBattlefield(player1, "The Gaffer");
     }
 }
