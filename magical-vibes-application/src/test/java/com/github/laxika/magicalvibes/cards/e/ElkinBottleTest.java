@@ -21,8 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ElkinBottleTest extends BaseCardTest {
 
     private void addBottleReady() {
-        Permanent bottle = harness.addToBattlefieldAndReturn(player1, new ElkinBottle());
-        bottle.setSummoningSick(false);
+        addCreatureReady(player1, new ElkinBottle());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
@@ -129,5 +128,96 @@ class ElkinBottleTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.getDelayedActions(RevokeExilePlayPermissionAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires three mana and taps the Bottle")
+    void activationPaysManaAndRequiresUntappedBottle() {
+        Permanent bottle = harness.addToBattlefieldAndReturn(player1, new ElkinBottle());
+        Card top = new DarkRitual();
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bottle.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(bottle.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("Permission survives the Bottle leaving the battlefield")
+    void permissionSurvivesSourceLeaving() {
+        Card top = activateBottleWithTop(new DarkRitual());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castFromExile(player1, top.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
+    }
+
+    @Test
+    @DisplayName("Only the activating player may play the exiled card")
+    void opponentCannotUsePermission() {
+        Card top = activateBottleWithTop(new DarkRitual());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+    }
+
+    @Test
+    @DisplayName("The permission does not bypass sorcery timing")
+    void artifactCannotBeCastDuringUpkeep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        Card top = activateBottleWithTop(new ElkinBottle());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromExile(player1, top.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(top.getId()));
+    }
+
+    @Test
+    @DisplayName("The permission does not grant an additional land play")
+    void landPlayLimitStillApplies() {
+        Card top = activateBottleWithTop(new SnowCoveredMountain());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SnowCoveredMountain()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
     }
 }
