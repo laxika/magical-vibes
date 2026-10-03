@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DrunauCorpseTrawler.class, DauntlessCathar.class})
 class DrunauCorpseTrawlerTest extends BaseCardTest {
 
     @Test
@@ -81,12 +82,65 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
     @DisplayName("Cannot target a non-Zombie creature")
     void cannotTargetNonZombie() {
         addReadyTrawler(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonZombie = addCreatureReady(player1, new DauntlessCathar());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonZombie.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a Zombie");
+    }
+
+    @Test
+    void canTargetOpponentsZombie() {
+        addReadyTrawler(player1);
+        Permanent target = addReadyTrawler(player2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent trawler = harness.addToBattlefieldAndReturn(player1, new DrunauCorpseTrawler());
+        trawler.setSummoningSick(true);
+        trawler.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, trawler.getId());
+        harness.passBothPriorities();
+
+        assertThat(trawler.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addReadyTrawler(player1);
+        Permanent target = addReadyTrawler(player2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void abilityDoesNotAffectTargetThatLeavesAndReturns() {
+        addReadyTrawler(player1);
+        Permanent target = addReadyTrawler(player2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(returned.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
     }
 
     private void castAndResolveTrawler() {
@@ -98,10 +152,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
     }
 
     private Permanent addReadyTrawler(Player player) {
-        Permanent perm = new Permanent(new DrunauCorpseTrawler());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DrunauCorpseTrawler());
     }
 
     private List<Permanent> zombieTokens(Player player) {
