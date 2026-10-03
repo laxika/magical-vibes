@@ -41,8 +41,7 @@ class CuratorBeastieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -70,5 +69,82 @@ class CuratorBeastieTest extends BaseCardTest {
                         && permanent.getCard().getId().equals(manifestedCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
         assertThat(curator.isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleCuratorsGiveManifestedColoredCreatureFourCounters() {
+        harness.addToBattlefield(player1, new CuratorBeastie());
+        addCreatureReady(player1, new CuratorBeastie());
+        Card manifestedCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(manifestedCard, new Forest()));
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        Permanent manifested = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(manifestedCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(manifested.isFaceDown()).isTrue();
+        assertThat(manifested.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(manifested));
+
+        assertThat(manifested.isFaceDown()).isFalse();
+        assertThat(manifested.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void mayManifestSecondCardEvenWhenItIsALand() {
+        addCreatureReady(player1, new CuratorBeastie());
+        Card graveyardCard = new GrizzlyBears();
+        Card manifestedCard = new Forest();
+        harness.setLibrary(player1, List.of(graveyardCard, manifestedCard));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard().getId().equals(manifestedCard.getId())
+                        && permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void manifestDreadWithOneCardManifestsItWithoutPuttingAnythingIntoGraveyard() {
+        addCreatureReady(player1, new CuratorBeastie());
+        Card manifestedCard = new Forest();
+        harness.setLibrary(player1, List.of(manifestedCard));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard().getId().equals(manifestedCard.getId())
+                        && permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void faceDownCuratorDoesNotGrantEntryCounters() {
+        Permanent faceUpCurator = addCreatureReady(player1, new CuratorBeastie());
+        Card manifestedCard = new CuratorBeastie();
+        harness.setLibrary(player1, List.of(manifestedCard, new Forest()));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(manifestedCard.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(faceUpCurator);
+
+        Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(enteringCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
