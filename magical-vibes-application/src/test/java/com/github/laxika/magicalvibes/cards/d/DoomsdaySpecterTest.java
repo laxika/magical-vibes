@@ -99,10 +99,46 @@ class DoomsdaySpecterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Combat damage can make the damaged player discard a land")
+    void combatDamageCanDiscardLand() {
+        addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new TerminalMoraine(), new Singe()));
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Terminal Moraine");
+        harness.assertInHand(player2, "Singe");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The opponent's Specter lets its controller choose from the damaged player's hand")
+    void opponentsSpecterDiscardsFromDamagedPlayersHand() {
+        addAttackingSpecter(player2);
+        harness.setHand(player1, List.of(new DaringLeap(), new Singe()));
+        harness.setHand(player2, List.of(new TerminalMoraine()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice.choosingPlayerId()).isEqualTo(player2.getId());
+        assertThat(choice.targetPlayerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player1, "Singe");
+        harness.assertInHand(player1, "Daring Leap");
+        harness.assertInHand(player2, "Terminal Moraine");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     private void castAndResolveSpell() {
         harness.castFromHand(player1, new DoomsdaySpecter(), "{2}{U}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addAttackingSpecter(Player player) {
