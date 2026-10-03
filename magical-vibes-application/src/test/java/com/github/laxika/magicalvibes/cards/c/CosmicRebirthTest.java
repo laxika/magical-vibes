@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CosmicRebirth.class, GrizzlyBears.class, AirElemental.class, Shock.class})
+@CardUsed({CosmicRebirth.class, GrizzlyBears.class, AirElemental.class, Shock.class,
+        GrafdiggersCage.class, Pacifism.class})
 class CosmicRebirthTest extends BaseCardTest {
 
     @Test
@@ -67,12 +70,78 @@ class CosmicRebirthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(Card target) {
+    @Test
+    @DisplayName("Cannot target a permanent card in an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new CosmicRebirth()));
+        addMana();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not gain life if the only target leaves the graveyard before resolution")
+    void invalidTargetPreventsLifeGain() {
+        Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
         harness.setHand(player1, List.of(new CosmicRebirth()));
         addMana();
         harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A returned Aura chooses a legal creature to enchant")
+    void returnedAuraEnchantsChosenCreature() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(new Pacifism());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handlePermanentChosen(player1, creature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isInstanceOf(Pacifism.class);
+                    assertThat(permanent.getAttachedTo()).isEqualTo(creature.getId());
+                });
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("An Aura with nothing legal to enchant goes into hand")
+    void auraWithoutLegalAttachmentReturnsToHand() {
+        cast(new Pacifism());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("A creature prevented from entering the battlefield goes into hand")
+    void blockedBattlefieldReturnGoesToHand() {
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        cast(new GrizzlyBears());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 23);
+    }
+
+    private void cast(Card target) {
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new CosmicRebirth()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
