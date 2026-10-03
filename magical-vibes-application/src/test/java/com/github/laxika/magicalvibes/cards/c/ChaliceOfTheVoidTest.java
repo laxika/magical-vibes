@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.m.MyrRetriever;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChaliceOfTheVoid.class, MyrRetriever.class, Ornithopter.class})
+@CardUsed({ChaliceOfTheVoid.class, MyrRetriever.class, Ornithopter.class, Shatter.class})
 class ChaliceOfTheVoidTest extends BaseCardTest {
 
     @Test
@@ -27,7 +28,7 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChaliceOfTheVoid()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.castArtifact(player1, 0, 3);
         harness.passBothPriorities();
 
         Permanent chalice = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -147,6 +148,61 @@ class ChaliceOfTheVoidTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Chalice of the Void");
         harness.assertInGraveyard(player2, "Chalice of the Void");
+    }
+
+    @Test
+    @DisplayName("A Chalice cast for zero enters without countering itself")
+    void zeroChaliceDoesNotCounterItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ChaliceOfTheVoid()));
+
+        harness.castArtifact(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chalice of the Void");
+        harness.assertNotInGraveyard(player1, "Chalice of the Void");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst()
+                .getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Destroying Chalice does not stop its pending trigger")
+    void countersSpellAfterSourceIsDestroyed() {
+        Permanent chalice = addChalice(player1, 0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        harness.castInstant(player1, 0, chalice.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Chalice of the Void");
+        harness.assertInGraveyard(player1, "Chalice of the Void");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Adding counters after a nonmatching spell was cast does not create a trigger")
+    void doesNotTriggerRetroactivelyWhenCountersChange() {
+        Permanent chalice = addChalice(player1, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new MyrRetriever()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0);
+        chalice.setCounterCount(CounterType.CHARGE, 2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Myr Retriever");
+        harness.assertNotInGraveyard(player2, "Myr Retriever");
     }
 
     private Permanent addChalice(Player player, int chargeCounters) {
