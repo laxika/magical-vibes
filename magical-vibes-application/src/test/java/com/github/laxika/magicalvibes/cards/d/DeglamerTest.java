@@ -87,4 +87,46 @@ class DeglamerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can shuffle your own enchantment into an empty library")
+    void shufflesOwnEnchantmentIntoEmptyLibrary() {
+        Bitterblossom target = new Bitterblossom();
+        harness.addToBattlefield(player1, target);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Deglamer()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Bitterblossom"));
+
+        harness.assertNotOnBattlefield(player1, "Bitterblossom");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target);
+        harness.assertNotInGraveyard(player1, "Bitterblossom");
+        harness.assertInGraveyard(player1, "Deglamer");
+    }
+
+    @Test
+    @DisplayName("Does not move a target already shuffled away in response")
+    void targetLeavesBeforeResolution() {
+        CloakAndDagger target = new CloakAndDagger();
+        harness.addToBattlefield(player2, target);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Deglamer(), new Deglamer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Cloak and Dagger");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Cloak and Dagger");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Deglamer"))
+                .hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
