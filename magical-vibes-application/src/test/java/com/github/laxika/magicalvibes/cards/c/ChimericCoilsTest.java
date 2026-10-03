@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChimericCoilsTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Activation makes Chimeric Coils an X/X Construct artifact creature until end of turn")
+    @DisplayName("Activation makes Chimeric Coils an X/X Construct artifact creature")
     void activationAnimatesWithChosenX() {
         Permanent coils = addCreatureReady(player1, new ChimericCoils());
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -41,8 +41,6 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Chimeric Coils");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -56,6 +54,52 @@ class ChimericCoilsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chimeric Coils");
+        harness.assertInGraveyard(player1, "Chimeric Coils");
+    }
+
+    @Test
+    @DisplayName("Animation during an end step persists through cleanup until the next end step")
+    void endStepAnimationPersistsIntoNextTurn() {
+        Permanent coils = addCreatureReady(player1, new ChimericCoils());
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Chimeric Coils");
+        assertThat(gqs.isCreature(gd, coils)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, coils)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, coils)).isEqualTo(3);
+        assertThat(gqs.hasEffectiveSubtype(gd, coils, CardSubtype.CONSTRUCT)).isTrue();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chimeric Coils");
+        harness.assertInGraveyard(player1, "Chimeric Coils");
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the earlier power and toughness")
+    void laterActivationUsesItsOwnX() {
+        Permanent coils = addCreatureReady(player1, new ChimericCoils());
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, coils)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, coils)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, coils)).isEqualTo(1);
+
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Chimeric Coils");
