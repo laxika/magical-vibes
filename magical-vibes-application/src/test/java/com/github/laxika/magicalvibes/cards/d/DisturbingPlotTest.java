@@ -108,4 +108,92 @@ class DisturbingPlotTest extends BaseCardTest {
                 List.of(blackCreature.getId(), whiteCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can conspire and the copy may keep its original target")
+    void conspireWithSummoningSickCreaturesKeepsTarget() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new DisturbingPlot()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Cinderbones());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CinderhazeWretch());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+
+        harness.castWithConspire(player1, 0, target.getId(), List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .filteredOn(card -> card.getId().equals(target.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).allMatch(card -> card instanceof DisturbingPlot);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire can retarget its copy to a creature in the opponent's graveyard")
+    void conspireCopyReturnsOpponentCardToOwner() {
+        Card originalTarget = new Cinderbones();
+        Card copyTarget = new CinderhazeWretch();
+        harness.setGraveyard(player1, List.of(originalTarget));
+        harness.setGraveyard(player2, List.of(copyTarget));
+        harness.setHand(player1, List.of(new DisturbingPlot()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent first = addCreatureReady(player1, new Cinderbones());
+        Permanent second = addCreatureReady(player1, new CinderhazeWretch());
+
+        harness.castWithConspire(player1, 0, originalTarget.getId(), List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalTarget);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(copyTarget);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target removed from the graveyard before resolution is not returned")
+    void removedTargetIsNotReturned() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new DisturbingPlot()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.setExile(player1, List.of(target));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(target.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conspire cannot use an already tapped creature")
+    void conspireRejectsTappedCreature() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new DisturbingPlot()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent first = addCreatureReady(player1, new Cinderbones());
+        Permanent second = addCreatureReady(player1, new CinderhazeWretch());
+        second.tap();
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0, target.getId(),
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(first.isTapped()).isFalse();
+    }
 }
