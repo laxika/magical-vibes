@@ -70,10 +70,48 @@ class CunningEvasionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Multiple blockers trigger only once for the blocked creature")
+    void multipleBlockersTriggerOnce() {
+        addReady(player1, new CunningEvasion());
+        Permanent attacker = addReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        addReady(player2, new GrizzlyBears());
+        addReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1), new BlockerAssignment(1, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Cunning Evasion");
+    }
+
+    @Test
+    @DisplayName("Does not trigger for an opponent's creature becoming blocked")
+    void opponentBlockedCreatureDoesNotTrigger() {
+        addReady(player1, new CunningEvasion());
+        addReady(player1, new GrizzlyBears());
+        Permanent attacker = addReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
     private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
