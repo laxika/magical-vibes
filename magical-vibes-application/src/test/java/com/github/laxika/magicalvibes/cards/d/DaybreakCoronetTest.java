@@ -123,4 +123,72 @@ class DaybreakCoronetTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(coronet);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(coronet.getOriginalCard());
     }
+
+    @Test
+    void doesNotResolveIfTheOtherAuraLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BoundInSilence());
+        aura.setAttachedTo(creature.getId());
+        DaybreakCoronet coronet = new DaybreakCoronet();
+
+        harness.setHand(player1, List.of(coronet));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(coronet);
+        harness.assertNotOnBattlefield(player1, "Daybreak Coronet");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void twoCoronetsKeepEachOtherLegalAfterTheInitialAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BoundInSilence());
+        aura.setAttachedTo(creature.getId());
+
+        harness.setHand(player1, List.of(new DaybreakCoronet(), new DaybreakCoronet()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof DaybreakCoronet).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    void coronetRemainsLegalWhileOneOfTwoOtherAurasRemains() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new BoundInSilence());
+        firstAura.setAttachedTo(creature.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new BoundInSilence());
+        secondAura.setAttachedTo(creature.getId());
+        Permanent coronet = harness.addToBattlefieldAndReturn(player1, new DaybreakCoronet());
+        coronet.setAttachedTo(creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(coronet);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondAura);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(coronet);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(coronet.getOriginalCard());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.LIFELINK)).isFalse();
+    }
 }
