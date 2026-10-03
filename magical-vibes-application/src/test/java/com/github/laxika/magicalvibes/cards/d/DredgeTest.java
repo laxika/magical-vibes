@@ -70,6 +70,48 @@ class DredgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Dredge cannot sacrifice an opponent's permanents and still draws")
+    void doesNotSacrificeOpponentsPermanents() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KavuTitan());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        KavuTitan drawnCard = new KavuTitan();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature, land);
+        harness.assertNotInGraveyard(player2, "Kavu Titan");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertInGraveyard(player1, "Dredge");
+    }
+
+    @Test
+    @DisplayName("Dredge waits for the sacrifice choice before drawing exactly one card")
+    void drawsOnlyAfterSacrificeChoice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KavuTitan());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        KavuTitan drawnCard = new KavuTitan();
+        Mountain remainingCard = new Mountain();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+
+        harness.castFromHand(player1, new Dredge(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, land);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Kavu Titan");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        harness.assertInGraveyard(player1, "Dredge");
+    }
+
+    @Test
     @DisplayName("With multiple eligible permanents, Dredge chooses one on resolution")
     void choosesOnePermanentOnResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new KavuTitan());
