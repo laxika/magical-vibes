@@ -109,4 +109,43 @@ class DreadOfNightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, dread)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, dread)).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Resolving Dread of Night kills an existing white creature with one toughness")
+    void resolvingEnchantmentKillsExistingWhiteCreature() {
+        harness.addToBattlefield(player2, new SoltariFootSoldier());
+        Permanent pegasus = harness.addToBattlefieldAndReturn(player2, new ArmoredPegasus());
+
+        harness.castFromHand(player1, new DreadOfNight(), "{B}");
+
+        harness.assertOnBattlefield(player2, "Soltari Foot Soldier");
+        assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pegasus)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dread of Night");
+        harness.assertNotOnBattlefield(player2, "Soltari Foot Soldier");
+        harness.assertInGraveyard(player2, "Soltari Foot Soldier");
+        assertThat(gqs.getEffectivePower(gd, pegasus)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, pegasus)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature becoming white starts receiving the debuff")
+    void debuffsCreatureAfterItsColorChanges() {
+        harness.addToBattlefield(player1, new DreadOfNight());
+        Permanent condor = harness.addToBattlefieldAndReturn(player2, new SkyshroudCondor());
+        Permanent opposingCondor = harness.addToBattlefieldAndReturn(player1, new SkyshroudCondor());
+
+        assertThat(gqs.getEffectivePower(gd, condor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, condor)).isEqualTo(2);
+
+        harness.addToBattlefield(player2, new CelestialDawn());
+
+        assertThat(gqs.getEffectivePower(gd, condor)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, condor)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingCondor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCondor)).isEqualTo(2);
+    }
 }
