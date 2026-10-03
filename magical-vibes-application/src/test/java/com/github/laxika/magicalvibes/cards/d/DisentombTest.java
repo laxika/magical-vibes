@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Disentomb.class, GrizzlyBears.class, HolyDay.class})
 class DisentombTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class DisentombTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
@@ -74,5 +75,25 @@ class DisentombTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Disentomb returns only the selected creature from a mixed graveyard")
+    void returnsOnlySelectedCreature() {
+        Card otherCreature = new GrizzlyBears();
+        Card selectedCreature = new GrizzlyBears();
+        Card instant = new HolyDay();
+        harness.setGraveyard(player1, List.of(otherCreature, selectedCreature, instant));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, selectedCreature.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selectedCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(otherCreature, instant)
+                .doesNotContain(selectedCreature);
+        harness.assertInGraveyard(player1, "Disentomb");
+        assertThat(gd.stack).isEmpty();
     }
 }
