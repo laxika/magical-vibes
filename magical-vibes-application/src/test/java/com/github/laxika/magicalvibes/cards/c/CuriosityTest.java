@@ -18,8 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Curiosity.class, GrizzlyBears.class, AnabaShaman.class})
 class CuriosityTest extends BaseCardTest {
 
-    // ===== Combat damage trigger =====
-
     @Test
     @DisplayName("Enchanted creature dealing combat damage presents may-draw choice")
     void combatDamageTriggerPresentsMayChoice() {
@@ -140,7 +138,43 @@ class CuriosityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Casting and attachment =====
+    @Test
+    @DisplayName("An opposing creature damaging its own controller lets Curiosity's controller draw")
+    void opponentCreatureDamagingItsControllerDrawsForAuraController() {
+        Permanent shaman = addCreatureReady(player2, new AnabaShaman());
+        attachCuriosity(player1, shaman);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        int auraControllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int creatureControllerHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHandSize + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHandSize);
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opposing creature does not trigger Curiosity")
+    void noncombatDamageToCreatureDoesNotTrigger() {
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        attachCuriosity(player1, shaman);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Casting Curiosity attaches it to the target creature")
@@ -177,8 +211,6 @@ class CuriosityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Curiosity");
         harness.assertNotOnBattlefield(player1, "Curiosity");
     }
-
-    // ===== Helpers =====
 
     private void attachCuriosity(Player controller, Permanent creature) {
         Permanent curiosity = harness.addToBattlefieldAndReturn(controller, new Curiosity());
