@@ -62,10 +62,70 @@ class DoubleTroubleTest extends BaseCardTest {
     }
 
     private void castDoubleTrouble() {
-        harness.setHand(player1, List.of(new DoubleTrouble()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new DoubleTrouble(), "{4}{R}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Doubles every creature controlled when the spell resolves")
+    void doublesMultipleCreaturesAtResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new DoubleTrouble(), "{4}{R}");
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the bonus")
+    void doesNotAffectLaterCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castDoubleTrouble();
+
+        Permanent later = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A second resolution doubles the already modified power")
+    void repeatedDoublingUsesCurrentPower() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castDoubleTrouble();
+        castDoubleTrouble();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(8);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A later power boost is not itself doubled")
+    void doublingBonusIsFixedAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castDoubleTrouble();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(7);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures or targets")
+    void resolvesWithNoCreatures() {
+        castDoubleTrouble();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Double Trouble");
     }
 }
