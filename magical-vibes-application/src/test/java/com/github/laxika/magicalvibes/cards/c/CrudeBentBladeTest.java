@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -46,9 +47,8 @@ class CrudeBentBladeTest extends BaseCardTest {
     @Test
     void equippedCreatureGetsPlusTwoPlusOne() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = new Permanent(new CrudeBentBlade());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
         blade.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(blade);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -56,7 +56,7 @@ class CrudeBentBladeTest extends BaseCardTest {
 
     @Test
     void equipTwoAttachesToCreature() {
-        Permanent blade = addReady(player1, new CrudeBentBlade());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -76,11 +76,97 @@ class CrudeBentBladeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player,
-                               com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void enteringSacrificesTheOpponentsOnlyCreatureAndLeavesControllersCreature() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new CrudeBentBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
+    }
+
+    @Test
+    void enteringWithNoOpposingCreaturesLeavesNoncreaturesAndOwnCreaturesAlone() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingEquipment = harness.addToBattlefieldAndReturn(player2, new CrudeBentBlade());
+        harness.setHand(player1, List.of(new CrudeBentBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opposingEquipment);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void reequippingMovesTheBonusAndDoesNotRepeatTheEnterTrigger() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        blade.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, spider.getId());
+        assertThat(blade.getAttachedTo()).isEqualTo(bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(spider.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spider)).isEqualTo(5);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opposingCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blade.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equipRequiresTwoMana() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blade.getAttachedTo()).isNull();
+    }
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new CrudeBentBlade());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
