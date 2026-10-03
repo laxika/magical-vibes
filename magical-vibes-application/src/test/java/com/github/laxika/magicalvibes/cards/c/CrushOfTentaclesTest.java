@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BoneSaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrushOfTentacles.class, GrizzlyBears.class, HillGiant.class, Island.class})
+@CardUsed({CrushOfTentacles.class, GrizzlyBears.class, HillGiant.class, Island.class, BoneSaw.class})
 class CrushOfTentaclesTest extends BaseCardTest {
 
     @Test
@@ -30,8 +31,7 @@ class CrushOfTentaclesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrushOfTentacles()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Island");
         harness.assertOnBattlefield(player2, "Island");
@@ -75,5 +75,36 @@ class CrushOfTentaclesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Casting normally after another spell does not create an Octopus")
+    void normalCostAfterAnotherSpellDoesNotCreateToken() {
+        harness.setHand(player1, List.of(new BoneSaw(), new CrushOfTentacles()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInHand(player1, "Bone Saw");
+        assertThat(findPermanents(player1, "Octopus")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A zero-cost artifact enables surge and noncreature artifacts are returned")
+    void zeroCostSpellEnablesSurgeAndArtifactsReturn() {
+        harness.setHand(player1, List.of(new BoneSaw(), new CrushOfTentacles()));
+        harness.addToBattlefield(player2, new BoneSaw());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bone Saw");
+        harness.assertInHand(player2, "Bone Saw");
+        assertThat(findPermanents(player1, "Octopus")).hasSize(1);
     }
 }
