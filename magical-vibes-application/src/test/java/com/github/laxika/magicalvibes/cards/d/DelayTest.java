@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +55,8 @@ class DelayTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.passBothPriorities();
+
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.suspendedSpellExiles).isEmpty();
@@ -66,6 +69,61 @@ class DelayTest extends BaseCardTest {
         Permanent entered = findPermanent(player1, "Blind Phantasm");
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(phantasm);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter puts a separate casting trigger on the stack")
+    void lastCounterCreatesSeparateCastingTrigger() {
+        BlindPhantasm phantasm = castBlindPhantasmAndDelay();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(phantasm);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not remove time counters")
+    void opponentsUpkeepDoesNotRemoveCounter() {
+        BlindPhantasm phantasm = castBlindPhantasmAndDelay();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.suspendedSpellExiles)
+                .containsExactly(new GameData.SuspendedSpellExile(phantasm.getId(), player1.getId(), 3));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the free cast leaves the card exiled without further suspend triggers")
+    void decliningFreeCastLeavesCardExiled() {
+        BlindPhantasm phantasm = castBlindPhantasmAndDelay();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(phantasm);
+        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Blind Phantasm");
     }
 
     @Test
@@ -88,8 +146,7 @@ class DelayTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, phantasm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, phantasm.getId());
         return phantasm;
     }
 }
