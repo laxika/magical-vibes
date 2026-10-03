@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -28,8 +27,7 @@ class DizzySpellTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DizzySpell()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Watchwolf"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Watchwolf"));
 
         assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Watchwolf"))).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Watchwolf"))).isEqualTo(3);
@@ -41,8 +39,7 @@ class DizzySpellTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DizzySpell()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Watchwolf"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Watchwolf"));
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -69,8 +66,7 @@ class DizzySpellTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(matchingCard);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Dizzy Spell");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
@@ -122,6 +118,104 @@ class DizzySpellTest extends BaseCardTest {
                 .as("the transmute search should still use Dizzy Spell's mana value after a response")
                 .isNotNull();
         assertThat(search.params().cards()).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteCannotBeActivatedWithASpellOnTheStack() {
+        harness.addToBattlefield(player2, new Watchwolf());
+        harness.setHand(player1, List.of(new DizzySpell(), new DizzySpell()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Watchwolf"));
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack");
+        harness.assertInHand(player1, "Dizzy Spell");
+        harness.assertNotInGraveyard(player1, "Dizzy Spell");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void transmuteCannotBeActivatedDuringOpponentsMainPhase() {
+        harness.setHand(player1, List.of(new DizzySpell()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+        harness.assertInHand(player1, "Dizzy Spell");
+        harness.assertNotInGraveyard(player1, "Dizzy Spell");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteDiscardsItsSourceBeforeResolving() {
+        harness.setHand(player1, List.of(new DizzySpell()));
+        harness.setLibrary(player1, List.of(new Darkblast()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Dizzy Spell");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void transmuteMayFailToFindEvenWhenAMatchingCardExists() {
+        Darkblast matchingCard = new Darkblast();
+        harness.setHand(player1, List.of(new DizzySpell()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Dizzy Spell");
+    }
+
+    @Test
+    void transmuteResolvesWithoutAMatchingCard() {
+        BorosSignet nonmatchingCard = new BorosSignet();
+        harness.setHand(player1, List.of(new DizzySpell()));
+        harness.setLibrary(player1, List.of(nonmatchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatchingCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Dizzy Spell");
+    }
+
+    @Test
+    void spellCanGiveYourOwnCreatureNegativePowerWithoutChangingToughness() {
+        harness.addToBattlefield(player1, new LoreBroker());
+        harness.setHand(player1, List.of(new DizzySpell()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Lore Broker"));
+
+        harness.assertOnBattlefield(player1, "Lore Broker");
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Lore Broker"))).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Lore Broker"))).isEqualTo(2);
     }
 
     @Test
