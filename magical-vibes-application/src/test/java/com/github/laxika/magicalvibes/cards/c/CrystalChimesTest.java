@@ -76,4 +76,67 @@ class CrystalChimesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Sacrifices the source immediately but returns enchantments only on resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new CrystalChimes());
+        Card enchantment = new Attunement();
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Crystal Chimes");
+        harness.assertInGraveyard(player1, "Crystal Chimes");
+        harness.assertInGraveyard(player1, "Attunement");
+        harness.assertNotInHand(player1, "Attunement");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
+        harness.assertNotInGraveyard(player1, "Attunement");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Determines the enchantments to return when the ability resolves")
+    void returnsEnchantmentsPresentAtResolution() {
+        harness.addToBattlefield(player1, new CrystalChimes());
+        Card removedEnchantment = new Attunement();
+        harness.setGraveyard(player1, List.of(removedEnchantment));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        Card sacrificedChimes = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(CrystalChimes.class::isInstance)
+                .findFirst().orElseThrow();
+        Card newlyDiscardedEnchantment = new GloriousAnthem();
+        harness.setGraveyard(player1, List.of(sacrificedChimes, newlyDiscardedEnchantment));
+        harness.setExile(player1, List.of(removedEnchantment));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(newlyDiscardedEnchantment);
+        harness.assertNotInHand(player1, "Attunement");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificedChimes);
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty graveyard and still pays the sacrifice cost")
+    void resolvesWithNoEnchantments() {
+        harness.addToBattlefield(player1, new CrystalChimes());
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Crystal Chimes");
+        harness.assertInGraveyard(player1, "Crystal Chimes");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.stack).isEmpty();
+    }
 }
