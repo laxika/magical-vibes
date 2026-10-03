@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianRager;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CurseOfPredation.class, GrizzlyBears.class, JaceBeleren.class})
+@CardUsed({CurseOfPredation.class, PhyrexianRager.class, JaceBeleren.class})
 class CurseOfPredationTest extends BaseCardTest {
 
     @Test
@@ -38,7 +38,7 @@ class CurseOfPredationTest extends BaseCardTest {
     @DisplayName("A creature attacking the enchanted player gets a +1/+1 counter")
     void attackingCreatureGetsCounter() {
         addCurseOnPlayer2();
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
 
         declareAttackers(List.of(1));
         resolveAllTriggers();
@@ -50,8 +50,8 @@ class CurseOfPredationTest extends BaseCardTest {
     @DisplayName("Each creature attacking the enchanted player gets its own counter")
     void eachAttackerGetsCounter() {
         addCurseOnPlayer2();
-        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstAttacker = addCreatureReady(player1, new PhyrexianRager());
+        Permanent secondAttacker = addCreatureReady(player1, new PhyrexianRager());
 
         declareAttackers(List.of(1, 2));
         resolveAllTriggers();
@@ -61,15 +61,12 @@ class CurseOfPredationTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A creature attacking a different player does not trigger the Curse")
+    @DisplayName("A creature attacking the enchanted player's planeswalker does not trigger the Curse")
     void attackOnDifferentPlayerDoesNotTrigger() {
-        Permanent curse = new Permanent(new CurseOfPredation());
-        curse.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(curse);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent planeswalker = new Permanent(new JaceBeleren());
+        addCurseOnPlayer2();
+        Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -81,9 +78,63 @@ class CurseOfPredationTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("A Curse enchanting its controller benefits the opponent's attacker")
+    void opponentAttackingCurseControllerGetsCounter() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfPredation());
+        curse.setAttachedTo(player1.getId());
+        Permanent attacker = addCreatureReady(player2, new PhyrexianRager());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Curses on the same player each add a counter")
+    void multipleCursesEachAddCounter() {
+        addCurseOnPlayer2();
+        addCurseOnPlayer2();
+        Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
+
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Attacking a player who is not enchanted adds no counter")
+    void attackingUnenchantedPlayerAddsNoCounter() {
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfPredation());
+        curse.setAttachedTo(player1.getId());
+        Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the Curse does not stop its already triggered ability")
+    void triggerResolvesAfterCurseLeavesBattlefield() {
+        addCurseOnPlayer2();
+        Permanent curse = findPermanent(player1, "Curse of Predation");
+        Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(curse);
+        gd.playerGraveyards.get(player1.getId()).add(curse.getCard());
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void addCurseOnPlayer2() {
-        Permanent curse = new Permanent(new CurseOfPredation());
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfPredation());
         curse.setAttachedTo(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(curse);
     }
 }
