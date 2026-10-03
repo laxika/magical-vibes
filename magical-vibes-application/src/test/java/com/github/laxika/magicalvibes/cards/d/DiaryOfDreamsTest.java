@@ -3,17 +3,13 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.z.ZimonesExperiment;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,33 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DiaryOfDreams.class, Forest.class, GrizzlyBears.class, LightningBolt.class, ZimonesExperiment.class})
 class DiaryOfDreamsTest extends BaseCardTest {
-
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has instant/sorcery cast trigger and a cost-reducing draw ability")
-    void hasCorrectEffects() {
-        DiaryOfDreams card = new DiaryOfDreams();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{5}");
-        assertThat(ability.getEffects()).anyMatch(e -> e instanceof ReduceActivationCostPerCounterEffect);
-        assertThat(ability.getEffects()).anyMatch(e -> e instanceof DrawCardEffect);
-
-        ReduceActivationCostPerCounterEffect reduce = (ReduceActivationCostPerCounterEffect) ability.getEffects().stream()
-                .filter(e -> e instanceof ReduceActivationCostPerCounterEffect).findFirst().orElseThrow();
-        assertThat(reduce.counterType()).isEqualTo(CounterType.PAGE);
-        assertThat(reduce.reductionPerCounter()).isEqualTo(1);
-    }
-
-    // ===== Page counter trigger =====
 
     @Test
     @DisplayName("Casting an instant puts a page counter on Diary of Dreams")
@@ -82,13 +53,11 @@ class DiaryOfDreamsTest extends BaseCardTest {
         assertThat(diary.getCounterCount(CounterType.PAGE)).isZero();
     }
 
-    // ===== Activated ability + cost reduction =====
-
     @Test
     @DisplayName("With no page counters the ability costs {5}")
     void abilityCostsFiveWithNoCounters() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -107,7 +76,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
     void threeCountersReduceCostToTwo() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
         diary.setCounterCount(CounterType.PAGE, 3);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -140,7 +109,7 @@ class DiaryOfDreamsTest extends BaseCardTest {
     void countersBeyondCostFloorAtZero() {
         Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
         diary.setCounterCount(CounterType.PAGE, 8); // more than the {5} generic cost
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -153,8 +122,100 @@ class DiaryOfDreamsTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Casting a sorcery adds a page counter before the spell resolves")
+    void sorceryCastAddsPageCounter() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new ZimonesExperiment(), "{3}{G}");
+        harness.passBothPriorities();
+
+        assertThat(diary.getCounterCount(CounterType.PAGE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not add a page counter")
+    void opponentInstantAddsNoPageCounter() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(diary.getCounterCount(CounterType.PAGE)).isZero();
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Non-page counters do not reduce the activation cost")
+    void otherCountersDoNotReduceCost() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        diary.setCounterCount(CounterType.CHARGE, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(diary.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A free draw activation still requires an untapped Diary")
+    void cannotActivateTappedDiaryEvenWhenFree() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        diary.setCounterCount(CounterType.PAGE, 5);
+        diary.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The draw ability resolves after its source leaves the battlefield")
+    void drawResolvesWithoutSource() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        diary.setCounterCount(CounterType.PAGE, 5);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(diary);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A page-counter trigger cannot put counters on a departed source")
+    void departedSourceGetsNoPageCounter() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new DiaryOfDreams());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(diary);
+        harness.passBothPriorities();
+
+        assertThat(diary.getCounterCount(CounterType.PAGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
     }
 }
