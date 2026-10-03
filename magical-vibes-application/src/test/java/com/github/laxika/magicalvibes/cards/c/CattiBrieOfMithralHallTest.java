@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -74,5 +75,107 @@ class CattiBrieOfMithralHallTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void attackWithoutEquipmentAddsNoCounters() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        cattiBrie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void countsEquipmentAtTriggerResolution() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(cattiBrie.getId());
+
+        declareAttackers(List.of(0));
+        equipment.setAttachedTo(null);
+        resolveAllTriggers();
+
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canActivateWithNoCounters() {
+        addCreatureReady(player1, new CattiBrieOfMithralHall());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void damagesOpponentBlockerUsingCountersRemovedAtActivation() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        cattiBrie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        cattiBrie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        resolveAllTriggers();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void targetLeavingCombatMakesAbilityFailWithoutRefundingCounters() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        cattiBrie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void countsAttachedEquipmentControlledByOpponent() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(cattiBrie.getId());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(cattiBrie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void destroyingBlockerLeavesAttackerBlocked() {
+        Permanent cattiBrie = addCreatureReady(player1, new CattiBrieOfMithralHall());
+        cattiBrie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        resolveCombat();
+        harness.assertLife(player2, 20);
     }
 }
