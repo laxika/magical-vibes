@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +25,7 @@ class CurseOfChaosTest extends BaseCardTest {
         GrizzlyBears drawn = new GrizzlyBears();
         placeCurseOnPlayer1();
         addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player2, new ArrayList<>(List.of(discarded)));
+        harness.setHand(player2, List.of(discarded));
         harness.setLibrary(player2, List.of(drawn));
 
         declareAttackers(player2, List.of(0));
@@ -48,7 +47,7 @@ class CurseOfChaosTest extends BaseCardTest {
         GrizzlyBears drawn = new GrizzlyBears();
         placeCurseOnPlayer1();
         addCreatureReady(player2, new GrizzlyBears());
-        harness.setHand(player2, new ArrayList<>(List.of(discarded)));
+        harness.setHand(player2, List.of(discarded));
         harness.setLibrary(player2, List.of(drawn));
 
         declareAttackers(player2, List.of(0));
@@ -62,7 +61,7 @@ class CurseOfChaosTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Attacking another player does not trigger")
+    @DisplayName("Attacking only the enchanted player's planeswalker does not trigger")
     void attackingAnotherPlayerDoesNotTrigger() {
         placeCurseOnPlayer1();
         addCreatureReady(player2, new GrizzlyBears());
@@ -78,6 +77,96 @@ class CurseOfChaosTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The draw happens during resolution immediately after the discard")
+    void drawDoesNotUseASeparateStackEntry() {
+        Forest discarded = new Forest();
+        GrizzlyBears drawn = new GrizzlyBears();
+        placeCurseOnPlayer1();
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(discarded));
+        harness.setLibrary(player2, List.of(drawn));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player2, true);
+            harness.handleCardChosen(player2, 0);
+        });
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple attackers cause only one discard and draw")
+    void multipleAttackersTriggerOnlyOnce() {
+        Forest discarded = new Forest();
+        Forest retained = new Forest();
+        GrizzlyBears drawn = new GrizzlyBears();
+        placeCurseOnPlayer1();
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(discarded, retained));
+        harness.setLibrary(player2, List.of(drawn, new Forest()));
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player2, true);
+            harness.handleCardChosen(player2, 0);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained, drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attacker with an empty hand cannot draw")
+    void emptyHandDoesNotDraw() {
+        GrizzlyBears drawn = new GrizzlyBears();
+        placeCurseOnPlayer1();
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawn));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Curse's controller can loot when attacking the enchanted opponent")
+    void curseControllerCanDiscardToDraw() {
+        Forest discarded = new Forest();
+        GrizzlyBears drawn = new GrizzlyBears();
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfChaos());
+        curse.setAttachedTo(player2.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
     private void placeCurseOnPlayer1() {
