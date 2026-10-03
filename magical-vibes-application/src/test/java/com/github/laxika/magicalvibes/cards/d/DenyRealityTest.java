@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DenyReality.class, GrizzlyBears.class, Island.class, LlanowarElves.class, Mountain.class})
 class DenyRealityTest extends BaseCardTest {
-
-    // ===== Bounce (Return target permanent to its owner's hand) =====
 
     @Test
     @DisplayName("Resolving returns target creature to its owner's hand")
@@ -74,8 +74,6 @@ class DenyRealityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Deny Reality");
     }
 
-    // ===== Cascade =====
-
     @Test
     @DisplayName("Cascade digs past lands and higher-cost nonlands to the first lesser-cost nonland")
     void cascadeOffersFirstLesserNonland() {
@@ -85,8 +83,7 @@ class DenyRealityTest extends BaseCardTest {
         // Deny Reality is {3}{U}{B} = mana value 5. Dig should skip the land, stop at Llanowar Elves
         // (MV 1 < 5), and never touch the Grizzly Bears beneath it.
         GrizzlyBears belowHit = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Mountain(), new LlanowarElves(), belowHit));
+        harness.setLibrary(player1, List.of(new Mountain(), new LlanowarElves(), belowHit));
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         castDenyReality(targetId);
@@ -105,20 +102,118 @@ class DenyRealityTest extends BaseCardTest {
         setupCasterTurn();
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Mountain(), new LlanowarElves()));
+        harness.setLibrary(player1, List.of(new Mountain(), new LlanowarElves()));
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         castDenyReality(targetId);
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Llanowar Elves")
                 && se.getEntryType() == StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Declining cascade returns every exiled card below the untouched library")
+    void decliningCascadeBottomsAllExiledCards() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Mountain skipped = new Mountain();
+        LlanowarElves hit = new LlanowarElves();
+        GrizzlyBears untouched = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(skipped, hit, untouched));
+
+        castDenyReality(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
+                .containsExactlyInAnyOrder(skipped, hit);
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cascade skips a card with equal mana value and stops at a lesser one")
+    void cascadeSkipsEqualManaValue() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        DenyReality equalValue = new DenyReality();
+        LlanowarElves hit = new LlanowarElves();
+        harness.setLibrary(player1, List.of(equalValue, hit));
+
+        castDenyReality(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(hit);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equalValue);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cascade puts the skipped cards and the offered card into exile")
+    void cascadeExilesCardsBeforeOfferingCast() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Mountain skipped = new Mountain();
+        LlanowarElves hit = new LlanowarElves();
+        harness.setLibrary(player1, List.of(skipped, hit));
+
+        castDenyReality(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).extracting(entry -> entry.card())
+                .containsExactlyInAnyOrder(skipped, hit);
+        assertThat(gd.cardsExiledThisTurn).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The spell cast by cascade is recorded as cast from exile")
+    void cascadeCastsFromExile() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new LlanowarElves()));
+
+        castDenyReality(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.EXILE)).isEqualTo(1);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.GRAVEYARD)).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cascade with no qualifying card returns the entire library")
+    void cascadeWithoutHitReturnsAllCards() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Mountain land = new Mountain();
+        DenyReality equalValue = new DenyReality();
+        harness.setLibrary(player1, List.of(land, equalValue));
+
+        castDenyReality(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(land, equalValue);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
 
     private void setupCasterTurn() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -126,7 +221,7 @@ class DenyRealityTest extends BaseCardTest {
     }
 
     private void emptyCasterLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
     }
 
     private void castDenyReality(UUID targetId) {
