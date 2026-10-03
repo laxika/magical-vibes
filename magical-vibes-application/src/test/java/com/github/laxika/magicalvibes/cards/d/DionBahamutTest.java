@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DionBahamut.class, BahamutWardenOfLight.class, ContainmentPriest.class,
         FountainOfYouth.class, GrizzlyBears.class})
@@ -96,7 +97,7 @@ class DionBahamutTest extends BaseCardTest {
 
     @Test
     void thirdChapterDestroysTargetAndReturnsBahamutToFrontFace() {
-        Permanent bahamut = addBahamutWithLore(2);
+        addBahamutWithLore(2);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
         advanceToNextChapter();
@@ -135,13 +136,116 @@ class DionBahamutTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard() instanceof DionBahamut);
     }
 
+    @Test
+    void secondChapterAffectsCreaturesPresentAtResolutionAndFlyingExpires() {
+        Permanent bahamut = addBahamutWithLore(1);
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        advanceToNextChapter();
+        Permanent creatureBeforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(bahamut.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(bahamut.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(creatureBeforeResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creatureBeforeResolution, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(laterCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.FLYING)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creatureBeforeResolution, Keyword.FLYING)).isFalse();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void newlyCastDionCannotPayTapCost() {
+        castDion();
+        Permanent dion = findPermanent(player1, DionBahamut.class);
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, dion), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(dion.isTapped()).isFalse();
+    }
+
+    @Test
+    void transformCannotBeActivatedOutsideMainPhase() {
+        castDion();
+        Permanent dion = findPermanent(player1, DionBahamut.class);
+        dion.setSummoningSick(false);
+        addTransformMana();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, dion), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(dion.isTapped()).isFalse();
+    }
+
+    @Test
+    void returnedBahamutCannotAttackOnTheTurnItEnters() {
+        castDion();
+        Permanent dion = findPermanent(player1, DionBahamut.class);
+        dion.setSummoningSick(false);
+        addTransformMana();
+        harness.activateAbility(player1, indexOf(player1, dion), 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent bahamut = findPermanent(player1, BahamutWardenOfLight.class);
+        assertThatThrownBy(() -> declareAttackers(List.of(indexOf(player1, bahamut))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnedDionCannotImmediatelyTransformAgain() {
+        addBahamutWithLore(2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent dion = findPermanent(player1, DionBahamut.class);
+        addTransformMana();
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, dion), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void thirdChapterCanDestroyBahamutItselfWithoutReturningIt() {
+        Permanent bahamut = addBahamutWithLore(2);
+        Card physicalCard = bahamut.getOriginalCard();
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, bahamut.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(physicalCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void transformRequiresAnEmptyStack() {
+        Permanent dion = addCreatureReady(player1, new DionBahamut());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        addTransformMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, dion), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(dion.isTapped()).isFalse();
+    }
+
     private void castDion() {
-        harness.setHand(player1, List.of(new DionBahamut()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new DionBahamut(), "{3}{W}");
+        resolveAllTriggers();
     }
 
     private void addTransformMana() {
