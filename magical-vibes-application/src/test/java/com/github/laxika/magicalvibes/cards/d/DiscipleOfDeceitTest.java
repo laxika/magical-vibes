@@ -8,14 +8,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DiscipleOfDeceit.class, GrizzlyBears.class, Island.class})
 class DiscipleOfDeceitTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         Card searchTarget = new GrizzlyBears();
         Card differentManaValue = new Island();
         addTappedDisciple();
-        harness.setHand(player1, new ArrayList<>(List.of(discarded, landInHand)));
+        harness.setHand(player1, List.of(discarded, landInHand));
         harness.setLibrary(player1, List.of(searchTarget, differentManaValue));
 
         resolveUntapTrigger();
@@ -38,7 +39,9 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         assertThat(discardChoice.validIndices()).containsExactly(0);
 
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.stack).isEmpty();
 
         PendingInteraction.LibrarySearch librarySearch =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -49,6 +52,8 @@ class DiscipleOfDeceitTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(landInHand, searchTarget);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gameLogContains("reveals")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test
@@ -56,7 +61,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
     void decliningInspiredDoesNothing() {
         Card cardInHand = new GrizzlyBears();
         addTappedDisciple();
-        harness.setHand(player1, new ArrayList<>(List.of(cardInHand)));
+        harness.setHand(player1, List.of(cardInHand));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         resolveUntapTrigger();
@@ -73,7 +78,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
     void inspiredCannotDiscardLand() {
         Card landInHand = new Island();
         addTappedDisciple();
-        harness.setHand(player1, new ArrayList<>(List.of(landInHand)));
+        harness.setHand(player1, List.of(landInHand));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         resolveUntapTrigger();
@@ -82,6 +87,64 @@ class DiscipleOfDeceitTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(landInHand);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Discarding still happens when the library has no matching card")
+    void noMatchingCardStillDiscardsAndShuffles() {
+        Card discarded = new GrizzlyBears();
+        Card land = new Island();
+        addTappedDisciple();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(land));
+
+        resolveUntapTrigger();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a matching card exists")
+    void mayFailToFindMatchingCard() {
+        Card discarded = new GrizzlyBears();
+        Card matching = new GrizzlyBears();
+        addTappedDisciple();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(matching));
+
+        resolveUntapTrigger();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matching);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already untapped Disciple does not trigger Inspired")
+    void alreadyUntappedDoesNotTrigger() {
+        harness.addToBattlefield(player1, new DiscipleOfDeceit());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        resolveUntapTrigger();
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -96,8 +159,6 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }
