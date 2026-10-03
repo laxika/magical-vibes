@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SphinxOfJwarIsle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DocOcksTentacles.class, GrizzlyBears.class, HillGiant.class, SerraAngel.class})
+@CardUsed({DocOcksTentacles.class, GrizzlyBears.class, HillGiant.class, SerraAngel.class, SphinxOfJwarIsle.class})
 class DocOcksTentaclesTest extends BaseCardTest {
 
     @Test
@@ -108,10 +109,67 @@ class DocOcksTentaclesTest extends BaseCardTest {
         assertThat(tentacles.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("The triggered attachment can attach to an entering creature with shroud")
+    void attachesToEnteringCreatureWithShroud() {
+        Permanent tentacles = addTentaclesReady(player1);
+        harness.setHand(player1, List.of(new SphinxOfJwarIsle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent sphinx = findPermanent(player1, "Sphinx of Jwar Isle");
+        assertThat(tentacles.getAttachedTo()).isEqualTo(sphinx.getId());
+        assertThat(gqs.getEffectivePower(gd, sphinx)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, sphinx)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Accepting moves the Equipment from its previous creature to the entering creature")
+    void acceptingMovesEquipmentAndBoost() {
+        Permanent previous = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tentacles = addTentaclesReady(player1);
+        tentacles.setAttachedTo(previous.getId());
+        castSerraAngel(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent angel = findPermanent(player1, "Serra Angel");
+        assertThat(tentacles.getAttachedTo()).isEqualTo(angel.getId());
+        assertThat(gqs.getEffectivePower(gd, previous)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, previous)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Declining preserves the Equipment's previous attachment")
+    void decliningPreservesPreviousAttachment() {
+        Permanent previous = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tentacles = addTentaclesReady(player1);
+        tentacles.setAttachedTo(previous.getId());
+        castSerraAngel(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        Permanent angel = findPermanent(player1, "Serra Angel");
+        assertThat(tentacles.getAttachedTo()).isEqualTo(previous.getId());
+        assertThat(gqs.getEffectivePower(gd, previous)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, previous)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
+    }
+
     private Permanent addTentaclesReady(Player player) {
-        Permanent permanent = new Permanent(new DocOcksTentacles());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DocOcksTentacles());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
