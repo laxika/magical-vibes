@@ -75,13 +75,51 @@ class DeathbringerRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Deathbringer Regent");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the trigger is created are also destroyed")
+    void destroysCreaturesEnteringBeforeResolution() {
+        addBears(player1, 2);
+        addBears(player2, 3);
+        harness.setHand(player1, List.of(new DeathbringerRegent()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        addBears(player2, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Deathbringer Regent");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("The trigger still destroys five other creatures after Regent leaves")
+    void triggerResolvesAfterRegentLeavesBattlefield() {
+        addBears(player1, 2);
+        addBears(player2, 3);
+        harness.setHand(player1, List.of(new DeathbringerRegent()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof DeathbringerRegent);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
 
     private List<Permanent> addBears(Player player, int count) {
