@@ -69,10 +69,75 @@ class CutDownDmuTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castCutDown(Permanent target) {
+    @Test
+    @DisplayName("Can destroy its controller's creature")
+    void destroysOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GoblinPiker());
+
+        castCutDown(target);
+
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+        harness.assertInGraveyard(player1, "Goblin Piker");
+    }
+
+    @Test
+    @DisplayName("Uses negative power when calculating the total")
+    void includesNegativePowerInTotal() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.setPowerModifier(-5);
+        target.setToughnessModifier(2);
+
+        castCutDown(target);
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Rechecks toughness increases on resolution")
+    void fizzlesWhenToughnessIncreasesAboveThreshold() {
+        Permanent target = addCreatureReady(player2, new GoblinPiker());
         harness.setHand(player1, List.of(new CutDown()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castInstant(player1, 0, target.getId());
+
+        target.setToughnessModifier(3);
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Goblin Piker");
+        harness.assertInGraveyard(player1, "Cut Down");
+    }
+
+    @Test
+    @DisplayName("Damage marked on a creature does not reduce its toughness for targeting")
+    void rejectsDamagedCreatureAboveThreshold() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        target.setMarkedDamage(3);
+        harness.setHand(player1, List.of(new CutDown()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("total power and toughness 5 or less");
+    }
+
+    @Test
+    @DisplayName("A regeneration shield can save the targeted creature")
+    void allowsRegeneration() {
+        Permanent target = addCreatureReady(player2, new GoblinPiker());
+        target.setRegenerationShield(1);
+
+        castCutDown(target);
+
+        harness.assertOnBattlefield(player2, "Goblin Piker");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Cut Down");
+    }
+
+    private void castCutDown(Permanent target) {
+        harness.setHand(player1, List.of(new CutDown()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
