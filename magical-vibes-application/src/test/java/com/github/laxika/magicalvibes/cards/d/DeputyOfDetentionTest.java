@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DeputyOfDetention.class, GrizzlyBears.class, LightningBolt.class, Forest.class, SoulWarden.class})
 class DeputyOfDetentionTest extends BaseCardTest {
 
     private void castAndResolve(UUID targetId) {
+        castDeputy(targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void castDeputy(UUID targetId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new DeputyOfDetention()));
@@ -26,8 +35,6 @@ class DeputyOfDetentionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     @Test
@@ -57,11 +64,9 @@ class DeputyOfDetentionTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         castAndResolve(targetId);
 
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID deputyId = harness.getPermanentId(player1, "Deputy of Detention");
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, deputyId);
         harness.passBothPriorities();
 
@@ -102,5 +107,73 @@ class DeputyOfDetentionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownBearsId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Nothing is exiled when Deputy leaves before its entrance trigger resolves")
+    void sourceLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDeputy(harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Deputy of Detention"));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Deputy of Detention");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents exiling the other same-name permanents")
+    void targetLeavesBeforeTriggerResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        castDeputy(targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All detained creatures return simultaneously and see each other enter")
+    void detainedCreaturesReturnSimultaneously() {
+        harness.addToBattlefield(player2, new SoulWarden());
+        harness.addToBattlefield(player2, new SoulWarden());
+        castAndResolve(harness.getPermanentId(player2, "Soul Warden"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Soul Warden");
+        int lifeBeforeReturn = gd.playerLifeTotals.get(player2.getId());
+
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Deputy of Detention"));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Soul Warden"))
+                .hasSize(2);
+        for (int i = 0; i < 2 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player2, lifeBeforeReturn + 2);
     }
 }
