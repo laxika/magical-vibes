@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,41 @@ class CruelAdministratorTest extends BaseCardTest {
     }
 
     @Test
+    void opponentsAttackDoesNotEnableRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+
+        Permanent administrator = castAdministrator(false);
+
+        assertThat(administrator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void soldierFirebendingProducesManaThatLastsUntilCombatEnds() {
+        Permanent administrator = addCreatureReady(player1, new CruelAdministrator());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(administrator)));
+        resolveAllTriggers();
+        Permanent soldier = findPermanent(player1, "Soldier");
+        assertThat(soldier.isTapped()).isFalse();
+        assertThat(soldier.isAttacking()).isFalse();
+        advanceToUpkeep(player1);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(soldier)));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredManaTotals()
+                .getOrDefault(ManaColor.RED, 0)).isEqualTo(1);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredManaTotals()
+                .getOrDefault(ManaColor.RED, 0)).isEqualTo(1);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredManaTotals()
+                .getOrDefault(ManaColor.RED, 0)).isZero();
+    }
+
+    @Test
     void attackingCreatesSoldierWithFirebending() {
         Permanent administrator = addCreatureReady(player1, new CruelAdministrator());
 
@@ -51,12 +87,7 @@ class CruelAdministratorTest extends BaseCardTest {
         if (raid) {
             gd.playersDeclaredAttackersThisTurn.add(player1.getId());
         }
-        harness.setHand(player1, List.of(new CruelAdministrator()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CruelAdministrator(), "{3}{B}{R}");
         harness.passBothPriorities();
         return findPermanent(player1, "Cruel Administrator");
     }
