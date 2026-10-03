@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -91,8 +92,7 @@ class DestinySpinnerTest extends BaseCardTest {
     void animatesLandUsingEnchantmentCount() {
         addSpinner(player1);
         Permanent land = addLand(player1);
-        Permanent otherEnchantment = new Permanent(new FamiliarGround());
-        gd.playerBattlefields.get(player1.getId()).add(otherEnchantment);
+        Permanent otherEnchantment = harness.addToBattlefieldAndReturn(player1, new FamiliarGround());
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.activateAbility(player1, 0, null, land.getId());
@@ -122,24 +122,121 @@ class DestinySpinnerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void doesNotProtectItselfOnTheStack() {
+        DestinySpinner spinner = new DestinySpinner();
+        harness.setHand(player1, List.of(spinner));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spinner.getId());
+
+        harness.assertInGraveyard(player1, "Destiny Spinner");
+        harness.assertNotOnBattlefield(player1, "Destiny Spinner");
+    }
+
+    @Test
+    void doesNotProtectOpponentsSpells() {
+        addSpinner(player2);
+        DestinySpinner spell = new DestinySpinner();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        harness.assertInGraveyard(player1, "Destiny Spinner");
+        harness.assertNotOnBattlefield(player1, "Destiny Spinner");
+    }
+
+    @Test
+    void enchantmentCountIsDeterminedAtResolutionAndExcludesOpponents() {
+        addSpinner(player1);
+        Permanent land = addLand(player1);
+        addSpinner(player2);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.addToBattlefield(player1, new DestinySpinner());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+    }
+
+    @Test
+    void zeroEnchantmentsAtResolutionPutsAnimatedLandInGraveyard() {
+        Permanent spinner = addSpinner(player1);
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(spinner);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void latestActivationReplacesPreviousBasePowerAndToughness() {
+        addSpinner(player1);
+        Permanent land = addLand(player1);
+        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new DestinySpinner());
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+    }
+
+    @Test
+    void animationDoesNotUntapLandAndExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new DestinySpinner());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isFalse();
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
     private Permanent addSpinner(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent spinner = new Permanent(new DestinySpinner());
+        Permanent spinner = harness.addToBattlefieldAndReturn(player, new DestinySpinner());
         spinner.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(spinner);
         return spinner;
     }
 
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
     private Permanent addLand(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent land = new Permanent(new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new Forest());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(land);
         return land;
     }
 }
