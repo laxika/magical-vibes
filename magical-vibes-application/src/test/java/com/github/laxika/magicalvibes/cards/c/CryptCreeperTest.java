@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,7 @@ class CryptCreeperTest extends BaseCardTest {
     void exilesCreatureFromOpponentGraveyard() {
         Permanent creeper = addCreatureReady(player1, new CryptCreeper());
         Card target = new DuskImp();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, List.of(target));
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
         harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
@@ -40,7 +39,7 @@ class CryptCreeperTest extends BaseCardTest {
     void exilesNoncreatureFromOwnGraveyard() {
         Permanent creeper = addCreatureReady(player1, new CryptCreeper());
         Card target = new Forest();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player1, List.of(target));
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
         harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
@@ -56,7 +55,7 @@ class CryptCreeperTest extends BaseCardTest {
     void activatingSacrificesCreeper() {
         Permanent creeper = addCreatureReady(player1, new CryptCreeper());
         Card target = new DuskImp();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, List.of(target));
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
         harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
@@ -96,7 +95,7 @@ class CryptCreeperTest extends BaseCardTest {
     void fizzlesIfTargetRemoved() {
         Permanent creeper = addCreatureReady(player1, new CryptCreeper());
         Card target = new DuskImp();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, List.of(target));
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
         harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
@@ -115,7 +114,7 @@ class CryptCreeperTest extends BaseCardTest {
         creeper.setSummoningSick(true);
 
         Card target = new DuskImp();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(target)));
+        harness.setGraveyard(player2, List.of(target));
 
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
         harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
@@ -123,5 +122,43 @@ class CryptCreeperTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Dusk Imp"));
+    }
+    @Test
+    @DisplayName("Can activate while tapped and exiles only the chosen card")
+    void canActivateWhileTappedAndExilesOnlyChosenCard() {
+        Permanent creeper = addCreatureReady(player1, new CryptCreeper());
+        creeper.setTapped(true);
+        Card target = new CryptCreeper();
+        Card other = new CryptCreeper();
+        harness.setGraveyard(player2, List.of(target, other));
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
+        harness.activateAbility(player1, index, 0, null, target.getId(), Zone.GRAVEYARD);
+
+        harness.assertNotOnBattlefield(player1, "Crypt Creeper");
+        harness.assertInGraveyard(player1, "Crypt Creeper");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target, other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+        harness.assertInGraveyard(player1, "Crypt Creeper");
+    }
+
+    @Test
+    @DisplayName("Cannot target itself before paying the sacrifice cost")
+    void cannotTargetItselfFromBattlefield() {
+        Permanent creeper = addCreatureReady(player1, new CryptCreeper());
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(creeper);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null,
+                creeper.getCard().getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Crypt Creeper");
+        harness.assertNotInGraveyard(player1, "Crypt Creeper");
+        assertThat(gd.stack).isEmpty();
     }
 }
