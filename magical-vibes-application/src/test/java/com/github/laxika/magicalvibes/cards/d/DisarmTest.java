@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.Arrest;
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Disarm.class, Frogmite.class, LeoninScimitar.class})
+@CardUsed({Disarm.class, Frogmite.class, LeoninScimitar.class, Arrest.class})
 class DisarmTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class DisarmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disarm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(equipment1.getAttachedTo()).isNull();
         assertThat(equipment2.getAttachedTo()).isNull();
@@ -43,8 +43,7 @@ class DisarmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disarm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(equipment.getAttachedTo()).isEqualTo(otherCreature.getId());
     }
@@ -57,8 +56,7 @@ class DisarmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disarm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(equipment.getAttachedTo()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(equipment);
@@ -74,6 +72,24 @@ class DisarmTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Leaves Auras attached while removing Equipment")
+    void leavesAurasAttached() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Frogmite());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Arrest());
+        aura.setAttachedTo(target.getId());
+        Permanent equipment = addEquipment(player2, target);
+        harness.setHand(player1, List.of(new Disarm()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(aura.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target, equipment);
     }
 
     private Permanent addEquipment(com.github.laxika.magicalvibes.model.Player player, Permanent target) {
