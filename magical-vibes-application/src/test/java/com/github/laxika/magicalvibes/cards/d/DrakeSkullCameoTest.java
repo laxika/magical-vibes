@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(DrakeSkullCameo.class)
 class DrakeSkullCameoTest extends BaseCardTest {
@@ -40,4 +41,35 @@ class DrakeSkullCameoTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A newly entered Drake-Skull Cameo can produce mana immediately")
+    void newlyEnteredCameoCanProduceMana() {
+        Permanent cameo = harness.enterBattlefieldAndReturn(player1, new DrakeSkullCameo());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(cameo.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Drake-Skull Cameo cannot produce mana again")
+    void tappedCameoCannotProduceManaAgain() {
+        Permanent cameo = addCreatureReady(player1, new DrakeSkullCameo());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(cameo.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
