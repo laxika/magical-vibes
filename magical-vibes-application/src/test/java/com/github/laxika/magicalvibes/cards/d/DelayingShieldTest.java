@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DelayingShield.class, KamahlPitFighter.class, DuskImp.class})
+@CardUsed({DelayingShield.class, KamahlPitFighter.class, DuskImp.class, DoublingSeason.class})
 class DelayingShieldTest extends BaseCardTest {
 
     private Permanent shield() {
@@ -99,6 +99,91 @@ class DelayingShieldTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
         assertThat(shield.getCounterCount(CounterType.DELAY)).isEqualTo(2);
+    }
+
+    @Test
+    void removesAllCountersBeforeOfferingPayments() {
+        Permanent shield = shield();
+        dealThreeDamageTo(player1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(shield.getCounterCount(CounterType.DELAY)).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void canPayForOnlySomeRemovedCounters() {
+        Permanent shield = shield();
+        dealThreeDamageTo(player1);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 18);
+        assertThat(shield.getCounterCount(CounterType.DELAY)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void upkeepWithoutCountersDoesNotOfferPayment() {
+        Permanent shield = shield();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(shield.getCounterCount(CounterType.DELAY)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentUpkeepDoesNotRemoveCounters() {
+        Permanent shield = shield();
+        dealThreeDamageTo(player1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(shield.getCounterCount(CounterType.DELAY)).isEqualTo(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void controllerChoosesWhichShieldReplacesDamage() {
+        Permanent first = shield();
+        Permanent second = shield();
+
+        dealThreeDamageTo(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isZero();
+        assertThat(second.getCounterCount(CounterType.DELAY)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void delayCounterPlacementIsDoubledByDoublingSeason() {
+        Permanent shield = shield();
+        harness.addToBattlefield(player1, new DoublingSeason());
+
+        dealThreeDamageTo(player1);
+
+        harness.assertLife(player1, 20);
+        assertThat(shield.getCounterCount(CounterType.DELAY)).isEqualTo(6);
     }
 
 }
