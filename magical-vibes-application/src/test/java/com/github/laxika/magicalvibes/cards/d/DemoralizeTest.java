@@ -97,6 +97,107 @@ class DemoralizeTest extends BaseCardTest {
         assertThat(opposingCreature.isCantBlockThisTurn()).isFalse();
     }
 
+    @Test
+    @DisplayName("Menace rejects a single blocker")
+    void menaceRejectsSingleBlocker() {
+        addCreatureReady(player1, new DuskImp());
+        addCreatureReady(player2, new DuskImp());
+        castDemoralize();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Menace permits two blockers without threshold")
+    void menacePermitsTwoBlockers() {
+        addCreatureReady(player1, new DuskImp());
+        Permanent firstBlocker = addCreatureReady(player2, new DuskImp());
+        Permanent secondBlocker = addCreatureReady(player2, new DuskImp());
+        castDemoralize();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain menace")
+    void laterCreatureDoesNotGainMenace() {
+        castDemoralize();
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold checks the graveyard at resolution and persists after it empties")
+    void thresholdUsesResolutionGraveyardAndPersists() {
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        harness.castFromHand(player1, new Demoralize(), "{2}{R}");
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing threshold before resolution leaves creatures able to block")
+    void thresholdLostBeforeResolutionDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+        harness.castFromHand(player1, new Demoralize(), "{2}{R}");
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace and the threshold blocking restriction expire at end of turn")
+    void bothEffectsExpireAtEndOfTurn() {
+        Permanent attacker = addCreatureReady(player1, new DuskImp());
+        Permanent blocker = addCreatureReady(player2, new DuskImp());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()
+        ));
+        castDemoralize();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.MENACE)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
     private void castDemoralize() {
         harness.castFromHand(player1, new Demoralize(), "{2}{R}");
         harness.passBothPriorities();
