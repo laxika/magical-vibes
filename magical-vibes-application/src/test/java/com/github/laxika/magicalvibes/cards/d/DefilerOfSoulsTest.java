@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.h.HonorOfThePure;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DefilerOfSouls.class, LlanowarElves.class, Ornithopter.class,
+        HonorOfThePure.class, Unsummon.class})
 class DefilerOfSoulsTest extends BaseCardTest {
 
     @Test
@@ -89,7 +97,78 @@ class DefilerOfSoulsTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(red.getId()));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Only the active player sacrifices, and only a monocolored creature qualifies")
+    void onlyActivePlayersMonocoloredCreatureIsSacrificed() {
+        addCreatureReady(player1, new DefilerOfSouls());
+        addCreatureReady(player1, new LlanowarElves());
+        addCreatureReady(player2, new LlanowarElves());
+        addCreatureReady(player2, new Ornithopter());
+        addCreatureReady(player2, new DefilerOfSouls());
+        harness.addToBattlefield(player2, new HonorOfThePure());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Defiler of Souls");
+        harness.assertOnBattlefield(player2, "Honor of the Pure");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An upkeep without a qualifying creature does not sacrifice a colored noncreature")
+    void noQualifyingCreatureDoesNotPromptOrSacrificeNoncreature() {
+        addCreatureReady(player1, new DefilerOfSouls());
+        addCreatureReady(player1, new LlanowarElves());
+        addCreatureReady(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new HonorOfThePure());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Honor of the Pure");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Qualifying creatures are determined when the upkeep trigger resolves")
+    void creatureEnteringAfterTriggerIsSacrificed() {
+        addCreatureReady(player1, new DefilerOfSouls());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        addCreatureReady(player2, new LlanowarElves());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Removing Defiler in response does not stop its upkeep trigger")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent defiler = addCreatureReady(player1, new DefilerOfSouls());
+        addCreatureReady(player2, new LlanowarElves());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        advanceToUpkeep(player2);
+        harness.castInstant(player2, 0, defiler.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Defiler of Souls");
+        harness.assertInHand(player1, "Defiler of Souls");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
 
     /**
      * Adds a 2/2 creature. A single non-null {@code primary} color makes it monocolored; passing both
@@ -106,9 +185,6 @@ class DefilerOfSoulsTest extends BaseCardTest {
         } else if (primary != null) {
             card.setColor(primary);
         }
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 }
