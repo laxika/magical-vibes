@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.t.TerritorialRoc;
+import com.github.laxika.magicalvibes.cards.t.ThunderbreakRegent;
+import com.github.laxika.magicalvibes.cards.t.TwinBolt;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,19 +13,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonHunter.class})
+@CardUsed({DragonHunter.class, ThunderbreakRegent.class, TerritorialRoc.class,
+        DragonlordAtarka.class, TwinBolt.class})
 class DragonHunterTest extends BaseCardTest {
 
     @Test
     @DisplayName("Can block a flying Dragon as though it had reach")
     void canBlockFlyingDragon() {
-        Permanent dragonHunter = addReadyPermanent(player2, new DragonHunter(), false);
-        Permanent dragon = addReadyPermanent(player1, createCreature("Dragon", CardSubtype.DRAGON, true), true);
+        Permanent dragonHunter = addCreatureReady(player2, new DragonHunter());
+        Permanent dragon = addCreatureReady(player1, new ThunderbreakRegent());
+        dragon.setAttacking(true);
 
         prepareDeclareBlockers();
 
@@ -38,8 +40,9 @@ class DragonHunterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot block a flying non-Dragon without reach")
     void cannotBlockFlyingNonDragon() {
-        Permanent dragonHunter = addReadyPermanent(player2, new DragonHunter(), false);
-        Permanent flyer = addReadyPermanent(player1, createCreature("Angel", null, true), true);
+        Permanent dragonHunter = addCreatureReady(player2, new DragonHunter());
+        Permanent flyer = addCreatureReady(player1, new TerritorialRoc());
+        flyer.setAttacking(true);
 
         prepareDeclareBlockers();
 
@@ -52,8 +55,9 @@ class DragonHunterTest extends BaseCardTest {
     @Test
     @DisplayName("Protection from Dragons prevents a Dragon from blocking it")
     void protectionFromDragonsPreventsBlocking() {
-        Permanent dragonHunter = addReadyPermanent(player1, new DragonHunter(), true);
-        Permanent dragon = addReadyPermanent(player2, createCreature("Dragon", CardSubtype.DRAGON, false), false);
+        Permanent dragonHunter = addCreatureReady(player1, new DragonHunter());
+        Permanent dragon = addCreatureReady(player2, new ThunderbreakRegent());
+        dragonHunter.setAttacking(true);
 
         prepareDeclareBlockers();
 
@@ -63,29 +67,61 @@ class DragonHunterTest extends BaseCardTest {
                 .hasMessageContaining("protection");
     }
 
-    private static Card createCreature(String name, CardSubtype subtype, boolean flying) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(3);
-        card.setToughness(3);
-        if (subtype != null) {
-            card.setSubtypes(List.of(subtype));
-        }
-        if (flying) {
-            card.setKeywords(Set.of(Keyword.FLYING));
-        }
-        return card;
+    @Test
+    void preventsCombatDamageFromBlockedDragon() {
+        Permanent dragonHunter = addCreatureReady(player2, new DragonHunter());
+        Permanent dragon = addCreatureReady(player1, new ThunderbreakRegent());
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, dragon)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, dragonHunter), indexOf(player1, dragon))));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(dragonHunter);
+        assertThat(dragonHunter.getMarkedDamage()).isZero();
+        assertThat(dragon.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 20);
     }
 
-    private Permanent addReadyPermanent(Player player, Card card, boolean attacking) {
-        card.setOwnerId(player.getId());
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(attacking);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void nonDragonCanBlockDragonHunter() {
+        Permanent dragonHunter = addCreatureReady(player1, new DragonHunter());
+        Permanent blocker = addCreatureReady(player2, new TerritorialRoc());
+        dragonHunter.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, blocker), indexOf(player1, dragonHunter))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void dragonTriggeredAbilityCannotTargetDragonHunter() {
+        Permanent dragonHunter = addCreatureReady(player2, new DragonHunter());
+        harness.setHand(player1, List.of(new DragonlordAtarka()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        gd.pendingETBDamageAssignments = Map.of(dragonHunter.getId(), 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(dragonHunter.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    void nonDragonSpellCanTargetAndDamageDragonHunter() {
+        Permanent dragonHunter = addCreatureReady(player2, new DragonHunter());
+        harness.setHand(player1, List.of(new TwinBolt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, Map.of(dragonHunter.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(dragonHunter);
+        harness.assertInGraveyard(player2, "Dragon Hunter");
     }
 
     private int indexOf(Player player, Permanent permanent) {
