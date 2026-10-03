@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,8 +19,7 @@ class ColdStorageTest extends BaseCardTest {
     @DisplayName("{3}: Exile target creature you control, tracked with Cold Storage")
     void exileAbilityExilesOwnCreature() {
         Permanent storage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
-        harness.addToBattlefield(player1, new MoggFanatic());
-        Permanent fanatic = findPermanent(player1, "Mogg Fanatic");
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, fanatic.getId());
@@ -37,8 +34,7 @@ class ColdStorageTest extends BaseCardTest {
     @DisplayName("{3} cannot target a creature you don't control")
     void exileAbilityCannotTargetOpponentCreature() {
         harness.addToBattlefieldAndReturn(player1, new ColdStorage());
-        harness.addToBattlefield(player2, new MoggFanatic());
-        Permanent enemyFanatic = findPermanent(player2, "Mogg Fanatic");
+        Permanent enemyFanatic = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, enemyFanatic.getId()))
@@ -49,8 +45,7 @@ class ColdStorageTest extends BaseCardTest {
     @DisplayName("Sacrifice: return each creature exiled with Cold Storage under your control")
     void sacrificeReturnsExiledCreatures() {
         Permanent storage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
-        harness.addToBattlefield(player1, new MoggFanatic());
-        Permanent fanatic = findPermanent(player1, "Mogg Fanatic");
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, fanatic.getId());
@@ -70,14 +65,13 @@ class ColdStorageTest extends BaseCardTest {
     @DisplayName("Sacrifice returns every creature exiled with Cold Storage")
     void sacrificeReturnsEveryExiledCreature() {
         Permanent storage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
-        harness.addToBattlefield(player1, new MoggFanatic());
-        harness.addToBattlefield(player1, new MoggFanatic());
-        List<Permanent> fanatics = findPermanents(player1, "Mogg Fanatic");
+        Permanent firstFanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        Permanent secondFanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        harness.activateAbility(player1, 0, 0, null, fanatics.get(0).getId());
+        harness.activateAbility(player1, 0, 0, null, firstFanatic.getId());
         harness.passBothPriorities();
-        harness.activateAbility(player1, 0, 0, null, fanatics.get(1).getId());
+        harness.activateAbility(player1, 0, 0, null, secondFanatic.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(storage.getId())).hasSize(2);
@@ -118,5 +112,69 @@ class ColdStorageTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Cold Storage");
         harness.assertInGraveyard(player1, "Cold Storage");
+    }
+
+    @Test
+    void exileAbilityCannotTargetUnanimatedLand() {
+        harness.addToBattlefield(player1, new ColdStorage());
+        Permanent stones = harness.addToBattlefieldAndReturn(player1, new StalkingStones());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, stones.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void sacrificeOnlyReturnsCardsExiledWithThatStorage() {
+        Permanent firstStorage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
+        Permanent secondStorage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
+        Permanent firstFanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        Permanent secondFanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, firstFanatic.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, secondFanatic.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Mogg Fanatic")).isEqualTo(1);
+        assertThat(gd.getCardsExiledByPermanent(firstStorage.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(secondStorage.getId()))
+                .extracting(card -> card.getId()).containsExactly(secondFanatic.getCard().getId());
+    }
+
+    @Test
+    void sacrificeInResponseDoesNotReturnCreatureExiledLater() {
+        harness.addToBattlefield(player1, new ColdStorage());
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, fanatic.getId());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertInGraveyard(player1, "Cold Storage");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mogg Fanatic");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(fanatic.getCard().getId()));
+    }
+
+    @Test
+    void exileAbilityDoesNotExileTargetSacrificedInResponse() {
+        Permanent storage = harness.addToBattlefieldAndReturn(player1, new ColdStorage());
+        Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, fanatic.getId());
+        harness.activateAbility(player1, 1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
+        assertThat(gd.getCardsExiledByPermanent(storage.getId())).isEmpty();
+        harness.assertLife(player2, 19);
     }
 }
