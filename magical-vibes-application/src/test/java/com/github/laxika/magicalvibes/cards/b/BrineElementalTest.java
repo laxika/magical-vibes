@@ -37,17 +37,75 @@ class BrineElementalTest extends BaseCardTest {
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.skipNextUntapStepCount.getOrDefault(player1.getId(), 0)).isZero();
 
-        advanceTurn();
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isTrue();
 
-        advanceTurn();
-        advanceTurn();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(opponentCreature.isTapped()).isFalse();
     }
 
-    private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
+    @Test
+    void castingFaceUpDoesNotSkipAnUntapStep() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        opponentCreature.tap();
+
+        harness.castFromHand(player1, new BrineElemental(), "{4}{U}{U}");
         harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void twoFaceUpTriggersSkipTwoSuccessiveUntapSteps() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        opponentCreature.tap();
+        harness.setHand(player1, List.of(new BrineElemental(), new BrineElemental()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.castCreatureWithMorph(player1, 0);
+            harness.passBothPriorities();
+        }
+        List<Permanent> elementals = findPermanents(player1, "Brine Elemental");
+        assertThat(elementals).hasSize(2);
+        for (Permanent elemental : elementals) {
+            harness.addMana(player1, ManaColor.COLORLESS, 5);
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elemental));
+            harness.passBothPriorities();
+        }
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(opponentCreature.isTapped()).isTrue();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(opponentCreature.isTapped()).isTrue();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void faceUpTriggerDoesNotSkipItsControllersUntapStep() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
+        ownCreature.tap();
+        harness.setHand(player1, List.of(new BrineElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent elemental = findPermanent(player1, "Brine Elemental");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elemental));
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(ownCreature.isTapped()).isFalse();
     }
 }
