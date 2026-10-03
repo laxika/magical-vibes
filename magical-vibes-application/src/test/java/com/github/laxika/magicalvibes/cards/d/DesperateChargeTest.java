@@ -49,7 +49,6 @@ class DesperateChargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
@@ -70,5 +69,37 @@ class DesperateChargeTest extends BaseCardTest {
         assertThat(creatureAlreadyOnBattlefield.getEffectiveToughness()).isEqualTo(2);
         assertThat(creatureEnteringLater.getEffectivePower()).isEqualTo(2);
         assertThat(creatureEnteringLater.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution are boosted")
+    void creaturesEnteringBeforeResolutionAreBoosted() {
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple casts stack and both boosts expire at cleanup")
+    void multipleCastsStackUntilCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ShuCavalry());
+
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new DesperateCharge(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(6);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
     }
 }
