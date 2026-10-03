@@ -74,4 +74,63 @@ class DeadGoneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(sphinx.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void deadKillsACreatureWithTwoToughnessRemaining() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        harness.setHand(player1, List.of(new DeadGone(), new DeadGone()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castModalInstant(player1, 0, 0, List.of(sphinx.getId()));
+        harness.passBothPriorities();
+        harness.castModalInstant(player1, 0, 0, List.of(sphinx.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Serra Sphinx");
+        harness.assertInGraveyard(player2, "Serra Sphinx");
+    }
+
+    @Test
+    void goneReturnsAnOpponentsCreatureToItsOwnerRatherThanItsController() {
+        SerraSphinx card = new SerraSphinx();
+        card.setOwnerId(player1.getId());
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, card);
+        harness.setHand(player1, List.of(new DeadGone()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castModalInstant(player1, 0, 1, List.of(sphinx.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Serra Sphinx");
+        harness.assertInHand(player1, "Serra Sphinx");
+        harness.assertNotInHand(player2, "Serra Sphinx");
+    }
+
+    @Test
+    void goneDoesNotResolveIfYouGainControlOfItsTarget() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        harness.setHand(player1, List.of(new DeadGone()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castModalInstant(player1, 0, 1, List.of(sphinx.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(sphinx);
+        gd.playerBattlefields.get(player1.getId()).add(sphinx);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Serra Sphinx");
+        harness.assertNotInHand(player1, "Serra Sphinx");
+        harness.assertNotInHand(player2, "Serra Sphinx");
+        harness.assertInGraveyard(player1, "Dead // Gone");
+    }
+
+    @Test
+    void goneRequiresRedManaEvenWithThreeGenericManaAvailable() {
+        Permanent sphinx = harness.addToBattlefieldAndReturn(player2, new SerraSphinx());
+        harness.setHand(player1, List.of(new DeadGone()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(sphinx.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
