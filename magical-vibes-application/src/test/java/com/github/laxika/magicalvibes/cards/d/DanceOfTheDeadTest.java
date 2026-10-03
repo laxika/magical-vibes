@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.c.CrownOfTheAges;
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheWhiteShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DanceOfTheDead.class, BalduvianBears.class, Disenchant.class, OrderOfTheWhiteShield.class})
+@CardUsed({DanceOfTheDead.class, BalduvianBears.class, Disenchant.class, OrderOfTheWhiteShield.class,
+        CrownOfTheAges.class})
 class DanceOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -160,6 +162,68 @@ class DanceOfTheDeadTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
     }
 
+    @Test
+    @DisplayName("Protection prevents attachment but sacrifice waits for its trigger to resolve")
+    void protectionLeavesCreatureAliveUntilSacrificeResolves() {
+        harness.setGraveyard(player1, List.of(new OrderOfTheWhiteShield()));
+        UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new DanceOfTheDead()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Order of the White Shield");
+        harness.assertOnBattlefield(player1, "Dance of the Dead");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dance of the Dead");
+        harness.assertOnBattlefield(player1, "Order of the White Shield");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Order of the White Shield");
+        harness.assertNotOnBattlefield(player1, "Order of the White Shield");
+    }
+
+    @Test
+    @DisplayName("Removing the Aura before its enter trigger resolves prevents reanimation")
+    void removingAuraBeforeEnterTriggerPreventsReanimation() {
+        harness.setGraveyard(player1, List.of(new BalduvianBears()));
+        UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.setHand(player1, List.of(new DanceOfTheDead()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Dance of the Dead").getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Dance of the Dead");
+    }
+
+    @Test
+    @DisplayName("Crown of the Ages cannot move the Aura to a creature it did not reanimate")
+    void cannotMoveToAnotherCreature() {
+        Permanent reanimated = reanimateBears();
+        Permanent aura = findPermanent(player1, "Dance of the Dead");
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent crown = harness.addToBattlefieldAndReturn(player1, new CrownOfTheAges());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(crown),
+                null, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(reanimated.getId());
+        assertThat(gqs.getEffectivePower(gd, reanimated)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
+
     private Permanent reanimateBears() {
         harness.setGraveyard(player1, List.of(new BalduvianBears()));
         UUID targetId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
@@ -168,7 +232,6 @@ class DanceOfTheDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castEnchantment(player1, 0, targetId);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         Permanent bears = findPermanent(player1, "Balduvian Bears");
