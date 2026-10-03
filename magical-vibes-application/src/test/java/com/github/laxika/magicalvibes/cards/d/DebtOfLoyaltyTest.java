@@ -165,4 +165,43 @@ class DebtOfLoyaltyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    void nonlethalDamageDoesNotSpendShieldOrChangeControl() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        knight.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new DebtOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0, knight.getId());
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(knight);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(knight.getMarkedDamage()).isEqualTo(1);
+        assertThat(knight.isTapped()).isFalse();
+        assertThat(knight.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void spentShieldDoesNotProtectAgainAndCreatureDiesUnderItsOwnersGraveyard() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new BenalishKnight());
+        harness.setHand(player1, List.of(new DebtOfLoyalty()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player1, 0, knight.getId());
+
+        knight.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+
+        knight.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(knight.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(knight.getCard().getId()));
+    }
 }
