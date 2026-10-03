@@ -1,18 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MidnightScavengers;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrafRats.class, MidnightScavengers.class, ChitteringHost.class, GrizzlyBears.class})
 class GrafRatsTest extends BaseCardTest {
 
     @Test
@@ -84,7 +85,7 @@ class GrafRatsTest extends BaseCardTest {
 
         Permanent host = findPermanent(player1, "Chittering Host");
 
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host));
 
         harness.assertNotOnBattlefield(player1, "Chittering Host");
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -111,18 +112,29 @@ class GrafRatsTest extends BaseCardTest {
     }
 
     private static Card namedMidnightScavengers() {
-        Card partner = new Card();
-        partner.setName("Midnight Scavengers");
-        partner.setType(CardType.CREATURE);
-        partner.setPower(3);
-        partner.setToughness(3);
-        return partner;
+        return new MidnightScavengers();
+    }
+
+    @Test
+    void tokenPartnerIsExiledButCannotMeld() {
+        GrafRats rats = new GrafRats();
+        MidnightScavengers token = new MidnightScavengers();
+        token.setToken(true);
+        harness.addToBattlefield(player1, rats);
+        harness.addToBattlefield(player1, token);
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
+        harness.assertNotOnBattlefield(player1, "Graf Rats");
+        harness.assertNotOnBattlefield(player1, "Midnight Scavengers");
+        assertThat(gd.exiledCards).anyMatch(c -> c.card().getId().equals(rats.getId()));
     }
 
     private void advanceToBeginningOfCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // BEGINNING_OF_COMBAT — trigger fires onto stack
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
