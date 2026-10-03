@@ -69,7 +69,9 @@ class RammasEchorAncientShieldTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
     }
 }
