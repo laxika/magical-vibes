@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OakgnarlWarrior;
 import com.github.laxika.magicalvibes.cards.s.SpellbreakerBehemoth;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,21 +16,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BrokenAmbitions.class, Forest.class, GrizzlyBears.class, AvatarOfMight.class,
+@CardUsed({BrokenAmbitions.class, Forest.class, WoodlandChangeling.class, OakgnarlWarrior.class,
         SpellbreakerBehemoth.class})
 class BrokenAmbitionsTest extends BaseCardTest {
 
-    private GrizzlyBears prepareCounterTarget() {
+    private WoodlandChangeling prepareCounterTarget() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
+        WoodlandChangeling target = new WoodlandChangeling();
 
         harness.setHand(player2, List.of(new BrokenAmbitions()));
         harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
 
-        return bears;
+        return target;
     }
 
     // Player2 (Broken Ambitions' caster) wins the clash: their revealed top card has a strictly
@@ -38,100 +37,88 @@ class BrokenAmbitionsTest extends BaseCardTest {
     private void stackClashWinForCaster() {
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new WoodlandChangeling(), new Forest(), new Forest()));
     }
-
-    // ===== Won clash + spell countered → that spell's controller mills four =====
 
     @Test
     @DisplayName("Countering and winning the clash mills the countered spell's controller four cards")
     void wonClashMillsCounteredSpellController() {
-        GrizzlyBears bears = prepareCounterTarget();
+        WoodlandChangeling target = prepareCounterTarget();
         stackClashWinForCaster();
-        harness.addMana(player1, ManaColor.GREEN, 2); // exactly enough to cast, nothing to pay {1}
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, target, "{1}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.castInstant(player2, 0, 1, target.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
 
         // Spell was countered (player1 could not pay {1}).
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        // Won clash → its controller (player1) milled four cards.
+        harness.assertNotOnBattlefield(player1, "Woodland Changeling");
+        harness.assertInGraveyard(player1, "Woodland Changeling");
+        // The winning clash mills four cards from the targeted spell controller.
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
     }
-
-    // ===== Lost clash → no mill =====
 
     @Test
     @DisplayName("Losing the clash counters the spell but mills nothing")
     void lostClashMillsNothing() {
-        GrizzlyBears bears = prepareCounterTarget();
+        WoodlandChangeling target = prepareCounterTarget();
         // Player2 loses the clash: player1 reveals the higher mana value.
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+                new WoodlandChangeling(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, target, "{1}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.castInstant(player2, 0, 1, target.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore); // no mill
     }
 
     @Test
     @DisplayName("A tied clash counters the spell but mills nothing")
     void tiedClashMillsNothing() {
-        GrizzlyBears bears = prepareCounterTarget();
+        WoodlandChangeling target = prepareCounterTarget();
         harness.setLibrary(player1, List.of(
-                new GrizzlyBears(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+                new WoodlandChangeling(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(
-                new GrizzlyBears(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+                new WoodlandChangeling(), new Forest(), new Forest()));
+        harness.castFromHand(player1, target, "{1}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.castInstant(player2, 0, 1, target.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Woodland Changeling");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
     }
-
-    // ===== Clash mill is independent of the counter (spell not countered when X is paid) =====
 
     @Test
     @DisplayName("Paying X keeps the spell but a won clash still mills its controller four cards")
     void paidSpellStillMilledOnWonClash() {
-        GrizzlyBears bears = prepareCounterTarget();
+        WoodlandChangeling target = prepareCounterTarget();
         stackClashWinForCaster();
-        harness.addMana(player1, ManaColor.GREEN, 3); // 2 to cast + 1 spare to pay {1}
-
-        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 1); // spare mana to pay {1}
+        harness.castFromHand(player1, target, "{1}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, bears.getId());
+        harness.castInstant(player2, 0, 1, target.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
 
-        // Won clash already milled player1 before the pay prompt is offered.
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
+        // Payment is decided before the clash reveals any cards or mills.
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true); // pay {1}
-        harness.passBothPriorities(); // resolve Grizzly Bears
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
+        harness.passBothPriorities(); // resolve Woodland Changeling
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Woodland Changeling");
     }
 
     @Test
@@ -141,25 +128,103 @@ class BrokenAmbitionsTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new SpellbreakerBehemoth());
 
-        AvatarOfMight avatar = new AvatarOfMight();
-        harness.setHand(player1, List.of(avatar));
-        harness.addMana(player1, ManaColor.GREEN, 8);
+        OakgnarlWarrior warrior = new OakgnarlWarrior();
         harness.setLibrary(player1, List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
 
         harness.setHand(player2, List.of(new BrokenAmbitions()));
         harness.addMana(player2, ManaColor.BLUE, 2); // {U} + X=1
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new WoodlandChangeling(), new Forest(), new Forest()));
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, warrior, "{5}{G}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 1, avatar.getId());
+        harness.castInstant(player2, 0, 1, warrior.getId());
 
         int libraryBefore = gd.playerDecks.get(player1.getId()).size();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Avatar of Might");
+        harness.assertOnBattlefield(player1, "Oakgnarl Warrior");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Declining payment counters the spell and a won clash still mills four")
+    void declinedPaymentStillMillsOnWin() {
+        WoodlandChangeling target = prepareCounterTarget();
+        stackClashWinForCaster();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromHand(player1, target, "{1}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Woodland Changeling");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Paying zero preserves the spell and does not prevent clash milling")
+    void zeroXCanBePaidAndStillMills() {
+        WoodlandChangeling target = prepareCounterTarget();
+        stackClashWinForCaster();
+        harness.castFromHand(player1, target, "{1}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Woodland Changeling");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A won clash mills only the cards remaining in a short library")
+    void millsShortLibraryWithoutDrawing() {
+        WoodlandChangeling target = prepareCounterTarget();
+        stackClashWinForCaster();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.castFromHand(player1, target, "{1}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Woodland Changeling");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The caster cannot win a clash without revealing a card")
+    void emptyCasterLibraryCannotWin() {
+        WoodlandChangeling target = prepareCounterTarget();
+        stackClashWinForCaster();
+        harness.setLibrary(player2, List.of());
+        harness.castFromHand(player1, target, "{1}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Woodland Changeling");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("Clashing players must be offered their revealed card placement choices")
+    void clashOffersLibraryPlacementChoices() {
+        WoodlandChangeling target = prepareCounterTarget();
+        harness.setLibrary(player1, List.of(new WoodlandChangeling(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new WoodlandChangeling()));
+        harness.castFromHand(player1, target, "{1}{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Woodland Changeling");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }
