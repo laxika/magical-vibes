@@ -72,11 +72,70 @@ class BoonOfBoseijuTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    @DisplayName("Can boost and untap an opponent's creature using the caster's permanents")
+    void boostsOpponentsCreatureUsingCastersPermanents() {
+        Permanent target = addTappedCreature(player2);
+        harness.addToBattlefield(player1, new DarksteelForge());
+
+        cast(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(11);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Still untaps the target when the caster controls no permanents")
+    void untapsWithNoControlledPermanents() {
+        Permanent target = addTappedCreature(player2);
+
+        cast(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Determines X at resolution and keeps the resolved boost afterward")
+    void determinesBoostAtResolution() {
+        Permanent target = addTappedCreature(player1);
         harness.setHand(player1, List.of(new BoonOfBoseiju()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castInstant(player1, 0, target.getId());
+        Permanent forge = harness.addToBattlefieldAndReturn(player1, new DarksteelForge());
+
         harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(forge);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(11);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not untap another creature when the target leaves before resolution")
+    void doesNotAffectOtherCreaturesWhenTargetLeaves() {
+        Permanent target = addTappedCreature(player1);
+        Permanent other = addTappedCreature(player1);
+        harness.setHand(player1, List.of(new BoonOfBoseiju()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(other.isTapped()).isTrue();
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new BoonOfBoseiju()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(com.github.laxika.magicalvibes.model.Player player) {
