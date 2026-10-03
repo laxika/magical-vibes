@@ -2,12 +2,11 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.r.RiverBoa;
 import com.github.laxika.magicalvibes.cards.u.UrborgMindsucker;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.i.ImmovableRod;
+import com.github.laxika.magicalvibes.cards.v.VraskaTheUnseen;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElephantGrass.class, RiverBoa.class, UrborgMindsucker.class})
+@CardUsed({ElephantGrass.class, RiverBoa.class, UrborgMindsucker.class, ImmovableRod.class, VraskaTheUnseen.class})
 class ElephantGrassTest extends BaseCardTest {
 
     @Test
@@ -84,7 +83,8 @@ class ElephantGrassTest extends BaseCardTest {
     @DisplayName("A creature can attack the controller's planeswalker without paying")
     void creatureCanAttackControllersPlaneswalker() {
         harness.addToBattlefield(player1, new ElephantGrass());
-        Permanent planeswalker = addPlaneswalker(player1, 4);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new VraskaTheUnseen());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         addCreatureReady(player2, new UrborgMindsucker());
 
         harness.forceActivePlayer(player2);
@@ -94,7 +94,7 @@ class ElephantGrassTest extends BaseCardTest {
         gs.declareAttackers(gd, player2, List.of(0), Map.of(0, planeswalker.getId()));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test
@@ -136,15 +136,80 @@ class ElephantGrassTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana to pay attack tax");
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
+    @Test
+    @DisplayName("Multiple Elephant Grass copies add their attack costs")
+    void multipleCopiesAddAttackCosts() {
+        harness.addToBattlefield(player1, new ElephantGrass());
+        harness.addToBattlefield(player1, new ElephantGrass());
+        addCreatureReady(player2, new RiverBoa());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
 
-        Permanent planeswalker = new Permanent(card);
-        planeswalker.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
-        return planeswalker;
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Elephant Grass does not restrict its controller's attackers")
+    void controllerCanAttackWithBlackCreatureWithoutPayment() {
+        harness.addToBattlefield(player1, new ElephantGrass());
+        addCreatureReady(player1, new UrborgMindsucker());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing Elephant Grass ends its black-creature restriction")
+    void sacrificeEndsBlackCreatureRestriction() {
+        harness.addToBattlefield(player1, new ElephantGrass());
+        addCreatureReady(player2, new UrborgMindsucker());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes Elephant Grass's black-creature restriction")
+    void losingAbilitiesAllowsBlackCreatureToAttack() {
+        removeGrassAbilitiesWithRod();
+        addCreatureReady(player2, new UrborgMindsucker());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes Elephant Grass's attack cost")
+    void losingAbilitiesRemovesAttackCost() {
+        removeGrassAbilitiesWithRod();
+        addCreatureReady(player2, new RiverBoa());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    private void removeGrassAbilitiesWithRod() {
+        Permanent grass = harness.addToBattlefieldAndReturn(player1, new ElephantGrass());
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new ImmovableRod());
+        rod.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, null, grass.getId());
+        harness.passBothPriorities();
+
+        assertThat(rod.isTapped()).isTrue();
     }
 }
