@@ -78,4 +78,39 @@ class DryadsRevivalTest extends BaseCardTest {
         assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("fizzles"));
     }
+    @Test
+    void returnsCreatureCardToHandRatherThanBattlefield() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new DryadsRevival()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dryad's Revival");
+    }
+
+    @Test
+    void flashbackExilesSpellEvenWhenTargetLeavesGraveyard() {
+        HolyDay target = new HolyDay();
+        DryadsRevival spell = new DryadsRevival();
+        harness.setGraveyard(player1, List.of(spell, target));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Holy Day");
+        harness.assertNotInHand(player1, "Dryad's Revival");
+        harness.assertNotInGraveyard(player1, "Dryad's Revival");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 }
