@@ -82,6 +82,53 @@ class DroningBureaucratsTest extends BaseCardTest {
                 .hasMessageContaining("Invalid attacker index");
     }
 
+    @Test
+    @DisplayName("X can be zero without restricting creatures with positive mana value")
+    void zeroDoesNotRestrictPositiveManaValue() {
+        Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
+        Permanent creature = addCreatureReady(player1, new SkarrganPitSkulk());
+
+        activate(bureaucrats, 0);
+
+        assertThatCode(() -> declareAttack(creature)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Separate activations retain their own X values")
+    void separateActivationsRetainTheirXValues() {
+        Permanent first = addCreatureReady(player1, new DroningBureaucrats());
+        Permanent second = addCreatureReady(player1, new DroningBureaucrats());
+        Permanent oneManaCreature = addCreatureReady(player1, new SkarrganPitSkulk());
+        Permanent twoManaCreature = addCreatureReady(player1, new DryadSophisticate());
+
+        activate(first, 1);
+        activate(second, 2);
+
+        assertThatThrownBy(() -> declareAttack(oneManaCreature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThatThrownBy(() -> declareAttack(twoManaCreature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("The ability resolves even when its source leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent bureaucrats = addCreatureReady(player1, new DroningBureaucrats());
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bureaucrats), 2, null);
+        gd.playerBattlefields.get(player1.getId()).remove(bureaucrats);
+        gd.playerGraveyards.get(player1.getId()).add(bureaucrats.getCard());
+
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttack(creature))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     private void activate(Permanent bureaucrats, int xValue) {
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bureaucrats), xValue, null);
