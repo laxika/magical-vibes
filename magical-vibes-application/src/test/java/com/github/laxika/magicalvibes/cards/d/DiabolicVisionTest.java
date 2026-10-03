@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DiabolicVision.class, BalduvianBears.class, FyndhornElves.class, Plains.class,
         Island.class, Mountain.class})
@@ -26,8 +27,7 @@ class DiabolicVisionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicVision()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -91,6 +91,29 @@ class DiabolicVisionTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(only);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Taking a card is mandatory, and a rejected decline leaves the choice usable")
+    void cannotDeclineTakingCard() {
+        Card first = new BalduvianBears();
+        Card second = new FyndhornElves();
+        Card third = new Island();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castVision();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 1);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
