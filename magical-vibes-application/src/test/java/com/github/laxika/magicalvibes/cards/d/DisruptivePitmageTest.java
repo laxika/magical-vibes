@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,6 +94,54 @@ class DisruptivePitmageTest extends BaseCardTest {
         assertThat(pitmage.isTapped()).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canCounterItsControllersOwnSpell() {
+        addCreatureReady(player1, new DisruptivePitmage());
+        GlorySeeker spell = new GlorySeeker();
+        harness.castFromHand(player1, spell, "{1}{W}");
+
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player2, new DisruptivePitmage());
+        GlorySeeker spell = new GlorySeeker();
+        harness.castFromHand(player1, spell, "{1}{W}");
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void canTurnFaceUpAndCounterWhileSpellIsOnStack() {
+        Permanent pitmage = addCreatureReady(player2, new DisruptivePitmage());
+        pitmage.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        GlorySeeker spell = new GlorySeeker();
+        harness.castFromHand(player1, spell, "{1}{W}");
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player2, 0);
+        assertThat(pitmage.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+
+        harness.activateAbility(player2, 0, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Glory Seeker");
+        harness.assertNotOnBattlefield(player1, "Glory Seeker");
     }
 
     @Test
