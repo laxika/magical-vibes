@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeadlyDerision.class, GrizzlyBears.class, JaceBeleren.class, Plains.class})
+@CardUsed({DeadlyDerision.class, DarksteelMyr.class, GrizzlyBears.class, JaceBeleren.class, Plains.class})
 class DeadlyDerisionTest extends BaseCardTest {
 
     @Test
@@ -54,11 +54,53 @@ class DeadlyDerisionTest extends BaseCardTest {
                 .hasMessageContaining("creature or planeswalker");
     }
 
+    @Test
+    void canDestroyOwnCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        castDeadlyDerision(player1, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void createsTreasureEvenWhenTargetIsIndestructible() {
+        Permanent myr = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+
+        castDeadlyDerision(player1, myr.getId());
+
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1)
+                .allSatisfy(treasure -> assertThat(treasure.isTapped()).isFalse());
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        harness.assertInGraveyard(player1, "Deadly Derision");
+    }
+
+    @Test
+    void doesNotCreateTreasureWhenTargetLeavesBattlefield() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyDerision()));
+        addDeadlyDerisionMana(player1);
+        harness.castInstant(player1, 0, bears.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerHands.get(player2.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Deadly Derision");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
     private void castDeadlyDerision(Player player, java.util.UUID targetId) {
         harness.setHand(player, List.of(new DeadlyDerision()));
         addDeadlyDerisionMana(player);
-        harness.castInstant(player, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, targetId);
     }
 
     private void addDeadlyDerisionMana(Player player) {
@@ -69,10 +111,8 @@ class DeadlyDerisionTest extends BaseCardTest {
     }
 
     private Permanent addReadyJace(Player player) {
-        Permanent jace = new Permanent(new JaceBeleren());
+        Permanent jace = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
-        jace.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(jace);
         return jace;
     }
 }
