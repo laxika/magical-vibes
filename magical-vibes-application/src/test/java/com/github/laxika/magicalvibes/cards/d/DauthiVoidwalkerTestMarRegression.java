@@ -30,8 +30,7 @@ class DauthiVoidwalkerTestMarRegression extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(shock.getId()));
@@ -88,7 +87,7 @@ class DauthiVoidwalkerTestMarRegression extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class)).isNull();
         assertThat(gd.findExiledCard(ownCard.getId())).isNotNull();
         assertThat(gd.findExiledCard(unmarkedOpponentCard.getId())).isNotNull();
     }
