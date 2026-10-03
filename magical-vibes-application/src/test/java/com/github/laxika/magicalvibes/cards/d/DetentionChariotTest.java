@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DetentionChariot.class, GrizzlyBears.class, HillGiant.class, Naturalize.class, RodOfRuin.class})
 class DetentionChariotTest extends BaseCardTest {
 
     @Test
@@ -61,8 +62,7 @@ class DetentionChariotTest extends BaseCardTest {
         UUID chariotId = harness.getPermanentId(player1, "Detention Chariot");
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, chariotId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, chariotId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -101,7 +101,7 @@ class DetentionChariotTest extends BaseCardTest {
     @Test
     @DisplayName("Crew animates Detention Chariot and taps the crew")
     void crewAnimatesVehicleAndTapsCrew() {
-        Permanent chariot = addChariotReady(player1);
+        Permanent chariot = addCreatureReady(player1, new DetentionChariot());
         Permanent crew = addCreatureReady(player1, new HillGiant());
 
         harness.activateAbility(player1, 0, null, null);
@@ -123,10 +123,82 @@ class DetentionChariotTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addChariotReady(Player player) {
-        Permanent permanent = new Permanent(new DetentionChariot());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void sourceLeavingBeforeEnterTriggerResolvesDoesNotExileTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new DetentionChariot(), new Naturalize()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castArtifact(player1, 0, targetId);
+        harness.passBothPriorities();
+        UUID chariotId = harness.getPermanentId(player1, "Detention Chariot");
+        harness.castAndResolveInstant(player1, 0, chariotId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Detention Chariot");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(targetId);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void crewCanCombineSummoningSickCreatures() {
+        Permanent chariot = harness.addToBattlefieldAndReturn(player1, new DetentionChariot());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, chariot)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, chariot)).isTrue();
+    }
+
+    @Test
+    void crewRejectsInsufficientPower() {
+        Permanent chariot = harness.addToBattlefieldAndReturn(player1, new DetentionChariot());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, chariot)).isFalse();
+    }
+
+    @Test
+    void crewAnimationEndsAtEndOfTurn() {
+        Permanent chariot = harness.addToBattlefieldAndReturn(player1, new DetentionChariot());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, chariot)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, chariot)).isFalse();
+        harness.assertOnBattlefield(player1, "Detention Chariot");
+    }
+
+    @Test
+    void cyclingDiscardsAsCostAndDrawsOnlyOnResolution() {
+        harness.setHand(player1, List.of(new DetentionChariot()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Detention Chariot");
+        harness.assertNotInHand(player1, "Detention Chariot");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }
