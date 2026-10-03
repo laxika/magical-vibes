@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DiabolicRevelation.class, GrizzlyBears.class, LlanowarElves.class, AirElemental.class, Shock.class})
 class DiabolicRevelationTest extends BaseCardTest {
 
     @Test
@@ -45,10 +46,8 @@ class DiabolicRevelationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(indexOf("Shock")));
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(indexOf("Air Elemental")));
+        harness.handleCardChosen(player1, indexOf("Shock"));
+        harness.handleCardChosen(player1, indexOf("Air Elemental"));
 
         harness.assertInHand(player1, "Shock");
         harness.assertInHand(player1, "Air Elemental");
@@ -70,6 +69,65 @@ class DiabolicRevelationTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Diabolic Revelation");
     }
 
+    @Test
+    @DisplayName("May choose no cards even when X is positive")
+    void mayChooseNoCards() {
+        castRevelation(2);
+        setupLibrary();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(4);
+        harness.assertInGraveyard(player1, "Diabolic Revelation");
+    }
+
+    @Test
+    @DisplayName("May stop searching after choosing fewer than X cards")
+    void mayStopAfterOneCard() {
+        castRevelation(3);
+        setupLibrary();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, indexOf("Shock"));
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInHand(player1, "Shock");
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Diabolic Revelation");
+    }
+
+    @Test
+    @DisplayName("Completes when the library contains fewer than X cards")
+    void librarySmallerThanX() {
+        castRevelation(3);
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, indexOf("Shock"));
+
+        harness.assertInHand(player1, "Shock");
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Diabolic Revelation");
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library")
+    void emptyLibrary() {
+        castRevelation(2);
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Diabolic Revelation");
+    }
+
     private void castRevelation(int xValue) {
         harness.setHand(player1, List.of(new DiabolicRevelation()));
         harness.addMana(player1, ManaColor.BLACK, xValue + 5);
@@ -77,9 +135,7 @@ class DiabolicRevelationTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new LlanowarElves(), new AirElemental(), new Shock()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new AirElemental(), new Shock()));
     }
 
     private PendingInteraction.LibrarySearch activeSearch() {
