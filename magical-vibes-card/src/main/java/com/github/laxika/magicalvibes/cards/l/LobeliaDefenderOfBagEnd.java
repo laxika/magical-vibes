@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "27")
 @CardRegistration(set = "LTC", collectorNumber = "110")
+@CardRegistration(set = "LTC", collectorNumber = "429")
 public class LobeliaDefenderOfBagEnd extends Card {
 
     public LobeliaDefenderOfBagEnd() {

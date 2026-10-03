@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "LTC", collectorNumber = "3")
 @CardRegistration(set = "LTC", collectorNumber = "83")
 @CardRegistration(set = "LTC", collectorNumber = "88")
+@CardRegistration(set = "LTC", collectorNumber = "462")
 public class GaladrielElvenQueen extends Card {
 
     public GaladrielElvenQueen() {

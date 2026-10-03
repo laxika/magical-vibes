@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 
 @CardRegistration(set = "LTC", collectorNumber = "32")
 @CardRegistration(set = "LTC", collectorNumber = "115")
+@CardRegistration(set = "LTC", collectorNumber = "434")
 public class GimliOfTheGlitteringCaves extends Card {
 
     public GimliOfTheGlitteringCaves() {

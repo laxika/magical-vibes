@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentCantAttackSourceContr
 
 @CardRegistration(set = "LTC", collectorNumber = "10")
 @CardRegistration(set = "LTC", collectorNumber = "94")
+@CardRegistration(set = "LTC", collectorNumber = "412")
 public class ChampionsOfMinasTirith extends Card {
 
     public ChampionsOfMinasTirith() {

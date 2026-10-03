@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "64")
+@CardRegistration(set = "LTC", collectorNumber = "471")
 public class OathOfEorl extends Card {
 
     public OathOfEorl() {

@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "76")
 @CardRegistration(set = "LTC", collectorNumber = "156")
+@CardRegistration(set = "LTC", collectorNumber = "486")
 public class HithlainRope extends Card {
 
     public HithlainRope() {

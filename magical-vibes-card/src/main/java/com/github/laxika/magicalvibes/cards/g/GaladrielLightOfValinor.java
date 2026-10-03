@@ -18,6 +18,8 @@ import java.util.List;
 
 @CardRegistration(set = "HOC", collectorNumber = "32")
 @CardRegistration(set = "HOC", collectorNumber = "72")
+@CardRegistration(set = "LTC", collectorNumber = "498")
+@CardRegistration(set = "LTC", collectorNumber = "542")
 public class GaladrielLightOfValinor extends Card {
 
     public GaladrielLightOfValinor() {

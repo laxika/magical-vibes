@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectH
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToTapAndGoadEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
@@ -119,6 +121,9 @@ public class PermanentChoiceHandlerService {
             chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler;
     private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
             benthicAnomalyEffectHandler;
+    private final EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler
+            olorinSearingLightEffectHandler;
+    private final EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -284,6 +289,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCaughtInAParallelUniverseCreatureChoice(gameData, permanentId, parallelChoice);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToExileWithSource exileChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureToExileWithSource(gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage searingLightChoice) {
+            battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage(
+                    gameData, permanentId, searingLightChoice);
+        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureToTapAndGoad fellBeastsShriekChoice) {
+            battlefieldHandler.handleEachOpponentChoosesCreatureToTapAndGoad(gameData, permanentId,
+                    fellBeastsShriekChoice);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesCreatureForTokenCopy benthicChoice) {
             battlefieldHandler.handleEachOpponentChoosesCreatureForTokenCopy(gameData, permanentId, benthicChoice);
         } else if (context instanceof PermanentChoiceContext.ChooseBenthicAnomalyCopy benthicCopyChoice) {

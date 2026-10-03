@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SecretCouncilEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "25")
 @CardRegistration(set = "LTC", collectorNumber = "108")
+@CardRegistration(set = "LTC", collectorNumber = "427")
 public class TrapTheTrespassers extends Card {
 
     public TrapTheTrespassers() {

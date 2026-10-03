@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ElrondOfTheWhiteCouncilEffect
 
 @CardRegistration(set = "LTC", collectorNumber = "51")
 @CardRegistration(set = "LTC", collectorNumber = "134")
+@CardRegistration(set = "LTC", collectorNumber = "454")
 public class ElrondOfTheWhiteCouncil extends Card {
 
     public ElrondOfTheWhiteCouncil() {

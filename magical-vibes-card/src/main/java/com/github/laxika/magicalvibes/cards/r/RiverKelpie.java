@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "SHM", collectorNumber = "49")
 @CardRegistration(set = "TDC", collectorNumber = "166")
 @CardRegistration(set = "C19", collectorNumber = "93")
+@CardRegistration(set = "LTC", collectorNumber = "524")
 public class RiverKelpie extends Card {
 
     public RiverKelpie() {

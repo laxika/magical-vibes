@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ModelOfUnityEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "78")
 @CardRegistration(set = "LTC", collectorNumber = "158")
+@CardRegistration(set = "LTC", collectorNumber = "488")
 public class ModelOfUnity extends Card {
 
     public ModelOfUnity() {

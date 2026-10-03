@@ -27,6 +27,7 @@ import java.util.Set;
  * III - Create a 1/1 white Halfling creature token for each Food you control.
  */
 @CardRegistration(set = "LTC", collectorNumber = "17")
+@CardRegistration(set = "LTC", collectorNumber = "419")
 public class OfHerbsAndStewedRabbit extends Card {
 
     public OfHerbsAndStewedRabbit() {

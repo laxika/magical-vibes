@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "LTC", collectorNumber = "39")
 @CardRegistration(set = "LTC", collectorNumber = "122")
+@CardRegistration(set = "LTC", collectorNumber = "441")
 public class HaldirLRienLieutenant extends Card {
 
     public HaldirLRienLieutenant() {

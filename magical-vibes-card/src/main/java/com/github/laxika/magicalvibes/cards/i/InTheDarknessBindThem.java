@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "58")
+@CardRegistration(set = "LTC", collectorNumber = "465")
 public class InTheDarknessBindThem extends Card {
 
     public InTheDarknessBindThem() {

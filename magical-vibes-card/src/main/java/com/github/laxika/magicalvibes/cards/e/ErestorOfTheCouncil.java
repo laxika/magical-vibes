@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ErestorOfTheCouncilEffect;
 
 @CardRegistration(set = "LTC", collectorNumber = "53")
 @CardRegistration(set = "LTC", collectorNumber = "136")
+@CardRegistration(set = "LTC", collectorNumber = "457")
 public class ErestorOfTheCouncil extends Card {
 
     public ErestorOfTheCouncil() {
