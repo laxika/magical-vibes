@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.v.Vendetta;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChoArrimLegate.class, Plains.class, Swamp.class})
+@CardUsed({ChoArrimLegate.class, Plains.class, Swamp.class, Vendetta.class})
 class ChoArrimLegateTest extends BaseCardTest {
 
     @Test
@@ -83,5 +85,52 @@ class ChoArrimLegateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Cho-Arrim Legate");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void castsForFreeWithNoManaEvenWhenQualifyingLandsAreTapped() {
+        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        harness.setHand(player1, List.of(new ChoArrimLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cho-Arrim Legate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void alternateCostDoesNotUseOpponentPlains() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new ChoArrimLegate()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void alternateCostDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new ChoArrimLegate()));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void protectionPreventsTargetingByBlackSpells() {
+        Permanent legate = harness.addToBattlefieldAndReturn(player2, new ChoArrimLegate());
+        harness.setHand(player1, List.of(new Vendetta()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, legate.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Cho-Arrim Legate");
+        assertThat(gd.stack).isEmpty();
     }
 }
