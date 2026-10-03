@@ -1,29 +1,32 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
+import com.github.laxika.magicalvibes.cards.m.MyrSire;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DistantMemories.class, Plains.class, Swamp.class, MyrSire.class,
+        LeoninArbiter.class, PlatinumAngel.class, PsychogenicProbe.class})
 class DistantMemoriesTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Distant Memories puts it on the stack")
@@ -36,8 +39,6 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Distant Memories");
     }
-
-    // ===== Library search phase =====
 
     @Test
     @DisplayName("Resolving Distant Memories presents library for search")
@@ -53,41 +54,36 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
-    // ===== Opponent accepts — card goes to hand =====
-
     @Test
     @DisplayName("When opponent accepts, exiled card goes to controller's hand")
     void opponentAcceptsCardGoesToHand() {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities(); // resolve sorcery → library search
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Should now be awaiting opponent's may ability choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        // Opponent (player2) accepts — let them have the card
+        // Opponent allows the controller to put the card into hand.
         harness.handleMayAbilityChosen(player2, true);
 
         // Card should be in player1's hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals(chosenName));
+        harness.assertInHand(player1, chosenName);
 
         // Card should no longer be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getName().equals(chosenName));
     }
-
-    // ===== Opponent declines — controller draws three =====
 
     @Test
     @DisplayName("When opponent declines, controller draws three cards")
@@ -95,13 +91,13 @@ class DistantMemoriesTest extends BaseCardTest {
         setupAndCast();
         setupLibrary();
 
-        harness.passBothPriorities(); // resolve sorcery → library search
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Should now be awaiting opponent's may ability choice
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -109,7 +105,7 @@ class DistantMemoriesTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        // Opponent (player2) declines — controller draws 3
+        // Opponent declines, so the controller draws three cards.
         harness.handleMayAbilityChosen(player2, false);
 
         // Player 1 should have drawn 3 cards
@@ -123,8 +119,6 @@ class DistantMemoriesTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals(chosenName));
     }
 
-    // ===== Card is exiled before opponent choice =====
-
     @Test
     @DisplayName("Chosen card is exiled and library is shuffled before opponent choice")
     void chosenCardIsExiledAndLibraryShuffled() {
@@ -137,7 +131,7 @@ class DistantMemoriesTest extends BaseCardTest {
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -151,21 +145,11 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("shuffled"));
     }
 
-    // ===== Empty library — draw three directly =====
-
     @Test
-    @DisplayName("With empty library, controller draws three cards directly")
+    @DisplayName("Drawing from an empty library after the search makes the controller lose")
     void emptyLibraryDrawsThree() {
         setupAndCast();
-        gd.playerDecks.get(player1.getId()).clear();
-
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
-
-        // Populate player2's deck so drawing doesn't fail due to empty deck issues
-        // Player1 has empty library, but draw from empty library in this engine just does nothing
-        // Actually we need cards for player1 to draw. Let's add cards to player1's deck
-        // before resolving, then clear. Actually the draw will simply not add cards if deck is empty.
-        // Let's just test the behavior:
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -174,9 +158,9 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Log should mention empty library
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
-
-    // ===== Sorcery goes to graveyard =====
 
     @Test
     @DisplayName("Distant Memories goes to graveyard after full resolution")
@@ -186,14 +170,11 @@ class DistantMemoriesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player1, "Distant Memories");
     }
-
-    // ===== Unrestricted search — cannot fail to find =====
 
     @Test
     @DisplayName("Unrestricted search sets canFailToFind to false")
@@ -207,17 +188,99 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A mandatory search rejects failing to find and still allows a valid choice")
+    void failingToFindIsRejected() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertInHand(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("An opponent can return the last library card without making the controller draw")
+    void acceptingLastCardDoesNotDraw() {
+        Plains chosenCard = new Plains();
+        setupAndCast();
+        harness.setLibrary(player1, List.of(chosenCard));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.findExiledCard(chosenCard.getId()).faceDown()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chosenCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player1, "Distant Memories");
+    }
+
+    @Test
+    @DisplayName("Declining with fewer than three cards remaining draws what is available and loses")
+    void decliningWithShortLibraryLoses() {
+        Plains chosenCard = new Plains();
+        Swamp remainingCard = new Swamp();
+        setupAndCast();
+        harness.setLibrary(player1, List.of(chosenCard, remainingCard));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @CardUsed({DistantMemories.class, Plains.class, Swamp.class, MyrSire.class, LeoninArbiter.class})
+    @DisplayName("Preventing the search does not prevent the three-card draw")
+    void preventedSearchStillDrawsThree() {
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Distant Memories");
+    }
+
+    @Test
+    @CardUsed({DistantMemories.class, PlatinumAngel.class, PsychogenicProbe.class})
+    @DisplayName("An empty library is still shuffled and triggers Psychogenic Probe")
+    void emptyLibraryStillTriggersShuffle() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof PsychogenicProbe);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new DistantMemories()));
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new DistantMemories(), "{2}{U}{U}");
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new MyrSire(), new MyrSire()));
     }
 }
