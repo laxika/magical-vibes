@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
+import com.github.laxika.magicalvibes.cards.p.PiratesCutlass;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,16 +13,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DesperateCastaways.class, PiratesCutlass.class})
 class DesperateCastawaysTest extends BaseCardTest {
-
-    // ===== Attack restriction =====
 
     @Test
     @DisplayName("Can attack when controller controls an artifact")
     void canAttackWhenControllerControlsArtifact() {
         harness.setLife(player2, 20);
-        Permanent castaways = addCreatureReady(player1, new DesperateCastaways());
-        harness.addToBattlefield(player1, new GolemsHeart());
+        addCreatureReady(player1, new DesperateCastaways());
+        harness.addToBattlefield(player1, new PiratesCutlass());
 
         declareAttackers(player1, List.of(0));
 
@@ -33,7 +32,7 @@ class DesperateCastawaysTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack when controller does not control an artifact")
     void cannotAttackWithoutArtifact() {
-        Permanent castaways = addCreatureReady(player1, new DesperateCastaways());
+        addCreatureReady(player1, new DesperateCastaways());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -42,8 +41,8 @@ class DesperateCastawaysTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot attack when only opponent controls an artifact")
     void cannotAttackWhenOnlyOpponentControlsArtifact() {
-        Permanent castaways = addCreatureReady(player1, new DesperateCastaways());
-        harness.addToBattlefield(player2, new GolemsHeart());
+        addCreatureReady(player1, new DesperateCastaways());
+        harness.addToBattlefield(player2, new PiratesCutlass());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -53,28 +52,44 @@ class DesperateCastawaysTest extends BaseCardTest {
     @DisplayName("Can block without controlling an artifact")
     void canBlockWithoutArtifact() {
         harness.setLife(player1, 20);
-        // Opponent has a vanilla attacker
-        Permanent attacker = addCreatureReady(player2, new DesperateCastaways());
+        addCreatureReady(player2, new DesperateCastaways());
         // Give opponent an artifact so the opponent's Castaways can attack
-        harness.addToBattlefield(player2, new GolemsHeart());
+        harness.addToBattlefield(player2, new PiratesCutlass());
 
         // Player1 has their own Castaways with no artifact — still should be able to block
-        Permanent blocker = addCreatureReady(player1, new DesperateCastaways());
+        addCreatureReady(player1, new DesperateCastaways());
 
         // Declare the opponent's creature as attacker
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         // Now declare blocker
-        harness.beginBlockerDeclarationInput();
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         // Blocker was accepted — the creature is blocking
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isBlocking()).isTrue();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A tapped artifact still allows attacking")
+    void canAttackWithTappedArtifact() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new DesperateCastaways());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PiratesCutlass());
+        artifact.setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
+    }
+
+    @Test
+    @DisplayName("Artifacts in hand and graveyard do not allow attacking")
+    void cannotAttackWithArtifactsOutsideBattlefield() {
+        addCreatureReady(player1, new DesperateCastaways());
+        harness.setHand(player1, List.of(new PiratesCutlass()));
+        harness.setGraveyard(player1, List.of(new PiratesCutlass()));
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
