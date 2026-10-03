@@ -125,4 +125,56 @@ class CrimsonAcolyteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Protection granted in response makes a red spell's target illegal")
+    void protectionInResponseStopsRedRemoval() {
+        addCreatureReady(player1, new CrimsonAcolyte());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player2, 0, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Acolyte can activate repeatedly and target itself")
+    void tappedSummoningSickAcolyteCanActivateRepeatedly() {
+        Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
+        acolyte.setSummoningSick(true);
+        acolyte.setTapped(true);
+        Permanent secondAcolyte = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, acolyte.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, secondAcolyte.getId());
+        harness.passBothPriorities();
+
+        assertThat(acolyte.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(secondAcolyte.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.RED);
+        assertThat(acolyte.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Printed protection prevents non-targeted red damage")
+    void printedProtectionPreventsNonTargetedDamage() {
+        Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new CrimsonAcolyte());
+        harness.setHand(player1, List.of(new BreathOfDarigaaz()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player1, "Crimson Acolyte");
+        assertThat(acolyte.getMarkedDamage()).isZero();
+    }
 }
