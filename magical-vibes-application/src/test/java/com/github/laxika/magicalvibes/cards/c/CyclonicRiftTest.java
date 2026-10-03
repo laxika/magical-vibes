@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.r.RubblebackRhino;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CyclonicRift.class, DrudgeBeetle.class, Island.class, RubblebackRhino.class, ChromaticLantern.class})
 class CyclonicRiftTest extends BaseCardTest {
 
     @Test
@@ -29,7 +32,7 @@ class CyclonicRiftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).contains("Grizzly Bears");
+        harness.assertInHand(player2, "Drudge Beetle");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(own);
     }
 
@@ -78,16 +81,113 @@ class CyclonicRiftTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotTargetOpponentLand() {
+        Permanent land = addLand(player2);
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void normalCastCannotTargetHexproof() {
+        Permanent rhino = harness.addToBattlefieldAndReturn(player2, new RubblebackRhino());
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, rhino.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void overloadBouncesHexproofAndNoncreaturePermanents() {
+        Permanent rhino = harness.addToBattlefieldAndReturn(player2, new RubblebackRhino());
+        Permanent lantern = harness.addToBattlefieldAndReturn(player2, new ChromaticLantern());
+        Permanent ownLantern = harness.addToBattlefieldAndReturn(player1, new ChromaticLantern());
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(rhino, lantern);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownLantern);
+        harness.assertInHand(player2, "Rubbleback Rhino");
+        harness.assertInHand(player2, "Chromatic Lantern");
+    }
+
+    @Test
+    void normalCastBouncesNoncreaturePermanent() {
+        Permanent lantern = harness.addToBattlefieldAndReturn(player2, new ChromaticLantern());
+        Permanent other = addCreature(player2);
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, lantern.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lantern).contains(other);
+        harness.assertInHand(player2, "Chromatic Lantern");
+    }
+
+    @Test
+    void overloadUsesControlAndReturnsCardsToTheirOwners() {
+        Permanent ownedButNotControlled = addCreature(player2);
+        gd.stolenCreatures.put(ownedButNotControlled.getId(), player1.getId());
+        Permanent controlledButNotOwned = addCreature(player1);
+        gd.stolenCreatures.put(controlledButNotOwned.getId(), player2.getId());
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(ownedButNotControlled);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(controlledButNotOwned);
+        assertThat(gd.playerHands.get(player1.getId())).contains(ownedButNotControlled.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(ownedButNotControlled.getCard());
+    }
+
+    @Test
+    void targetBecomingControlledByCasterBeforeResolutionIsNotReturned() {
+        Permanent target = addCreature(player2);
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertNotInHand(player2, "Drudge Beetle");
+    }
+
+    @Test
+    void overloadCanBeCastWithNoOpposingNonlandPermanents() {
+        Permanent land = addLand(player2);
+        Permanent own = addCreature(player1);
+        harness.setHand(player1, List.of(new CyclonicRift()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own);
+        harness.assertInGraveyard(player1, "Cyclonic Rift");
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new DrudgeBeetle());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addLand(Player player) {
-        Permanent permanent = new Permanent(new com.github.laxika.magicalvibes.cards.i.Island());
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }
