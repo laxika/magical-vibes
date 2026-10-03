@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AxebaneGuardian;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({DestroyTheEvidence.class, Forest.class, AxebaneGuardian.class})
 class DestroyTheEvidenceTest extends BaseCardTest {
 
     private void castAt(UUID targetId) {
@@ -32,12 +34,11 @@ class DestroyTheEvidenceTest extends BaseCardTest {
     void destroysLandAndMillsUntilLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(
-                new GrizzlyBears(),
-                new GrizzlyBears(),
+        harness.setLibrary(player2, List.of(
+                new AxebaneGuardian(),
+                new AxebaneGuardian(),
                 new Forest(),      // first land -> stop
-                new GrizzlyBears() // stays in library
+                new AxebaneGuardian() // stays in library
         ));
 
         castAt(land.getId());
@@ -46,9 +47,9 @@ class DestroyTheEvidenceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting("name")
-                .containsExactlyInAnyOrder("Forest", "Grizzly Bears", "Grizzly Bears", "Forest");
+                .containsExactlyInAnyOrder("Forest", "Axebane Guardian", "Axebane Guardian", "Forest");
         assertThat(gd.playerDecks.get(player2.getId()))
-                .extracting("name").containsExactly("Grizzly Bears");
+                .extracting("name").containsExactly("Axebane Guardian");
     }
 
     @Test
@@ -56,8 +57,7 @@ class DestroyTheEvidenceTest extends BaseCardTest {
     void millsEntireLibraryWhenNoLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new AxebaneGuardian(), new AxebaneGuardian()));
 
         castAt(land.getId());
         harness.passBothPriorities();
@@ -65,7 +65,7 @@ class DestroyTheEvidenceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting("name")
-                .containsExactlyInAnyOrder("Forest", "Grizzly Bears", "Grizzly Bears");
+                .containsExactlyInAnyOrder("Forest", "Axebane Guardian", "Axebane Guardian");
     }
 
     @Test
@@ -73,22 +73,21 @@ class DestroyTheEvidenceTest extends BaseCardTest {
     void millsOwnControllerWhenTargetingOwnLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(new AxebaneGuardian(), new Forest()));
 
         castAt(land.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting("name")
-                .contains("Grizzly Bears", "Forest");
+                .contains("Axebane Guardian", "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Cannot target a nonland permanent")
     void cannotTargetCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new AxebaneGuardian());
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
@@ -98,5 +97,74 @@ class DestroyTheEvidenceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The destroyed land enters the graveyard before the revealed cards")
+    void destroysLandBeforePuttingRevealedCardsInGraveyard() {
+        Forest destroyedLand = new Forest();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, destroyedLand);
+        Forest revealedLand = new Forest();
+        harness.setLibrary(player2, List.of(revealedLand));
+
+        castAt(land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(destroyedLand, revealedLand);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the land from being destroyed")
+    void destroysLandWithEmptyLibrary() {
+        Forest destroyedLand = new Forest();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, destroyedLand);
+        harness.setLibrary(player2, List.of());
+
+        castAt(land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(destroyedLand);
+    }
+
+    @Test
+    @DisplayName("No cards are revealed when the targeted land leaves before resolution")
+    void doesNotMillWhenTargetLeavesBattlefield() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        AxebaneGuardian creature = new AxebaneGuardian();
+        Forest libraryLand = new Forest();
+        harness.setLibrary(player2, List.of(creature, libraryLand));
+
+        castAt(land.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerHands.get(player2.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creature, libraryLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land controlled by another player mills its controller rather than its owner")
+    void millsControllerOfLandOwnedByAnotherPlayer() {
+        Forest ownedLand = new Forest();
+        ownedLand.setOwnerId(player1.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, ownedLand);
+        Forest controllerLibraryLand = new Forest();
+        AxebaneGuardian ownerLibraryCard = new AxebaneGuardian();
+        harness.setLibrary(player2, List.of(controllerLibraryLand));
+        harness.setLibrary(player1, List.of(ownerLibraryCard));
+
+        castAt(land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownedLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(controllerLibraryLand);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownerLibraryCard);
     }
 }
