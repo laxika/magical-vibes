@@ -1,43 +1,24 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
-import java.util.List;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 
+@CardUsed({BogwaterLumaret.class, GrizzlyBears.class})
 class BogwaterLumaretTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Entering the battlefield triggers self life gain")
     void selfEntryTriggersLifeGain() {
-        harness.setHand(player1, List.of(new BogwaterLumaret()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BogwaterLumaret(), "{B}{G}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -45,19 +26,16 @@ class BogwaterLumaretTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Bogwater Lumaret");
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(1));
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
     @DisplayName("Resolving self-ETB trigger gains 1 life")
     void selfEntryGainsOneLife() {
-        harness.setHand(player1, List.of(new BogwaterLumaret()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BogwaterLumaret(), "{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -69,9 +47,7 @@ class BogwaterLumaretTest extends BaseCardTest {
     void anotherCreatureEnteringTriggersLifeGain() {
         harness.addToBattlefield(player1, new BogwaterLumaret());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
 
@@ -80,9 +56,10 @@ class BogwaterLumaretTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(trigger.getCard().getName()).isEqualTo("Bogwater Lumaret");
-        assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(1));
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -90,9 +67,7 @@ class BogwaterLumaretTest extends BaseCardTest {
     void anotherCreatureGainsOneLife() {
         harness.addToBattlefield(player1, new BogwaterLumaret());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -105,9 +80,7 @@ class BogwaterLumaretTest extends BaseCardTest {
     void doesNotTriggerForOpponentCreatures() {
         harness.addToBattlefield(player2, new BogwaterLumaret());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
 
@@ -124,9 +97,7 @@ class BogwaterLumaretTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BogwaterLumaret());
         harness.addToBattlefield(player1, new BogwaterLumaret());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
 
@@ -138,5 +109,21 @@ class BogwaterLumaretTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("A second Lumaret gains life for both its own entry and the existing Lumaret")
+    void enteringLumaretTriggersItselfAndExistingLumaret() {
+        harness.addToBattlefield(player1, new BogwaterLumaret());
+        harness.castFromHand(player1, new BogwaterLumaret(), "{B}{G}");
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 }
