@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.e.ElementalEruption;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(CracklingSpellslinger.class)
+@CardUsed({CracklingSpellslinger.class, ElementalEruption.class, SolRing.class})
 class CracklingSpellslingerTest extends BaseCardTest {
 
     @Test
@@ -49,12 +52,63 @@ class CracklingSpellslingerTest extends BaseCardTest {
     }
 
     private void castSpellslinger() {
-        harness.setHand(player1, List.of(new CracklingSpellslinger()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new CracklingSpellslinger(), "{3}{R}{R}");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Granted storm triggers separately from a spell's own storm")
+    void addsStormToSpellThatAlreadyHasStorm() {
+        castSpellslinger();
+        harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Dragon Elemental")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple Spellslingers grant separate instances of storm")
+    void multipleGrantsApplyToSameSpell() {
+        castSpellslinger();
+        castSpellslinger();
+        harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Dragon Elemental")).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("An artifact does not consume the grant and counts toward storm")
+    void artifactDoesNotConsumeGrant() {
+        castSpellslinger();
+        harness.castFromHand(player1, new SolRing(), "{1}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Dragon Elemental")).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Opponent spells count toward storm without consuming the grant")
+    void opponentSpellDoesNotConsumeGrant() {
+        castSpellslinger();
+        harness.castFromHand(player2, new CracklingSpellslinger(), "{3}{R}{R}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Dragon Elemental")).isEqualTo(5);
+        assertThat(countPermanents(player2, "Dragon Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("An unused storm grant expires at the end of the turn")
+    void unusedGrantExpires() {
+        castSpellslinger();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new SolRing(), "{1}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Dragon Elemental")).isEqualTo(2);
     }
 
     private static Card lifeGainInstant() {
