@@ -3967,6 +3967,35 @@ public class MiscTriggerCollectorService {
     }
 
     @CollectsTriggers({
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT)
+    })
+    boolean handleControllerExileTriggers(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromHand)
+                && !(ctx instanceof TriggerContext.ControllerSpellOrAbilityExilesPermanent)) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        match.gameData().stack.add(entry);
+        if (ctx instanceof TriggerContext.ControllerCardsExiledFromHand exiled) {
+            entry.setEventValue(exiled.count());
+        } else {
+            entry.setEventValue(1);
+        }
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on cards or permanents being exiled",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD)
     })

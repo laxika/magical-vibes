@@ -29,8 +29,11 @@ public class ExileCardFromHandAndCreateTokenCopyEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exileEffect = (ExileCardFromHandAndCreateTokenCopyEffect) effect;
-        UUID controllerId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(controllerId);
+        UUID playerId = exileEffect.targetPlayer() ? entry.getTargetId() : entry.getControllerId();
+        if (playerId == null || !gameData.playerIds.contains(playerId)) {
+            return;
+        }
+        List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             return;
         }
@@ -39,7 +42,7 @@ public class ExileCardFromHandAndCreateTokenCopyEffectHandler implements NormalE
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             if (predicateEvaluationService.matchesCardPredicate(
-                    hand.get(i), exileEffect.filter(), sourceCardId, gameData, controllerId,
+                    hand.get(i), exileEffect.filter(), sourceCardId, gameData, playerId,
                     entry.getSourcePermanentId(), null, entry.getXValue())) {
                 validIndices.add(i);
             }
@@ -50,7 +53,10 @@ public class ExileCardFromHandAndCreateTokenCopyEffectHandler implements NormalE
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice(
-                        controllerId, validIndices,
-                        "Choose an artifact or creature card from your hand to exile.", exileEffect));
+                        playerId, validIndices,
+                        exileEffect.targetPlayer()
+                                ? "Choose a card from your hand to exile."
+                                : "Choose an artifact or creature card from your hand to exile.",
+                        exileEffect));
     }
 }

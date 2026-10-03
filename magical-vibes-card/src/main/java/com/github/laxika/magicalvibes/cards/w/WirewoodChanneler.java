@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "144")
+@CardRegistration(set = "KHC", collectorNumber = "79")
 public class WirewoodChanneler extends Card {
 
     public WirewoodChanneler() {

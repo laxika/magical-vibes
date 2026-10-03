@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M21", collectorNumber = "226")
+@CardRegistration(set = "KHC", collectorNumber = "95")
 public class TwinbladeAssassins extends Card {
 
     public TwinbladeAssassins() {

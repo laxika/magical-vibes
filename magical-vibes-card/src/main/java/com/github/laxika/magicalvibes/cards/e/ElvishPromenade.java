@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "DD1", collectorNumber = "20")
 @CardRegistration(set = "DPA", collectorNumber = "62")
 @CardRegistration(set = "EVG", collectorNumber = "20")
+@CardRegistration(set = "KHC", collectorNumber = "59")
 public class ElvishPromenade extends Card {
 
     public ElvishPromenade() {

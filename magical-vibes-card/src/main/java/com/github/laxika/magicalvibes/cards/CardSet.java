@@ -169,6 +169,7 @@ public enum CardSet {
     SET_KLD("KLD"),
     SET_KLR("KLR"),
     SET_KHM("KHM"),
+    SET_KHC("KHC"),
     SET_NEO("NEO"),
     SET_YNEO("YNEO"),
     SET_AER("AER"),

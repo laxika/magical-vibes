@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "244")
+@CardRegistration(set = "KHC", collectorNumber = "109")
 public class CrypticCaves extends Card {
 
     public CrypticCaves() {

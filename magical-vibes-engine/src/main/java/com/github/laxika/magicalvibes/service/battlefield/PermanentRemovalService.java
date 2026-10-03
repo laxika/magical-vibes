@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.GrantExilePlayPermissionAtNextTurn;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -761,6 +763,8 @@ public class PermanentRemovalService {
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId, exiledPowerAtTrigger);
+        triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
+                gameData, target, controllerId, exilingControllerId(gameData));
         forgetDamageDealtToDepartedPermanent(gameData, target);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
@@ -1968,6 +1972,8 @@ public class PermanentRemovalService {
                 : null;
         boolean ownSubtypeExileReplacement = wasCreature
                 && ownSubtypeExileReplacement(gameData, target, controllerId, creatureSubtypesAtDeath);
+        boolean controlledPermanentExileReplacement = gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn
+                .contains(controllerId);
         boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
                 || opponentExileReplacement != null
                 || bloodCounterReplacement != null
@@ -1977,7 +1983,8 @@ public class PermanentRemovalService {
                 || planarExileReplacement != null
                 || (wasCreature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty())
                 || (wasCreature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
-                        .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId)));
+                        .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId)))
+                || controlledPermanentExileReplacement;
         if (exileInstead && wasCreature) {
             gameData.creatureExileCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
@@ -2017,6 +2024,13 @@ public class PermanentRemovalService {
                                 " is exiled with a blood counter instead of being put into a graveyard.")
                                 : GameLog.cardThen(leaving,
                                 " is exiled instead of being put into a graveyard."));
+                if (controlledPermanentExileReplacement
+                        && !isToken(gameData, leaving)
+                        && gameData.findExiledCard(leaving.getId()) != null) {
+                    gameData.queueDelayedAction(new DelayedEndStepTrigger(
+                            controllerId, leaving, null, null,
+                            new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(leaving.getId())));
+                }
                 } else {
                     boolean enteredGraveyard = graveyardService.addCardToGraveyard(
                             gameData, leavingOwnerId, leaving, Zone.BATTLEFIELD, controllerId, target,
@@ -2068,6 +2082,8 @@ public class PermanentRemovalService {
                     gameData, target, wasCreature, controllerId);
             triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
                     gameData, target, wasCreature, controllerId, Math.max(0, dyingPowerAtDeath));
+            triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
+                    gameData, target, controllerId, exilingControllerId(gameData));
         }
         if (wentToGraveyard) {
             triggerCollectionService.checkHauntedCreatureDeathTriggers(gameData, target);
@@ -2188,6 +2204,14 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    private UUID exilingControllerId(GameData gameData) {
+        if (gameData.currentlyResolvingControllerId != null) {
+            return gameData.currentlyResolvingControllerId;
+        }
+        return gameData.pendingEffectResolutionEntry == null
+                ? null : gameData.pendingEffectResolutionEntry.getControllerId();
     }
 
     private void resolveMandatoryOpponentExileRider(

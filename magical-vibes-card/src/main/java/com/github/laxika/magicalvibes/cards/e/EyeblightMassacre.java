@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "96")
+@CardRegistration(set = "KHC", collectorNumber = "49")
 public class EyeblightMassacre extends Card {
 
     public EyeblightMassacre() {

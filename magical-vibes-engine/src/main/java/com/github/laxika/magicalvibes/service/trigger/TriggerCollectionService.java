@@ -11352,6 +11352,35 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Fires triggers that care when one or more cards leave the given player's hand for exile. */
+    public void checkControllerCardsExiledFromHandTriggers(GameData gameData, UUID handOwnerId, int count) {
+        if (handOwnerId == null || count <= 0) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(handOwnerId);
+        if (battlefield == null) return;
+
+        TriggerContext context = new TriggerContext.ControllerCardsExiledFromHand(handOwnerId, count);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, handOwnerId,
+                    EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND, context);
+        }
+    }
+
+    /** Fires triggers for a permanent exiled by the resolving controller's spell or ability. */
+    public void checkControllerSpellOrAbilityExilesPermanentTriggers(
+            GameData gameData, Permanent exiledPermanent, UUID exiledPermanentControllerId,
+            UUID exilingControllerId) {
+        if (exiledPermanent == null || exilingControllerId == null) return;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(exilingControllerId);
+        if (battlefield == null) return;
+
+        TriggerContext context = new TriggerContext.ControllerSpellOrAbilityExilesPermanent(
+                exiledPermanent, exiledPermanentControllerId, exilingControllerId);
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, permanent, exilingControllerId,
+                    EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT, context);
+        }
+    }
+
     private void collectCreatureDeathTriggerWatchers(GameData gameData, Permanent dyingPermanent) {
         for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
             StackEntry entry = new StackEntry(

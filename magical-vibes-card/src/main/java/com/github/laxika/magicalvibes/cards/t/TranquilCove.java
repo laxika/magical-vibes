@@ -27,6 +27,7 @@ import java.util.List;
 @CardRegistration(set = "LTC", collectorNumber = "340")
 @CardRegistration(set = "C19", collectorNumber = "284")
 @CardRegistration(set = "C18", collectorNumber = "288")
+@CardRegistration(set = "KHC", collectorNumber = "119")
 public class TranquilCove extends Card {
 
     public TranquilCove() {

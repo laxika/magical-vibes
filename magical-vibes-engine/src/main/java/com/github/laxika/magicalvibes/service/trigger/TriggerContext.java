@@ -69,6 +69,14 @@ public sealed interface TriggerContext {
 
     record Foretell(UUID foretellingPlayerId, Card foretoldCard) implements TriggerContext {}
 
+    /** Context for one or more cards exiled from a player's hand. */
+    record ControllerCardsExiledFromHand(UUID handOwnerId, int count) implements TriggerContext {}
+
+    /** Context for a controller's spell or ability exiling a permanent from the battlefield. */
+    record ControllerSpellOrAbilityExilesPermanent(Permanent exiledPermanent,
+                                                    UUID exiledPermanentControllerId,
+                                                    UUID exilingControllerId) implements TriggerContext {}
+
     /** Context for "whenever a spell you've cast is countered" triggers. */
     record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
 

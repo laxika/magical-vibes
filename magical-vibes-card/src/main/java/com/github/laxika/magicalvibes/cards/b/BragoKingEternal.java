@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "EMA", collectorNumber = "198")
 @CardRegistration(set = "VMA", collectorNumber = "246")
 @CardRegistration(set = "SLD", collectorNumber = "1601")
+@CardRegistration(set = "KHC", collectorNumber = "82")
 public class BragoKingEternal extends Card {
 
     public BragoKingEternal() {

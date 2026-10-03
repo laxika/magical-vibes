@@ -33,6 +33,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "301")
 @CardRegistration(set = "DMC", collectorNumber = "181")
 @CardRegistration(set = "MIC", collectorNumber = "159")
+@CardRegistration(set = "KHC", collectorNumber = "99")
 public class CommandersSphere extends Card {
 
     public CommandersSphere() {

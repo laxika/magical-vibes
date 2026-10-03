@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "AKH", collectorNumber = "170")
+@CardRegistration(set = "KHC", collectorNumber = "63")
 public class HarvestSeason extends Card {
 
     public HarvestSeason() {

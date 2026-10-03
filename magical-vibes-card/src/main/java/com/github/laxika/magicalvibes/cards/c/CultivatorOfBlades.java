@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KLD", collectorNumber = "151")
+@CardRegistration(set = "KHC", collectorNumber = "55")
 public class CultivatorOfBlades extends Card {
 
     public CultivatorOfBlades() {

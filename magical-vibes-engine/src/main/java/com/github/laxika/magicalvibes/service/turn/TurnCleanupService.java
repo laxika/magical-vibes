@@ -372,6 +372,7 @@ public class TurnCleanupService {
         gameData.playersShufflingCreaturesEnteringFromExileThisTurn.clear();
         gameData.playersExilingCreaturesInsteadOfDyingThisTurn.clear();
         gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.clear();
+        gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn.clear();
         gameData.playersWhoPlayedCardFromExileThisTurn.clear();
         gameData.playersWhoPlayedOrCastFromOutsideHandThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
@@ -566,6 +567,7 @@ public class TurnCleanupService {
                 !gameData.exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId));
         gameData.exileCastPermissionsUntilEndOfTurn.clear();
         gameData.foretoldCardCastPermissionsThisTurn.clear();
+        gameData.playersWhoForetoldThisTurn.clear();
         gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;

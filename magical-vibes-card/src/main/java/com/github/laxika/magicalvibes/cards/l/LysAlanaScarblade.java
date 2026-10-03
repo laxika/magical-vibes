@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "122")
 @CardRegistration(set = "EMA", collectorNumber = "95")
+@CardRegistration(set = "KHC", collectorNumber = "50")
 public class LysAlanaScarblade extends Card {
 
     public LysAlanaScarblade() {

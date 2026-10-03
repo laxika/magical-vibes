@@ -1,4 +1,5 @@
 # CARD_PATTERN_INDEX
+| sorcery that looks at six, may put one land tapped onto the battlefield and one Elf into hand, then random-bottoms the rest | `b/BountyOfSkemfar.java` + `LookAtTopCardsRevealTwoTypesToHandThenRestEffect.landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(...)` |
 | sacrifice-artifact trigger that chooses a creature card in hand or a creature you control for a perpetual +1/+0 boost | `s/ScourTheScene.java` + `TriggeringPermanentConditionalEffect(PermanentIsArtifactPredicate, ChooseCreatureCardInHandOrCreatureYouControlAndApplyPerpetualPowerToughnessEffect(1, 0))` |
 | ETB connive plus once-per-turn discard-event Seek for a card sharing a type with any discarded card | `d/DivinerOfFates.java` + `DrawDiscardAndConniveEffect` + `OncePerTurnTriggerEffect` + `SeekCardSharingCardTypeWithDiscardedCardsEffect` |
 | ETB returns a permanent you control, then perpetually upgrades it if it is a non-Angel creature card | `s/SkylineSavior.java` + `ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffect` |
@@ -42,9 +43,11 @@
 | activated ability offers a suspended hand spell for its suspend cost | `t/TheFaceOfBoe.java` + `MayCastSpellWithSuspendCostFromHandEffect` |
 | turn-scoped shuffle replacement for creatures entering from exile or cast from exile | `d/DontBlink.java` + `ShuffleCreaturesEnteringFromExileEffect` |
 | creature death replacement that reveals and shuffles the creature into its owner's library | `s/SaibaSyphoner.java` + `ShuffleIntoLibraryInsteadOfDyingEffect` |
+| turn-scoped controlled-permanent death replacement that exiles and returns cards at the next end step | `c/CosmicIntervention.java` + `ExileControlledPermanentsInsteadOfDyingThisTurnEffect` |
 | equipment attack counter plus combat-damage d12 comparison that doubles attached-creature +1/+1 counters | `s/SwordOfHours.java` + `RollD12AndResolveIfGreaterThanEventValueEffect` + `DoublePlusOneCountersOnEnchantedCreatureEffect` |
 | temporary triggered ability on all opponent permanents, including later entrants | `h/HellishRebuke.java` + `GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect` + `GrantTriggeredAbilityEffect` |
 | notes the greatest mana value of every card put into exile this turn and has that power with a fixed toughness, while its upkeep trigger grants normal-cost play permission for the top card | `b/BellBorcaSpectralSergeant.java` + `ON_ANY_CARD_EXILED` note marker + `GreatestManaValueNotedForSourceThisTurn` + `ExileTopCardMayPlayThisTurnEffect(false)` |
+| first foretell each turn is free and cards exiled from hand or battlefield permanents exiled by your spells or abilities create a flying Spirit | `r/RanarTheEverWatchful.java` + `ReduceFirstForetellCostEachTurnEffect` + controller-scoped hand/permanent exile trigger slots |
 | ally combat-damage trigger exiles the damaged player's top card, grants end-of-turn play permission, and perpetually turns nonland permanents into artifact mana sources | `p/PepRaucousRaider.java` + `AllyCombatDamageTriggerEffect` + `ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect` + `PerpetuallyGrantCardCharacteristicsEffect` |
 | equipped attack trigger chooses damage to any target or a free instant/sorcery cast from hand capped by attached Equipment mana value | `t/TetsuoImperialChampion.java` + `ConditionalEffect(new Equipped(), new ChooseOneEffect(...))` + `GreatestManaValueAmongAttachedEquipment` |
 | artifact gains all activated abilities of lands on the battlefield and may spend mana as any color for them | `m/ManascapeRefractor.java` + STATIC `GainActivatedAbilitiesOfAllLandsEffect()` + `SpendManaAsAnyColorForActivatedAbilitiesEffect()` + `EntersTappedEffect()` |
@@ -401,6 +404,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | face-down top-library exile plus two-player hidden 1/2/3 match ability | `e/ExpertLevelSafe.java` + `ExpertLevelSafeEffect` |
 | foretell, enters with counters based on turns since foretell | `l/LupineHarbingers.java` + `EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, new TurnsBegunSinceForetell())` |
 | self-damage trigger exiles the source face down and makes it foretold | `t/TheForetoldSoldier.java` + `ExileSelfAndBecomeForetoldEffect` |
+| enters or attacks, draws, then exiles a hand card face down and makes it foretold at mana cost minus {2} | `e/EtherealValkyrie.java` + `SequenceEffect.of(DrawCardEffect(), ExileCardFromHandAndBecomeForetoldEffect())` |
 | ETB secretly choose an opponent permanent, then opponent sacrifices another and the chosen permanent | `TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentEffect` + CARD_PATTERNS_CREATURES_ETB.md |
 | airbend, exile target nonland permanent for a {2} cast | CARD_PATTERNS_CREATURES_ETB.md |
 | airbend all other creatures, opponents can't cast from outside hand | CARD_PATTERNS_LANDS_SPELLS.md |

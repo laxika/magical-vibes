@@ -3002,6 +3002,20 @@ public class PlayerInputService {
                                          UUID playPermissionTaxSourceControllerId,
                                          int exilePlayOpponentTax, boolean landsEnterTapped,
                                          ChosenCardAwareEffect chosenCardThenEffect) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, playPermissionControllerId,
+                remainingCount, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
+                untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
+                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount,
+                                         List<UUID> remainingChoosers, int cardsPerPlayer,
+                                         boolean faceDown, boolean returnOnSourceLeave,
+                                         UUID untapPermanentId, boolean playPermissionToChooser,
+                                         UUID playPermissionTaxSourceControllerId,
+                                         int exilePlayOpponentTax, boolean landsEnterTapped,
+                                         ChosenCardAwareEffect chosenCardThenEffect, int exiledCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
@@ -3010,7 +3024,7 @@ public class PlayerInputService {
                 "Choose a card to exile.", remainingChoosers != null ? remainingChoosers : List.of(),
                 cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
                 playPermissionToChooser, playPermissionTaxSourceControllerId,
-                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect));
+                exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, exiledCount));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

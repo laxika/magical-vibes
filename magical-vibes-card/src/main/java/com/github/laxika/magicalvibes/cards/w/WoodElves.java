@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "MOC", collectorNumber = "316")
 @CardRegistration(set = "NCC", collectorNumber = "321")
 @CardRegistration(set = "LTC", collectorNumber = "263")
+@CardRegistration(set = "KHC", collectorNumber = "80")
 public class WoodElves extends Card {
 
     public WoodElves() {

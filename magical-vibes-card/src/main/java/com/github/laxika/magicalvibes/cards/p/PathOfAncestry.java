@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "BLC", collectorNumber = "322")
 @CardRegistration(set = "MIC", collectorNumber = "178")
 @CardRegistration(set = "WOC", collectorNumber = "165")
+@CardRegistration(set = "KHC", collectorNumber = "117")
 public class PathOfAncestry extends Card {
 
     public PathOfAncestry() {

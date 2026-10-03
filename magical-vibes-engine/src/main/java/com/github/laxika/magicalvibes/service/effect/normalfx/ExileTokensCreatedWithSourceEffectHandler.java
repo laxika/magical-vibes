@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,6 +38,13 @@ public class ExileTokensCreatedWithSourceEffectHandler implements NormalEffectHa
         UUID sourceId = exile.sourcePermanentId() != null
                 ? exile.sourcePermanentId() : entry.getSourcePermanentId();
         if (sourceId == null) {
+            return;
+        }
+
+        if (exile.atNextEndStep()) {
+            gameData.queueDelayedAction(new DelayedEndStepTrigger(
+                    entry.getControllerId(), entry.getCard(), sourceId, null,
+                    new ExileTokensCreatedWithSourceEffect(sourceId)));
             return;
         }
 

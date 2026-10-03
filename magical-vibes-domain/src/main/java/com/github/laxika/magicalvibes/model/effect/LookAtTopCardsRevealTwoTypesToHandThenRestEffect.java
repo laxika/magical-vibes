@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +51,8 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         String secondPrompt,
         boolean randomRest,
         LibraryScope scope,
-        UUID playerId) implements CombatDamageAmountAwareEffect {
+        UUID playerId,
+        LibrarySearchDestination firstChosenDestination) implements CombatDamageAmountAwareEffect {
 
     @Override
     public DynamicAmount combatDamageAmount() {
@@ -63,7 +65,7 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
             LibrarySearchDestination chosenDestination) {
         this(count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, null, null, null, null, false,
-                LibraryScope.CONTROLLER, null);
+                LibraryScope.CONTROLLER, null, chosenDestination);
     }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
@@ -78,6 +80,9 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
         if (chosenDestination != LibrarySearchDestination.HAND
                 && chosenDestination != LibrarySearchDestination.BATTLEFIELD) {
             throw new IllegalArgumentException("Chosen destination must be hand or battlefield");
+        }
+        if (firstChosenDestination == null) {
+            firstChosenDestination = chosenDestination;
         }
     }
 
@@ -119,13 +124,26 @@ public record LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 new CardTypePredicate(CardType.LAND), "a land card",
                 new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
-                "an instant or sorcery card", true, LibraryScope.EACH_PLAYER, null);
+                "an instant or sorcery card", true, LibraryScope.EACH_PLAYER, null,
+                LibrarySearchDestination.HAND);
+    }
+
+    /** Look at the top cards, then may put one land tapped onto the battlefield and one matching
+     * subtype card into hand; the rest go to the bottom in a random order. */
+    public static LookAtTopCardsRevealTwoTypesToHandThenRestEffect
+    landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(int count, CardSubtype subtype) {
+        return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
+                new Fixed(count), CardType.LAND, null, List.of(),
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, true, LibrarySearchDestination.HAND,
+                null, "a land card", new CardSubtypePredicate(subtype),
+                "a card with the " + subtype.getDisplayName() + " subtype", true,
+                LibraryScope.CONTROLLER, null, LibrarySearchDestination.BATTLEFIELD_TAPPED);
     }
 
     public LookAtTopCardsRevealTwoTypesToHandThenRestEffect forPlayer(UUID playerId) {
         return new LookAtTopCardsRevealTwoTypesToHandThenRestEffect(
                 count, firstType, secondType, subtypePicks, restDestination, reveal,
                 chosenDestination, firstPredicate, firstPrompt, secondPredicate, secondPrompt,
-                randomRest, LibraryScope.CONTROLLER, playerId);
+                randomRest, LibraryScope.CONTROLLER, playerId, firstChosenDestination);
     }
 }

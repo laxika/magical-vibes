@@ -2382,6 +2382,7 @@ public class AbilityActivationService {
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             int suspendTimeCounters = ability.isSuspendTimeCountersFromX()
                     ? effectiveXValue
                     : ability.getSuspendTimeCounters();
@@ -2398,6 +2399,7 @@ public class AbilityActivationService {
             recordHandAbilityActivationUse(gameData, card, idx);
             hand.remove(handCardIndex);
             exileService.exileCard(gameData, playerId, card);
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
             if (isManaAbility(ability, abilityEffects)) {
                 resolveHandManaAbility(gameData, player, card, abilityEffects, effectiveXValue);
                 gameData.priorityPassedBy.clear();

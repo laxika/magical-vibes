@@ -36,8 +36,18 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
         if (copyCount <= 0) {
             return;
         }
+        java.util.UUID tokenControllerId = entry.getControllerId();
+        if (copyEffect.tokenCopyEffect().createForTargetController() && entry.getTargetId() != null) {
+            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            java.util.UUID targetControllerId = targetPermanent == null
+                    ? gameData.playerIds.contains(entry.getTargetId()) ? entry.getTargetId() : null
+                    : gameQueryService.findPermanentController(gameData, entry.getTargetId());
+            if (targetControllerId != null) {
+                tokenControllerId = targetControllerId;
+            }
+        }
         tokenCopySupport.createTokenCopies(gameData, entry,
                 Collections.nCopies(copyCount, copyEffect.sourceCard()),
-                sourcePermanent, copyEffect.tokenCopyEffect());
+                sourcePermanent, tokenControllerId, copyEffect.tokenCopyEffect());
     }
 }

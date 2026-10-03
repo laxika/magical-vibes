@@ -1481,7 +1481,7 @@ public class CardChoiceHandlerService {
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
                     exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect());
+                    exileChoice.chosenCardThenEffect(), exileChoice.exiledCount());
             return;
         }
 
@@ -1539,6 +1539,10 @@ public class CardChoiceHandlerService {
         }
 
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
+        if (remainingExiles == 0 || hand.isEmpty()) {
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(
+                    gameData, playerId, exileChoice.exiledCount() + 1);
+        }
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
             inputCompletionService.publishStateAfterInput(gameData);
@@ -1549,7 +1553,7 @@ public class CardChoiceHandlerService {
                     exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
                     exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect());
+                    exileChoice.chosenCardThenEffect(), exileChoice.exiledCount() + 1);
         } else if (exileChoice.remainingChoosers() != null && !exileChoice.remainingChoosers().isEmpty()) {
             // Next opponent in the each-opponent exile queue (Nicol Bolas, God-Pharaoh +1).
             UUID next = exileChoice.remainingChoosers().getFirst();
@@ -1564,7 +1568,7 @@ public class CardChoiceHandlerService {
                     exileChoice.untapPermanentId(), exileChoice.playPermissionToChooser(),
                     exileChoice.playPermissionTaxSourceControllerId(),
                     exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect());
+                    exileChoice.chosenCardThenEffect(), 0);
         } else {
             gameData.interaction.clearAwaitingInput();
 
@@ -1615,11 +1619,17 @@ public class CardChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         Card chosenCard = hand.remove(cardIndex);
         exileService.exileCard(gameData, player.getId(), chosenCard);
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " exiles ", chosenCard, " from hand."));
 
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry != null) {
+        boolean createTokenCopy = choice.effect().copyFilter() == null
+                || predicateEvaluationService.matchesCardPredicate(
+                        chosenCard, choice.effect().copyFilter(),
+                        pendingEntry == null || pendingEntry.getCard() == null
+                                ? null : pendingEntry.getCard().getId());
+        if (pendingEntry != null && createTokenCopy) {
             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
                     List.of(new CreateTokenCopyOfCardEffect(
                             chosenCard, choice.effect().tokenCopyEffect())));
@@ -2271,6 +2281,10 @@ public class CardChoiceHandlerService {
         // More cards left to discard (e.g. Noggin Whack chooses two)? Prompt for the next one over
         // the remaining revealed cards before resolving any triggers or the rest of the spell.
         int remainingDiscards = choice.remainingCount() - 1;
+        if (choice.destination() == HandChoiceDestination.EXILE
+                && (remainingDiscards <= 0 || targetHand.isEmpty())) {
+            triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, targetPlayerId, 1);
+        }
         List<UUID> remainingRevealed = new ArrayList<>(choice.revealedCardIds());
         remainingRevealed.remove(chosenId);
         if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
@@ -2323,6 +2337,7 @@ public class CardChoiceHandlerService {
         boolean targetPicked = choice.decidingPlayerId().equals(targetPlayerId);
         Card exiled = targetHand.remove(cardIndex);
         exileService.exileCard(gameData, targetPlayerId, exiled);
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, targetPlayerId, 1);
 
         List<UUID> targetExiled = new ArrayList<>(choice.targetExiledIds());
         List<UUID> controllerExiled = new ArrayList<>(choice.controllerExiledIds());
@@ -2406,6 +2421,7 @@ public class CardChoiceHandlerService {
         } else {
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
         }
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, playerId, 1);
 
         // "You may cast that card for as long as it remains exiled" (Ice Cauldron) — no expiry.
         if (imprintChoice.grantCastPermission()) {
@@ -2460,6 +2476,7 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card card = hand.remove(cardIndex);
         exileService.exileCard(gameData, player.getId(), card);
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
         gameData.exiledCardRefineCounters.put(card.getId(), choice.counterCount());
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is exiled with " + choice.counterCount() + " refine counters."));
@@ -2487,6 +2504,7 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card card = hand.remove(cardIndex);
         exileService.exileCard(gameData, player.getId(), card);
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
         gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is exiled with " + card.getManaValue() + " time counters."));
@@ -2514,6 +2532,7 @@ public class CardChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card card = hand.remove(cardIndex);
         exileService.exileCard(gameData, player.getId(), card);
+        triggerCollectionService.checkControllerCardsExiledFromHandTriggers(gameData, player.getId(), 1);
         gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is exiled with " + card.getManaValue() + " time counters."));
