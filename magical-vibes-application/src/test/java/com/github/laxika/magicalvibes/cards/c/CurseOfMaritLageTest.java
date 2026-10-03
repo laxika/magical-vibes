@@ -21,8 +21,7 @@ class CurseOfMaritLageTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.castFromHand(player1, new CurseOfMaritLage(), "{3}{R}{R}");
-        harness.passBothPriorities(); // resolve the enchantment → ETB trigger onto the stack
-        harness.passBothPriorities(); // resolve the trigger
+        resolveAllTriggers();
 
         assertThat(ownIsland.isTapped()).isTrue();
         assertThat(opponentIsland.isTapped()).isTrue();
@@ -72,6 +71,38 @@ class CurseOfMaritLageTest extends BaseCardTest {
 
         assertThat(opponentIsland.isTapped()).isTrue();
         assertThat(opponentForest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enter trigger still taps Islands after the enchantment leaves")
+    void enterTriggerSurvivesSourceLeaving() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.castFromHand(player1, new CurseOfMaritLage(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        Permanent curse = findPermanent(player1, "Curse of Marit Lage");
+        gd.playerBattlefields.get(player1.getId()).remove(curse);
+        harness.passBothPriorities();
+
+        assertThat(island.isTapped()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(island.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing one Curse does not end another Curse's untap restriction")
+    void remainingCurseStillPreventsUntapping() {
+        Permanent firstCurse = harness.addToBattlefieldAndReturn(player1, new CurseOfMaritLage());
+        harness.addToBattlefield(player2, new CurseOfMaritLage());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstCurse);
+        advanceToUpkeep(player1);
+
+        assertThat(island.isTapped()).isTrue();
     }
 
     @Test
