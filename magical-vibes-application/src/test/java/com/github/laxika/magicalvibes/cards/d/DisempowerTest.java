@@ -73,6 +73,57 @@ class DisempowerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses the owner's library when another player controls the artifact")
+    void putsArtifactInOwnersLibraryRatherThanControllers() {
+        CursedTotem card = new CursedTotem();
+        card.setOwnerId(player2.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, card);
+        List<Card> controllerLibraryBefore = List.copyOf(harness.getGameData().playerDecks.get(player1.getId()));
+        List<Card> ownerLibraryBefore = List.copyOf(harness.getGameData().playerDecks.get(player2.getId()));
+
+        castAndResolveDisempower(artifact.getId());
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).containsExactlyElementsOf(controllerLibraryBefore);
+        List<Card> ownerLibrary = harness.getGameData().playerDecks.get(player2.getId());
+        assertThat(ownerLibrary.getFirst()).isSameAs(card);
+        assertThat(ownerLibrary.subList(1, ownerLibrary.size())).containsExactlyElementsOf(ownerLibraryBefore);
+    }
+
+    @Test
+    @DisplayName("Can put an enchantment on top of an empty library")
+    void putsEnchantmentIntoEmptyLibrary() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Chaosphere());
+        harness.setLibrary(player2, List.of());
+
+        castAndResolveDisempower(enchantment.getId());
+
+        assertThat(harness.getGameData().playerDecks.get(player2.getId())).containsExactly(enchantment.getCard());
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).doesNotContain(enchantment);
+    }
+
+    @Test
+    @DisplayName("Does nothing when its target leaves the battlefield before resolution")
+    void doesNotMoveTargetAgainAfterItLeavesBattlefield() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
+        prepareDisempower();
+        harness.castInstant(player1, 0, artifact.getId());
+        harness.setHand(player2, List.of(new Disempower()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+        List<Card> libraryAfterResponse = List.copyOf(harness.getGameData().playerDecks.get(player2.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryAfterResponse);
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        harness.assertInGraveyard(player1, "Disempower");
+        harness.assertInGraveyard(player2, "Disempower");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
     private void prepareDisempower() {
         harness.setHand(player1, List.of(new Disempower()));
         harness.addMana(player1, ManaColor.WHITE, 1);
