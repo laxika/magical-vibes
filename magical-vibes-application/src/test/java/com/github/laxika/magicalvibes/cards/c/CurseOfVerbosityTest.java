@@ -27,7 +27,7 @@ class CurseOfVerbosityTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        declareDirectAttackers(player2, List.of(0));
+        declareAttackers(player2, List.of(0));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -55,18 +55,78 @@ class CurseOfVerbosityTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The controller draws only once when attacking the enchanted opponent")
+    void controllerAttackingEnchantedOpponentDrawsOnce() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfVerbosity());
+        curse.setAttachedTo(player2.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple attackers give each eligible player only one draw")
+    void multipleAttackersDrawOnlyOnce() {
+        placeCurseOnPlayer1();
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Attacking an unenchanted player gives neither player a draw")
+    void attackingUnenchantedPlayerDoesNotTrigger() {
+        placeCurseOnPlayer1();
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        declareAttackers(player1, List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the controller draws if all attackers die before resolution")
+    void attackingOpponentDoesNotDrawAfterAllAttackersDie() {
+        placeCurseOnPlayer1();
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        attacker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void placeCurseOnPlayer1() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         Permanent curse = harness.addToBattlefieldAndReturn(player1, new CurseOfVerbosity());
         curse.setAttachedTo(player1.getId());
-    }
-
-    private void declareDirectAttackers(com.github.laxika.magicalvibes.model.Player player, List<Integer> attackers) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackers, Map.of());
     }
 }
