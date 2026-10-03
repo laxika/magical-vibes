@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.t.TezzeretsGambit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,17 +20,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DoesMachines.class, DarksteelRelic.class, Forest.class, GrizzlyBears.class, Memnite.class})
+@CardUsed({DoesMachines.class, DarksteelRelic.class, Forest.class, Memnite.class, TezzeretsGambit.class})
 class DoesMachinesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Mills two, draws two, then discards two when it enters")
     void entersAndLoots() {
-        Card milled1 = new GrizzlyBears();
+        Card milled1 = new Forest();
         Card milled2 = new Forest();
         Card drawn1 = new Memnite();
         Card drawn2 = new DarksteelRelic();
-        Card discarded1 = new GrizzlyBears();
+        Card discarded1 = new Forest();
         Card discarded2 = new Forest();
 
         harness.setHand(player1, new ArrayList<>(List.of(new DoesMachines(), discarded1, discarded2)));
@@ -69,8 +68,7 @@ class DoesMachinesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(artifact1.getId(), artifact2.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(artifact1.getId()));
-        harness.handleMultipleCardsChosen(player1, List.of(artifact2.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(artifact1.getId(), artifact2.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(artifact1, artifact2);
@@ -121,6 +119,106 @@ class DoesMachinesTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, memnite, CardSubtype.ROBOT)).isFalse();
         assertThat(gqs.getEffectivePower(gd, memnite)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, memnite)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The combat ability is absent at level 1")
+    void levelOneHasNoCombatAbility() {
+        harness.addToBattlefield(player1, new DoesMachines());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+
+        prepareBeginningOfCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, relic)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The combat ability is absent at level 2")
+    void levelTwoHasNoCombatAbility() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new DoesMachines());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        levelUp(talent, 0, 1);
+
+        prepareBeginningOfCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, relic)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Level 2 can return no artifacts even when two are available")
+    void levelTwoCanChooseNoArtifacts() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new DoesMachines());
+        Card artifact1 = new DarksteelRelic();
+        Card artifact2 = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact1, artifact2));
+
+        levelUp(talent, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact1, artifact2);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(artifact1, artifact2);
+    }
+
+    @Test
+    @DisplayName("Level 2 can return just one of two available artifacts")
+    void levelTwoCanChooseOneArtifact() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new DoesMachines());
+        Card artifact1 = new DarksteelRelic();
+        Card artifact2 = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact1, artifact2));
+
+        levelUp(talent, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(artifact1.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact1).doesNotContain(artifact2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact2);
+    }
+
+    @Test
+    @DisplayName("Proliferating another counter on a level 2 Class does not advance its Class level")
+    void proliferatingDoesNotAdvanceClassLevel() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new DoesMachines());
+        levelUp(talent, 0, 1);
+        talent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new TezzeretsGambit()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(talent.getId()));
+        resolveAllTriggers();
+
+        assertThat(talent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        levelUp(talent, 1, 4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Level 3 does not trigger during the opponent's combat")
+    void levelThreeDoesNotTriggerOnOpponentsTurn() {
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new DoesMachines());
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        levelUp(talent, 0, 1);
+        levelUp(talent, 1, 4);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(relic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, relic)).isFalse();
     }
 
     private void prepareBeginningOfCombat() {
