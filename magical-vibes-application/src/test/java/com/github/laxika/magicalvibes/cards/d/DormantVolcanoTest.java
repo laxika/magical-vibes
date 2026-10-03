@@ -32,8 +32,7 @@ class DormantVolcanoTest extends BaseCardTest {
     @Test
     @DisplayName("Auto-sacrifices when controller has no untapped Mountain")
     void autoSacrificesWithoutUntappedMountain() {
-        harness.addToBattlefield(player1, new Mountain());
-        findPermanent(player1, "Mountain").tap();
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
         harness.addToBattlefield(player1, new MagmaMine());
         playAndResolveEtb();
 
@@ -83,7 +82,7 @@ class DormantVolcanoTest extends BaseCardTest {
     void returnsControlledMountainToOwnersHand() {
         Mountain mountain = new Mountain();
         mountain.setOwnerId(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(mountain));
+        harness.addToBattlefield(player1, mountain);
 
         playAndResolveEtb();
         harness.handleMayAbilityChosen(player1, true);
@@ -131,6 +130,42 @@ class DormantVolcanoTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifices when the only Mountain is tapped in response to the entry trigger")
+    void mountainTappedBeforeTriggerResolves() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new DormantVolcano()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Dormant Volcano");
+        harness.tapPermanent(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Dormant Volcano");
+        harness.assertInGraveyard(player1, "Dormant Volcano");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotInHand(player1, "Mountain");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returns only the untapped Mountain when a tapped Mountain is also present")
+    void returnsOnlyUntappedMountain() {
+        Permanent tappedMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        tappedMountain.tap();
+        Permanent untappedMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Dormant Volcano");
+        assertThat(findPermanents(player1, "Mountain")).containsExactly(tappedMountain);
+        assertThat(gd.playerHands.get(player1.getId())).contains(untappedMountain.getCard());
     }
 
     private void playAndResolveEtb() {
