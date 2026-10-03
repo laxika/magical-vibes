@@ -85,4 +85,52 @@ class CrumblingAshesTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Noggle Bandit");
         harness.assertNotInGraveyard(player2, "Noggle Bandit");
     }
+
+    @Test
+    @DisplayName("The upkeep trigger can destroy a creature you control")
+    void destroysOwnCreatureWithCounter() {
+        harness.addToBattlefield(player1, new CrumblingAshes());
+        Permanent bandit = addCreatureReady(player1, new NoggleBandit());
+        bandit.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bandit.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Noggle Bandit");
+        harness.assertInGraveyard(player1, "Noggle Bandit");
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new CrumblingAshes());
+        Permanent bandit = addCreatureReady(player2, new NoggleBandit());
+        bandit.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertOnBattlefield(player2, "Noggle Bandit");
+    }
+
+    @Test
+    @DisplayName("A noncreature permanent with a -1/-1 counter is not a legal target")
+    void noncreatureWithCounterNotTargetable() {
+        Permanent ashes = harness.addToBattlefieldAndReturn(player1, new CrumblingAshes());
+        ashes.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent bandit = addCreatureReady(player2, new NoggleBandit());
+        bandit.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ashes.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, bandit.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Crumbling Ashes");
+        harness.assertInGraveyard(player2, "Noggle Bandit");
+    }
 }
