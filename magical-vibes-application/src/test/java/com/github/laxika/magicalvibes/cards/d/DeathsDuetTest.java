@@ -61,4 +61,54 @@ class DeathsDuetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires 2 matching cards in your graveyard");
     }
+
+    @Test
+    @DisplayName("Returns the remaining legal target when the other leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card creature1 = new DauthiJackal();
+        Card creature2 = new DauthiCutthroat();
+        Card spell = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of(creature2));
+        harness.setHand(player1, List.of(creature1));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(creature1.getId(), creature2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(spell.getId());
+    }
+
+    @Test
+    @DisplayName("Returns no cards when both targets leave the graveyard")
+    void returnsNoCardsWhenBothTargetsAreIllegal() {
+        Card creature1 = new DauthiJackal();
+        Card creature2 = new DauthiCutthroat();
+        Card unchosen = new DauthiJackal();
+        Card spell = new DeathsDuet();
+        harness.setGraveyard(player1, List.of(creature1, creature2, unchosen));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of(unchosen));
+        harness.setHand(player1, List.of(creature1, creature2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(creature1.getId(), creature2.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(unchosen.getId(), spell.getId());
+        assertThat(gd.stack).isEmpty();
+    }
 }
