@@ -90,4 +90,56 @@ class DiscipleOfGraceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Disciple of Grace");
         harness.assertInHand(player1, "Gorilla Warrior");
     }
+
+    @Test
+    @DisplayName("Cycling discards as a cost before the draw resolves")
+    void cyclingDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new DiscipleOfGrace()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Disciple of Grace");
+        harness.assertNotInHand(player1, "Disciple of Grace");
+        harness.assertNotInHand(player1, "Gorilla Warrior");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gorilla Warrior");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new DiscipleOfGrace()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Disciple of Grace");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection from black does not prevent combat damage from a green creature")
+    void protectionDoesNotPreventNonblackCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        attacker.setAttacking(true);
+        Permanent disciple = addCreatureReady(player2, new DiscipleOfGrace());
+        disciple.setBlocking(true);
+        disciple.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Disciple of Grace");
+        harness.assertNotOnBattlefield(player2, "Disciple of Grace");
+        harness.assertOnBattlefield(player1, "Gorilla Warrior");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
 }
