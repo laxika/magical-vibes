@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DivinersWand.class, CounselOfTheSoratami.class, FugitiveWizard.class, GrizzlyBears.class})
 class DivinersWandTest extends BaseCardTest {
 
-    // ===== Granted draw trigger: +1/+1 and flying per card drawn =====
 
     @Test
     @DisplayName("Equipped creature gets +1/+1 and flying whenever its controller draws")
@@ -38,8 +39,7 @@ class DivinersWandTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities(); // resolve Counsel (draws 2)
-        harness.passBothPriorities(); // resolve first wand trigger
-        harness.passBothPriorities(); // resolve second wand trigger
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -60,9 +60,7 @@ class DivinersWandTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
 
@@ -96,7 +94,6 @@ class DivinersWandTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Granted activated ability: {4}: Draw a card =====
 
     @Test
     @DisplayName("Equipped creature can pay {4} to draw a card")
@@ -116,7 +113,6 @@ class DivinersWandTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }
 
-    // ===== Trigger: Wizard creature enters =====
 
     @Test
     @DisplayName("Accepting the may attaches the Wand to the Wizard that entered")
@@ -153,13 +149,122 @@ class DivinersWandTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("The equipped creature's controller draws to trigger the bonus")
+    void creatureControllerDrawTriggersAcrossControllers() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(creature.getId());
+
+        castDrawTwo(player2);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Equipment controller's draws do not trigger an opponent's creature")
+    void equipmentControllerDrawDoesNotTriggerOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(creature.getId());
+
+        castDrawTwo(player1);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pending draw triggers still boost the original creature after the Wand moves")
+    void pendingDrawTriggersRememberOriginalCreature() {
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent next = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(original.getId());
+
+        castDrawTwo(player1);
+        wand.setAttachedTo(next.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, next)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, next, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pending draw triggers survive the Wand leaving the battlefield")
+    void pendingDrawTriggersSurviveWandRemoval() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(creature.getId());
+
+        castDrawTwo(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(wand);
+        gd.playerGraveyards.get(player1.getId()).add(wand.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Declining attachment leaves the Wand on its current creature")
+    void decliningAttachmentKeepsCurrentCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        wand.setAttachedTo(creature.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(wand.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The Wand can attach to an opponent's entering Wizard")
+    void attachesToOpponentsWizard() {
+        Permanent wand = addWandReady(player1);
+        Permanent wizard = harness.enterBattlefieldAndReturn(player2, new FugitiveWizard());
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(wand.getAttachedTo()).isEqualTo(wizard.getId());
+    }
+
+    @Test
+    @DisplayName("Equip attaches the Wand for three mana")
+    void equipAttachesForThreeMana() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wand = addWandReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(wand.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    private void castDrawTwo(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player, ManaColor.BLUE, 3);
+        harness.castSorcery(player, 0, 0);
+        harness.passBothPriorities();
+    }
 
     private Permanent addWandReady(Player player) {
-        Permanent perm = new Permanent(new DivinersWand());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new DivinersWand());
     }
 
     private Permanent wizardOnBattlefield(Player player) {
