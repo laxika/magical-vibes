@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,19 +15,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Doppelgang.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Doppelgang.class, DoublingSeason.class, Forest.class, GrizzlyBears.class})
 class DoppelgangTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates X token copies of each of X target permanents")
     void createsCopiesOfEachTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new Forest());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        UUID forestId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
         harness.setHand(player1, List.of(new Doppelgang()));
         addManaForX(2);
 
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        UUID forestId = harness.getPermanentId(player2, "Forest");
         harness.castSorcery(player1, 0, 2, List.of(bearsId, forestId));
         harness.passBothPriorities();
 
@@ -75,6 +74,85 @@ class DoppelgangTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countTokenCopies("Grizzly Bears")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({Doppelgang.class, DoublingSeason.class, Forest.class})
+    void copiedDoublingSeasonsDoNotMultiplyTokensFromTheSameSpell() {
+        UUID seasonId = harness.addToBattlefieldAndReturn(player2, new DoublingSeason()).getId();
+        UUID forestId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
+        harness.setHand(player1, List.of(new Doppelgang()));
+        addManaForX(2);
+
+        harness.castSorcery(player1, 0, 2, List.of(seasonId, forestId));
+        harness.passBothPriorities();
+
+        assertThat(countTokenCopies("Doubling Season")).isEqualTo(2);
+        assertThat(countTokenCopies("Forest")).isEqualTo(2);
+    }
+
+    @Test
+    void copiedLandEntersUntappedAndCanProduceMana() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new Forest());
+        original.tap();
+        harness.setHand(player1, List.of(new Doppelgang()));
+        addManaForX(1);
+
+        harness.castSorcery(player1, 0, 1, List.of(original.getId()));
+        harness.passBothPriorities();
+
+        assertThat(countTokenCopies("Forest")).isEqualTo(1);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(token.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(original.isTapped()).isTrue();
+    }
+
+    @Test
+    void createsNothingWhenAllTargetsHaveLeft() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
+        harness.setHand(player1, List.of(new Doppelgang()));
+        addManaForX(1);
+
+        harness.castSorcery(player1, 0, 1, List.of(targetId));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Doppelgang");
+    }
+
+    @Test
+    void copiesFaceDownCharacteristicsInsteadOfHiddenLand() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new Forest());
+        original.setFaceDownAsCloaked();
+        harness.setHand(player1, List.of(new Doppelgang()));
+        addManaForX(1);
+
+        harness.castSorcery(player1, 0, 1, List.of(original.getId()));
+        harness.passBothPriorities();
+
+        assertThat(countTokenCopies("Forest")).isZero();
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().isFaceDown()).isFalse();
+        assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(2);
+        assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void permitsMoreThanOneHundredTargetsWhenXRequiresThem() {
+        List<UUID> targetIds = java.util.stream.IntStream.range(0, 101)
+                .mapToObj(ignored -> harness.addToBattlefieldAndReturn(player2, new Forest()).getId())
+                .toList();
+        harness.setHand(player1, List.of(new Doppelgang()));
+        addManaForX(101);
+
+        harness.castSorcery(player1, 0, 101, targetIds);
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     private void addManaForX(int x) {
