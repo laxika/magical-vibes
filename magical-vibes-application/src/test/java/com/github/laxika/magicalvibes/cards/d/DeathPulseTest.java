@@ -107,9 +107,7 @@ class DeathPulseTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
@@ -123,6 +121,63 @@ class DeathPulseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The cycling trigger resolves before the separate draw ability")
+    void cyclingTriggerResolvesBeforeDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
+        harness.setHand(player1, List.of(new DeathPulse()));
+        harness.setLibrary(player1, List.of(new KrosanColossus()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.assertInGraveyard(player1, "Death Pulse");
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        harness.assertNotInHand(player1, "Krosan Colossus");
+
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Krosan Colossus");
+    }
+
+    @Test
+    @DisplayName("Losing the cycling trigger's target does not prevent drawing")
+    void cyclingDrawsWhenTriggerTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
+        harness.setHand(player1, List.of(new DeathPulse(), new DeathPulse()));
+        harness.setLibrary(player1, List.of(new KrosanColossus()));
+        addCyclingMana();
+        addSpellMana();
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Gustcloak Sentinel");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Krosan Colossus");
+    }
+
+    @Test
+    @DisplayName("The main spell's debuff wears off at cleanup")
+    void spellDebuffWearsOffAtCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KrosanColossus());
+        harness.setHand(player1, List.of(new DeathPulse()));
+        addSpellMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(target.getEffectivePower()).isEqualTo(9);
+        assertThat(target.getEffectiveToughness()).isEqualTo(9);
     }
 
     private void addSpellMana() {
