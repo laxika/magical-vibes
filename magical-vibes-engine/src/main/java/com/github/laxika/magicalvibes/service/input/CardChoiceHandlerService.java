@@ -1402,10 +1402,12 @@ public class CardChoiceHandlerService {
                 copyDiscardFollowUpContext(gameData, thenEntry, discardedCard, followUp);
                 gameData.stack.add(thenEntry);
             } else {
+                UUID thenEffectControllerId = followUp.eachPlayerControllerId() != null
+                        ? followUp.eachPlayerControllerId() : playerId;
                 StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
-                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, thenEffectControllerId,
                                 sourceCard.getName() + "'s effect", List.of(thenEffect))
-                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, thenEffectControllerId,
                                 sourceCard.getName() + "'s effect", List.of(thenEffect),
                                 (UUID) null, followUp.thenEffectSourcePermanentId());
                 reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
