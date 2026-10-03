@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.n.Nefashu;
+import com.github.laxika.magicalvibes.cards.p.PemminsAura;
 import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.cards.t.TreetopScout;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DragonShadow.class, Nefashu.class, Stabilizer.class, TreetopScout.class})
+@CardUsed({DragonShadow.class, Nefashu.class, PemminsAura.class, Stabilizer.class, TreetopScout.class})
 class DragonShadowTest extends BaseCardTest {
 
     @Test
@@ -73,7 +74,7 @@ class DragonShadowTest extends BaseCardTest {
     }
 
     @Test
-    void acceptedReturnEntersUnattachedWhenEnteringCreatureLeavesBeforeResolution() {
+    void acceptedReturnStaysInGraveyardWhenEnteringCreatureLeavesBeforeResolution() {
         harness.setGraveyard(player1, List.of(new DragonShadow()));
         Permanent creature = harness.enterBattlefieldAndReturn(player1, new Nefashu());
 
@@ -84,9 +85,47 @@ class DragonShadowTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        assertThat(gameLogContains("Dragon Shadow returns to the battlefield unattached.")).isTrue();
+        assertThat(gameLogContains("Dragon Shadow returns to the battlefield")).isFalse();
         harness.assertInGraveyard(player1, "Dragon Shadow");
         harness.assertNotOnBattlefield(player1, "Dragon Shadow");
+    }
+
+    @Test
+    void returnDoesNothingWhenAuraIsNoLongerInGraveyard() {
+        DragonShadow shadow = new DragonShadow();
+        harness.setGraveyard(player1, List.of(shadow));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new Nefashu());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(shadow));
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Dragon Shadow");
+        harness.assertNotInGraveyard(player1, "Dragon Shadow");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    void returnCanAttachToCreatureThatGainsShroudInResponse() {
+        harness.setGraveyard(player1, List.of(new DragonShadow()));
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new Nefashu());
+        harness.addToBattlefield(player1, new PemminsAura());
+        Permanent pemminsAura = findPermanent(player1, "Pemmin's Aura");
+        pemminsAura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        resolveMayAbility(true);
+
+        assertThat(findPermanent(player1, "Dragon Shadow").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertNotInGraveyard(player1, "Dragon Shadow");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
     }
 
     @Test
