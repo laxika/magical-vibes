@@ -149,6 +149,45 @@ class DisruptTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can counter its controller's own sorcery and draw for that controller")
+    void canCounterOwnSorcery() {
+        stockLibrary(player1, 2);
+        ParadigmShift paradigmShift = new ParadigmShift();
+        harness.setHand(player1, List.of(paradigmShift, new Disrupt()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player1, 0, paradigmShift.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Paradigm Shift");
+        harness.assertInGraveyard(player1, "Disrupt");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Waits for the payment decision before drawing, then draws when payment is declined")
+    void drawsOnlyAfterPaymentDecision() {
+        stockLibrary(player2, 2);
+        castFirestormDisruptedBy(new Disrupt(), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Firestorm");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Fizzles without drawing when its target leaves the stack")
     void fizzlesWithoutDrawingWhenTargetLeavesStack() {
         stockLibrary(player2, 1);
