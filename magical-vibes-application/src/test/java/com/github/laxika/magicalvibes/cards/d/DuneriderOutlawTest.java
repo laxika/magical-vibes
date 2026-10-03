@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.e.EvolutionCharm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DuneriderOutlaw.class, GrizzlyBears.class})
+@CardUsed({DuneriderOutlaw.class, EvolutionCharm.class, GrizzlyBears.class})
 class DuneriderOutlawTest extends BaseCardTest {
 
     @Test
@@ -48,12 +50,9 @@ class DuneriderOutlawTest extends BaseCardTest {
     void greenCreatureCannotBlock() {
         Permanent outlaw = addCreatureReady(player1, new DuneriderOutlaw());
         outlaw.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,6 +72,51 @@ class DuneriderOutlawTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Dunerider Outlaw");
         assertThat(outlaw.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the Outlaw that dealt damage to an opponent gets a counter")
+    void damageHistoryIsTrackedPerPermanent() {
+        Permanent attacker = addCreatureReady(player1, new DuneriderOutlaw());
+        Permanent other = addCreatureReady(player1, new DuneriderOutlaw());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        advanceToEndStepAndResolveTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dealing damage only to a creature does not earn a counter")
+    void creatureDamageDoesNotSatisfyCondition() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent outlaw = addCreatureReady(player1, new DuneriderOutlaw());
+        outlaw.setBlocking(true);
+        outlaw.addBlockingTarget(0);
+
+        resolveCombat(player2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(outlaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A green spell cannot target the Outlaw even when its controller casts it")
+    void greenSpellCannotTargetOutlaw() {
+        Permanent outlaw = addCreatureReady(player1, new DuneriderOutlaw());
+        harness.setHand(player1, List.of(new EvolutionCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, outlaw.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 
     private void advanceToEndStepAndResolveTriggers() {

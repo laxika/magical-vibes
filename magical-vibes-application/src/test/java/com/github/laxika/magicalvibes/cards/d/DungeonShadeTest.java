@@ -61,8 +61,7 @@ class DungeonShadeTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can be activated with summoning sickness")
     void abilityCanBeActivatedWithSummoningSickness() {
-        Permanent shade = new Permanent(new DungeonShade());
-        gd.playerBattlefields.get(player1.getId()).add(shade);
+        Permanent shade = harness.addToBattlefieldAndReturn(player1, new DungeonShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -112,5 +111,50 @@ class DungeonShadeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple activations use the stack and each spends one black mana")
+    void stackedActivationsResolveSeparately() {
+        Permanent shade = addCreatureReady(player1, new DungeonShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(2);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The boost affects only the source, even with other Dungeon Shades present")
+    void boostOnlyAffectsSource() {
+        Permanent shade = addCreatureReady(player1, new DungeonShade());
+        Permanent otherShade = addCreatureReady(player1, new DungeonShade());
+        Permanent opponentShade = addCreatureReady(player2, new DungeonShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(2);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
+        assertThat(otherShade.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opponentShade.getEffectivePower()).isEqualTo(1);
+        assertThat(opponentShade.getEffectiveToughness()).isEqualTo(1);
     }
 }

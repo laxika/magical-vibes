@@ -51,6 +51,79 @@ class DulcetSirensTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    void tappedCreatureIsNotRequiredToAttack() {
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player1, new DulcetSirens());
+        creature.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of());
+        assertThat(creature.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    void creatureCannotBeRequiredToAttackItsOwnController() {
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player2, new DulcetSirens());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of());
+        assertThat(creature.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    void creatureLeavingBeforeResolutionDoesNotAffectAnotherCreature() {
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player1, new DulcetSirens());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        declareAttackers(player1, List.of());
+        assertThat(sirens.isMustAttackThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void morphCanBeTurnedFaceUpForOneBlueAndUseItsAbility() {
+        harness.setHand(player1, List.of(new DulcetSirens()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent sirens = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(sirens.isFaceDown()).isTrue();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, battlefieldIndex(sirens));
+        assertThat(sirens.isFaceDown()).isFalse();
+
+        sirens.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player1, new DulcetSirens());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(sirens.isTapped()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        declareAttackers(player1, List.of(battlefieldIndex(creature)));
+        assertThat(creature.isAttackedThisTurn()).isTrue();
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         for (Player player : List.of(player1, player2)) {
             int index = gd.playerBattlefields.get(player.getId()).indexOf(permanent);
