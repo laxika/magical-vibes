@@ -29,7 +29,26 @@ class DarigaazsCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Return target creature card from your graveyard to your hand")
+    @CardUsed({DarigaazsCharm.class, GiantGrowth.class, GrizzlyBears.class})
     class ReturnCreatureMode {
+
+        @Test
+        void doesNotReturnAnotherCreatureWhenTargetLeavesGraveyard() {
+            Card target = new GrizzlyBears();
+            Card other = new GrizzlyBears();
+            harness.setGraveyard(player1, List.of(target, other));
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            harness.castInstant(player1, 0, 0, target.getId());
+            harness.setGraveyard(player1, List.of(other));
+            harness.setExile(player1, List.of(target));
+            harness.passBothPriorities();
+
+            harness.assertNotInHand(player1, "Grizzly Bears");
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(other);
+            harness.assertInGraveyard(player1, "Darigaaz's Charm");
+        }
 
         @Test
         @DisplayName("Returns a creature card from the graveyard to hand")
@@ -73,7 +92,30 @@ class DarigaazsCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Deal 3 damage to any target")
+    @CardUsed({DarigaazsCharm.class, FountainOfYouth.class, GrizzlyBears.class})
     class DamageMode {
+
+        @Test
+        void canDamageItsController() {
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            harness.castInstant(player1, 0, 1, player1.getId());
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, 17);
+            harness.assertLife(player2, 20);
+        }
+
+        @Test
+        void cannotDamageANoncreatureArtifact() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+            harness.setHand(player1, List.of(new DarigaazsCharm()));
+            addBRG();
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, target.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
 
         @Test
         @DisplayName("Deals 3 damage to the targeted player")
@@ -104,6 +146,7 @@ class DarigaazsCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Target creature gets +3/+3 until end of turn")
+    @CardUsed({DarigaazsCharm.class, FountainOfYouth.class, GrizzlyBears.class})
     class BoostMode {
 
         @Test
