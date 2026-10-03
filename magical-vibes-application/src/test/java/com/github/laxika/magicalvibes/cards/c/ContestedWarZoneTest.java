@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,21 +16,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({ContestedWarZone.class, GrizzlyBears.class, OrcishArtillery.class})
 class ContestedWarZoneTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
     @Test
-    @DisplayName("Contested War Zone has two activated abilities (mana and boost)")
-    void hasActivatedAbilities() {
-        ContestedWarZone card = new ContestedWarZone();
+    @DisplayName("Tapping Contested War Zone adds colorless mana without using the stack")
+    void tappingAddsColorlessMana() {
+        Permanent warZone = addContestedWarZone(player1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(2);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(warZone.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
-
-    
-
-    // ===== Combat damage control change =====
 
     @Test
     @DisplayName("Unblocked attacker dealing combat damage to controller causes control change")
@@ -40,7 +35,8 @@ class ContestedWarZoneTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        resolveCombat(player1, player2);
+        resolveCombat(player1);
+        resolveAllTriggers();
 
         // Contested War Zone should now be on player1's battlefield
         harness.assertOnBattlefield(player1, "Contested War Zone");
@@ -48,20 +44,19 @@ class ContestedWarZoneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Multiple attackers dealing combat damage only transfer control once")
-    void multipleAttackersOnlyTransferOnce() {
+    @DisplayName("Multiple attackers dealing combat damage leave the land with their controller")
+    void multipleAttackersGainControl() {
         addContestedWarZone(player2);
         Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
         attacker1.setAttacking(true);
         Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
         attacker2.setAttacking(true);
 
-        resolveCombat(player1, player2);
+        resolveCombat(player1);
+        resolveAllTriggers();
 
-        // Contested War Zone should be on player1's battlefield (transferred once)
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Contested War Zone"))
-                .hasSize(1);
+        // Multiple triggers all give control to the same player.
+        assertThat(countPermanents(player1, "Contested War Zone")).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Contested War Zone");
     }
 
@@ -70,7 +65,7 @@ class ContestedWarZoneTest extends BaseCardTest {
     void abilityDamageDoesNotTriggerControlChange() {
         addContestedWarZone(player2);
         harness.setLife(player2, 20);
-        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
+        addCreatureReady(player1, new OrcishArtillery());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -100,18 +95,17 @@ class ContestedWarZoneTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombat(player1, player2);
+        resolveCombat(player1);
+        resolveAllTriggers();
 
         // Contested War Zone should still be on player2's battlefield (attacker was blocked and killed)
         harness.assertOnBattlefield(player2, "Contested War Zone");
     }
 
-    // ===== Boost ability =====
-
     @Test
     @DisplayName("Boost ability gives +1/+0 to attacking creatures")
     void boostAbilityGivesPlusOnePlusZero() {
-        Permanent warZone = addContestedWarZone(player1);
+        addContestedWarZone(player1);
 
         GrizzlyBears bearsCard = new GrizzlyBears();
         bearsCard.setPower(2);
@@ -135,7 +129,7 @@ class ContestedWarZoneTest extends BaseCardTest {
     @Test
     @DisplayName("Boost ability does not boost non-attacking creatures")
     void boostAbilityDoesNotBoostNonAttackingCreatures() {
-        Permanent warZone = addContestedWarZone(player1);
+        addContestedWarZone(player1);
 
         GrizzlyBears bearsCard = new GrizzlyBears();
         bearsCard.setPower(2);
@@ -162,19 +156,77 @@ class ContestedWarZoneTest extends BaseCardTest {
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Combat damage queues the control change and leaves time to respond")
+    void controlChangeUsesTheStack() {
+        Permanent warZone = addContestedWarZone(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
-    private Permanent addContestedWarZone(Player player) {
-        Permanent perm = new Permanent(new ContestedWarZone());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Contested War Zone");
+        harness.assertNotOnBattlefield(player1, "Contested War Zone");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.tapPermanent(player2, 0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Contested War Zone");
+        assertThat(warZone.isTapped()).isTrue();
     }
 
-    private void resolveCombat(Player attacker, Player defender) {
-        harness.forceActivePlayer(attacker);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Each creature dealing combat damage creates a separate control-change trigger")
+    void multipleAttackersCreateSeparateTriggers() {
+        addContestedWarZone(player2);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertOnBattlefield(player2, "Contested War Zone");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Contested War Zone");
+    }
+
+    @Test
+    @DisplayName("The defending player can boost opposing attackers; the boost lasts until end of turn")
+    void boostAffectsOpposingAttackersAndExpires() {
+        Permanent warZone = addContestedWarZone(player2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent laterAttacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        assertThat(warZone.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
         harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(laterAttacker.getPowerModifier()).isZero();
+        attacker.setAttacking(false);
+        laterAttacker.setAttacking(true);
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(laterAttacker.getPowerModifier()).isZero();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
+
+    private Permanent addContestedWarZone(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new ContestedWarZone());
     }
 }
