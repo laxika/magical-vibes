@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,9 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 
-@CardUsed({DaringApprentice.class, AngelsFeather.class, GrizzlyBears.class})
+@CardUsed({DaringApprentice.class, AngelsFeather.class, GrizzlyBears.class, GaeasHerald.class})
 class DaringApprenticeTest extends BaseCardTest {
 
     @Test
@@ -122,7 +122,6 @@ class DaringApprenticeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(GaeasHerald.class)
     @DisplayName("Can target an uncounterable creature spell, but does not counter it")
     void doesNotCounterUncounterableCreatureSpell() {
         addCreatureReady(player1, new DaringApprentice());
@@ -173,5 +172,44 @@ class DaringApprenticeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a target and does not pay costs")
+    void cannotActivateWithoutTarget() {
+        Permanent apprentice = addCreatureReady(player1, new DaringApprentice());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Daring Apprentice");
+        harness.assertNotInGraveyard(player1, "Daring Apprentice");
+        assertThat(apprentice.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an activated ability and does not pay costs")
+    void cannotTargetActivatedAbility() {
+        addCreatureReady(player1, new DaringApprentice());
+        Permanent remainingApprentice = addCreatureReady(player1, new DaringApprentice());
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, bears, "{1}{G}");
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, bears.getId());
+
+        var abilityId = gd.stack.getLast().getTargetableId();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(remainingApprentice.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Daring Apprentice");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
