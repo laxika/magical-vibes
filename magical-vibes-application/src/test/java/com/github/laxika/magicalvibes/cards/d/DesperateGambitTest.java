@@ -57,6 +57,44 @@ class DesperateGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chosen spell's damage is doubled or prevented when it resolves")
+    void chosenStackSpellDamageIsDoubledOrPrevented() {
+        harness.setLife(player2, 20);
+        Thunderbolt thunderbolt = new Thunderbolt();
+        harness.setHand(player1, List.of(thunderbolt, new DesperateGambit()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, thunderbolt.getId());
+        int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20 - 3 * multiplier);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A sacrificed Fire Whip is a legal source while its damage ability is on the stack")
+    void sacrificedSourceOfPendingAbilityIsLegalChoice() {
+        Permanent creature = addReadyBerserker(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        aura.setAttachedTo(creature.getId());
+        harness.activateAbility(player1, indexOf(player1, aura), null, player2.getId());
+        harness.assertNotOnBattlefield(player1, "Fire Whip");
+        castGambit(player1);
+
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(aura.getId());
+    }
+
+    @Test
     @DisplayName("Choosing a source flips a coin and records a doubling or prevention shield")
     void choosingSourceFlipsAndRecordsShield() {
         castGambit(player1);
@@ -146,11 +184,8 @@ class DesperateGambitTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, attacker.getId());
         int multiplier = gd.sourceNextDamageToAnyTargetShields.getFirst().damageMultiplier();
 
-        harness.forceActivePlayer(player1);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         harness.assertLife(player2, 20 - 2 * multiplier);
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
@@ -210,9 +245,8 @@ class DesperateGambitTest extends BaseCardTest {
 
     private Permanent addReadyWhippedBerserker(Player player) {
         Permanent creature = addReadyBerserker(player);
-        Permanent aura = new Permanent(new FireWhip());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new FireWhip());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return creature;
     }
 
