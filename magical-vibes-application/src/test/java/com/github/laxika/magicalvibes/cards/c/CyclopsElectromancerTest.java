@@ -48,4 +48,98 @@ class CyclopsElectromancerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Deals no damage when only the opponent has instant and sorcery cards")
+    void dealsZeroDamageWithNoQualifyingCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new CyclopsElectromancer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Cyclops Electromancer");
+    }
+
+    @Test
+    @DisplayName("Counts cards added to the graveyard before the trigger resolves")
+    void countsCardsAddedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new CyclopsElectromancer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not count cards removed from the graveyard before resolution")
+    void excludesCardsRemovedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+        harness.setHand(player1, List.of(new CyclopsElectromancer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The trigger still deals damage after Cyclops Electromancer dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new CyclopsElectromancer()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof CyclopsElectromancer)
+                .findFirst().orElseThrow();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Cyclops Electromancer");
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can enter the battlefield when no opponent controls a creature")
+    void entersWithNoLegalTarget() {
+        harness.setGraveyard(player1, List.of(new Shock(), new Divination()));
+
+        harness.castFromHand(player1, new CyclopsElectromancer(), "{4}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cyclops Electromancer");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
