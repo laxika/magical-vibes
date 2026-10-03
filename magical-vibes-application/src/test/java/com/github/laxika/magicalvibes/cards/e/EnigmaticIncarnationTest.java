@@ -32,10 +32,7 @@ class EnigmaticIncarnationTest extends BaseCardTest {
         harness.addToBattlefield(player1, enchantment);
         harness.setLibrary(player1, List.of(foundCreature, wrongManaValue));
 
-        Permanent enchantmentPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == enchantment)
-                .findFirst()
-                .orElseThrow();
+        Permanent enchantmentPermanent = findPermanent(player1, "Underworld Dreams");
 
         moveToEndStep();
         harness.passBothPriorities();
@@ -88,11 +85,62 @@ class EnigmaticIncarnationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new EnigmaticIncarnation());
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Underworld Dreams");
+    }
+
+    @Test
+    void sacrificeRemainsPaidWhenNoCreatureMatches() {
+        harness.addToBattlefield(player1, new EnigmaticIncarnation());
+        UnderworldDreams enchantment = new UnderworldDreams();
+        NessianHornbeetle wrongManaValue = new NessianHornbeetle();
+        EnigmaticIncarnation nonCreature = new EnigmaticIncarnation();
+        harness.addToBattlefield(player1, enchantment);
+        harness.setLibrary(player1, List.of(wrongManaValue, nonCreature));
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Underworld Dreams"));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(wrongManaValue, nonCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void mayFailToFindEvenWhenCreatureMatches() {
+        harness.addToBattlefield(player1, new EnigmaticIncarnation());
+        UnderworldDreams enchantment = new UnderworldDreams();
+        TectonicGiant creature = new TectonicGiant();
+        harness.addToBattlefield(player1, enchantment);
+        harness.setLibrary(player1, List.of(creature));
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Underworld Dreams"));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        harness.assertNotOnBattlefield(player1, "Tectonic Giant");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void moveToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.END_STEP);
     }
 }
