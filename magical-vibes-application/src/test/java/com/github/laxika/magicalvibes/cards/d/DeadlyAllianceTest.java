@@ -70,13 +70,68 @@ class DeadlyAllianceTest extends BaseCardTest {
                 .hasMessageContaining("creature or planeswalker");
     }
 
+    @Test
+    @DisplayName("Duplicate party roles reduce the cost only once")
+    void duplicateRolesReduceCostOnlyOnce() {
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new FugitiveWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyAlliance()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opposing party members do not reduce the cost")
+    void opposingPartyDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyAlliance()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Deadly Alliance");
+    }
+
+    @Test
+    @DisplayName("A full party cannot pay the required black mana with colorless mana")
+    void fullPartyStillRequiresBlackMana() {
+        addFullParty();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DeadlyAlliance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Deadly Alliance");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by its caster")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAndResolve(target);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
     private void castAndResolve(Permanent target) {
         harness.setHand(player1, List.of(new DeadlyAlliance()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addFullParty() {
