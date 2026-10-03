@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +24,7 @@ class DecayingTimeLoopTest extends BaseCardTest {
         Card discardedTwo = new Mountain();
         Card drawnOne = new Mountain();
         Card drawnTwo = new Mountain();
-        setDeck(player1, List.of(drawnOne, drawnTwo));
+        harness.setLibrary(player1, List.of(drawnOne, drawnTwo));
         harness.setHand(player1, List.of(spell, discardedOne, discardedTwo));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -70,8 +69,71 @@ class DecayingTimeLoopTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("An empty hand on resolution draws no cards")
+    void emptyHandDrawsNothing() {
+        Card spell = new DecayingTimeLoop();
+        Card libraryCard = new Mountain();
+        Card opponentCard = new Mountain();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Retrace draws for the remaining hand and can be used again")
+    void retraceExcludesCostDiscardAndCanBeRepeated() {
+        Card spell = new DecayingTimeLoop();
+        Card costLand = new Mountain();
+        Card discarded = new DecayingTimeLoop();
+        Card drawnLand = new Mountain();
+        Card libraryRemainder = new Mountain();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(costLand, discarded));
+        harness.setLibrary(player1, List.of(drawnLand, libraryRemainder));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castRetrace(player1, 0, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(costLand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryRemainder);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(costLand, discarded, spell);
+
+        harness.castRetrace(player1, gd.playerGraveyards.get(player1.getId()).indexOf(spell), 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryRemainder);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(costLand, discarded, drawnLand, spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
+    }
+
+    @Test
+    @DisplayName("Retrace still requires the spell's mana cost")
+    void retraceWithoutManaDoesNotDiscardLand() {
+        Card spell = new DecayingTimeLoop();
+        Card land = new Mountain();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(land));
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 }
