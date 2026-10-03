@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DragonStyleTwins.class, GrizzlyBears.class, Shock.class})
 class DragonStyleTwinsTest extends BaseCardTest {
 
     private Permanent addTwins() {
-        harness.addToBattlefield(player1, new DragonStyleTwins());
+        Permanent twins = harness.addToBattlefieldAndReturn(player1, new DragonStyleTwins());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return twins;
     }
 
     private void endTurn() {
@@ -44,8 +46,7 @@ class DragonStyleTwinsTest extends BaseCardTest {
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isEqualTo(1);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
@@ -96,8 +97,7 @@ class DragonStyleTwinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
 
@@ -105,5 +105,74 @@ class DragonStyleTwinsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Prowess resolves before the spell that triggered it")
+    void prowessResolvesBeforeSpell() {
+        Permanent twins = addTwins();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds a separate prowess boost")
+    void multipleSpellsGiveCumulativeBoosts() {
+        Permanent twins = addTwins();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(5);
+
+        endTurn();
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Double strike deals damage in both combat damage steps")
+    void unblockedTwinsDealDamageTwice() {
+        addCreatureReady(player1, new DragonStyleTwins());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Prowess increases damage in both double-strike damage steps")
+    void prowessBoostAppliesToBothCombatDamageSteps() {
+        Permanent twins = addTwins();
+        twins.setSummoningSick(false);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 10);
     }
 }
