@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,19 +17,19 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeathGreetersChampion.class, GrizzlyBears.class})
+@CardUsed({DeathGreetersChampion.class, BurnishedHart.class})
 class DeathGreetersChampionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Backup puts a +1/+1 counter on another creature and grants double strike")
     void backsUpAnotherCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent hart = harness.addToBattlefieldAndReturn(player1, new BurnishedHart());
         castChampion();
 
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(hart);
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
@@ -47,16 +47,16 @@ class DeathGreetersChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Backup's granted double strike expires at the end of the turn")
     void grantedDoubleStrikeExpiresAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent hart = harness.addToBattlefieldAndReturn(player1, new BurnishedHart());
         castChampion();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(hart);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -86,11 +86,54 @@ class DeathGreetersChampionTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Death-Greeter's Champion");
     }
 
-    private void castChampion() {
+    @Test
+    @DisplayName("Backup can grant its counter and double strike to an opponent's creature")
+    void backsUpOpponentsCreature() {
+        Permanent hart = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        castChampion();
+
+        resolveEtbTargeting(hart);
+
+        assertThat(hart.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hart.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(hart.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Dash schedules its return when the spell resolves, before backup resolves")
+    void dashReturnDoesNotDependOnBackupResolution() {
         harness.setHand(player1, List.of(new DeathGreetersChampion()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent champion = findPermanent(player1, "Death-Greeter's Champion");
+        harness.handlePermanentChosen(player1, champion.getId());
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(action -> action.permanentId().equals(champion.getId())
+                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant haste or return the Champion at end step")
+    void normalCastStaysOnBattlefield() {
+        castChampion();
+        Permanent champion = findPermanent(player1, "Death-Greeter's Champion");
+        resolveEtbTargeting(champion);
+
+        assertThat(champion.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Death-Greeter's Champion");
+        harness.assertNotInHand(player1, "Death-Greeter's Champion");
+    }
+
+    private void castChampion() {
+        harness.castFromHand(player1, new DeathGreetersChampion(), "{2}{R}");
         harness.passBothPriorities();
     }
 
