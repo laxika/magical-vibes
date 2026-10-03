@@ -39,12 +39,46 @@ class DranaLiberatorOfMalakirTest extends BaseCardTest {
         Permanent drana = addCreatureReady(player1, new DranaLiberatorOfMalakir());
         addCreatureReady(player2, new AirElemental());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
 
         assertThat(drana.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counters from first-strike damage increase other attackers' regular damage")
+    void countersIncreaseRegularCombatDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new DranaLiberatorOfMalakir());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Blocked attackers receive counters before regular combat damage")
+    void blockedAttackerSurvivesWithCounter() {
+        Permanent drana = addCreatureReady(player1, new DranaLiberatorOfMalakir());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.passBothPriorities();
+
+        assertThat(drana.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
 }
