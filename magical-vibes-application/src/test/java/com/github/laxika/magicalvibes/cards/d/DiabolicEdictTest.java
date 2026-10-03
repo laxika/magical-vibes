@@ -43,8 +43,7 @@ class DiabolicEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         PendingInteraction.PermanentChoice choice =
@@ -84,8 +83,7 @@ class DiabolicEdictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiabolicEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         PendingInteraction.PermanentChoice choice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -108,6 +106,38 @@ class DiabolicEdictTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Diabolic Edict");
+    }
+
+    @Test
+    @DisplayName("The caster can target themselves and sacrifices only their own creature")
+    void canTargetSelf() {
+        harness.addToBattlefield(player1, new TrainedArmodon());
+        harness.addToBattlefield(player2, new FightingDrake());
+        harness.setHand(player1, List.of(new DiabolicEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertOnBattlefield(player2, "Fighting Drake");
+        harness.assertInGraveyard(player1, "Diabolic Edict");
+    }
+
+    @Test
+    @DisplayName("A target with only a land sacrifices nothing")
+    void noncreaturePermanentIsNotSacrificed() {
+        harness.addToBattlefield(player2, new Wasteland());
+        harness.setHand(player1, List.of(new DiabolicEdict()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player2, "Wasteland");
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Diabolic Edict");
     }
 }
