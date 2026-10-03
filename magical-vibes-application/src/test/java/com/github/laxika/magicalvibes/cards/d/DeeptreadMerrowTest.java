@@ -114,4 +114,70 @@ class DeeptreadMerrowTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Islandwalk is gained only when the ability resolves")
+    void islandwalkIsNotGrantedBeforeResolution() {
+        Permanent merrow = addCreatureReady(player1, new DeeptreadMerrow());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isFalse();
+        assertThat(merrow.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Merrow can activate its mana-only ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent merrow = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        merrow.setSummoningSick(true);
+        merrow.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
+        assertThat(merrow.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the Merrow whose ability was activated gains islandwalk")
+    void grantsIslandwalkOnlyToSource() {
+        Permanent otherMerrow = addCreatureReady(player1, new DeeptreadMerrow());
+        Permanent source = addCreatureReady(player1, new DeeptreadMerrow());
+        Permanent opponentMerrow = addCreatureReady(player2, new DeeptreadMerrow());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.ISLANDWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherMerrow, Keyword.ISLANDWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentMerrow, Keyword.ISLANDWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Island controlled by the attacker does not prevent blocking")
+    void attackersIslandDoesNotPreventBlocking() {
+        Permanent merrow = addCreatureReady(player1, new DeeptreadMerrow());
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = addCreatureReady(player2, new DeeptreadMerrow());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, merrow, Keyword.ISLANDWALK)).isTrue();
+    }
 }
