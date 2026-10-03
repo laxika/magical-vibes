@@ -7,22 +7,19 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DoorToNothingness.class)
+@CardUsed({DoorToNothingness.class})
 class DoorToNothingnessTest extends BaseCardTest {
 
     @Test
     @DisplayName("Door to Nothingness enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new DoorToNothingness()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new DoorToNothingness(), "{5}");
         harness.passBothPriorities();
 
         Permanent door = gd.playerBattlefields.get(player1.getId()).getLast();
@@ -65,6 +62,35 @@ class DoorToNothingnessTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Door to Nothingness");
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Colorless mana cannot replace either required mana of any color")
+    void requiresTwoManaOfEveryColor(ManaColor missingColor) {
+        Permanent door = harness.addToBattlefieldAndReturn(player1, new DoorToNothingness());
+        for (ManaColor color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE,
+                ManaColor.BLACK, ManaColor.RED, ManaColor.GREEN}) {
+            harness.addMana(player1, color, color == missingColor ? 1 : 2);
+        }
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(door.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Door to Nothingness");
+        harness.assertNotInGraveyard(player1, "Door to Nothingness");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
     @Test
