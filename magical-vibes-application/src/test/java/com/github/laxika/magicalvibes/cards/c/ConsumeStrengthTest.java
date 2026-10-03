@@ -87,11 +87,51 @@ class ConsumeStrengthTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, weakened)).isEqualTo(1);
     }
 
-    private void castConsumeStrength(Permanent boosted, Permanent weakened) {
+    @Test
+    @DisplayName("Still boosts the first target when the second target leaves before resolution")
+    void stillBoostsWhenSecondTargetLeaves() {
+        Permanent boosted = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
+        Permanent weakened = harness.addToBattlefieldAndReturn(player2, new FesterhideBoar());
         harness.setHand(player1, List.of(new ConsumeStrength()));
         addMana();
         harness.castInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(weakened);
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, boosted)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Can target two creatures controlled by the caster and kills a creature with zero toughness")
+    void canTargetOwnCreaturesAndReduceToughnessToZero() {
+        Permanent boosted = harness.addToBattlefieldAndReturn(player1, new FesterhideBoar());
+        Permanent weakened = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
+
+        castConsumeStrength(boosted, weakened);
+
+        assertThat(gqs.getEffectivePower(gd, boosted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, boosted)).isEqualTo(5);
+        harness.assertNotOnBattlefield(player1, "Death-Hood Cobra");
+        harness.assertInGraveyard(player1, "Death-Hood Cobra");
+    }
+
+    @Test
+    @DisplayName("Requires both creature targets when cast")
+    void rejectsMissingSecondTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DeathHoodCobra());
+        harness.setHand(player1, List.of(new ConsumeStrength()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castConsumeStrength(Permanent boosted, Permanent weakened) {
+        harness.setHand(player1, List.of(new ConsumeStrength()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
     }
 
     private void addMana() {
