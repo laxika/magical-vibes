@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
 import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
+import com.github.laxika.magicalvibes.cards.f.Fork;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -18,7 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DrainLife.class, CircleOfProtectionBlack.class, GrizzlyBears.class, Plains.class})
+@CardUsed({DrainLife.class, CircleOfProtectionBlack.class, GrizzlyBears.class, Plains.class,
+        GarrukWildspeaker.class, EnergyStorm.class, FurnaceOfRath.class, Fork.class})
 class DrainLifeTest extends BaseCardTest {
 
     @Test
@@ -86,8 +89,7 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 3);
 
-        harness.castSorcery(player1, 0, 5, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 5, player2.getId());
 
         harness.assertLife(player2, -2);
         harness.assertLife(player1, 23);
@@ -102,33 +104,28 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, 4, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, bearsId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 22);
     }
 
     @Test
-    @CardUsed(GarrukWildspeaker.class)
     @DisplayName("Life gain is capped by a planeswalker's loyalty before damage")
     void lifeGainCappedByPlaneswalkerLoyalty() {
-        Permanent planeswalker = new Permanent(new GarrukWildspeaker());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 2);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new DrainLife()));
         harness.addMana(player1, ManaColor.BLACK, 6); // X=4
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 4, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, planeswalker.getId());
 
         harness.assertNotOnBattlefield(player2, "Garruk Wildspeaker");
         harness.assertLife(player1, 22);
     }
 
     @Test
-    @CardUsed(EnergyStorm.class)
     @DisplayName("Prevented damage produces no life gain")
     void preventedDamageDoesNotGrantLife() {
         harness.addToBattlefield(player2, new EnergyStorm());
@@ -137,11 +134,75 @@ class DrainLifeTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void increasedDamageGrantsLifeBeyondX() {
+        harness.addToBattlefield(player2, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new DrainLife()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
+
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 26);
+    }
+
+    @Test
+    void copiedDrainLifeStillGrantsLife() {
+        DrainLife drainLife = new DrainLife();
+        harness.setHand(player1, List.of(drainLife));
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
         harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, drainLife.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
         harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void zeroXDealsNoDamageAndGrantsNoLife() {
+        harness.setHand(player1, List.of(new DrainLife()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void selfTargetingRestoresLifeBeforeStateBasedActions() {
+        harness.setHand(player1, List.of(new DrainLife()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 3);
     }
 
     @Test
