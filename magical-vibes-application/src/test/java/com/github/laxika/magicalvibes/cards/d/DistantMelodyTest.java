@@ -24,8 +24,7 @@ class DistantMelodyTest extends BaseCardTest {
         harness.addMana(player, ManaColor.BLUE, 1);
         harness.addMana(player, ManaColor.COLORLESS, 3);
         harness.setHand(player, List.of(new DistantMelody()));
-        harness.castSorcery(player, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player, 0, 0);
     }
 
     private void stockLibrary(Player player, int count) {
@@ -106,5 +105,38 @@ class DistantMelodyTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("An empty battlefield still allows a creature type choice and draws nothing")
+    void emptyBattlefieldDrawsZero() {
+        stockLibrary(player1, 5);
+
+        payAndCast(player1);
+        harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each cast makes a fresh creature type choice")
+    void repeatedCastsChooseDifferentTypes() {
+        harness.addToBattlefield(player1, new BallyrushBanneret());
+        harness.addToBattlefield(player1, new Bitterblossom());
+        harness.addToBattlefield(player1, new Bitterblossom());
+        stockLibrary(player1, 5);
+
+        payAndCast(player1);
+        harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+
+        payAndCast(player1);
+        harness.handleListChoice(player1, CardSubtype.FAERIE.name());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
