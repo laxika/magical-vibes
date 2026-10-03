@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({CaptivatingVampire.class, BaronyVampire.class, RuneclawBear.class, Pacifism.class, AmoeboidChangeling.class})
 class CaptivatingVampireTest extends BaseCardTest {
-
-    // ===== Static effect: +1/+1 to other Vampires you control =====
 
     @Test
     @DisplayName("Other Vampire creatures you control get +1/+1")
@@ -48,9 +49,9 @@ class CaptivatingVampireTest extends BaseCardTest {
     @DisplayName("Does not buff non-Vampire creatures you control")
     void doesNotBuffNonVampires() {
         harness.addToBattlefield(player1, new CaptivatingVampire());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RuneclawBear());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Runeclaw Bear");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -100,8 +101,6 @@ class CaptivatingVampireTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, barony)).isEqualTo(2);
     }
 
-    // ===== Activated ability: Gain control of target creature =====
-
     @Test
     @DisplayName("Activated ability gains control of target creature and makes it a Vampire")
     void gainControlAndMakeVampire() {
@@ -111,7 +110,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
         harness.activateAbility(player1, captivatingIdx, null, target.getId());
@@ -151,7 +150,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
 
@@ -167,8 +166,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
 
@@ -185,7 +183,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         Permanent captivating = findPermanent(player1, "Captivating Vampire");
         captivating.setSummoningSick(false);
 
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         int captivatingIdx = gd.playerBattlefields.get(player1.getId()).indexOf(captivating);
         harness.activateAbility(player1, captivatingIdx, null, target.getId());
@@ -202,7 +200,7 @@ class CaptivatingVampireTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) is now a Vampire and should get +1/+1 from Captivating Vampire
+        // Runeclaw Bear (2/2) is now a Vampire and should get +1/+1 from Captivating Vampire
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
@@ -210,21 +208,113 @@ class CaptivatingVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Ability does not require tapping self ({T} is not in the cost)")
     void abilityDoesNotRequireSelfTap() {
-        CaptivatingVampire card = new CaptivatingVampire();
+        addVampires(player1, 5);
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        source.tap();
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
+        harness.activateAbility(player1, 5, null, target.getId());
+        for (Permanent vampire : findPermanents(player1, "Barony Vampire")) {
+            harness.handlePermanentChosen(player1, vampire.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(source.isTapped()).isTrue();
     }
 
-    
+    @Test
+    @DisplayName("Summoning-sick Vampires including the source can pay the cost")
+    void summoningSickVampiresCanPayCost() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new BaronyVampire());
+        }
+        List<Permanent> vampires = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        vampires.forEach(vampire -> vampire.setSummoningSick(true));
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
 
-    // ===== Helpers =====
+        harness.activateAbility(player1, 0, null, target.getId());
+        for (Permanent vampire : vampires) {
+            harness.handlePermanentChosen(player1, vampire.getId());
+        }
+        assertThat(vampires).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target, source);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.BEAR, CardSubtype.VAMPIRE);
+    }
+
+    @Test
+    @DisplayName("Control and Vampire type persist after the source leaves")
+    void controlAndSubtypePersistWithoutSource() {
+        addVampires(player1, 4);
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        List<Permanent> vampires = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+
+        harness.activateAbility(player1, 4, null, target.getId());
+        for (Permanent vampire : vampires) {
+            harness.handlePermanentChosen(player1, vampire.getId());
+        }
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.BEAR, CardSubtype.VAMPIRE);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Own creature can be targeted and becomes a Vampire")
+    void ownCreatureBecomesVampire() {
+        addVampires(player1, 4);
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
+        List<Permanent> vampires = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        Permanent target = addCreatureReady(player1, new RuneclawBear());
+
+        harness.activateAbility(player1, 4, null, target.getId());
+        for (Permanent vampire : vampires) {
+            harness.handlePermanentChosen(player1, vampire.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target, source);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).contains(CardSubtype.BEAR, CardSubtype.VAMPIRE);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Later Vampire type addition applies after an earlier removal of creature types")
+    void vampireTypeAdditionUsesResolutionOrder() {
+        addVampires(player1, 4);
+        harness.addToBattlefield(player1, new CaptivatingVampire());
+        List<Permanent> vampires = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        addCreatureReady(player2, new AmoeboidChangeling());
+
+        harness.activateAbility(player2, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).isEmpty();
+
+        harness.activateAbility(player1, 4, null, target.getId());
+        for (Permanent vampire : vampires) {
+            harness.handlePermanentChosen(player1, vampire.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.VAMPIRE);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
 
     private void addVampires(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent vamp = new Permanent(new BaronyVampire());
-            vamp.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(vamp);
+            addCreatureReady(player, new BaronyVampire());
         }
     }
 
