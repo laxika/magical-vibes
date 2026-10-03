@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.ShiningAerosaur;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,28 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DaringSaboteur.class, Forest.class, ShiningAerosaur.class})
 class DaringSaboteurTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with {2}{U} cost and MakeCreatureUnblockableEffect")
-    void hasUnblockableActivatedAbility() {
-        DaringSaboteur card = new DaringSaboteur();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{U}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MakeCreatureUnblockableEffect.class);
-        MakeCreatureUnblockableEffect effect = (MakeCreatureUnblockableEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.selfTargeting()).isTrue();
-    }
-
-    
-
-    // ===== Activated ability: make self unblockable =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -103,8 +82,6 @@ class DaringSaboteurTest extends BaseCardTest {
         assertThat(saboteur.isTapped()).isFalse();
     }
 
-    // ===== Combat damage trigger: accept may =====
-
     @Test
     @DisplayName("Deals combat damage to player and controller accepts loot — draws then discards")
     void combatDamageAcceptMay() {
@@ -112,7 +89,7 @@ class DaringSaboteurTest extends BaseCardTest {
         saboteur.setAttacking(true);
         harness.setLife(player2, 20);
 
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -139,8 +116,6 @@ class DaringSaboteurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    // ===== Combat damage trigger: decline may =====
-
     @Test
     @DisplayName("Deals combat damage to player and controller declines loot — no draw or discard")
     void combatDamageDeclineMay() {
@@ -165,20 +140,17 @@ class DaringSaboteurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    // ===== No trigger when blocked =====
-
     @Test
     @DisplayName("No trigger when Daring Saboteur is blocked and killed")
     void noTriggerWhenBlocked() {
         Permanent saboteur = addSaboteurReady(player1);
         saboteur.setAttacking(true);
 
-        // 4/4 blocker kills the 2/1 Daring Saboteur
-        Permanent blocker = new Permanent(new SerraAngel());
+        // 3/4 blocker kills the 2/1 Daring Saboteur
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ShiningAerosaur());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -191,17 +163,47 @@ class DaringSaboteurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Loot may discard a previously held card and keep the drawn card")
+    void lootCanDiscardPreviouslyHeldCard() {
+        Permanent saboteur = addSaboteurReady(player1);
+        saboteur.setAttacking(true);
+        Forest heldCard = new Forest();
+        ShiningAerosaur drawnCard = new ShiningAerosaur();
+        harness.setHand(player1, List.of(heldCard));
+        harness.setLibrary(player1, List.of(drawnCard, new Forest()));
 
-    private Permanent addSaboteurReady(Player player) {
-        Permanent perm = new Permanent(new DaringSaboteur());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(heldCard, drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(heldCard);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Unblockable ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent saboteur = harness.addToBattlefieldAndReturn(player1, new DaringSaboteur());
+        saboteur.setTapped(true);
+        saboteur.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(saboteur.isCantBeBlocked()).isTrue();
+        assertThat(saboteur.isTapped()).isTrue();
+    }
+
+    private Permanent addSaboteurReady(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new DaringSaboteur());
+        perm.setSummoningSick(false);
+        return perm;
     }
 }
