@@ -57,4 +57,47 @@ class BottomlessPitTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Each copy triggers separately and only the active player discards")
+    void multipleCopiesDiscardOneCardEach() {
+        harness.addToBattlefield(player1, new BottomlessPit());
+        harness.addToBattlefield(player2, new BottomlessPit());
+        FoulImp inactiveCard = new FoulImp();
+        harness.setHand(player1, List.of(inactiveCard));
+        FoulImp firstCard = new FoulImp();
+        WallOfSouls secondCard = new WallOfSouls();
+        harness.setHand(player2, List.of(firstCard, secondCard));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(inactiveCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand at trigger time does not prevent discarding at resolution")
+    void usesHandAtResolution() {
+        harness.addToBattlefield(player1, new BottomlessPit());
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        FoulImp drawnCard = new FoulImp();
+        harness.setHand(player2, List.of(drawnCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(drawnCard);
+    }
 }
